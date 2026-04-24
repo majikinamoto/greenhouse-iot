@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IoTダッシュボード</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
+<style>
+body {
+    font-family: sans-serif;
+    margin: 10px;
+}
+
+.top {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.box {
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    width: 100%;
+    max-width: 600px;
+    height: 400px;
+}
+
+button {
+    margin: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+    🌡 温度：<span id="nowTemp">-</span> ℃　
+    💧 湿度：<span id="nowHum">-</span> %
+</div>
+
+<div class="box">
+    開始：<input type="datetime-local" id="start">
+    終了：<input type="datetime-local" id="end">
+    <button onclick="downloadCSV()">CSVダウンロード</button>
+</div>
+
+<div class="box">
+    <button onclick="resetZoom()">ズームリセット</button>
+</div>
+
+<h3>温度</h3>
+<div class="chart-container">
+    <canvas id="tempChart"></canvas>
+</div>
+
+<h3>湿度</h3>
+<div class="chart-container">
+    <canvas id="humChart"></canvas>
+</div>
+
+<script>
+
+let tempChart, humChart;
+let lastData = [];
+
+function formatDate(d) {
+    const pad = n => n.toString().padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ` +
+           `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+async function loadData() {
+
+    const res = await fetch('/get_data.php');
+    const data = await res.json();
+
+    lastData = data;
+
+    const parsed = data.map(d => ({
+        x: new Date(d.recorded_at),
+        temp: Number(d.temperature),
+        hum: Number(d.humidity)
+    }));
+
+    const now = new Date();
+    consif (filtered.length > 0) {
+    const last = filtered[filtered.length - 1];
+
+    const time = new Date(last.recorded_at).toLocaleString('ja-JP', {
+        hour12: false
+    });
+
+    document.getElementById("nowTemp").innerHTML =
+        "🌡 <span style='font-size:32px; font-weight:bold;'>" + last.temp + " ℃</span>";
+
+    document.getElementById("nowHum").innerHTML =
+        "💧 <span style='font-size:28px;'>" + last.hum + " %</span>";
+
+    // もし時刻表示枠があるなら（なければ無視OK）
+    const timeEl = document.getElementById("nowTime");
+    if (timeEl) {
+        timeEl.innerHTML =
+            "🕒 <span style='font-size:18px;'>" + time + "</span>";
+    }
+}t maxRange = new Date(now.getTime());
+    const minRange = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3日
+
+    const filtered = parsed.filter(d => d.x >= minRange && d.x <= maxRange);
+
+    const tempData = filtered.map(d => ({ x: d.x, y: d.temp }));
+    const humData = filtered.map(d => ({ x: d.x, y: d.hum }));
+
+    // 最新値表示
+    if (filtered.length > 0) {
+        const last = filtered[filtered.length - 1];
+        document.getElementById("nowTemp").innerText = last.temp;
+        document.getElementById("nowHum").innerText = last.hum;
+    }
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+
+        scales: {
+            x: {
+                type: 'time',
+                time: {
+                    unit: 'hour',
+                    displayFormats: {
+                        hour: 'MM/dd HH:mm'
+                    }
+                },
+                ticks: {
+                    maxTicksLimit: 12
+                },
+                min: minRange,
+                max: maxRange
+            },
+            y: {
+                min: 0,
+                ticks: {
+                    stepSize: 10
+                }
+            }
+        },
+
+        plugins: {
+            tooltip: {
+                yAlign: 'bottom',   // ← 上に出しすぎない
+                xAlign: 'center'
+            },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x'
+                },
+                zoom: {
+                    wheel: { enabled: true },
+                    drag: { enabled: true },
+                    mode: 'x'
+                }
+            }
+        },
+
+        elements: {
+            line: {
+                borderWidth: 1
+            },
+            point: {
+                radius: 0
+            }
+        }
+    };
+
+    if (!tempChart) {
+
+        tempChart = new Chart(document.getElementById("tempChart"), {
+            type: "line",
+            data: {
+                datasets: [{
+                    label: "温度",
+                    data: tempData,
+                    borderColor: "red"
+                }]
+            },
+            options: {
+                ...options,
+                scales: {
+                    ...options.scales,
+                    y: { min: 0, max: 50, ticks: { stepSize: 10 } }
+                }
+            }
+        });
+
+        humChart = new Chart(document.getElementById("humChart"), {
+            type: "line",
+            data: {
+                datasets: [{
+                    label: "湿度",
+                    data: humData,
+                    borderColor: "blue"
+                }]
+            },
+            options: {
+                ...options,
+                scales: {
+                    ...options.scales,
+                    y: { min: 40, max: 100, ticks: { stepSize: 10 } }
+                }
+            }
+        });
+
+    } else {
+        tempChart.data.datasets[0].data = tempData;
+        humChart.data.datasets[0].data = humData;
+
+        // ★ズーム保持（ここ重要）
+        const tempState = tempChart.getZoomedState?.();
+        const humState = humChart.getZoomedState?.();
+
+        tempChart.update();
+        humChart.update();
+    }
+}
+
+// リセット
+function resetZoom() {
+    tempChart.resetZoom();
+    humChart.resetZoom();
+}
+
+// CSVダウンロード
+function downloadCSV() {
+
+    const start = new Date(document.getElementById("start").value);
+    const end = new Date(document.getElementById("end").value);
+
+    const filtered = lastData.filter(d => {
+        const t = new Date(d.recorded_at);
+        return t >= start && t <= end;
+    });
+
+    let csv = "datetime,temperature,humidity\n";
+
+    filtered.forEach(d => {
+        csv += `${d.recorded_at},${d.temperature},${d.humidity}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `greenhouse_${start.toISOString()}_to_${end.toISOString()}.csv`;
+    a.click();
+}
+
+loadData();
+setInterval(loadData, 5000);
+
+</script>
+
+</body>
+</html>
