@@ -165,7 +165,13 @@ async function loadData() {
                     maxTicksLimit: 12
                 },
                 min: minRange,
-                max: maxRange
+                max: maxRange,
+                grid: {
+                    color: function(context) {
+                        if (context.tick.value === 0) return 'rgba(0,0,0,0.3)';
+                        return 'rgba(0,0,0,0.1)';
+                    }
+                }
             },
             y: {
                 min: 0,
@@ -251,7 +257,7 @@ async function loadData() {
                     },
                     yTemp: {
                         position: 'right',
-                        min: 10,
+                        min: 15,
                         max: 40,
                         ticks: { stepSize: 10 },
                         title: { display: true, text: '温度 (℃)' }
