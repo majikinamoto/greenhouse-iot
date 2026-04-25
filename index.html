@@ -128,7 +128,7 @@ async function loadData() {
 
     const now = new Date();
     const maxRange = new Date(now.getTime());
-    const minRange = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3日
+    const minRange = new Date(now.getTime() - 72 * 60 * 60 * 1000); // 72時間
 
     const filtered = parsed.filter(d => d.x >= minRange && d.x <= maxRange);
 
