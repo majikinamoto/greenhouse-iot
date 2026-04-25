@@ -52,6 +52,12 @@ button {
     <button onclick="resetZoom()">表示サイズをリセット</button>
 </div>
 
+<h3>温度・湿度</h3>
+<div class="chart-container">
+    <canvas id="combinedChart"></canvas>
+</div>
+
+<!-- 個別のグラフは削除
 <h3>温度</h3>
 <div class="chart-container">
     <canvas id="tempChart"></canvas>
@@ -61,10 +67,11 @@ button {
 <div class="chart-container">
     <canvas id="humChart"></canvas>
 </div>
+-->
 
 <script>
 
-let tempChart, humChart;
+let combinedChart;
 let lastData = [];
 
 function formatDate(d) {
@@ -135,18 +142,12 @@ async function loadData() {
                 },
                 min: minRange,
                 max: maxRange
-            },
-            y: {
-                min: 0,
-                ticks: {
-                    stepSize: 10
-                }
             }
         },
 
         plugins: {
             tooltip: {
-                yAlign: 'bottom',   // ← 上に出しすぎない
+                yAlign: 'bottom',
                 xAlign: 'center'
             },
             zoom: {
@@ -172,57 +173,72 @@ async function loadData() {
         }
     };
 
-    if (!tempChart) {
+    if (!combinedChart) {
 
-        tempChart = new Chart(document.getElementById("tempChart"), {
+        combinedChart = new Chart(document.getElementById("combinedChart"), {
             type: "line",
             data: {
-                datasets: [{
-                    label: "温度",
-                    data: tempData,
-                    borderColor: "red"
-                }]
+                datasets: [
+                    {
+                        label: "湿度",
+                        data: humData,
+                        borderColor: "blue",
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "温度",
+                        data: tempData,
+                        borderColor: "red",
+                        yAxisID: 'y1'
+                    }
+                ]
             },
             options: {
                 ...options,
                 scales: {
                     ...options.scales,
-                    y: { min: 0, max: 50, ticks: { stepSize: 10 } }
-                }
-            }
-        });
-
-        humChart = new Chart(document.getElementById("humChart"), {
-            type: "line",
-            data: {
-                datasets: [{
-                    label: "湿度",
-                    data: humData,
-                    borderColor: "blue"
-                }]
-            },
-            options: {
-                ...options,
-                scales: {
-                    ...options.scales,
-                    y: { min: 40, max: 100, ticks: { stepSize: 10 } }
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        min: 40,
+                        max: 100,
+                        ticks: { stepSize: 10 },
+                        title: {
+                            display: true,
+                            text: '湿度 (%)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        min: 0,
+                        max: 50,
+                        ticks: { stepSize: 10 },
+                        title: {
+                            display: true,
+                            text: '温度 (℃)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
                 }
             }
         });
 
     } else {
-        tempChart.data.datasets[0].data = tempData;
-        humChart.data.datasets[0].data = humData;
+        combinedChart.data.datasets[0].data = humData;
+        combinedChart.data.datasets[1].data = tempData;
 
-        tempChart.update();
-        humChart.update();
+        combinedChart.update();
     }
 }
 
 // リセット
 function resetZoom() {
-    tempChart.resetZoom();
-    humChart.resetZoom();
+    combinedChart.resetZoom();
 }
 
 // CSVダウンロード
