@@ -95,7 +95,65 @@ button {
         <span class="icon">▼</span>
         <span class="label">前日最低：</span>
         <span class="value" id="yesterdayMin">-</span>
-        <span class="unit">℃</span>
+        <span class="        x: {
+            type: 'time',
+            time: {
+                unit: 'hour',
+                displayFormats: {
+                    hour: 'MM/dd HH',
+                    day: 'MM/dd',
+                    minute: 'MM/dd HH',
+                    second: 'MM/dd HH'
+                }
+            },
+            ticks: {
+                maxTicksLimit: 12,
+                callback: function(value, index, ticks) {
+                    const date = new Date(value);
+                    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const dd = date.getDate().toString().padStart(2, '0');
+                    const hh = date.getHours().toString().padStart(2, '0');
+                    return `${mm}/${dd} ${hh}時`;
+                }
+            },
+            min: minRange,
+            max: maxRange,
+            grid: {
+                color: function(context) {
+                    if (context.tick.value === 0) return 'rgba(0,0,0,0.3)';
+                    return 'rgba(0,0,0,0.1)';
+                }
+            }
+        },        x: {
+            type: 'time',
+            time: {
+                unit: 'hour',
+                displayFormats: {
+                    hour: 'MM/dd HH',
+                    day: 'MM/dd',
+                    minute: 'MM/dd HH',
+                    second: 'MM/dd HH'
+                }
+            },
+            ticks: {
+                maxTicksLimit: 12,
+                callback: function(value, index, ticks) {
+                    const date = new Date(value);
+                    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const dd = date.getDate().toString().padStart(2, '0');
+                    const hh = date.getHours().toString().padStart(2, '0');
+                    return `${mm}/${dd} ${hh}時`;
+                }
+            },
+            min: minRange,
+            max: maxRange,
+            grid: {
+                color: function(context) {
+                    if (context.tick.value === 0) return 'rgba(0,0,0,0.3)';
+                    return 'rgba(0,0,0,0.1)';
+                }
+            }
+        },unit">℃</span>
     </div>
 </div>
 
@@ -121,8 +179,8 @@ let lastData = [];
 
 function formatDate(d) {
     const pad = n => n.toString().padStart(2,'0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ` +
-           `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    // 24時間表記
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 async function loadData() {
@@ -191,26 +249,36 @@ async function loadData() {
         },
 
         scales: {
-            x: {
-                type: 'time',
-                time: {
-                    unit: 'hour',
-                    displayFormats: {
-                        hour: 'MM/dd HH'
-                    }
-                },
-                ticks: {
-                    maxTicksLimit: 12
-                },
-                min: minRange,
-                max: maxRange,
-                grid: {
-                    color: function(context) {
-                        if (context.tick.value === 0) return 'rgba(0,0,0,0.3)';
-                        return 'rgba(0,0,0,0.1)';
-                    }
-                }
-            },
+  x: {
+    type: 'time',
+    time: {
+        unit: 'hour',
+        displayFormats: {
+            hour: 'MM/dd HH',
+            day: 'MM/dd',
+            minute: 'MM/dd HH',
+            second: 'MM/dd HH'
+        }
+    },
+    ticks: {
+        maxTicksLimit: 12,
+        callback: function(value, index, ticks) {
+            const date = new Date(value);
+            const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+            const dd = date.getDate().toString().padStart(2, '0');
+            const hh = date.getHours().toString().padStart(2, '0');
+            return `${mm}/${dd} ${hh}時`;
+        }
+    },
+    min: minRange,
+    max: maxRange,
+    grid: {
+        color: function(context) {
+            if (context.tick.value === 0) return 'rgba(0,0,0,0.3)';
+            return 'rgba(0,0,0,0.1)';
+        }
+    }
+},
             y: {
                 min: 0,
                 ticks: {
