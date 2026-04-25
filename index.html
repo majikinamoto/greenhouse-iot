@@ -148,7 +148,21 @@ async function loadData() {
         plugins: {
             tooltip: {
                 yAlign: 'bottom',
-                xAlign: 'center'
+                xAlign: 'center',
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.dataset.label === "湿度") {
+                            label += context.parsed.y + ' %';
+                        } else {
+                            label += context.parsed.y + ' ℃';
+                        }
+                        return label;
+                    }
+                }
             },
             zoom: {
                 pan: {
@@ -183,12 +197,16 @@ async function loadData() {
                         label: "湿度",
                         data: humData,
                         borderColor: "blue",
+                        backgroundColor: "rgba(0, 0, 255, 0.1)",
+                        fill: true,
                         yAxisID: 'y'
                     },
                     {
                         label: "温度",
                         data: tempData,
                         borderColor: "red",
+                        backgroundColor: "rgba(255, 0, 0, 0.1)",
+                        fill: true,
                         yAxisID: 'y1'
                     }
                 ]
@@ -207,7 +225,11 @@ async function loadData() {
                         title: {
                             display: true,
                             text: '湿度 (%)'
-                        }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 255, 0.1)'
+                        },
+                        backgroundColor: 'rgba(200, 200, 255, 0.2)'
                     },
                     y1: {
                         type: 'linear',
