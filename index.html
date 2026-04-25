@@ -87,19 +87,14 @@ button {
     <button onclick="resetZoom()">表示サイズnoリセット</button>
 </div>
 
-<h3>温度</h3>
+<h3>温度・湿度</h3>
 <div class="chart-container">
     <canvas id="tempChart"></canvas>
 </div>
 
-<h3>湿度</h3>
-<div class="chart-container">
-    <canvas id="humChart"></canvas>
-</div>
-
 <script>
 
-let tempChart, humChart;
+let tempChart;
 let lastData = [];
 
 function formatDate(d) {
@@ -213,56 +208,57 @@ async function loadData() {
         tempChart = new Chart(document.getElementById("tempChart"), {
             type: "line",
             data: {
-                datasets: [{
-                    label: "温度",
-                    data: tempData,
-                    borderColor: "red"
-                }]
+                datasets: [
+                    {
+                        label: "温度",
+                        data: tempData,
+                        borderColor: "red",
+                        yAxisID: 'yTemp'
+                    },
+                    {
+                        label: "湿度",
+                        data: humData,
+                        borderColor: "blue",
+                        yAxisID: 'yHum'
+                    }
+                ]
             },
             options: {
                 ...options,
                 scales: {
-                    ...options.scales,
-                    y: { min: 0, max: 50, ticks: { stepSize: 10 } }
-                }
-            }
-        });
-
-        humChart = new Chart(document.getElementById("humChart"), {
-            type: "line",
-            data: {
-                datasets: [{
-                    label: "湿度",
-                    data: humData,
-                    borderColor: "blue"
-                }]
-            },
-            options: {
-                ...options,
-                scales: {
-                    ...options.scales,
-                    y: { min: 40, max: 100, ticks: { stepSize: 10 } }
+                    x: options.scales.x,
+                    yHum: {
+                        position: 'left',
+                        min: 40,
+                        max: 100,
+                        ticks: { stepSize: 10 },
+                        title: { display: true, text: '湿度 (%)' }
+                    },
+                    yTemp: {
+                        position: 'right',
+                        min: 10,
+                        max: 40,
+                        ticks: { stepSize: 10 },
+                        title: { display: true, text: '温度 (℃)' }
+                    }
                 }
             }
         });
 
     } else {
         tempChart.data.datasets[0].data = tempData;
-        humChart.data.datasets[0].data = humData;
+        tempChart.data.datasets[1].data = humData;
 
         // ★ズーム保持（ここ重要）
         const tempState = tempChart.getZoomedState?.();
-        const humState = humChart.getZoomedState?.();
 
         tempChart.update();
-        humChart.update();
     }
 }
 
 // リセット
 function resetZoom() {
     tempChart.resetZoom();
-    humChart.resetZoom();
 }
 
 // CSVダウンロード
