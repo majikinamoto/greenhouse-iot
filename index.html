@@ -5,8 +5,8 @@
 <title>IoTダッシュボード</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 
 <style>
 body {
@@ -14,9 +14,34 @@ body {
     margin: 10px;
 }
 
-.top {
-    font-size: 18px;
-    margin-bottom: 10px;
+.status-container {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.status-box {
+    display: flex;
+    align-items: center;
+    font-size: 2.2em;
+    font-weight: bold;
+    border: 3px solid #4CAF50;
+    border-radius: 18px;
+    padding: 18px 32px;
+    background: linear-gradient(135deg, #e0ffe0 0%, #f0f8ff 100%);
+    box-shadow: 0 4px 16px rgba(76,175,80,0.08);
+    min-width: 220px;
+    justify-content: center;
+}
+
+.status-box .icon {
+    font-size: 1.2em;
+    margin-right: 12px;
+}
+
+.status-box .value {
+    font-size: 1.1em;
+    margin: 0 6px;
 }
 
 .box {
@@ -37,9 +62,19 @@ button {
 
 <body>
 
-<div class="top">
-    🌡 温度：<span id="nowTemp">-</span> ℃　
-    💧 湿度：<span id="nowHum">-</span> %
+<div class="status-container">
+    <div class="status-box">
+        <span class="icon">🌡</span>
+        <span class="label">温度：</span>
+        <span class="value" id="nowTemp">-</span>
+        <span class="unit">℃</span>
+    </div>
+    <div class="status-box">
+        <span class="icon">💧</span>
+        <span class="label">湿度：</span>
+        <span class="value" id="nowHum">-</span>
+        <span class="unit">%</span>
+    </div>
 </div>
 
 <div class="box">
@@ -49,15 +84,9 @@ button {
 </div>
 
 <div class="box">
-    <button onclick="resetZoom()">表示サイズをリセット</button>
+    <button onclick="resetZoom()">表示サイズnoリセット</button>
 </div>
 
-<h3>温度・湿度</h3>
-<div class="chart-container">
-    <canvas id="combinedChart"></canvas>
-</div>
-
-<!-- 個別のグラフは削除
 <h3>温度</h3>
 <div class="chart-container">
     <canvas id="tempChart"></canvas>
@@ -67,11 +96,10 @@ button {
 <div class="chart-container">
     <canvas id="humChart"></canvas>
 </div>
--->
 
 <script>
 
-let combinedChart;
+let tempChart, humChart;
 let lastData = [];
 
 function formatDate(d) {
@@ -122,6 +150,7 @@ async function loadData() {
     const options = {
         responsive: true,
         maintainAspectRatio: false,
+        parsing: false,
 
         interaction: {
             mode: 'index',
@@ -142,27 +171,19 @@ async function loadData() {
                 },
                 min: minRange,
                 max: maxRange
+            },
+            y: {
+                min: 0,
+                ticks: {
+                    stepSize: 10
+                }
             }
         },
 
         plugins: {
             tooltip: {
-                yAlign: 'bottom',
-                xAlign: 'center',
-                callbacks: {
-                    label: function(context) {
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.dataset.label === "湿度") {
-                            label += context.parsed.y + ' %';
-                        } else {
-                            label += context.parsed.y + ' ℃';
-                        }
-                        return label;
-                    }
-                }
+                yAlign: 'bottom',   // ← 上に出しすぎない
+                xAlign: 'center'
             },
             zoom: {
                 pan: {
@@ -187,80 +208,61 @@ async function loadData() {
         }
     };
 
-    if (!combinedChart) {
+    if (!tempChart) {
 
-        combinedChart = new Chart(document.getElementById("combinedChart"), {
+        tempChart = new Chart(document.getElementById("tempChart"), {
             type: "line",
             data: {
-                datasets: [
-                    {
-                        label: "湿度",
-                        data: humData,
-                        borderColor: "blue",
-                        backgroundColor: "rgba(0, 0, 255, 0.1)",
-                        fill: true,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: "温度",
-                        data: tempData,
-                        borderColor: "red",
-                        backgroundColor: "rgba(255, 0, 0, 0.1)",
-                        fill: true,
-                        yAxisID: 'y1'
-                    }
-                ]
+                datasets: [{
+                    label: "温度",
+                    data: tempData,
+                    borderColor: "red"
+                }]
             },
             options: {
                 ...options,
                 scales: {
                     ...options.scales,
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        min: 40,
-                        max: 100,
-                        ticks: { stepSize: 10 },
-                        title: {
-                            display: true,
-                            text: '湿度 (%)'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 255, 0.1)'
-                        },
-                        backgroundColor: 'rgba(200, 200, 255, 0.2)'
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        min: 10,
-                        max: 40,
-                        ticks: { stepSize: 10 },
-                        title: {
-                            display: true,
-                            text: '温度 (℃)'
-                        },
-                        grid: {
-                            drawOnChartArea: false
-                        }
-                    }
+                    y: { min: 0, max: 50, ticks: { stepSize: 10 } }
+                }
+            }
+        });
+
+        humChart = new Chart(document.getElementById("humChart"), {
+            type: "line",
+            data: {
+                datasets: [{
+                    label: "湿度",
+                    data: humData,
+                    borderColor: "blue"
+                }]
+            },
+            options: {
+                ...options,
+                scales: {
+                    ...options.scales,
+                    y: { min: 40, max: 100, ticks: { stepSize: 10 } }
                 }
             }
         });
 
     } else {
-        combinedChart.data.datasets[0].data = humData;
-        combinedChart.data.datasets[1].data = tempData;
+        tempChart.data.datasets[0].data = tempData;
+        humChart.data.datasets[0].data = humData;
 
-        combinedChart.update();
+        // ★ズーム保持（ここ重要）
+        const tempState = tempChart.getZoomedState?.();
+        const humState = humChart.getZoomedState?.();
+
+        tempChart.update();
+        humChart.update();
     }
 }
 
 // リセット
 function resetZoom() {
-    combinedChart.resetZoom();
+    tempChart.resetZoom();
+    humChart.resetZoom();
 }
 
 // CSVダウンロード
