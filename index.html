@@ -11,6 +11,9 @@
 <!-- Crosshairプラグイン -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
 
+<!-- Chart.js annotation plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+
 <style>
 body {
     font-family: sans-serif;
@@ -257,6 +260,28 @@ async function loadData() {
                 snap: {
                     enabled: false
                 }
+            },
+            annotation: {
+                annotations: (() => {
+                    // 72時間分の0時0分の縦線を生成
+                    const lines = {};
+                    const now = new Date();
+                    for (let i = 0; i <= 3; i++) {
+                        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 0, 0, 0, 0);
+                        lines['dayline' + i] = {
+                            type: 'line',
+                            xMin: d.getTime(),
+                            xMax: d.getTime(),
+                            borderColor: 'rgba(0,0,0,0.4)',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {
+                                display: false
+                            }
+                        };
+                    }
+                    return lines;
+                })()
             }
         },
 
@@ -308,7 +333,7 @@ async function loadData() {
                     yTemp: {
                         position: 'right',
                         min: 15,
-                        max: 40,
+                        max: 35,
                         ticks: { stepSize: 10 },
                         title: { display: true, text: '温度 (℃)' }
                     }
