@@ -213,13 +213,17 @@ async function loadData() {
                         label: "温度",
                         data: tempData,
                         borderColor: "red",
-                        yAxisID: 'yTemp'
+                        yAxisID: 'yTemp',
+                        backgroundColor: "rgba(255, 0, 0, 0.1)",
+                        fill: true
                     },
                     {
                         label: "湿度",
                         data: humData,
                         borderColor: "blue",
-                        yAxisID: 'yHum'
+                        yAxisID: 'yHum',
+                        backgroundColor: "rgba(0, 0, 255, 0.1)",
+                        fill: true
                     }
                 ]
             },
