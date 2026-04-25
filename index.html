@@ -5,8 +5,8 @@
 <title>IoTダッシュボード</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
 
 <style>
 body {
@@ -49,7 +49,7 @@ button {
 </div>
 
 <div class="box">
-    <button onclick="resetZoom()">表示サイズnoリセット</button>
+    <button onclick="resetZoom()">表示サイズをリセット</button>
 </div>
 
 <h3>温度</h3>
@@ -115,7 +115,6 @@ async function loadData() {
     const options = {
         responsive: true,
         maintainAspectRatio: false,
-        parsing: false,
 
         interaction: {
             mode: 'index',
@@ -214,10 +213,6 @@ async function loadData() {
     } else {
         tempChart.data.datasets[0].data = tempData;
         humChart.data.datasets[0].data = humData;
-
-        // ★ズーム保持（ここ重要）
-        const tempState = tempChart.getZoomedState?.();
-        const humState = humChart.getZoomedState?.();
 
         tempChart.update();
         humChart.update();
