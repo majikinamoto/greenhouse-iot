@@ -77,6 +77,21 @@ button {
     </div>
 </div>
 
+<div class="status-container">
+    <div class="status-box" style="border-color: #ff6b6b; background: linear-gradient(135deg, #ffe0e0 0%, #fff5f5 100%);">
+        <span class="icon">▲</span>
+        <span class="label">前日最高：</span>
+        <span class="value" id="yesterdayMax">-</span>
+        <span class="unit">℃</span>
+    </div>
+    <div class="status-box" style="border-color: #6b9fff; background: linear-gradient(135deg, #e0e8ff 0%, #f0f5ff 100%);">
+        <span class="icon">▼</span>
+        <span class="label">前日最低：</span>
+        <span class="value" id="yesterdayMin">-</span>
+        <span class="unit">℃</span>
+    </div>
+</div>
+
 <div class="box">
     開始：<input type="datetime-local" id="start">
     終了：<input type="datetime-local" id="end">
@@ -140,6 +155,22 @@ async function loadData() {
         const last = filtered[filtered.length - 1];
         document.getElementById("nowTemp").innerText = last.temp;
         document.getElementById("nowHum").innerText = last.hum;
+    }
+
+    // 前日の最高・最低温度を計算
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+    const yesterdayEnd = new Date(yesterday);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+
+    const yesterdayData = parsed.filter(d => d.x >= yesterday && d.x <= yesterdayEnd);
+    if (yesterdayData.length > 0) {
+        const temps = yesterdayData.map(d => d.temp);
+        const maxTemp = Math.max(...temps);
+        const minTemp = Math.min(...temps);
+        document.getElementById("yesterdayMax").innerText = maxTemp;
+        document.getElementById("yesterdayMin").innerText = minTemp;
     }
 
     const options = {
