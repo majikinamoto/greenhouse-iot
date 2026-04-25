@@ -148,7 +148,7 @@ async function loadData() {
         parsing: false,
 
         interaction: {
-            mode: 'dataset',
+            mode: 'index',
             intersect: false
         },
 
@@ -177,8 +177,19 @@ async function loadData() {
 
         plugins: {
             tooltip: {
-                yAlign: 'bottom',   // ← 上に出しすぎない
-                xAlign: 'center'
+                yAlign: 'bottom',
+                xAlign: 'center',
+                callbacks: {
+                    label: function(context) {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        if (label === '温度') {
+                            return `${label}: ${value}℃`;
+                        } else {
+                            return `${label}: ${value}%`;
+                        }
+                    }
+                }
             },
             zoom: {
                 pan: {
