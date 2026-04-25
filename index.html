@@ -76,7 +76,17 @@ function formatDate(d) {
 async function loadData() {
 
     const res = await fetch('/get_data.php');
+    if (!res.ok) {
+        console.error('Fetch error:', res.status, await res.text());
+        return;
+    }
     const data = await res.json();
+    console.log('Received data:', data);
+
+    if (!Array.isArray(data) || data.length === 0) {
+        console.warn('No data received');
+        return;
+    }
 
     lastData = data;
 
