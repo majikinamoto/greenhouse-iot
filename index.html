@@ -8,6 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 
+<!-- Crosshairプラグイン -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
+
 <style>
 body {
     font-family: sans-serif;
@@ -238,6 +241,21 @@ async function loadData() {
                     wheel: { enabled: true },
                     drag: { enabled: true },
                     mode: 'x'
+                }
+            },
+            crosshair: {
+                line: {
+                    color: '#888',
+                    width: 1
+                },
+                sync: {
+                    enabled: false
+                },
+                zoom: {
+                    enabled: false
+                },
+                snap: {
+                    enabled: false
                 }
             }
         },
