@@ -87,26 +87,7 @@ async function loadData() {
     }));
 
     const now = new Date();
-    consif (filtered.length > 0) {
-    const last = filtered[filtered.length - 1];
-
-    const time = new Date(last.recorded_at).toLocaleString('ja-JP', {
-        hour12: false
-    });
-
-    document.getElementById("nowTemp").innerHTML =
-        "🌡 <span style='font-size:32px; font-weight:bold;'>" + last.temp + " ℃</span>";
-
-    document.getElementById("nowHum").innerHTML =
-        "💧 <span style='font-size:28px;'>" + last.hum + " %</span>";
-
-    // もし時刻表示枠があるなら（なければ無視OKよ）
-    const timeEl = document.getElementById("nowTime");
-    if (timeEl) {
-        timeEl.innerHTML =
-            "🕒 <span style='font-size:18px;'>" + time + "</span>";
-    }
-}t maxRange = new Date(now.getTime());
+    const maxRange = new Date(now.getTime());
     const minRange = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3日
 
     const filtered = parsed.filter(d => d.x >= minRange && d.x <= maxRange);
