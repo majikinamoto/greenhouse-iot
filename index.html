@@ -307,6 +307,12 @@ footer {
         <span class="value" id="nowHum">-</span>
         <span class="unit">%</span>
     </div>
+    <div class="status-box vap">
+        <span class="icon">🫧</span>
+        <span class="label">現在飽差</span>
+        <span class="value" id="nowVPD">-</span>
+        <span class="unit">kPa</span>
+    </div>
     <div class="status-box max">
         <span class="icon">▲</span>
         <span class="label">前日最高</span>
@@ -387,6 +393,18 @@ async function loadData() {
         const last = filtered[filtered.length - 1];
         document.getElementById("nowTemp").innerText = last.temp;
         document.getElementById("nowHum").innerText = last.hum;
+
+        // 飽差（VPD）計算
+        // 飽和水蒸気圧（kPa）: 0.6108 * exp((17.27 * T) / (T + 237.3))
+        // 実際の水蒸気圧 = 飽和水蒸気圧 * (湿度/100)
+        // 飽差 = 飽和水蒸気圧 - 実際の水蒸気圧
+        function calcVPD(temp, hum) {
+            const es = 0.6108 * Math.exp((17.27 * temp) / (temp + 237.3));
+            const ea = es * (hum / 100);
+            return es - ea;
+        }
+        const vpd = calcVPD(last.temp, last.hum);
+        document.getElementById("nowVPD").innerText = vpd.toFixed(2);
     }
 
     // 前日の最高・最低温度を計算
