@@ -528,7 +528,7 @@ async function loadData() {
             tooltip: {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 titleColor: '#0066cc',
-                titleFont: { family: 'Orbitron', size: 12 },
+                titleFont: { family: 'Noto Sans JP', size: 13 },
                 bodyColor: '#333',
                 bodyFont: { family: 'Noto Sans JP', size: 13 },
                 borderColor: 'rgba(0, 0, 0, 0.15)',
@@ -708,7 +708,11 @@ async function loadData() {
                         pointHoverBackgroundColor: "#00A0A6",
                         pointHoverBorderColor: "#fff",
                         pointHoverBorderWidth: 2,
-                        yAxisID: 'yVapor'
+                        yAxisID: 'yVapor',
+                        datalabels: {
+                            color: '#00A0A6',
+                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
+                        }
                     },
                     {
                         label: "飽差 (g/m³)",
@@ -724,7 +728,11 @@ async function loadData() {
                         pointHoverBackgroundColor: "#888888",
                         pointHoverBorderColor: "#fff",
                         pointHoverBorderWidth: 2,
-                        yAxisID: 'yRemain'
+                        yAxisID: 'yRemain',
+                        datalabels: {
+                            color: '#888888',
+                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
+                        }
                     }
                 ]
             },
@@ -813,10 +821,20 @@ function downloadCSV() {
         return t >= start && t <= end;
     });
 
-    let csv = "datetime,temperature,humidity\n";
+    // ヘッダー
+    let csv = "datetime,temperature,humidity,vapor,remain\n";
+
+    // 水蒸気量・飽差の計算関数
+    function calcVapor(temp, hum) {
+        const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+        const ea = es * (hum / 100);
+        return 216.7 * (ea / (temp + 273.15));
+    }
 
     filtered.forEach(d => {
-        csv += `${d.recorded_at},${d.temperature},${d.humidity}\n`;
+        const vapor = calcVapor(Number(d.temperature), Number(d.humidity));
+        const remain = calcVapor(Number(d.temperature), 100) - vapor;
+        csv += `${d.recorded_at},${d.temperature},${d.humidity},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
     });
 
     const blob = new Blob([csv], { type: "text/csv" });
