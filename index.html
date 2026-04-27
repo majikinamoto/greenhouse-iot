@@ -309,9 +309,9 @@ footer {
     </div>
     <div class="status-box vap">
         <span class="icon">🫧</span>
-        <span class="label">現在飽差</span>
-        <span class="value" id="nowVPD">-</span>
-        <span class="unit">kPa</span>
+        <span class="label">現在水蒸気量</span>
+        <span class="value" id="nowVapor">-</span>
+        <span class="unit">g/m³</span>
     </div>
     <div class="status-box max">
         <span class="icon">▲</span>
@@ -345,9 +345,15 @@ footer {
     <canvas id="tempChart"></canvas>
 </div>
 
+<h3>🫧 水蒸気量（g/m³）推移</h3>
+<div class="chart-container">
+    <canvas id="vaporChart"></canvas>
+</div>
+
 <script>
 
 let tempChart;
+let vaporChart;
 let lastData = [];
 
 function formatDate(d) {
@@ -387,6 +393,13 @@ async function loadData() {
 
     const tempData = filtered.map(d => ({ x: d.x, y: d.temp }));
     const humData = filtered.map(d => ({ x: d.x, y: d.hum }));
+    // 水蒸気量データ
+    function calcVapor(temp, hum) {
+        const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+        const ea = es * (hum / 100);
+        return 216.7 * (ea / (temp + 273.15));
+    }
+    const vaporData = filtered.map(d => ({ x: d.x, y: calcVapor(d.temp, d.hum) }));
 
     // 最新値表示
     if (filtered.length > 0) {
@@ -394,17 +407,18 @@ async function loadData() {
         document.getElementById("nowTemp").innerText = last.temp;
         document.getElementById("nowHum").innerText = last.hum;
 
-        // 飽差（VPD）計算
-        // 飽和水蒸気圧（kPa）: 0.6108 * exp((17.27 * T) / (T + 237.3))
-        // 実際の水蒸気圧 = 飽和水蒸気圧 * (湿度/100)
-        // 飽差 = 飽和水蒸気圧 - 実際の水蒸気圧
-        function calcVPD(temp, hum) {
-            const es = 0.6108 * Math.exp((17.27 * temp) / (temp + 237.3));
+        // 水蒸気量（absolute humidity, g/m³）計算
+        // AH = 216.7 × (飽和水蒸気圧 × 相対湿度/100) / (温度+273.15)
+        function calcVapor(temp, hum) {
+            // 飽和水蒸気圧（hPa）
+            const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+            // 実際の水蒸気圧（hPa）
             const ea = es * (hum / 100);
-            return es - ea;
+            // 絶対湿度（g/m³）
+            return 216.7 * (ea / (temp + 273.15));
         }
-        const vpd = calcVPD(last.temp, last.hum);
-        document.getElementById("nowVPD").innerText = vpd.toFixed(2);
+        const vapor = calcVapor(last.temp, last.hum);
+        document.getElementById("nowVapor").innerText = vapor.toFixed(2);
     }
 
     // 前日の最高・最低温度を計算
@@ -632,14 +646,78 @@ async function loadData() {
             }
         });
 
+        // 水蒸気量グラフ
+        vaporChart = new Chart(document.getElementById("vaporChart"), {
+            type: "line",
+            data: {
+                datasets: [
+                    {
+                        label: "水蒸気量 (g/m³)",
+                        data: vaporData,
+                        borderColor: "#00A0A6",
+                        backgroundColor: "rgba(0,160,166,0.12)",
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: "#00A0A6",
+                        pointHoverBorderColor: "#fff",
+                        pointHoverBorderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                parsing: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: options.scales.x,
+                    y: {
+                        min: 0,
+                        ticks: { color: '#00A0A6', font: { family: 'Orbitron' } },
+                        title: { display: true, text: '水蒸気量 (g/m³)', color: '#00A0A6', font: { family: 'Orbitron', size: 12 } },
+                        grid: { color: 'rgba(0,0,0,0.08)' },
+                        border: { color: 'rgba(0,0,0,0.15)' }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        backgroundColor: 'rgba(255,255,255,0.95)',
+                        titleColor: '#00A0A6',
+                        titleFont: { family: 'Orbitron', size: 12 },
+                        bodyColor: '#333',
+                        bodyFont: { family: 'Noto Sans JP', size: 13 },
+                        borderColor: 'rgba(0,0,0,0.15)',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        padding: 12,
+                        yAlign: 'bottom',
+                        xAlign: 'center',
+                        callbacks: {
+                            label: function(context) {
+                                return `水蒸気量: ${context.parsed.y.toFixed(2)} g/m³`;
+                            }
+                        }
+                    },
+                    zoom: options.plugins.zoom,
+                    crosshair: options.plugins.crosshair,
+                    annotation: options.plugins.annotation
+                },
+                elements: {
+                    line: { borderWidth: 2, tension: 0.4 },
+                    point: { radius: 0, hoverRadius: 6 }
+                }
+            }
+        });
+
     } else {
         tempChart.data.datasets[0].data = tempData;
         tempChart.data.datasets[1].data = humData;
-
-        // ★ズーム保持（ここ重要）
-        const tempState = tempChart.getZoomedState?.();
-
+        vaporChart.data.datasets[0].data = vaporData;
         tempChart.update();
+        vaporChart.update();
     }
 }
 
