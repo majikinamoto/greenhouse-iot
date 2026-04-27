@@ -451,7 +451,7 @@ async function loadData() {
             return 216.7 * (ea / (temp + 273.15));
         }
         const vapor = calcVapor(last.temp, last.hum);
-        // 飽和水蒸気量（最大）+ 現在の水蒸気量 = 残り容量
+        // 飽和水蒸気量（最大）+ 現在の水蒸気量 = 飽差
         const maxVapor = calcVapor(last.temp, 100);
         const remain = maxVapor - vapor;
         document.getElementById("nowVapor").innerText = vapor.toFixed(1);
@@ -711,7 +711,7 @@ async function loadData() {
                         yAxisID: 'yVapor'
                     },
                     {
-                        label: "残り容量 (g/m³)",
+                        label: "飽差 (g/m³)",
                         data: remainData,
                         borderColor: "#888888",
                         backgroundColor: "rgba(136,136,136,0.08)",
@@ -747,7 +747,7 @@ async function loadData() {
                         position: 'right',
                         min: 0,
                         ticks: { color: '#888888', font: { family: 'Noto Sans JP' } },
-                        title: { display: true, text: '残り容量 (g/m³)', color: '#888888', font: { family: 'Noto Sans JP', size: 12 } },
+                        title: { display: true, text: '飽差 (g/m³)', color: '#888888', font: { family: 'Noto Sans JP', size: 12 } },
                         grid: { display: false },
                         border: { color: 'rgba(0,0,0,0.15)' }
                     }
