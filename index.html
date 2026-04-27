@@ -341,7 +341,7 @@ footer {
     </div>
     <div class="status-box rem">
         <span class="icon">📈</span>
-        <span class="label">残り容量</span>
+        <span class="label">飽差</span>
         <span class="value simple" id="nowRemain">-</span>
         <span class="unit">g/m³</span>
     </div>
@@ -369,16 +369,16 @@ footer {
 </div>
 
 <div class="box" style="text-align: center;">
-    <button onclick="resetTempZoom()">温度・湿度グラフ リセット</button>
-    <button onclick="resetVaporZoom()">水蒸気量グラフ リセット</button>
+    <button onclick="resetTempZoom()">温度・湿度サイズ リセット</button>
+    <button onclick="resetVaporZoom()">水蒸気量・飽差サイズ リセット</button>
 </div>
 
-<h3>📊 温度・湿度推移</h3>
+<h3>📊 温度・湿度</h3>
 <div class="chart-container">
     <canvas id="tempChart"></canvas>
 </div>
 
-<h3>🫧 水蒸気量（g/m³）推移</h3>
+<h3>🫧 水蒸気量・飽差</h3>
 <div class="chart-container">
     <canvas id="vaporChart"></canvas>
 </div>
@@ -683,7 +683,7 @@ async function loadData() {
             }
         });
 
-        // 残り容量データも計算
+        // 飽差データも計算
         const remainData = filtered.map(d => {
             const v = calcVapor(d.temp, d.hum);
             const max = calcVapor(d.temp, 100);
