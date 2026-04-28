@@ -1,28 +1,21 @@
 <?php
+$conn = new mysqli("localhost","iot","password123","greenhouse");
 
-header('Content-Type: application/json');
+$user_id = $_GET['user_id'] ?? null;
 
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
-try {
-
-    $conn = new mysqli("localhost", "gh_user", "majikina.moto", "greenhouse");
-
-    $result = $conn->query("
-        SELECT temperature, humidity, recorded_at
-        FROM measurements
-        ORDER BY recorded_at ASC
-    ");
-
-    $data = [];
-
-    while ($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
-
-    echo json_encode($data);
-
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["error" => $e->getMessage()]);
+if ($user_id) {
+    $stmt = $conn->prepare("SELECT * FROM measurements WHERE user_id=? ORDER BY recorded_at DESC LIMIT 1000");
+    $stmt->bind_param("i",$user_id);
+} else {
+    $stmt = $conn->prepare("SELECT * FROM measurements ORDER BY recorded_at DESC LIMIT 1000");
 }
+
+$stmt->execute();
+$result = $stmt->get_result();
+
+$data = [];
+while($row = $result->fetch_assoc()){
+    $data[] = $row;
+}
+
+echo json_encode(array_reverse($data));
