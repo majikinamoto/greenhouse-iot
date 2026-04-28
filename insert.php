@@ -19,15 +19,19 @@ if (!$data) {
 
 $temperature = $data["temperature"] ?? null;
 $humidity = $data["humidity"] ?? null;
+$channel_id = $data["channel_id"] ?? null;
+$co2 = $data["co2"] ?? null;
+$solar_radiation = $data["solar_radiation"] ?? null;
+$voltage = $data["voltage"] ?? null;
 
-$sql = "INSERT INTO measurements (temperature, humidity) VALUES (?, ?)";
+$sql = "INSERT INTO measurements (channel_id, temperature, humidity, CO2, solar_radiation, voltage) VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
     die("SQLエラー");
 }
 
-$stmt->bind_param("dd", $temperature, $humidity);
+$stmt->bind_param("iddddd", $channel_id, $temperature, $humidity, $co2, $solar_radiation, $voltage);
 
 if ($stmt->execute()) {
     echo "OK";
