@@ -18,23 +18,23 @@ if (!$data) {
 // データの取得とバリデーション
 $temperature = $data["temperature"] ?? null;
 $humidity = $data["humidity"] ?? null;
-$channel_id = $data["channel_id"] ?? null;
+$user_id = $data["user_id"] ?? null;
 $co2 = $data["co2"] ?? null;
 $solar_radiation = $data["solar_radiation"] ?? null;
 $voltage = $data["voltage"] ?? null;
 
-if (!is_numeric($channel_id)) {
-    die("エラー: channel_idは数値である必要があります");
+if (!is_numeric($user_id)) {
+    die("エラー: user_idは数値である必要があります");
 }
 
-$sql = "INSERT INTO measurements (channel_id, temperature, humidity, CO2, solar_radiation, voltage) VALUES (?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO measurements (user_id, temperature, humidity, CO2, solar_radiation, voltage) VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
     die("SQLエラー: " . $conn->error);
 }
 
-$stmt->bind_param("iddddd", $channel_id, $temperature, $humidity, $co2, $solar_radiation, $voltage);
+$stmt->bind_param("iddddd", $user_id, $temperature, $humidity, $co2, $solar_radiation, $voltage);
 
 if ($stmt->execute()) {
     echo "データ挿入成功";
