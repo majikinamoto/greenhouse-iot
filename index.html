@@ -1,415 +1,91 @@
-@ -1,534 +1,534 @@
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>USUI Tech ウスイテック</title>
+<title>USUI Tech</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
-
-<!-- Crosshairプラグイン -->
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
-
-<!-- Chart.js annotation plugin -->
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
 
 <style>
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&display=swap');
-
-* {
-    box-sizing: border-box;
-}
-
 body {
-    font-family: 'Noto Sans JP', sans-serif;
-    margin: 0;
+    font-family: sans-serif;
     padding: 20px;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
-    color: #333;
+    background: #f5f5f5;
 }
+h1 { text-align: center; }
 
-/* タイトル */
-h1 {
-    font-family: 'Orbitron', sans-serif;
-    text-align: center;
-    font-size: 2.5em;
-    margin: 0 0 30px 0;
-    background: linear-gradient(90deg, #0066cc, #00aaff, #0066cc);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient-shift 3s linear infinite;
-    letter-spacing: 4px;
-}
-
-@keyframes gradient-shift {
-    0% { background-position: 0% center; }
-    100% { background-position: 200% center; }
-}
-
-h3 {
-    font-family: 'Orbitron', sans-serif;
-    color: #0066cc;
-    font-size: 1.3em;
-    margin: 30px 0 15px 0;
-    padding-left: 15px;
-    border-left: 4px solid #0066cc;
-}
-
-/* ステータスコンテナ */
-.status-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-/* ステータスカード - ガラスモーフィズム */
-.status-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    font-size: 1.1em;
-    font-weight: bold;
-    border-radius: 20px;
-    padding: 20px 28px;
-    min-width: 200px;
-    justify-content: center;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.status-box:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-}
-
-/* 温度カード */
-.status-box.temp {
-    border: 2px solid rgba(255, 70, 70, 0.3);
-}
-
-.status-box.temp .icon {
-    color: #ff6b6b;
-}
-
-/* 湿度カード */
-.status-box.hum {
-    border: 2px solid rgba(70, 130, 255, 0.3);
-}
-
-.status-box.hum .icon {
-    color: #6b9fff;
-}
-
-/* 水蒸気量カード */
-.status-box.vap {
-    border: 2px solid rgba(0, 160, 166, 0.3);
-}
-
-.status-box.vap .icon {
-    color: #00A0A6;
-}
-
-/* 飽差カード */
-.status-box.rem {
-    border: 2px solid rgba(180, 180, 180, 0.3);
-}
-
-.status-box.rem .icon {
-    color: #888;
-}
-
-/* 最高温度カード */
-.status-box.max {
-    border: 2px solid rgba(255, 100, 50, 0.3);
-}
-
-.status-box.max .icon {
-    color: #ff9646;
-}
-
-/* 最低温度カード */
-.status-box.min {
-    border: 2px solid rgba(100, 180, 255, 0.3);
-}
-
-.status-box.min .icon {
-    color: #64b4ff;
-}
-
-.status-box .icon {
-    font-size: 1.8em;
-    margin-right: 15px;
-}
-
-.status-box .label {
-    color: #666;
-    font-size: 0.85em;
-    margin-right: 8px;
-}
-
-.status-box .value {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.6em;
-    font-weight: 700;
-    margin: 0 8px;
-}
-
-.status-box.temp .value { color: #ff6b6b; }
-.status-box.hum .value { color: #6b9fff; }
-.status-box.max .value { color: #ff9646; }
-.status-box.min .value { color: #64b4ff; }
-.status-box.vap .value { color: #00A0A6; }
-.status-box.rem .value { color: #666; }
-
-/* シンプルなフォントクラス */
-.value.simple {
-    font-family: 'Noto Sans JP', sans-serif !important;
-    font-weight: 600 !important;
-}
-
-.status-box .unit {
-    font-size: 0.9em;
-    color: #999;
-}
-
-/* コントロールボックス */
 .box {
     background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 16px;
-    padding: 20px;
+    padding: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.box label {
-    color: #666;
-    margin-right: 10px;
+input {
+    padding: 5px;
+    font-size: 1em;
 }
 
-.box input[type="datetime-local"] {
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px 15px;
-    color: #333;
-    font-family: 'Noto Sans JP', sans-serif;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.box input[type="datetime-local"]:focus {
-    border-color: #0066cc;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-}
-
-/* ボタン */
 button {
-    font-family: 'Orbitron', sans-serif;
-    background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-    border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.9em;
-    cursor: pointer;
-    margin: 5px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-/* チャートコンテナ */
-.chart-container {
-    width: 100%;
-    max-width: 800px;
-    height: 450px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-}
-
-/* フッター */
-footer {
-    text-align: center;
-    margin-top: 40px;
-    padding: 20px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 0.8em;
-}
-
-/* レスポンシブ */
-@media (max-width: 768px) {
-    body {
-        padding: 15px;
-    }
-    
-    h1 {
-        font-size: 1.8em;
-    }
-    
-    .status-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .status-box {
-        width: 100%;
-        max-width: 300px;
-    }
-    
-    .chart-container {
-        height: 350px;
-        padding: 10px;
-    }
-    
-    .box {
-        padding: 15px;
-    }
-    
-    .box input[type="datetime-local"] {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    
-    button {
-        width: 100%;
-        max-width: 300px;
-    }
+    padding: 6px 10px;
+    margin-left: 5px;
 }
 </style>
 </head>
 
 <body>
 
+<h1>🌱 Greenhouse Dashboard</h1>
 
-
-
-<!-- USUI Tech サービス名・キャッチコピーのみ -->
-<div style="text-align: center; margin-bottom: 18px;">
-    <h1 style="font-family: 'Orbitron', 'Noto Sans JP', sans-serif; font-weight: 700; color: #18405A; margin: 0 0 8px 0; letter-spacing: 2px; font-size: 2.2em; background: none; -webkit-text-fill-color: initial;">USUI Tech</h1>
-    <div style="font-size: 1.1em; color: #18405A; margin-bottom: 8px;">ウスイテック</div>
-    <div style="color: #18405A; font-size: 1.1em;">テクノロジーで、農業の未来を<span style='color:#00A0A6; font-weight: bold;'>見える化</span>する。</div>
-</div>
-
-<!-- 旧タイトルも残す -->
-<h1>🌱 Greenhouse IoT Dashboard</h1>
-
-<!-- 旧タイトルは非表示化または削除可 -->
-<!-- <h1>🌱 Greenhouse IoT Dashboard</h1> -->
-
-<div class="status-container">
-    <div class="status-box temp">
-        <span class="icon">🌡</span>
-        <span class="label">現在温度</span>
-        <span class="value" id="nowTemp">-</span>
-        <span class="unit">℃</span>
-    </div>
-    <div class="status-box hum">
-        <span class="icon">💧</span>
-        <span class="label">現在湿度</span>
-        <span class="value" id="nowHum">-</span>
-        <span class="unit">%</span>
-    </div>
-    <div class="status-box vap">
-        <span class="icon">🫧</span>
-        <span class="label">現在水蒸気量</span>
-        <span class="value simple" id="nowVapor">-</span>
-        <span class="unit">g/m³</span>
-    </div>
-    <div class="status-box rem">
-        <span class="icon">📈</span>
-        <span class="label">飽差</span>
-        <span class="value simple" id="nowRemain">-</span>
-        <span class="unit">g/m³</span>
-    </div>
-    <div class="status-box max">
-        <span class="icon">▲</span>
-        <span class="label">前日最高</span>
-        <span class="value" id="yesterdayMax">-</span>
-        <span class="unit">℃</span>
-    </div>
-    <div class="status-box min">
-        <span class="icon">▼</span>
-        <span class="label">前日最低</span>
-        <span class="value" id="yesterdayMin">-</span>
-        <span class="unit">℃</span>
-    </div>
-</div>
+<div class="box">
+ハウスID：
+<input type="number" id="houseId" value="2">
+<button onclick="changeHouse()">切り替え</button>
 </div>
 
 <div class="box">
-    <span style="color: #666; margin-right: 10px;">開始：</span>
-    <input type="datetime-local" id="start">
-    <span style="color: #666; margin: 0 10px;">終了：</span>
-    <input type="datetime-local" id="end">
-    <button onclick="downloadCSV()">CSVダウンロード</button>
+温度: <span id="nowTemp">-</span> ℃　
+湿度: <span id="nowHum">-</span> %　
+水蒸気量: <span id="nowVapor">-</span> g/m³　
+飽差: <span id="nowRemain">-</span> g/m³
 </div>
 
-<div class="box" style="text-align: center;">
-    <button onclick="resetTempZoom()">温度・湿度サイズ リセット</button>
-    <button onclick="resetVaporZoom()">水蒸気量・飽差サイズ リセット</button>
+<div class="box">
+<button onclick="downloadCSV()">CSVダウンロード</button>
 </div>
 
-<h3>📊 温度・湿度</h3>
-<div class="chart-container">
-    <canvas id="tempChart"></canvas>
-</div>
-
-<h3>🫧 水蒸気量・飽差</h3>
-<div class="chart-container">
-    <canvas id="vaporChart"></canvas>
-</div>
+<canvas id="tempChart" height="120"></canvas>
+<canvas id="vaporChart" height="120"></canvas>
 
 <script>
+
+let USER_ID = localStorage.getItem("houseId") || 2;
+
+document.getElementById("houseId").value = USER_ID;
 
 let tempChart;
 let vaporChart;
 let lastData = [];
 
-function formatDate(d) {
-    const pad = n => n.toString().padStart(2,'0');
-    // 24時間表記
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function changeHouse() {
+    const id = document.getElementById("houseId").value;
+    USER_ID = id;
+    localStorage.setItem("houseId", id);
+    loadData();
+}
+
+function calcVapor(temp, hum) {
+    const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+    const ea = es * (hum / 100);
+    return 216.7 * (ea / (temp + 273.15));
 }
 
 async function loadData() {
 
-    const res = await fetch('/get_data.php');
-    if (!res.ok) {
-        console.error('Fetch error:', res.status, await res.text());
-        return;
-    }
+    const res = await fetch(`/get_data.php?user_id=${USER_ID}`);
     const data = await res.json();
-    console.log('Received data:', data);
 
-    if (!Array.isArray(data) || data.length === 0) {
-        console.warn('No data received');
-        return;
-    }
+    if (!data.length) return;
 
     lastData = data;
 
@@ -419,175 +95,66 @@ async function loadData() {
         hum: Number(d.humidity)
     }));
 
-    const now = new Date();
-    const maxRange = new Date(now.getTime());
-    const minRange = new Date(now.getTime() - 72 * 60 * 60 * 1000); // 72時間
+    const tempData = parsed.map(d => ({ x: d.x, y: d.temp }));
+    const humData = parsed.map(d => ({ x: d.x, y: d.hum }));
+    const vaporData = parsed.map(d => ({ x: d.x, y: calcVapor(d.temp, d.hum) }));
+    const remainData = parsed.map(d => ({ x: d.x, y: calcVapor(d.temp,100) - calcVapor(d.temp,d.hum) }));
 
-    const filtered = parsed.filter(d => d.x >= minRange && d.x <= maxRange);
+    const last = parsed[parsed.length-1];
 
-    const tempData = filtered.map(d => ({ x: d.x, y: d.temp }));
-    const humData = filtered.map(d => ({ x: d.x, y: d.hum }));
-    // 水蒸気量データ
-    function calcVapor(temp, hum) {
-        const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
-        const ea = es * (hum / 100);
-        return 216.7 * (ea / (temp + 273.15));
-    }
-    const vaporData = filtered.map(d => ({ x: d.x, y: calcVapor(d.temp, d.hum) }));
+    document.getElementById("nowTemp").innerText = last.temp;
+    document.getElementById("nowHum").innerText = last.hum;
 
-    // 最新値表示
-    if (filtered.length > 0) {
-        const last = filtered[filtered.length - 1];
-        document.getElementById("nowTemp").innerText = last.temp;
-        document.getElementById("nowHum").innerText = last.hum;
+    const vapor = calcVapor(last.temp,last.hum);
+    const remain = calcVapor(last.temp,100) - vapor;
 
-        // 水蒸気量（absolute humidity, g/m³）計算
-        // AH = 216.7 × (飽和水蒸気圧 × 相対湿度/100) / (温度+273.15)
-        function calcVapor(temp, hum) {
-            // 飽和水蒸気圧（hPa）
-            const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
-            // 実際の水蒸気圧（hPa）
-            const ea = es * (hum / 100);
-            // 絶対湿度（g/m³）
-            return 216.7 * (ea / (temp + 273.15));
-        }
-        const vapor = calcVapor(last.temp, last.hum);
-        // 飽和水蒸気量（最大）+ 現在の水蒸気量 = 飽差
-        const maxVapor = calcVapor(last.temp, 100);
-        const remain = maxVapor - vapor;
-        document.getElementById("nowVapor").innerText = vapor.toFixed(1);
-        document.getElementById("nowRemain").innerText = remain.toFixed(1);
-    }
+    document.getElementById("nowVapor").innerText = vapor.toFixed(1);
+    document.getElementById("nowRemain").innerText = remain.toFixed(1);
 
-    // 前日の最高・最低温度を計算
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-    const yesterdayEnd = new Date(yesterday);
-    yesterdayEnd.setHours(23, 59, 59, 999);
+    if (tempChart) tempChart.destroy();
 
-    const yesterdayData = parsed.filter(d => d.x >= yesterday && d.x <= yesterdayEnd);
-    if (yesterdayData.length > 0) {
-        const temps = yesterdayData.map(d => d.temp);
-        const maxTemp = Math.max(...temps);
-        const minTemp = Math.min(...temps);
-        document.getElementById("yesterdayMax").innerText = maxTemp;
-        document.getElementById("yesterdayMin").innerText = minTemp;
-    }
-
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        parsing: false,
-
-        interaction: {
-            mode: 'index',
-            intersect: false
+    tempChart = new Chart(document.getElementById("tempChart"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {label:"温度", data: tempData, borderColor:"red"},
+                {label:"湿度", data: humData, borderColor:"blue"}
+            ]
         },
-
-        scales: {
-  x: {
-    type: 'time',
-    time: {
-        unit: 'hour',
-        displayFormats: {
-            hour: 'MM/dd HH',
-            day: 'MM/dd',
-            minute: 'MM/dd HH',
-            second: 'MM/dd HH'
-        }
-    },
-    ticks: {
-        maxTicksLimit: 12,
-        color: '#666',
-        font: { family: 'Orbitron', size: 11 },
-        callback: function(value, index, ticks) {
-            const date = new Date(value);
-            const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-            const dd = date.getDate().toString().padStart(2, '0');
-            const hh = date.getHours().toString().padStart(2, '0');
-            return `${mm}/${dd} ${hh}時`;
-        }
-    },
-    min: minRange,
-    max: maxRange,
-    grid: {
-        color: 'rgba(0,0,0,0.08)',
-        borderColor: 'rgba(0,0,0,0.15)'
-    }
-},
-            y: {
-                min: 0,
-                ticks: {
-                    stepSize: 10,
-                    color: '#666'
-                }
-            }
-        },
-
-        plugins: {
-            tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                titleColor: '#0066cc',
-                titleFont: { family: 'Orbitron', size: 12 },
-                titleFont: { family: 'Noto Sans JP', size: 13 },
-                bodyColor: '#333',
-                bodyFont: { family: 'Noto Sans JP', size: 13 },
-                borderColor: 'rgba(0, 0, 0, 0.15)',
-@ -708,7 +708,11 @@ async function loadData() {
-                        pointHoverBackgroundColor: "#00A0A6",
-                        pointHoverBorderColor: "#fff",
-                        pointHoverBorderWidth: 2,
-                        yAxisID: 'yVapor'
-                        yAxisID: 'yVapor',
-                        datalabels: {
-                            color: '#00A0A6',
-                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
-                        }
-                    },
-                    {
-                        label: "飽差 (g/m³)",
-@ -724,7 +728,11 @@ async function loadData() {
-                        pointHoverBackgroundColor: "#888888",
-                        pointHoverBorderColor: "#fff",
-                        pointHoverBorderWidth: 2,
-                        yAxisID: 'yRemain'
-                        yAxisID: 'yRemain',
-                        datalabels: {
-                            color: '#888888',
-                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
-                        }
-                    }
-                ]
-            },
-@ -813,26 +821,36 @@
-        return t >= start && t <= end;
+        options: { parsing:false }
     });
 
-    let csv = "datetime,temperature,humidity\n";
-    // ヘッダー
-    let csv = "datetime,temperature,humidity,vapor,remain\n";
+    if (vaporChart) vaporChart.destroy();
 
-    // 水蒸気量・飽差の計算関数
-    function calcVapor(temp, hum) {
-        const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
-        const ea = es * (hum / 100);
-        return 216.7 * (ea / (temp + 273.15));
-    }
+    vaporChart = new Chart(document.getElementById("vaporChart"), {
+        type: 'line',
+        data: {
+            datasets: [
+                {label:"水蒸気量", data: vaporData, borderColor:"green"},
+                {label:"飽差", data: remainData, borderColor:"gray"}
+            ]
+        },
+        options: { parsing:false }
+    });
+}
 
-    filtered.forEach(d => {
-        csv += `${d.recorded_at},${d.temperature},${d.humidity}\n`;
+function downloadCSV() {
+
+    let csv = "datetime,temp,hum,vapor,remain\n";
+
+    lastData.forEach(d => {
         const vapor = calcVapor(Number(d.temperature), Number(d.humidity));
-        const remain = calcVapor(Number(d.temperature), 100) - vapor;
+        const remain = calcVapor(Number(d.temperature),100) - vapor;
+
         csv += `${d.recorded_at},${d.temperature},${d.humidity},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
     });
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csv]);
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `greenhouse_${start.toISOString()}_to_${end.toISOString()}.csv`;
+    a.download = `house_${USER_ID}.csv`;
     a.click();
 }
 
