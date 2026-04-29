@@ -1,194 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>USUI Tech</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
-
-<style>
-body { font-family: sans-serif; padding:20px; background:#f5f5f5;}
-.chart-container { max-width:800px; height:400px; margin:20px auto; background:#fff; padding:10px;}
-.box { margin-bottom:15px;}
-button { margin:5px; padding:8px 15px;}
-</style>
-</head>
-
-<body>
-
-<h2>🌱 Greenhouse Dashboard</h2>
-
-<div class="box">
-    user_ID：
-    <input type="number" id="userId">
-    <button onclick="loadData()">表示</button>
-</div>
-
-<div class="box">
-    開始：<input type="datetime-local" id="start">
-    終了：<input type="datetime-local" id="end">
-    <button onclick="downloadCSV()">CSV</button>
-</div>
-
-<h3>温度・湿度</h3>
-<button onclick="tempChart.resetZoom()">リセット</button>
-<div class="chart-container"><canvas id="tempChart"></canvas></div>
-
-<h3>水蒸気量・飽差</h3>
-<button onclick="vaporChart.resetZoom()">リセット</button>
-<div class="chart-container"><canvas id="vaporChart"></canvas></div>
-
-<h3>CO2・日射</h3>
-<button onclick="co2Chart.resetZoom()">リセット</button>
-<div class="chart-container"><canvas id="co2Chart"></canvas></div>
-
-<h3>電圧</h3>
-<button onclick="voltageChart.resetZoom()">リセット</button>
-<div class="chart-container"><canvas id="voltageChart"></canvas></div>
-
-<script>
-let tempChart, vaporChart, co2Chart, voltageChart;
-let lastData = [];
-
-function calcVapor(temp, hum) {
-    const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
-    const ea = es * (hum / 100);
-    return 216.7 * (ea / (temp + 273.15));
-}
-
-async function loadData() {
-
-    const userId = document.getElementById("userId").value;
-    let url = "/get_data.php";
-    if(userId) url += "?user_id=" + userId;
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    lastData = data;
-
-    const parsed = data.map(d => ({
-        x: new Date(d.recorded_at),
-        temp: +d.temperature,
-        hum: +d.humidity,
-        co2: +d.CO2,
-        solar: +d.solar_radiation,
-        voltage: +d.voltage
-    }));
-
-    const tempData = parsed.map(d=>({x:d.x,y:d.temp}));
-    const humData = parsed.map(d=>({x:d.x,y:d.hum}));
-
-    const vaporData = parsed.map(d=>({x:d.x,y:calcVapor(d.temp,d.hum)}));
-    const remainData = parsed.map(d=>{
-        const v=calcVapor(d.temp,d.hum);
-        return {x:d.x,y:calcVapor(d.temp,100)-v};
+@ -528,7 +528,7 @@ async function loadData() {
+            tooltip: {
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                titleColor: '#0066cc',
+                titleFont: { family: 'Orbitron', size: 12 },
+                titleFont: { family: 'Noto Sans JP', size: 13 },
+                bodyColor: '#333',
+                bodyFont: { family: 'Noto Sans JP', size: 13 },
+                borderColor: 'rgba(0, 0, 0, 0.15)',
+@ -708,7 +708,11 @@ async function loadData() {
+                        pointHoverBackgroundColor: "#00A0A6",
+                        pointHoverBorderColor: "#fff",
+                        pointHoverBorderWidth: 2,
+                        yAxisID: 'yVapor'
+                        yAxisID: 'yVapor',
+                        datalabels: {
+                            color: '#00A0A6',
+                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
+                        }
+                    },
+                    {
+                        label: "飽差 (g/m³)",
+@ -724,7 +728,11 @@ async function loadData() {
+                        pointHoverBackgroundColor: "#888888",
+                        pointHoverBorderColor: "#fff",
+                        pointHoverBorderWidth: 2,
+                        yAxisID: 'yRemain'
+                        yAxisID: 'yRemain',
+                        datalabels: {
+                            color: '#888888',
+                            font: { family: 'Noto Sans JP', weight: 'bold', size: 12 }
+                        }
+                    }
+                ]
+            },
+@ -813,10 +821,20 @@ function downloadCSV() {
+        return t >= start && t <= end;
     });
 
-    const co2Data = parsed.map(d=>({x:d.x,y:d.co2}));
-    const solarData = parsed.map(d=>({x:d.x,y:d.solar}));
-    const voltageData = parsed.map(d=>({x:d.x,y:d.voltage}));
+    let csv = "datetime,temperature,humidity\n";
+    // ヘッダー
+    let csv = "datetime,temperature,humidity,vapor,remain\n";
 
-    const baseOpt = {
-        responsive:true,
-        maintainAspectRatio:false,
-        parsing:false,
-        scales:{ x:{type:'time'} },
-        plugins:{ zoom:{zoom:{wheel:{enabled:true},mode:'x'}}}
-    };
-
-    if(!tempChart){
-        tempChart = new Chart(tempChartCanvas(),{
-            type:"line",
-            data:{datasets:[
-                {label:"温度",data:tempData,borderColor:"red"},
-                {label:"湿度",data:humData,borderColor:"blue"}
-            ]}, options:baseOpt
-        });
-
-        vaporChart = new Chart(vaporCanvas(),{
-            type:"line",
-            data:{datasets:[
-                {label:"水蒸気量",data:vaporData,borderColor:"green"},
-                {label:"飽差",data:remainData,borderColor:"gray"}
-            ]}, options:baseOpt
-        });
-
-        co2Chart = new Chart(co2Canvas(),{
-            type:"line",
-            data:{datasets:[
-                {label:"CO2",data:co2Data,yAxisID:"y1",borderColor:"green"},
-                {label:"日射",data:solarData,yAxisID:"y2",borderColor:"orange"}
-            ]},
-            options:{
-                ...baseOpt,
-                scales:{
-                    x:{type:"time"},
-                    y1:{position:"left"},
-                    y2:{position:"right",grid:{drawOnChartArea:false}}
-                }
-            }
-        });
-
-        voltageChart = new Chart(voltageCanvas(),{
-            type:"line",
-            data:{datasets:[
-                {label:"電圧",data:voltageData,borderColor:"purple"}
-            ]}, options:baseOpt
-        });
-
-    } else {
-        tempChart.data.datasets[0].data=tempData;
-        tempChart.data.datasets[1].data=humData;
-
-        vaporChart.data.datasets[0].data=vaporData;
-        vaporChart.data.datasets[1].data=remainData;
-
-        co2Chart.data.datasets[0].data=co2Data;
-        co2Chart.data.datasets[1].data=solarData;
-
-        voltageChart.data.datasets[0].data=voltageData;
-
-        tempChart.update();
-        vaporChart.update();
-        co2Chart.update();
-        voltageChart.update();
+    // 水蒸気量・飽差の計算関数
+    function calcVapor(temp, hum) {
+        const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+        const ea = es * (hum / 100);
+        return 216.7 * (ea / (temp + 273.15));
     }
-}
 
-function tempChartCanvas(){return document.getElementById("tempChart")}
-function vaporCanvas(){return document.getElementById("vaporChart")}
-function co2Canvas(){return document.getElementById("co2Chart")}
-function voltageCanvas(){return document.getElementById("voltageChart")}
-
-function downloadCSV(){
-    const start=new Date(document.getElementById("start").value);
-    const end=new Date(document.getElementById("end").value);
-
-    let csv="time,temp,hum,co2,solar,voltage,vapor,remain\n";
-
-    lastData.forEach(d=>{
-        const t=new Date(d.recorded_at);
-        if(t>=start && t<=end){
-            const vapor=calcVapor(+d.temperature,+d.humidity);
-            const remain=calcVapor(+d.temperature,100)-vapor;
-
-            csv+=`${d.recorded_at},${d.temperature},${d.humidity},${d.CO2},${d.solar_radiation},${d.voltage},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
-        }
+    filtered.forEach(d => {
+        csv += `${d.recorded_at},${d.temperature},${d.humidity}\n`;
+        const vapor = calcVapor(Number(d.temperature), Number(d.humidity));
+        const remain = calcVapor(Number(d.temperature), 100) - vapor;
+        csv += `${d.recorded_at},${d.temperature},${d.humidity},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
     });
 
-    const blob=new Blob([csv]);
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="data.csv";
-    a.click();
-}
-
-loadData();
-setInterval(loadData,5000);
-</script>
-
-</body>
-</html>
+    const blob = new Blob([csv], { type: "text/csv" });
