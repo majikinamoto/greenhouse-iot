@@ -8,14 +8,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 
 <style>
-body { font-family: sans-serif; margin:20px; }
+body { font-family:sans-serif; margin:20px; }
 .chart-container { width:100%; max-width:950px; height:420px; margin:20px auto; }
 .box { margin:10px 0; }
-.status-container { display:flex; gap:10px; flex-wrap:wrap; }
-.status-box { border:1px solid #ccc; padding:10px; border-radius:8px; background:rgba(0,0,0,0.03); }
-button { margin:5px; }
+.status-container { display:flex; flex-wrap:wrap; gap:10px; }
+.status-box { border:1px solid #ccc; padding:10px; border-radius:8px; }
 </style>
 </head>
 
@@ -30,6 +30,12 @@ button { margin:5px; }
 <button onclick="resetZoom()">ズームリセット</button>
 </div>
 
+<div class="box">
+開始：<input type="datetime-local" id="start">
+終了：<input type="datetime-local" id="end">
+<button onclick="downloadCSV()">CSVダウンロード</button>
+</div>
+
 <div class="status-container">
 <div class="status-box">温度：<span id="nowTemp">-</span>℃</div>
 <div class="status-box">湿度：<span id="nowHum">-</span>%</div>
@@ -42,45 +48,51 @@ button { margin:5px; }
 <h3>温度・湿度</h3>
 <div class="chart-container"><canvas id="tempChart"></canvas></div>
 
-<h3>水蒸気量・飽差</h3>
-<div class="chart-container"><canvas id="vaporChart"></canvas></div>
-
-<h3>日射</h3>
-<div class="chart-container"><canvas id="solarChart"></canvas></div>
-
-<h3>電圧</h3>
-<div class="chart-container"><canvas id="voltChart"></canvas></div>
-
 <script>
 
-let tempChart, vaporChart, solarChart, voltChart;
+let tempChart;
 let lastData = [];
 
-function calcVapor(temp, hum){
-    const es = 6.1078 * Math.exp((17.269 * temp)/(temp+237.3));
-    const ea = es*(hum/100);
-    return 216.7*(ea/(temp+273.15));
+function calcVapor(t,h){
+    const es=6.1078*Math.exp((17.269*t)/(t+237.3));
+    return 216.7*((es*(h/100))/(t+273.15));
 }
 
-// ===== 日付線（0時ライン）生成 =====
-function createMidnightLines(min, max){
-    let lines = {};
-    let d = new Date(min);
-    d.setHours(0,0,0,0);
+// ===== CSV（期間指定対応）=====
+function downloadCSV(){
 
-    while(d <= max){
-        lines["line"+d.getTime()] = {
-            type: 'line',
-            xMin: d,
-            xMax: d,
-            borderColor: 'rgba(0,0,0,0.2)',
-            borderWidth: 1
-        };
-        d.setDate(d.getDate()+1);
-    }
-    return lines;
+    if(!lastData.length) return;
+
+    const startVal = document.getElementById("start").value;
+    const endVal = document.getElementById("end").value;
+
+    const start = startVal ? new Date(startVal) : null;
+    const end = endVal ? new Date(endVal) : null;
+
+    let csv = "datetime,temp,hum,vapor,remain\n";
+
+    lastData.forEach(d=>{
+        const t = new Date(d.recorded_at);
+
+        if(start && t < start) return;
+        if(end && t > end) return;
+
+        const temp = Number(d.temperature);
+        const hum = Number(d.humidity);
+        const vapor = calcVapor(temp,hum);
+        const remain = calcVapor(temp,100)-vapor;
+
+        csv += `${d.recorded_at},${temp},${hum},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
+    });
+
+    const blob = new Blob([csv],{type:"text/csv"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "greenhouse.csv";
+    a.click();
 }
 
+// ===== 共通設定 =====
 function baseOptions(minTime,maxTime){
     return {
         parsing:false,
@@ -88,28 +100,31 @@ function baseOptions(minTime,maxTime){
         interaction:{mode:'index',intersect:false},
         plugins:{
             zoom:{
-                zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'x'},
-                pan:{enabled:true,mode:'x'}
+                limits:{
+                    x:{min:minTime,max:maxTime}
+                },
+                zoom:{
+                    drag:{enabled:true},   // ←ドラッグズーム（範囲制限）
+                    wheel:false,           // ←ホイール無効（暴走防止）
+                    mode:'x'
+                },
+                pan:{enabled:false}
             },
             crosshair:{
-                line:{color:'#000',width:1},
-                sync:{enabled:false}
+                line:{color:'#000',width:1}
             }
         },
         scales:{
-            x:{
-                type:"time",
-                min:minTime,
-                max:maxTime
-            }
+            x:{type:"time",min:minTime,max:maxTime}
         }
     };
 }
 
+// ===== データ取得 =====
 async function loadData(){
 
     const userId = document.getElementById("userId").value;
-    localStorage.setItem("userId", userId);
+    localStorage.setItem("userId",userId);
 
     const res = await fetch(`/get_data.php?user_id=${userId}`);
     const data = await res.json();
@@ -118,14 +133,12 @@ async function loadData(){
     lastData = data;
 
     const now = new Date();
-    const minTime = new Date(now.getTime() - 72*60*60*1000);
+    const minTime = new Date(now.getTime()-72*60*60*1000);
 
     const parsed = data.map(d=>({
         x:new Date(d.recorded_at),
         temp:Number(d.temperature),
-        hum:Number(d.humidity),
-        solar:Number(d.solar_radiation),
-        volt:Number(d.voltage)
+        hum:Number(d.humidity)
     })).filter(d=>d.x>=minTime);
 
     const last = parsed[parsed.length-1];
@@ -139,10 +152,8 @@ async function loadData(){
     document.getElementById("nowVapor").innerText = vapor.toFixed(1);
     document.getElementById("nowRemain").innerText = remain.toFixed(1);
 
-    // ===== 前日 =====
-    const yStart = new Date();
-    yStart.setDate(yStart.getDate()-1);
-    yStart.setHours(0,0,0,0);
+    // 前日
+    const yStart = new Date(); yStart.setDate(yStart.getDate()-1); yStart.setHours(0,0,0,0);
     const yEnd = new Date(yStart); yEnd.setHours(23,59,59,999);
 
     const yData = parsed.filter(d=>d.x>=yStart && d.x<=yEnd);
@@ -153,10 +164,8 @@ async function loadData(){
         document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
     }
 
-    const midnightLines = createMidnightLines(minTime, now);
-
-    // ===== 温湿度 =====
     if(tempChart) tempChart.destroy();
+
     tempChart = new Chart(document.getElementById("tempChart"),{
         type:"line",
         data:{
@@ -179,94 +188,26 @@ async function loadData(){
             ...baseOptions(minTime,now),
             scales:{
                 ...baseOptions(minTime,now).scales,
-                yHum:{min:50,max:100,position:"left",title:{display:true,text:"湿度 (%)"}},
-                yTemp:{min:10,max:60,position:"right",title:{display:true,text:"温度 (℃)"}}
-            },
-            plugins:{
-                ...baseOptions(minTime,now).plugins,
-                annotation:{annotations:midnightLines}
-            }
-        }
-    });
-
-    // ===== vapor =====
-    if(vaporChart) vaporChart.destroy();
-    vaporChart = new Chart(document.getElementById("vaporChart"),{
-        type:"line",
-        data:{
-            datasets:[
-                {
-                    label:"水蒸気量",
-                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yV"
-                },
-                {
-                    label:"飽差",
-                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yR"
-                }
-            ]
-        },
-        options:{
-            ...baseOptions(minTime,now),
-            scales:{
-                ...baseOptions(minTime,now).scales,
-                yV:{position:"left",title:{display:true,text:"g/m³"}},
-                yR:{position:"right",title:{display:true,text:"g/m³"}}
-            },
-            plugins:{
-                ...baseOptions(minTime,now).plugins,
-                annotation:{annotations:midnightLines}
-            }
-        }
-    });
-
-    // ===== 日射 =====
-    if(solarChart) solarChart.destroy();
-    solarChart = new Chart(document.getElementById("solarChart"),{
-        type:"line",
-        data:{
-            datasets:[{
-                label:"日射",
-                data:parsed.map(d=>({x:d.x,y:d.solar}))
-            }]
-        },
-        options:{...baseOptions(minTime,now)}
-    });
-
-    // ===== 電圧 =====
-    if(voltChart) voltChart.destroy();
-    voltChart = new Chart(document.getElementById("voltChart"),{
-        type:"line",
-        data:{
-            datasets:[{
-                label:"電圧",
-                data:parsed.map(d=>({x:d.x,y:d.volt}))
-            }]
-        },
-        options:{
-            ...baseOptions(minTime,now),
-            scales:{
-                ...baseOptions(minTime,now).scales,
-                y:{min:11,max:15}
+                yHum:{min:50,max:100,position:"left"},
+                yTemp:{min:10,max:60,position:"right"}
             }
         }
     });
 }
 
-function resetZoom(){
-    [tempChart,vaporChart,solarChart,voltChart].forEach(c=>{
-        if(c) c.resetZoom();
-    });
-}
-
+// ===== 初期化 =====
 window.onload=()=>{
     const saved=localStorage.getItem("userId");
     if(saved) document.getElementById("userId").value=saved;
     loadData();
 };
 
-setInterval(loadData,60000);
+// ★30分更新
+setInterval(loadData,1800000);
+
+function resetZoom(){
+    if(tempChart) tempChart.resetZoom();
+}
 
 </script>
 
