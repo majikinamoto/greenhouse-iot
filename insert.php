@@ -12,22 +12,24 @@ if ($conn->connect_error) {
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!$data) {
-    die("JSON取得失敗: データが空です");
+    die("JSON取得失敗");
 }
 
-// データの取得とバリデーション
-$temperature = $data["temperature"] ?? null;
-$humidity = $data["humidity"] ?? null;
-$user_id = $data["user_id"] ?? null;
-$co2 = $data["co2"] ?? null;
-$solar_radiation = $data["solar_radiation"] ?? null;
-$voltage = $data["voltage"] ?? null;
+$temperature = isset($data["temperature"]) ? floatval($data["temperature"]) : null;
+$humidity = isset($data["humidity"]) ? floatval($data["humidity"]) : null;
+$user_id = isset($data["user_id"]) ? intval($data["user_id"]) : null;
+$co2 = isset($data["co2"]) ? floatval($data["co2"]) : null;
+$solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : null;
+$voltage = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
 
-if (!is_numeric($user_id)) {
-    die("エラー: user_idは数値である必要があります");
+if (!$user_id) {
+    die("user_idが必要です");
 }
 
-$sql = "INSERT INTO measurements (user_id, temperature, humidity, CO2, solar_radiation, voltage) VALUES (?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO measurements 
+(user_id, temperature, humidity, CO2, solar_radiation, voltage) 
+VALUES (?, ?, ?, ?, ?, ?)";
+
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
@@ -37,9 +39,9 @@ if (!$stmt) {
 $stmt->bind_param("iddddd", $user_id, $temperature, $humidity, $co2, $solar_radiation, $voltage);
 
 if ($stmt->execute()) {
-    echo "データ挿入成功";
+    echo "OK";
 } else {
-    echo "データ挿入失敗: " . $stmt->error;
+    echo "NG: " . $stmt->error;
 }
 
 $stmt->close();
