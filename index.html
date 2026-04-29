@@ -2,34 +2,19 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>USUI Tech</title>
+<title>USUI Tech ウスイテック</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
 <style>
-body {
-    font-family: sans-serif;
-    padding: 20px;
-    background: #f5f5f5;
-}
-h1 { text-align: center; }
-
-.box {
-    background: #fff;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-input {
-    padding: 5px;
-    font-size: 1em;
-}
-
-button {
-    padding: 6px 10px;
-    margin-left: 5px;
-}
+body { font-family: sans-serif; padding: 20px; background:#f5f5f5;}
+h1 { text-align:center; }
+.box { background:#fff; padding:15px; margin-bottom:20px; }
+.value { font-size:1.5em; }
+input { padding:5px; font-size:1em; }
+button { padding:6px 12px; margin-left:5px; }
+canvas { background:#fff; padding:10px; }
 </style>
 </head>
 
@@ -39,8 +24,8 @@ button {
 
 <div class="box">
 ハウスID：
-<input type="number" id="houseId" value="2">
-<button onclick="changeHouse()">切り替え</button>
+<input type="number" id="houseIdInput" value="2">
+<button onclick="reloadData()">表示</button>
 </div>
 
 <div class="box">
@@ -59,19 +44,21 @@ button {
 
 <script>
 
-let USER_ID = localStorage.getItem("houseId") || 2;
-
-document.getElementById("houseId").value = USER_ID;
-
 let tempChart;
 let vaporChart;
 let lastData = [];
 
-function changeHouse() {
-    const id = document.getElementById("houseId").value;
-    USER_ID = id;
-    localStorage.setItem("houseId", id);
-    loadData();
+function getUserId() {
+    const input = document.getElementById("houseIdInput").value;
+    return input || 1;
+}
+
+// URL ?user_id=2 にも対応
+function initUserId() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("user_id")) {
+        document.getElementById("houseIdInput").value = params.get("user_id");
+    }
 }
 
 function calcVapor(temp, hum) {
@@ -82,7 +69,9 @@ function calcVapor(temp, hum) {
 
 async function loadData() {
 
-    const res = await fetch(`/get_data.php?user_id=${USER_ID}`);
+    const userId = getUserId();
+
+    const res = await fetch(`/get_data.php?user_id=${userId}`);
     const data = await res.json();
 
     if (!data.length) return;
@@ -95,10 +84,10 @@ async function loadData() {
         hum: Number(d.humidity)
     }));
 
-    const tempData = parsed.map(d => ({ x: d.x, y: d.temp }));
-    const humData = parsed.map(d => ({ x: d.x, y: d.hum }));
-    const vaporData = parsed.map(d => ({ x: d.x, y: calcVapor(d.temp, d.hum) }));
-    const remainData = parsed.map(d => ({ x: d.x, y: calcVapor(d.temp,100) - calcVapor(d.temp,d.hum) }));
+    const tempData = parsed.map(d => ({ x:d.x, y:d.temp }));
+    const humData = parsed.map(d => ({ x:d.x, y:d.hum }));
+    const vaporData = parsed.map(d => ({ x:d.x, y:calcVapor(d.temp,d.hum) }));
+    const remainData = parsed.map(d => ({ x:d.x, y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum) }));
 
     const last = parsed[parsed.length-1];
 
@@ -114,30 +103,35 @@ async function loadData() {
     if (tempChart) tempChart.destroy();
 
     tempChart = new Chart(document.getElementById("tempChart"), {
-        type: 'line',
-        data: {
-            datasets: [
-                {label:"温度", data: tempData, borderColor:"red"},
-                {label:"湿度", data: humData, borderColor:"blue"}
+        type:'line',
+        data:{
+            datasets:[
+                {label:"温度", data:tempData, borderColor:"red"},
+                {label:"湿度", data:humData, borderColor:"blue"}
             ]
         },
-        options: { parsing:false }
+        options:{ parsing:false }
     });
 
     if (vaporChart) vaporChart.destroy();
 
     vaporChart = new Chart(document.getElementById("vaporChart"), {
-        type: 'line',
-        data: {
-            datasets: [
-                {label:"水蒸気量", data: vaporData, borderColor:"green"},
-                {label:"飽差", data: remainData, borderColor:"gray"}
+        type:'line',
+        data:{
+            datasets:[
+                {label:"水蒸気量", data:vaporData, borderColor:"green"},
+                {label:"飽差", data:remainData, borderColor:"gray"}
             ]
         },
-        options: { parsing:false }
+        options:{ parsing:false }
     });
 }
 
+function reloadData(){
+    loadData();
+}
+
+// CSV
 function downloadCSV() {
 
     let csv = "datetime,temp,hum,vapor,remain\n";
@@ -154,10 +148,11 @@ function downloadCSV() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `house_${USER_ID}.csv`;
+    a.download = "data.csv";
     a.click();
 }
 
+initUserId();
 loadData();
 setInterval(loadData, 5000);
 
