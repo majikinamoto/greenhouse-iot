@@ -8,39 +8,41 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
 
 <style>
-body {
-    font-family: sans-serif;
-    margin: 20px;
-}
-.chart-container {
-    width: 100%;
-    max-width: 800px;
-    height: 400px;
-    margin: auto;
-}
-.box {
-    margin: 10px 0;
-}
+body { font-family: 'Noto Sans JP', sans-serif; margin: 20px; }
+.chart-container { width:100%; max-width:800px; height:400px; margin:auto; }
+.box { margin: 10px 0; }
+.status-container { display:flex; gap:15px; flex-wrap:wrap; }
+.status-box { padding:10px 15px; border:1px solid #ccc; border-radius:10px; }
 </style>
 </head>
 
 <body>
 
-<h2>🌱 Greenhouse IoT Dashboard</h2>
+<h2>🌱 USUI Tech ダッシュボード</h2>
 
-<!-- ★ 追加：ハウスID -->
+<!-- ★ ハウスID -->
 <div class="box">
-    <label>ハウスID：</label>
-    <input type="number" id="userId" value="2">
+    ハウスID：
+    <input type="number" id="userId" value="2" style="width:80px;">
     <button onclick="loadData()">表示</button>
 </div>
 
-<!-- 現在値 -->
+<!-- ステータス -->
+<div class="status-container">
+    <div class="status-box">温度：<span id="nowTemp">-</span>℃</div>
+    <div class="status-box">湿度：<span id="nowHum">-</span>%</div>
+    <div class="status-box">水蒸気量：<span id="nowVapor">-</span> g/m³</div>
+    <div class="status-box">飽差：<span id="nowRemain">-</span> g/m³</div>
+</div>
+
+<!-- CSV -->
 <div class="box">
-    温度：<span id="nowTemp">-</span> ℃　
-    湿度：<span id="nowHum">-</span> %
+    開始：<input type="datetime-local" id="start">
+    終了：<input type="datetime-local" id="end">
+    <button onclick="downloadCSV()">CSVダウンロード</button>
 </div>
 
 <h3>温度・湿度</h3>
@@ -48,34 +50,47 @@ body {
     <canvas id="tempChart"></canvas>
 </div>
 
+<h3>水蒸気量・飽差</h3>
+<div class="chart-container">
+    <canvas id="vaporChart"></canvas>
+</div>
+
 <script>
 
 let tempChart;
+let vaporChart;
 let lastData = [];
+
+// ===== vapor関数（★統一） =====
+function calcVapor(temp, hum) {
+    const es = 6.1078 * Math.exp((17.269 * temp) / (temp + 237.3));
+    const ea = es * (hum / 100);
+    return 216.7 * (ea / (temp + 273.15));
+}
 
 // ===== データ取得 =====
 async function loadData() {
 
-    const userId = document.getElementById("userId").value;
+    const userIdInput = document.getElementById("userId");
+    const userId = userIdInput.value;
 
     if (!userId) {
         alert("ハウスIDを入力してください");
         return;
     }
 
+    // ★ 保存
+    localStorage.setItem("userId", userId);
+
     const res = await fetch(`/get_data.php?user_id=${userId}`);
 
     if (!res.ok) {
-        console.error("Fetch error");
+        console.error("fetch失敗");
         return;
     }
 
     const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-        console.warn("データなし");
-        return;
-    }
+    if (!Array.isArray(data) || data.length === 0) return;
 
     lastData = data;
 
@@ -90,45 +105,106 @@ async function loadData() {
     document.getElementById("nowTemp").innerText = last.temp.toFixed(1);
     document.getElementById("nowHum").innerText = last.hum.toFixed(1);
 
-    // ===== グラフ =====
+    const vapor = calcVapor(last.temp, last.hum);
+    const remain = calcVapor(last.temp, 100) - vapor;
+
+    document.getElementById("nowVapor").innerText = vapor.toFixed(1);
+    document.getElementById("nowRemain").innerText = remain.toFixed(1);
+
+    // ===== グラフ用データ =====
     const tempData = parsed.map(d => ({ x: d.x, y: d.temp }));
     const humData = parsed.map(d => ({ x: d.x, y: d.hum }));
 
+    const vaporData = parsed.map(d => ({
+        x: d.x,
+        y: calcVapor(d.temp, d.hum)
+    }));
+
+    const remainData = parsed.map(d => ({
+        x: d.x,
+        y: calcVapor(d.temp, 100) - calcVapor(d.temp, d.hum)
+    }));
+
+    // ===== 温湿度グラフ =====
     if (tempChart) tempChart.destroy();
 
     tempChart = new Chart(document.getElementById("tempChart"), {
         type: "line",
         data: {
             datasets: [
-                {
-                    label: "温度 (℃)",
-                    data: tempData,
-                    borderWidth: 2
-                },
-                {
-                    label: "湿度 (%)",
-                    data: humData,
-                    borderWidth: 2
-                }
+                { label: "温度(℃)", data: tempData, borderWidth: 2 },
+                { label: "湿度(%)", data: humData, borderWidth: 2 }
             ]
         },
         options: {
-            parsing: false,
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: "time"
-                }
-            }
+            parsing:false,
+            responsive:true,
+            scales:{ x:{ type:"time" } }
+        }
+    });
+
+    // ===== vaporグラフ =====
+    if (vaporChart) vaporChart.destroy();
+
+    vaporChart = new Chart(document.getElementById("vaporChart"), {
+        type: "line",
+        data: {
+            datasets: [
+                { label: "水蒸気量", data: vaporData, borderWidth: 2 },
+                { label: "飽差", data: remainData, borderWidth: 2 }
+            ]
+        },
+        options: {
+            parsing:false,
+            responsive:true,
+            scales:{ x:{ type:"time" } }
         }
     });
 }
 
-// 初回読み込み
-loadData();
+// ===== CSV =====
+function downloadCSV() {
 
-// 自動更新
+    if (!lastData.length) return;
+
+    const start = new Date(document.getElementById("start").value);
+    const end = new Date(document.getElementById("end").value);
+
+    const filtered = lastData.filter(d => {
+        const t = new Date(d.recorded_at);
+        return (!start || t >= start) && (!end || t <= end);
+    });
+
+    let csv = "datetime,temperature,humidity,vapor,remain\n";
+
+    filtered.forEach(d => {
+        const temp = Number(d.temperature);
+        const hum = Number(d.humidity);
+
+        const vapor = calcVapor(temp, hum);
+        const remain = calcVapor(temp, 100) - vapor;
+
+        csv += `${d.recorded_at},${temp},${hum},${vapor.toFixed(1)},${remain.toFixed(1)}\n`;
+    });
+
+    const blob = new Blob([csv], { type:"text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "greenhouse.csv";
+    a.click();
+}
+
+// ===== 初期化 =====
+window.onload = () => {
+    const saved = localStorage.getItem("userId");
+    if (saved) {
+        document.getElementById("userId").value = saved;
+    }
+    loadData();
+};
+
 setInterval(loadData, 5000);
 
 </script>
