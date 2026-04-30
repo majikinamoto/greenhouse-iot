@@ -137,6 +137,9 @@ async function loadData(){
     return;
 }
 
+const last = parsed[parsed.length-1];
+
+
 
         document.getElementById("tempNow").innerText = last.temp.toFixed(1);
         document.getElementById("humNow").innerText = last.hum.toFixed(1);
