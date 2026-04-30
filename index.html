@@ -1,4 +1,3 @@
-@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,32 +11,35 @@
 
 <style>
 body { font-family: sans-serif; margin:20px; }
-.chart-container { width:100%; max-width:900px; height:400px; margin:auto; }
 .chart-container { width:100%; max-width:950px; height:420px; margin:20px auto; }
 .box { margin:10px 0; }
 .status-container { display:flex; gap:10px; flex-wrap:wrap; }
-.status-box { border:1px solid #ccc; padding:10px; border-radius:8px; }
 .status-box { border:1px solid #ccc; padding:10px; border-radius:8px; background:rgba(0,0,0,0.03); }
 button { margin:5px; }
 </style>
 </head>
 
-@ -24,6 +27,7 @@ body { font-family: sans-serif; margin:20px; }
+<body>
+
+<div class="box">
 ハウスID：
-<input type="number" id="userId" value="2">
+<input type="text" id="userId" value="T0001">
+
+ポイント：
+<select id="pointId">
+  <option value="P01">P01（中央）</option>
+  <option value="P02">P02（入口）</option>
+</select>
+
 <button onclick="loadData()">表示</button>
 <button onclick="resetZoom()">ズームリセット</button>
 </div>
 
 <div class="status-container">
-@ -35,24 +39,21 @@ body { font-family: sans-serif; margin:20px; }
+<div class="status-box">現在温度：<span id="tempNow">-</span>℃</div>
+<div class="status-box">現在湿度：<span id="humNow">-</span>%</div>
+<div class="status-box">前日最高：<span id="yMax">-</span>℃</div>
 <div class="status-box">前日最低：<span id="yMin">-</span>℃</div>
-</div>
-
-<div class="box">
-開始：<input type="datetime-local" id="start">
-終了：<input type="datetime-local" id="end">
-<button onclick="downloadCSV()">CSV</button>
 </div>
 
 <h3>温度・湿度</h3>
@@ -46,8 +48,6 @@ button { margin:5px; }
 <h3>水蒸気量・飽差</h3>
 <div class="chart-container"><canvas id="vaporChart"></canvas></div>
 
-<h3>日射・電圧</h3>
-<div class="chart-container"><canvas id="envChart"></canvas></div>
 <h3>日射</h3>
 <div class="chart-container"><canvas id="solarChart"></canvas></div>
 
@@ -56,32 +56,13 @@ button { margin:5px; }
 
 <script>
 
-let tempChart, vaporChart, envChart;
 let tempChart, vaporChart, solarChart, voltChart;
 let lastData = [];
 
 function calcVapor(temp, hum){
-@ -61,6 +62,50 @@ function calcVapor(temp, hum){
+    const es = 6.1078 * Math.pow(10, (7.5*temp)/(237.3+temp));
+    const ea = es * hum/100;
     return 216.7*(ea/(temp+273.15));
-}
-
-// ===== 日付線（0時ライン）生成 =====
-function createMidnightLines(min, max){
-    let lines = {};
-    let d = new Date(min);
-    d.setHours(0,0,0,0);
-
-    while(d <= max){
-        lines["line"+d.getTime()] = {
-            type: 'line',
-            xMin: d,
-            xMax: d,
-            borderColor: 'rgba(0,0,0,0.2)',
-            borderWidth: 1
-        };
-        d.setDate(d.getDate()+1);
-    }
-    return lines;
 }
 
 function baseOptions(minTime,maxTime){
@@ -112,7 +93,10 @@ function baseOptions(minTime,maxTime){
 async function loadData(){
 
     const userId = document.getElementById("userId").value;
-@ -72,13 +117,16 @@ async function loadData(){
+    const pointId = document.getElementById("pointId").value;
+
+    const res = await fetch(`api.php?user_id=${userId}&point_id=${pointId}`);
+    const data = await res.json();
 
     lastData = data;
 
@@ -125,31 +109,30 @@ async function loadData(){
         hum:Number(d.humidity),
         solar:Number(d.solar_radiation),
         volt:Number(d.voltage)
-    }));
     })).filter(d=>d.x>=minTime);
+
+    if(parsed.length === 0) return;
 
     const last = parsed[parsed.length-1];
 
-@ -95,9 +143,7 @@ async function loadData(){
+    document.getElementById("tempNow").innerText = last.temp.toFixed(1);
+    document.getElementById("humNow").innerText = last.hum.toFixed(1);
+
     const yStart = new Date();
     yStart.setDate(yStart.getDate()-1);
     yStart.setHours(0,0,0,0);
 
     const yEnd = new Date(yStart);
     yEnd.setHours(23,59,59,999);
-    const yEnd = new Date(yStart); yEnd.setHours(23,59,59,999);
 
     const yData = parsed.filter(d=>d.x>=yStart && d.x<=yEnd);
 
-@ -107,138 +153,122 @@ async function loadData(){
+    if(yData.length){
+        const temps = yData.map(d=>d.temp);
+        document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
         document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
     }
 
-    // ===== グラフ =====
-    if(tempChart) tempChart.destroy();
-    const midnightLines = createMidnightLines(minTime, now);
-
-    tempChart = new Chart(tempChart = document.getElementById("tempChart"),{
     // ===== 温湿度 =====
     if(tempChart) tempChart.destroy();
     tempChart = new Chart(document.getElementById("tempChart"),{
@@ -158,98 +141,45 @@ async function loadData(){
             datasets:[
                 {
                     label:"湿度 (%)",
-                    data: parsed.map(d=>({x:d.x,y:d.hum})),
-                    yAxisID:"yHum"
                     data:parsed.map(d=>({x:d.x,y:d.hum})),
-                    yAxisID:"yHum",
-                    backgroundColor:"rgba(0,0,255,0.1)"
+                    yAxisID:"yHum"
                 },
                 {
                     label:"温度 (℃)",
-                    data: parsed.map(d=>({x:d.x,y:d.temp})),
-                    yAxisID:"yTemp"
                     data:parsed.map(d=>({x:d.x,y:d.temp})),
-                    yAxisID:"yTemp",
-                    backgroundColor:"rgba(255,0,0,0.1)"
+                    yAxisID:"yTemp"
                 }
             ]
         },
         options:{
-            parsing:false,
             ...baseOptions(minTime,now),
             scales:{
-                x:{type:"time"},
-                yHum:{
-                    type:"linear",
-                    position:"left",
-                    title:{display:true,text:"湿度 (%)"}
-                },
-                yTemp:{
-                    type:"linear",
-                    position:"right",
-                    title:{display:true,text:"温度 (℃)"}
-                }
                 ...baseOptions(minTime,now).scales,
-                yHum:{min:50,max:100,position:"left",title:{display:true,text:"湿度 (%)"}},
-                yTemp:{min:10,max:60,position:"right",title:{display:true,text:"温度 (℃)"}}
-            },
-            plugins:{
-                ...baseOptions(minTime,now).plugins,
-                annotation:{annotations:midnightLines}
+                yHum:{position:"left",min:50,max:100},
+                yTemp:{position:"right",min:10,max:60}
             }
         }
     });
 
     // ===== vapor =====
     if(vaporChart) vaporChart.destroy();
-
     vaporChart = new Chart(document.getElementById("vaporChart"),{
         type:"line",
         data:{
             datasets:[
                 {
-                    label:"水蒸気量 (g/m³)",
-                    data: parsed.map(d=>({x:d.x,y:calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yVapor"
                     label:"水蒸気量",
-                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yV"
+                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,d.hum)}))
                 },
                 {
-                    label:"飽差 (g/m³)",
-                    data: parsed.map(d=>({x:d.x,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yRemain"
                     label:"飽差",
-                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
-                    yAxisID:"yR"
+                    data:parsed.map(d=>({x:d.x,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)}))
                 }
             ]
         },
-        options:{
-            parsing:false,
-            ...baseOptions(minTime,now),
-            scales:{
-                x:{type:"time"},
-                yVapor:{
-                    position:"left",
-                    title:{display:true,text:"水蒸気量 (g/m³)"}
-                },
-                yRemain:{
-                    position:"right",
-                    title:{display:true,text:"飽差 (g/m³)"}
-                }
-                ...baseOptions(minTime,now).scales,
-                yV:{position:"left",title:{display:true,text:"g/m³"}},
-                yR:{position:"right",title:{display:true,text:"g/m³"}}
-            },
-            plugins:{
-                ...baseOptions(minTime,now).plugins,
-                annotation:{annotations:midnightLines}
-            }
-        }
+        options:{...baseOptions(minTime,now)}
     });
 
-    if(envChart) envChart.destroy();
     // ===== 日射 =====
     if(solarChart) solarChart.destroy();
     solarChart = new Chart(document.getElementById("solarChart"),{
@@ -263,79 +193,35 @@ async function loadData(){
         options:{...baseOptions(minTime,now)}
     });
 
-    envChart = new Chart(document.getElementById("envChart"),{
     // ===== 電圧 =====
     if(voltChart) voltChart.destroy();
     voltChart = new Chart(document.getElementById("voltChart"),{
         type:"line",
         data:{
-            datasets:[
-                {
-                    label:"日射",
-                    data: parsed.map(d=>({x:d.x,y:d.solar})),
-                    yAxisID:"ySolar"
-                },
-                {
-                    label:"電圧",
-                    data: parsed.map(d=>({x:d.x,y:d.volt})),
-                    yAxisID:"yVolt"
-                }
-            ]
             datasets:[{
                 label:"電圧",
                 data:parsed.map(d=>({x:d.x,y:d.volt}))
             }]
         },
-        options:{
-            parsing:false,
-            ...baseOptions(minTime,now),
-            scales:{
-                x:{type:"time"},
-                ySolar:{position:"left",title:{display:true,text:"日射"}},
-                yVolt:{position:"right",title:{display:true,text:"電圧"}}
-                ...baseOptions(minTime,now).scales,
-                y:{min:11,max:15}
-            }
-        }
+        options:{...baseOptions(minTime,now)}
     });
 }
 
-function downloadCSV(){
-    if(!lastData.length) return;
-
-    let csv="datetime,temp,hum,vapor,remain\n";
-
-    lastData.forEach(d=>{
-        const t=Number(d.temperature);
-        const h=Number(d.humidity);
-        const v=calcVapor(t,h);
-        const r=calcVapor(t,100)-v;
-
-        csv+=`${d.recorded_at},${t},${h},${v.toFixed(1)},${r.toFixed(1)}\n`;
 function resetZoom(){
     [tempChart,vaporChart,solarChart,voltChart].forEach(c=>{
         if(c) c.resetZoom();
     });
-
-    const blob=new Blob([csv],{type:"text/csv"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="data.csv";
-    a.click();
 }
 
 // 初期化
 window.onload=()=>{
-    const saved=localStorage.getItem("userId");
-    if(saved) document.getElementById("userId").value=saved;
     loadData();
 };
 
-// ★60秒更新
+// 60秒更新
 setInterval(loadData,60000);
 
 </script>
 
 </body>
-</html>
 </html>
