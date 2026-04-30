@@ -1,3 +1,7 @@
+echo "PHP OK";
+exit;
+
+
 <?php
 // 1. JSONの受信と解析
 $json = file_get_contents('php://input');
