@@ -1,58 +1,72 @@
-echo "PHP OK";
-exit;
-
-
 <?php
-// 1. JSONの受信と解析
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// ===== DB接続 =====
+$conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+
+if ($conn->connect_error) {
+    die("DB接続失敗: " . $conn->connect_error);
+}
+
+// ===== JSON受信 =====
 $json = file_get_contents('php://input');
+
+// ログ出力（デバッグ用）
+file_put_contents("/tmp/debug.log", $json . "\n", FILE_APPEND);
+
 $data = json_decode($json, true);
-
-file_put_contents("debug.log", file_get_contents("php://input") . "\n", FILE_APPEND);
-
-// 【デバッグ用】もし動かない場合、サーバー上に log.txt を作って中身を確認できます
-// file_put_contents("log.txt", "Received: " . $json . "\n", FILE_APPEND);
 
 if (!$data) {
     die("JSONデータが空、または解析できません");
 }
 
-// 2. データの抽出（スケッチから送られないものは 0 などを入れると安全）
-$user_id    = isset($data["user_id"]) ? $data["user_id"] : null;
-$point_id   = isset($data["point_id"]) ? $data["point_id"] : "default";
-$temperature= isset($data["temperature"]) ? floatval($data["temperature"]) : 0.0;
-$humidity   = isset($data["humidity"]) ? floatval($data["humidity"]) : 0.0;
-$co2        = isset($data["co2"]) ? floatval($data["co2"]) : 0.0;
-$solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : 0.0;
-$voltage    = isset($data["voltage"]) ? floatval($data["voltage"]) : 0.0;
+// ===== データ取得 =====
+$user_id  = isset($data["user_id"]) ? $data["user_id"] : null;
+$point_id = isset($data["point_id"]) ? $data["point_id"] : "P01";
+
+$temperature = isset($data["temperature"]) ? floatval($data["temperature"]) : null;
+$humidity    = isset($data["humidity"]) ? floatval($data["humidity"]) : null;
+$co2         = isset($data["co2"]) ? floatval($data["co2"]) : null;
+$solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : null;
+$voltage     = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
 
 if (!$user_id) {
     die("user_idが必要です");
 }
 
-// 3. SQLの実行
-$sql = "INSERT INTO measurements (user_id, point_id, temperature, humidity, CO2, solar_radiation, voltage) VALUES (?, ?, ?, ?, ?, ?, ?)";
+// ===== SQL =====
+$sql = "INSERT INTO measurements 
+(user_id, point_id, temperature, humidity, CO2, solar_radiation, voltage) 
+VALUES (?, ?, ?, ?, ?, ?, ?)";
+
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
     die("SQLエラー: " . $conn->error);
 }
 
-// 型指定: s(string), d(double/float)
-$stmt->bind_param("ssddddd", 
-    $user_id, 
-    $point_id, 
-    $temperature, 
-    $humidity, 
-    $co2, 
-    $solar_radiation, 
+// s=文字列, d=数値
+$stmt->bind_param(
+    "ssddddd",
+    $user_id,
+    $point_id,
+    $temperature,
+    $humidity,
+    $co2,
+    $solar_radiation,
     $voltage
 );
 
+// ===== 実行 =====
 if ($stmt->execute()) {
-    echo "保存成功";
+    echo "OK";
 } else {
-    echo "実行エラー: " . $stmt->error;
+    echo "NG: " . $stmt->error;
 }
 
 $stmt->close();
+$conn->close();
+
 ?>
