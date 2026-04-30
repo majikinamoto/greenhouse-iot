@@ -3,6 +3,8 @@
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
+file_put_contents("debug.log", file_get_contents("php://input") . "\n", FILE_APPEND);
+
 // 【デバッグ用】もし動かない場合、サーバー上に log.txt を作って中身を確認できます
 // file_put_contents("log.txt", "Received: " . $json . "\n", FILE_APPEND);
 
