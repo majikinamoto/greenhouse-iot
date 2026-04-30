@@ -32,6 +32,7 @@ point_id：
 </div>
 
 <div class="status-container">
+<div id="message" style="text-align:center; color:#666; margin:10px;"></div>
 <div class="status-box">現在温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">現在湿度：<span id="humNow">-</span>%</div>
 <div class="status-box">前日最高：<span id="yMax">-</span>℃</div>
@@ -98,7 +99,8 @@ async function loadData(){
         return;
     }
 
-    msg.innerText = "読み込み中...";
+    if(msg) msg.innerText = "～～";
+
 
     try{
         const res = await fetch(`get_data.php?user_id=${userId}&point_id=${pointId}`);
@@ -130,7 +132,11 @@ async function loadData(){
             volt:d.voltage ? Number(d.voltage) : null
         })).filter(d=>d.x>=minTime);
 
-        const last = parsed[parsed.length-1];
+        if(parsed.length === 0){
+    if(msg) msg.innerText = "No data（72時間内データなし）";
+    return;
+}
+
 
         document.getElementById("tempNow").innerText = last.temp.toFixed(1);
         document.getElementById("humNow").innerText = last.hum.toFixed(1);
