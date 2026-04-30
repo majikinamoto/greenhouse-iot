@@ -23,13 +23,10 @@ button { margin:5px; }
 
 <div class="box">
 user_id：
-<input type="text" id="userId" value="T0001">
+<input type="text" id="userId" placeholder="例: T0001">
 
 point_id：
-<select id="pointId">
-  <option value="P01">P01</option>
-  <option value="P02">P02</option>
-</select>
+<input type="text" id="pointId" placeholder="例: P01">
 
 <button onclick="loadData()">表示</button>
 <button onclick="resetZoom()">ズームリセット</button>
@@ -213,13 +210,9 @@ function resetZoom(){
     });
 }
 
-// 初期化
-window.onload=()=>{
-    loadData();
-};
 
-// 60秒更新
-setInterval(loadData,60000);
+
+
 
 </script>
 
