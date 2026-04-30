@@ -95,7 +95,7 @@ async function loadData(){
     const userId = document.getElementById("userId").value;
     const pointId = document.getElementById("pointId").value;
 
-    const res = await fetch(`api.php?user_id=${userId}&point_id=${pointId}`);
+    const res = await fetch(`get_data.php?user_id=${userId}&point_id=${pointId}`);
     const data = await res.json();
 
     lastData = data;

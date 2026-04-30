@@ -14,7 +14,7 @@ $user_id = intval($_GET['user_id']);
 
 $stmt = $conn->prepare(
     "SELECT * FROM measurements 
-     WHERE user_id=? 
+WHERE user_id = ? AND point_id = ?
      ORDER BY recorded_at DESC 
      LIMIT 1000"
 );
