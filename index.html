@@ -186,6 +186,9 @@ const last = parsed[parsed.length-1];
                 }
             }
         });
+        document.getElementById("tempChart").ondblclick = ()=>{tempChart.resetZoom();};
+
+        
 
         // ===== vapor =====
         if(vaporChart) vaporChart.destroy();
