@@ -254,8 +254,24 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
-        data:{ datasets:[{ label:"温度差", data:diffData }] },
-        options:{ ...baseOptions(minTime,maxTime) }
+        data:{
+            datasets:[{
+                label:"温度差 P01−P02 (℃)",
+                data:diffData
+            }]
+        },
+        options:{
+            ...baseOptions(minTime,maxTime),
+            scales:{
+                ...baseOptions(minTime,maxTime).scales,
+                y:{
+                    min:-3,
+                    max:3,
+                    ticks:{stepSize:1},
+                    title:{display:true,text:"℃"}
+                }
+            }
+        }
     });
 }
 
@@ -285,6 +301,11 @@ async function loadData(){
 
     msg.innerText = "読み込み中...";
 
+    document.getElementById("tempNow").innerText = "-";
+    document.getElementById("humNow").innerText = "-";
+    document.getElementById("yMax").innerText = "-";
+    document.getElementById("yMin").innerText = "-";
+
     try{
 
         const [dataP01, dataP02, dataP11] = await Promise.all([
@@ -302,6 +323,33 @@ async function loadData(){
         const p02 = parseData(dataP02,minTime);
         const p11 = parseData(dataP11,minTime);
 
+        if(!p01.length && !p02.length && !p11.length){
+            msg.innerText = "No data（72時間内データなし）";
+            return;
+        }
+
+        if(p01.length){
+            const last = p01[p01.length - 1];
+
+            document.getElementById("tempNow").innerText = last.temp.toFixed(1);
+            document.getElementById("humNow").innerText = last.hum.toFixed(1);
+
+            const yStart = new Date();
+            yStart.setDate(yStart.getDate() - 1);
+            yStart.setHours(0,0,0,0);
+
+            const yEnd = new Date(yStart);
+            yEnd.setHours(23,59,59,999);
+
+            const yData = p01.filter(d=>d.x>=yStart && d.x<=yEnd);
+
+            if(yData.length){
+                const temps = yData.map(d=>d.temp);
+                document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
+                document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
+            }
+        }
+
         tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
         tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
         tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
@@ -317,6 +365,7 @@ async function loadData(){
 
     }catch(e){
         msg.innerText = "通信エラー";
+        console.error(e);
     }
 }
 
