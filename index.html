@@ -123,10 +123,10 @@ function createMidnightLines(minTime, maxTime){
         const key = "midnight_" + d.getTime();
 
         lines[key] = {
-            type:'line',
-            xMin: d,
-            xMax: d,
-            borderColor:'rgba(0,0,0,0.2)',
+            type:"line",
+            scaleID:"x",
+            value:d.getTime(),
+            borderColor:"rgba(0,0,0,0.2)",
             borderWidth:1
         };
 
@@ -141,28 +141,28 @@ function baseOptions(minTime,maxTime){
         parsing:false,
         responsive:true,
         maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
+        interaction:{mode:"index",intersect:false},
         plugins:{
             zoom:{
                 zoom:{
                     wheel:{enabled:true},
                     pinch:{enabled:true},
                     drag:{enabled:true},
-                    mode:'x',
+                    mode:"x",
                     onZoomComplete({chart}){ syncZoom(chart); }
                 },
                 pan:{
                     enabled:true,
-                    mode:'x',
+                    mode:"x",
                     onPanComplete({chart}){ syncZoom(chart); }
                 }
             },
             crosshair:{
-                line:{color:'#000',width:1},
-                sync:{ enabled:true, group:1 }
+                line:{color:"#000",width:1},
+                sync:{enabled:true, group:1}
             },
             annotation:{
-                annotations: createMidnightLines(minTime,maxTime)
+                annotations:createMidnightLines(minTime,maxTime)
             }
         },
         scales:{
@@ -202,50 +202,79 @@ function syncZoom(sourceChart){
 
 async function fetchDataSafe(userId, pointId){
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 10000);
+
     try{
         const url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
-        const res = await fetch(url);
+
+        const res = await fetch(url, {
+            signal:controller.signal,
+            cache:"no-store"
+        });
+
+        clearTimeout(timeoutId);
 
         if(!res.ok){
             return {
-                pointId: pointId,
-                data: [],
-                error: `${pointId}：HTTPエラー ${res.status}`
+                pointId:pointId,
+                data:[],
+                error:`${pointId}：HTTPエラー ${res.status}`
             };
         }
 
         const text = await res.text();
 
+        if(!text.trim()){
+            return {
+                pointId:pointId,
+                data:[],
+                error:`${pointId}：空のレスポンス`
+            };
+        }
+
         let data;
+
         try{
             data = JSON.parse(text);
         }catch(e){
             return {
-                pointId: pointId,
-                data: [],
-                error: `${pointId}：JSON形式ではありません`
+                pointId:pointId,
+                data:[],
+                error:`${pointId}：JSON形式ではありません`
             };
         }
 
         if(!Array.isArray(data)){
             return {
-                pointId: pointId,
-                data: [],
-                error: `${pointId}：配列データではありません`
+                pointId:pointId,
+                data:[],
+                error:`${pointId}：配列データではありません`
             };
         }
 
         return {
-            pointId: pointId,
-            data: data,
-            error: null
+            pointId:pointId,
+            data:data,
+            error:null
         };
 
     }catch(e){
+
+        clearTimeout(timeoutId);
+
+        if(e.name === "AbortError"){
+            return {
+                pointId:pointId,
+                data:[],
+                error:`${pointId}：通信タイムアウト`
+            };
+        }
+
         return {
-            pointId: pointId,
-            data: [],
-            error: `${pointId}：通信エラー`
+            pointId:pointId,
+            data:[],
+            error:`${pointId}：通信エラー`
         };
     }
 }
@@ -259,8 +288,7 @@ function parseData(data, minTime){
         solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
         volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
     })).filter(d=>
-        d.x instanceof Date &&
-        !isNaN(d.x) &&
+        !isNaN(d.x.getTime()) &&
         d.x >= minTime
     );
 }
@@ -291,8 +319,18 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                yHum:{ position:"left", min:50, max:100, ticks:{stepSize:10}},
-                yTemp:{ position:"right", min:10, max:60, ticks:{stepSize:10}}
+                yHum:{
+                    position:"left",
+                    min:50,
+                    max:100,
+                    ticks:{stepSize:10}
+                },
+                yTemp:{
+                    position:"right",
+                    min:10,
+                    max:60,
+                    ticks:{stepSize:10}
+                }
             }
         }
     });
@@ -375,7 +413,15 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
                     .map(d=>({x:d.x,y:d[key]}))
             }]
         },
-        options:{ ...baseOptions(minTime,maxTime) }
+        options:{
+            ...baseOptions(minTime,maxTime),
+            scales:{
+                ...baseOptions(minTime,maxTime).scales,
+                y:{
+                    title:{display:true,text:unit}
+                }
+            }
+        }
     });
 }
 
@@ -400,95 +446,106 @@ async function loadData(){
 
     destroyCharts();
 
-    const now = new Date();
-    const minTime = new Date(now.getTime() - 72*60*60*1000);
+    try{
 
-    const results = await Promise.all([
-        fetchDataSafe(userId,"P01"),
-        fetchDataSafe(userId,"P02"),
-        fetchDataSafe(userId,"P11")
-    ]);
+        const now = new Date();
+        const minTime = new Date(now.getTime() - 72*60*60*1000);
 
-    const resultP01 = results.find(r=>r.pointId === "P01");
-    const resultP02 = results.find(r=>r.pointId === "P02");
-    const resultP11 = results.find(r=>r.pointId === "P11");
+        const results = await Promise.all([
+            fetchDataSafe(userId,"P01"),
+            fetchDataSafe(userId,"P02"),
+            fetchDataSafe(userId,"P11")
+        ]);
 
-    const p01 = parseData(resultP01.data, minTime);
-    const p02 = parseData(resultP02.data, minTime);
-    const p11 = parseData(resultP11.data, minTime);
+        const resultP01 = results.find(r=>r.pointId === "P01");
+        const resultP02 = results.find(r=>r.pointId === "P02");
+        const resultP11 = results.find(r=>r.pointId === "P11");
 
-    const errors = results
-        .filter(r=>r.error)
-        .map(r=>r.error);
+        const p01 = parseData(resultP01.data, minTime);
+        const p02 = parseData(resultP02.data, minTime);
+        const p11 = parseData(resultP11.data, minTime);
 
-    if(!p01.length && !p02.length && !p11.length){
-        msg.innerText = "No data（72時間内データなし）" + (errors.length ? " / " + errors.join(" / ") : "");
-        return;
-    }
+        const errors = results
+            .filter(r=>r.error)
+            .map(r=>r.error);
 
-    if(p01.length){
-        const validP01 = p01.filter(d=>
-            d.temp !== null &&
-            d.hum !== null &&
-            !isNaN(d.temp) &&
-            !isNaN(d.hum)
-        );
+        if(!p01.length && !p02.length && !p11.length){
+            msg.innerText = "No data（72時間内データなし）" + (errors.length ? " / " + errors.join(" / ") : "");
+            return;
+        }
 
-        if(validP01.length){
-            const last = validP01[validP01.length - 1];
+        if(p01.length){
+            const validP01 = p01.filter(d=>
+                d.temp !== null &&
+                d.hum !== null &&
+                !isNaN(d.temp) &&
+                !isNaN(d.hum)
+            );
 
-            document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-            document.getElementById("humNow").innerText = last.hum.toFixed(1);
+            if(validP01.length){
+                const last = validP01[validP01.length - 1];
 
-            const yStart = new Date();
-            yStart.setDate(yStart.getDate() - 1);
-            yStart.setHours(0,0,0,0);
+                document.getElementById("tempNow").innerText = last.temp.toFixed(1);
+                document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
-            const yEnd = new Date(yStart);
-            yEnd.setHours(23,59,59,999);
+                const yStart = new Date();
+                yStart.setDate(yStart.getDate() - 1);
+                yStart.setHours(0,0,0,0);
 
-            const yData = validP01.filter(d=>d.x>=yStart && d.x<=yEnd);
+                const yEnd = new Date(yStart);
+                yEnd.setHours(23,59,59,999);
 
-            if(yData.length){
-                const temps = yData.map(d=>d.temp);
-                document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
-                document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
+                const yData = validP01.filter(d=>d.x>=yStart && d.x<=yEnd);
+
+                if(yData.length){
+                    const temps = yData.map(d=>d.temp);
+                    document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
+                    document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
+                }
             }
         }
-    }
 
-    tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
-    tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
-    tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
+        tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
+        tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
+        tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
 
-    diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
+        diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
-    solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
-    voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
+        solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
+        voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
 
-    allCharts = [
-        tempChartP01,
-        tempChartP02,
-        tempChartP11,
-        diffChart,
-        solarChart,
-        voltChart
-    ];
+        allCharts = [
+            tempChartP01,
+            tempChartP02,
+            tempChartP11,
+            diffChart,
+            solarChart,
+            voltChart
+        ];
 
-    if(errors.length){
-        msg.innerText = errors.join(" / ");
-    }else{
-        msg.innerText = "";
+        if(errors.length){
+            msg.innerText = errors.join(" / ");
+        }else{
+            msg.innerText = "";
+        }
+
+    }catch(e){
+        msg.innerText = "画面側エラー：" + e.message;
+        console.error(e);
     }
 }
 
 function destroyCharts(){
-    allCharts.forEach(c=>{ if(c) c.destroy(); });
+    allCharts.forEach(c=>{
+        if(c) c.destroy();
+    });
     allCharts = [];
 }
 
 function resetZoom(){
-    allCharts.forEach(c=>{ if(c) c.resetZoom(); });
+    allCharts.forEach(c=>{
+        if(c) c.resetZoom();
+    });
 }
 
 </script>
