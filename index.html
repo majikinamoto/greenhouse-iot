@@ -273,8 +273,22 @@ function baseOptions(minTime, maxTime){
 }
 
 async function fetchData(userId, pointId){
-    const res = await fetch(`get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`);
-    return await res.json();
+    const url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
+
+    const res = await fetch(url);
+
+    if(!res.ok){
+        throw new Error(`${pointId} の通信失敗: HTTP ${res.status}`);
+    }
+
+    const text = await res.text();
+
+    try{
+        return JSON.parse(text);
+    }catch(e){
+        console.error(`${pointId} のJSON解析失敗`, text);
+        throw new Error(`${pointId} のJSON解析失敗`);
+    }
 }
 
 function parseData(data, minTime){
@@ -508,7 +522,7 @@ async function loadData(){
 
     }catch(e){
         console.error(e);
-        msg.innerText = "通信エラー（get_data.php またはDBを確認してください）";
+        msg.innerText = e.message;
     }
 }
 
