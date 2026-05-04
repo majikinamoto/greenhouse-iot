@@ -5,10 +5,11 @@
 <title>USUI Tech</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/dist/date-fns.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 
 <style>
 body { font-family: sans-serif; margin:20px; }
@@ -106,35 +107,50 @@ let diffChart, solarChart, voltChart;
 let allCharts = [];
 let syncingZoom = false;
 
+const midnightLinePlugin = {
+    id:"midnightLinePlugin",
+    afterDraw(chart){
+        const xScale = chart.scales.x;
+        const chartArea = chart.chartArea;
+
+        if(!xScale || !chartArea) return;
+
+        const min = xScale.min;
+        const max = xScale.max;
+
+        let d = new Date(min);
+        d.setHours(0,0,0,0);
+
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,0,0,0.2)";
+        ctx.lineWidth = 1;
+
+        while(d.getTime() <= max){
+            const x = xScale.getPixelForValue(d.getTime());
+
+            if(x >= chartArea.left && x <= chartArea.right){
+                ctx.beginPath();
+                ctx.moveTo(x, chartArea.top);
+                ctx.lineTo(x, chartArea.bottom);
+                ctx.stroke();
+            }
+
+            d = new Date(d.getTime() + 24*60*60*1000);
+        }
+
+        ctx.restore();
+    }
+};
+
+Chart.register(midnightLinePlugin);
+
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
     }
 });
-
-function createMidnightLines(minTime, maxTime){
-
-    const lines = {};
-    let d = new Date(minTime);
-    d.setHours(0,0,0,0);
-
-    while(d <= maxTime){
-        const key = "midnight_" + d.getTime();
-
-        lines[key] = {
-            type:"line",
-            scaleID:"x",
-            value:d,
-            borderColor:"rgba(0,0,0,0.2)",
-            borderWidth:1
-        };
-
-        d = new Date(d.getTime() + 24*60*60*1000);
-    }
-
-    return lines;
-}
 
 function baseOptions(minTime,maxTime){
     return {
@@ -170,9 +186,6 @@ function baseOptions(minTime,maxTime){
                 snap:{
                     enabled:false
                 }
-            },
-            annotation:{
-                annotations:createMidnightLines(minTime,maxTime)
             }
         },
         scales:{
