@@ -24,7 +24,8 @@ button { margin:5px; }
 }
 
 .chart-container {
-    width:100%;
+    width:66%;
+    min-width:320px;
     height:350px;
     margin-bottom:25px;
 }
@@ -47,6 +48,10 @@ button { margin:5px; }
     .grid {
         grid-template-columns: 1fr;
     }
+
+    .chart-container {
+        width:100%;
+    }
 }
 </style>
 </head>
@@ -63,10 +68,10 @@ user_id：
 <div id="message" style="color:#666; margin:10px;"></div>
 
 <div class="status-container">
-<div class="status-box">現在温度：<span id="tempNow">-</span>℃</div>
-<div class="status-box">現在湿度：<span id="humNow">-</span>%</div>
-<div class="status-box">前日最高：<span id="yMax">-</span>℃</div>
-<div class="status-box">前日最低：<span id="yMin">-</span>℃</div>
+<div class="status-box">現在温度（P01）：<span id="tempNow">-</span>℃</div>
+<div class="status-box">現在湿度（P01）：<span id="humNow">-</span>%</div>
+<div class="status-box">前日最高（P01）：<span id="yMax">-</span>℃</div>
+<div class="status-box">前日最低（P01）：<span id="yMin">-</span>℃</div>
 </div>
 
 <h3>温度・湿度</h3>
@@ -93,7 +98,7 @@ user_id：
     </div>
 
     <div>
-        <h4>温度差（P01−P02）</h4>
+        <h4>温度差・湿度差（P01−P02）</h4>
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
     </div>
 
@@ -106,6 +111,13 @@ let diffChart, solarChart, voltChart;
 
 let allCharts = [];
 let syncingZoom = false;
+
+window.addEventListener("DOMContentLoaded", ()=>{
+    const savedUserId = localStorage.getItem("usui_user_id");
+    if(savedUserId){
+        document.getElementById("userId").value = savedUserId;
+    }
+});
 
 function createMidnightLines(minTime, maxTime){
 
@@ -242,23 +254,48 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     const p02Map = new Map(
-        p02.map(d=>[Math.floor(d.x.getTime()/60000), d.temp])
+        p02.map(d=>[
+            Math.floor(d.x.getTime()/60000),
+            {
+                temp:d.temp,
+                hum:d.hum
+            }
+        ])
     );
 
-    const diffData = p01.map(d=>{
+    const tempDiffData = [];
+    const humDiffData = [];
+
+    p01.forEach(d=>{
         const key = Math.floor(d.x.getTime()/60000);
-        const p02Temp = p02Map.get(key);
-        if(p02Temp === undefined) return null;
-        return { x:d.x, y:d.temp - p02Temp };
-    }).filter(d=>d);
+        const p02Data = p02Map.get(key);
+
+        if(p02Data === undefined) return;
+
+        tempDiffData.push({
+            x:d.x,
+            y:d.temp - p02Data.temp
+        });
+
+        humDiffData.push({
+            x:d.x,
+            y:d.hum - p02Data.hum
+        });
+    });
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
-            datasets:[{
-                label:"温度差 P01−P02 (℃)",
-                data:diffData
-            }]
+            datasets:[
+                {
+                    label:"温度差 P01−P02 (℃)",
+                    data:tempDiffData
+                },
+                {
+                    label:"湿度差 P01−P02 (%)",
+                    data:humDiffData
+                }
+            ]
         },
         options:{
             ...baseOptions(minTime,maxTime),
@@ -268,7 +305,7 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
                     min:-3,
                     max:3,
                     ticks:{stepSize:1},
-                    title:{display:true,text:"℃"}
+                    title:{display:true,text:"差"}
                 }
             }
         }
@@ -298,6 +335,8 @@ async function loadData(){
         msg.innerText = "user_id を入力してください";
         return;
     }
+
+    localStorage.setItem("usui_user_id", userId);
 
     msg.innerText = "読み込み中...";
 
