@@ -12,7 +12,6 @@
 
 <style>
 body { font-family: sans-serif; margin:20px; }
-
 .box { margin:10px 0; }
 button { margin:5px; }
 
@@ -45,13 +44,8 @@ button { margin:5px; }
 }
 
 @media (max-width: 1100px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
-    .chart-container {
-        width:100%;
-    }
+    .grid { grid-template-columns: 1fr; }
+    .chart-container { width:100%; }
 }
 </style>
 </head>
@@ -122,7 +116,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
 function createMidnightLines(minTime, maxTime){
 
     const lines = {};
-
     let d = new Date(minTime);
     d.setHours(0,0,0,0);
 
@@ -207,19 +200,69 @@ function syncZoom(sourceChart){
     syncingZoom = false;
 }
 
-async function fetchData(userId, pointId){
-    const res = await fetch(`get_data.php?user_id=${userId}&point_id=${pointId}`);
-    return await res.json();
+async function fetchDataSafe(userId, pointId){
+
+    try{
+        const url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
+        const res = await fetch(url);
+
+        if(!res.ok){
+            return {
+                pointId: pointId,
+                data: [],
+                error: `${pointId}：HTTPエラー ${res.status}`
+            };
+        }
+
+        const text = await res.text();
+
+        let data;
+        try{
+            data = JSON.parse(text);
+        }catch(e){
+            return {
+                pointId: pointId,
+                data: [],
+                error: `${pointId}：JSON形式ではありません`
+            };
+        }
+
+        if(!Array.isArray(data)){
+            return {
+                pointId: pointId,
+                data: [],
+                error: `${pointId}：配列データではありません`
+            };
+        }
+
+        return {
+            pointId: pointId,
+            data: data,
+            error: null
+        };
+
+    }catch(e){
+        return {
+            pointId: pointId,
+            data: [],
+            error: `${pointId}：通信エラー`
+        };
+    }
 }
 
 function parseData(data, minTime){
+
     return data.map(d=>({
         x:new Date(d.recorded_at),
-        temp:Number(d.temperature),
-        hum:Number(d.humidity),
-        solar:d.solar_radiation ? Number(d.solar_radiation) : null,
-        volt:d.voltage ? Number(d.voltage) : null
-    })).filter(d=>d.x>=minTime);
+        temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
+        hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
+        solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
+        volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
+    })).filter(d=>
+        d.x instanceof Date &&
+        !isNaN(d.x) &&
+        d.x >= minTime
+    );
 }
 
 function createTempHumChart(canvasId, parsed, minTime, maxTime){
@@ -230,12 +273,16 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
             datasets:[
                 {
                     label:"湿度 (%)",
-                    data:parsed.map(d=>({x:d.x,y:d.hum})),
+                    data:parsed
+                        .filter(d=>d.hum !== null && !isNaN(d.hum))
+                        .map(d=>({x:d.x,y:d.hum})),
                     yAxisID:"yHum"
                 },
                 {
                     label:"温度 (℃)",
-                    data:parsed.map(d=>({x:d.x,y:d.temp})),
+                    data:parsed
+                        .filter(d=>d.temp !== null && !isNaN(d.temp))
+                        .map(d=>({x:d.x,y:d.temp})),
                     yAxisID:"yTemp"
                 }
             ]
@@ -270,17 +317,21 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
         const key = Math.floor(d.x.getTime()/60000);
         const p02Data = p02Map.get(key);
 
-        if(p02Data === undefined) return;
+        if(!p02Data) return;
 
-        tempDiffData.push({
-            x:d.x,
-            y:d.temp - p02Data.temp
-        });
+        if(d.temp !== null && p02Data.temp !== null && !isNaN(d.temp) && !isNaN(p02Data.temp)){
+            tempDiffData.push({
+                x:d.x,
+                y:d.temp - p02Data.temp
+            });
+        }
 
-        humDiffData.push({
-            x:d.x,
-            y:d.hum - p02Data.hum
-        });
+        if(d.hum !== null && p02Data.hum !== null && !isNaN(d.hum) && !isNaN(p02Data.hum)){
+            humDiffData.push({
+                x:d.x,
+                y:d.hum - p02Data.hum
+            });
+        }
     });
 
     return new Chart(document.getElementById(canvasId),{
@@ -319,7 +370,9 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         data:{
             datasets:[{
                 label:label,
-                data:parsed.map(d=>({x:d.x,y:d[key]}))
+                data:parsed
+                    .filter(d=>d[key] !== null && !isNaN(d[key]))
+                    .map(d=>({x:d.x,y:d[key]}))
             }]
         },
         options:{ ...baseOptions(minTime,maxTime) }
@@ -328,7 +381,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
 
 async function loadData(){
 
-    const userId = document.getElementById("userId").value;
+    const userId = document.getElementById("userId").value.trim();
     const msg = document.getElementById("message");
 
     if(!userId){
@@ -345,30 +398,44 @@ async function loadData(){
     document.getElementById("yMax").innerText = "-";
     document.getElementById("yMin").innerText = "-";
 
-    try{
+    destroyCharts();
 
-        const [dataP01, dataP02, dataP11] = await Promise.all([
-            fetchData(userId,"P01"),
-            fetchData(userId,"P02"),
-            fetchData(userId,"P11")
-        ]);
+    const now = new Date();
+    const minTime = new Date(now.getTime() - 72*60*60*1000);
 
-        destroyCharts();
+    const results = await Promise.all([
+        fetchDataSafe(userId,"P01"),
+        fetchDataSafe(userId,"P02"),
+        fetchDataSafe(userId,"P11")
+    ]);
 
-        const now = new Date();
-        const minTime = new Date(now.getTime() - 72*60*60*1000);
+    const resultP01 = results.find(r=>r.pointId === "P01");
+    const resultP02 = results.find(r=>r.pointId === "P02");
+    const resultP11 = results.find(r=>r.pointId === "P11");
 
-        const p01 = parseData(dataP01,minTime);
-        const p02 = parseData(dataP02,minTime);
-        const p11 = parseData(dataP11,minTime);
+    const p01 = parseData(resultP01.data, minTime);
+    const p02 = parseData(resultP02.data, minTime);
+    const p11 = parseData(resultP11.data, minTime);
 
-        if(!p01.length && !p02.length && !p11.length){
-            msg.innerText = "No data（72時間内データなし）";
-            return;
-        }
+    const errors = results
+        .filter(r=>r.error)
+        .map(r=>r.error);
 
-        if(p01.length){
-            const last = p01[p01.length - 1];
+    if(!p01.length && !p02.length && !p11.length){
+        msg.innerText = "No data（72時間内データなし）" + (errors.length ? " / " + errors.join(" / ") : "");
+        return;
+    }
+
+    if(p01.length){
+        const validP01 = p01.filter(d=>
+            d.temp !== null &&
+            d.hum !== null &&
+            !isNaN(d.temp) &&
+            !isNaN(d.hum)
+        );
+
+        if(validP01.length){
+            const last = validP01[validP01.length - 1];
 
             document.getElementById("tempNow").innerText = last.temp.toFixed(1);
             document.getElementById("humNow").innerText = last.hum.toFixed(1);
@@ -380,7 +447,7 @@ async function loadData(){
             const yEnd = new Date(yStart);
             yEnd.setHours(23,59,59,999);
 
-            const yData = p01.filter(d=>d.x>=yStart && d.x<=yEnd);
+            const yData = validP01.filter(d=>d.x>=yStart && d.x<=yEnd);
 
             if(yData.length){
                 const temps = yData.map(d=>d.temp);
@@ -388,23 +455,30 @@ async function loadData(){
                 document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
             }
         }
+    }
 
-        tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
-        tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
-        tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
+    tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
+    tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
+    tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
 
-        diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
+    diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
-        solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
-        voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
+    solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
+    voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
 
-        allCharts = [tempChartP01,tempChartP02,tempChartP11,diffChart,solarChart,voltChart];
+    allCharts = [
+        tempChartP01,
+        tempChartP02,
+        tempChartP11,
+        diffChart,
+        solarChart,
+        voltChart
+    ];
 
+    if(errors.length){
+        msg.innerText = errors.join(" / ");
+    }else{
         msg.innerText = "";
-
-    }catch(e){
-        msg.innerText = "通信エラー";
-        console.error(e);
     }
 }
 
