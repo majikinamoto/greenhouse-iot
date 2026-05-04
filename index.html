@@ -5,8 +5,6 @@
 <title>USUI Tech</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/dist/date-fns.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0"></script>
@@ -107,6 +105,13 @@ let diffChart, solarChart, voltChart;
 let allCharts = [];
 let syncingZoom = false;
 
+window.addEventListener("DOMContentLoaded", ()=>{
+    const savedUserId = localStorage.getItem("usui_user_id");
+    if(savedUserId){
+        document.getElementById("userId").value = savedUserId;
+    }
+});
+
 const midnightLinePlugin = {
     id:"midnightLinePlugin",
     afterDraw(chart){
@@ -145,12 +150,12 @@ const midnightLinePlugin = {
 
 Chart.register(midnightLinePlugin);
 
-window.addEventListener("DOMContentLoaded", ()=>{
-    const savedUserId = localStorage.getItem("usui_user_id");
-    if(savedUserId){
-        document.getElementById("userId").value = savedUserId;
-    }
-});
+function formatTime(value){
+    const d = new Date(value);
+    const h = String(d.getHours()).padStart(2,"0");
+    const m = String(d.getMinutes()).padStart(2,"0");
+    return h + ":" + m;
+}
 
 function baseOptions(minTime,maxTime){
     return {
@@ -180,25 +185,29 @@ function baseOptions(minTime,maxTime){
                     group:1,
                     suppressTooltips:false
                 },
-                zoom:{
-                    enabled:false
-                },
-                snap:{
-                    enabled:false
+                zoom:{enabled:false},
+                snap:{enabled:false}
+            },
+            tooltip:{
+                callbacks:{
+                    title(items){
+                        if(!items.length) return "";
+                        return formatTime(items[0].parsed.x);
+                    }
                 }
             }
         },
         scales:{
             x:{
-                type:"time",
-                min:minTime,
-                max:maxTime,
-                time:{
-                    tooltipFormat:"HH:mm",
-                    displayFormats:{
-                        minute:"HH:mm",
-                        hour:"HH:mm"
-                    }
+                type:"linear",
+                min:minTime.getTime(),
+                max:maxTime.getTime(),
+                ticks:{
+                    callback:function(value){
+                        return formatTime(value);
+                    },
+                    maxRotation:0,
+                    autoSkip:true
                 }
             }
         }
@@ -276,14 +285,19 @@ async function fetchDataSafe(userId, pointId){
 
 function parseData(data, minTime){
 
-    return data.map(d=>({
-        x:new Date(d.recorded_at),
-        temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
-        hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
-        solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
-        volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
-    })).filter(d=>
-        !isNaN(d.x.getTime()) &&
+    return data.map(d=>{
+        const date = new Date(d.recorded_at);
+
+        return {
+            x:date,
+            xValue:date.getTime(),
+            temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
+            hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
+            solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
+            volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
+        };
+    }).filter(d=>
+        !isNaN(d.xValue) &&
         d.x >= minTime
     );
 }
@@ -298,14 +312,14 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
                     label:"湿度 (%)",
                     data:parsed
                         .filter(d=>d.hum !== null && !isNaN(d.hum))
-                        .map(d=>({x:d.x,y:d.hum})),
+                        .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum"
                 },
                 {
                     label:"温度 (℃)",
                     data:parsed
                         .filter(d=>d.temp !== null && !isNaN(d.temp))
-                        .map(d=>({x:d.x,y:d.temp})),
+                        .map(d=>({x:d.xValue,y:d.temp})),
                     yAxisID:"yTemp"
                 }
             ]
@@ -335,7 +349,7 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     const p02Map = new Map(
         p02.map(d=>[
-            Math.floor(d.x.getTime()/60000),
+            Math.floor(d.xValue/60000),
             { temp:d.temp, hum:d.hum }
         ])
     );
@@ -344,17 +358,17 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
     const humDiffData = [];
 
     p01.forEach(d=>{
-        const key = Math.floor(d.x.getTime()/60000);
+        const key = Math.floor(d.xValue/60000);
         const p02Data = p02Map.get(key);
 
         if(!p02Data) return;
 
         if(d.temp !== null && p02Data.temp !== null && !isNaN(d.temp) && !isNaN(p02Data.temp)){
-            tempDiffData.push({ x:d.x, y:d.temp - p02Data.temp });
+            tempDiffData.push({ x:d.xValue, y:d.temp - p02Data.temp });
         }
 
         if(d.hum !== null && p02Data.hum !== null && !isNaN(d.hum) && !isNaN(p02Data.hum)){
-            humDiffData.push({ x:d.x, y:d.hum - p02Data.hum });
+            humDiffData.push({ x:d.xValue, y:d.hum - p02Data.hum });
         }
     });
 
@@ -396,7 +410,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
                 label:label,
                 data:parsed
                     .filter(d=>d[key] !== null && !isNaN(d[key]))
-                    .map(d=>({x:d.x,y:d[key]}))
+                    .map(d=>({x:d.xValue,y:d[key]}))
             }]
         },
         options:{
