@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <title>USUI Tech</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 
 <style>
@@ -125,7 +125,7 @@ function createMidnightLines(minTime, maxTime){
         lines[key] = {
             type:"line",
             scaleID:"x",
-            value:d.getTime(),
+            value:d,
             borderColor:"rgba(0,0,0,0.2)",
             borderWidth:1
         };
@@ -159,8 +159,17 @@ function baseOptions(minTime,maxTime){
             },
             crosshair:{
                 line:{color:"#000",width:1},
-                sync:{enabled:true, group:1, suppressTooltips:false},
-                zoom:{enabled:false}
+                sync:{
+                    enabled:true,
+                    group:1,
+                    suppressTooltips:false
+                },
+                zoom:{
+                    enabled:false
+                },
+                snap:{
+                    enabled:false
+                }
             },
             annotation:{
                 annotations:createMidnightLines(minTime,maxTime)
@@ -381,7 +390,9 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                y:{ title:{display:true,text:unit} }
+                y:{
+                    title:{display:true,text:unit}
+                }
             }
         }
     });
