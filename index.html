@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0"></script>
 
 <style>
 body { font-family: sans-serif; margin:20px; }
@@ -30,22 +29,11 @@ body { font-family: sans-serif; margin:20px; }
 
 .chart-container {
     width:100%;
-    height:330px;
+    height:320px;
 }
-
-.p01 { grid-column:1; }
-.p02 { grid-column:2; }
-.diff { grid-column:3; }
-
-.p11 { grid-column:1; }
-.co2 { grid-column:2; }
-
-.solar { grid-column:1; }
-.volt { grid-column:1; }
 
 @media (max-width:1200px){
     .dashboard { grid-template-columns:1fr; }
-    .p01,.p02,.diff,.p11,.co2,.solar,.volt { grid-column:auto; }
 }
 </style>
 </head>
@@ -63,40 +51,40 @@ user_id：
 
 <div class="dashboard">
 
-    <div class="panel p01">
-        <h3>P01 温度・湿度</h3>
-        <div class="chart-container"><canvas id="chartP01"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P01</h3>
+<canvas id="chartP01"></canvas>
+</div>
 
-    <div class="panel p02">
-        <h3>P02 温度・湿度</h3>
-        <div class="chart-container"><canvas id="chartP02"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P02</h3>
+<canvas id="chartP02"></canvas>
+</div>
 
-    <div class="panel diff">
-        <h3>差分 P01 − P02</h3>
-        <div class="chart-container"><canvas id="chartDiff"></canvas></div>
-    </div>
+<div class="panel">
+<h3>差分</h3>
+<canvas id="chartDiff"></canvas>
+</div>
 
-    <div class="panel p11">
-        <h3>P11 温度・湿度</h3>
-        <div class="chart-container"><canvas id="chartP11"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P11</h3>
+<canvas id="chartP11"></canvas>
+</div>
 
-    <div class="panel co2">
-        <h3>P21 CO2</h3>
-        <div class="chart-container"><canvas id="chartCO2"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P21 CO2</h3>
+<canvas id="chartCO2"></canvas>
+</div>
 
-    <div class="panel solar">
-        <h3>P11 日射</h3>
-        <div class="chart-container"><canvas id="chartSolar"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P11 日射</h3>
+<canvas id="chartSolar"></canvas>
+</div>
 
-    <div class="panel volt">
-        <h3>P11 電圧</h3>
-        <div class="chart-container"><canvas id="chartVolt"></canvas></div>
-    </div>
+<div class="panel">
+<h3>P11 電圧</h3>
+<canvas id="chartVolt"></canvas>
+</div>
 
 </div>
 
@@ -104,9 +92,6 @@ user_id：
 
 let chartP01, chartP02, chartP11, chartDiff, chartCO2, chartSolar, chartVolt;
 let isSyncing = false;
-
-const TEMP_COLOR = "rgba(255, 99, 132, 1)";
-const HUM_COLOR  = "rgba(54, 162, 235, 1)";
 
 function getAllCharts(){
     return [chartP01, chartP02, chartP11, chartDiff, chartCO2, chartSolar, chartVolt].filter(c => c);
@@ -130,85 +115,33 @@ function syncZoom(sourceChart){
     isSyncing = false;
 }
 
-function createMidnightLines(minTime, maxTime){
-    const annotations = {};
-    const d = new Date(minTime);
-    d.setHours(0,0,0,0);
-
-    if(d < minTime){
-        d.setDate(d.getDate() + 1);
-    }
-
-    let i = 0;
-    while(d <= maxTime){
-        annotations["midnight_" + i] = {
-            type: "line",
-            xMin: new Date(d),
-            xMax: new Date(d),
-            borderColor: "rgba(0,0,0,0.35)",
-            borderWidth: 1,
-            borderDash: [4, 4],
-            label: {
-                display: true,
-                content: "0:00",
-                position: "start"
-            }
-        };
-        d.setDate(d.getDate() + 1);
-        i++;
-    }
-
-    return annotations;
-}
-
-function baseOptions(minTime, maxTime){
+function baseOptions(minTime,maxTime){
     return {
         parsing:false,
         responsive:true,
         maintainAspectRatio:false,
-
-        interaction:{
-            mode:"nearest",
-            intersect:false
-        },
-
+        interaction:{mode:'index',intersect:false},
         plugins:{
-            tooltip:{
-                mode:"nearest",
-                intersect:false,
-                position:"nearest"
-            },
-
             zoom:{
                 zoom:{
                     wheel:{enabled:true},
                     pinch:{enabled:true},
                     drag:{enabled:true},
-                    mode:"x",
+                    mode:'x',
                     onZoom:({chart}) => syncZoom(chart)
                 },
                 pan:{
                     enabled:true,
-                    mode:"x",
+                    mode:'x',
                     onPan:({chart}) => syncZoom(chart)
                 }
             },
-
             crosshair:{
-                line:{color:"#000", width:1},
-                sync:{
-                    enabled:true,
-                    group:1,
-                    suppressTooltips:false
-                },
+                line:{color:'#000',width:1},
+                sync:{enabled:true, group:1},
                 zoom:{enabled:false}
-            },
-
-            annotation:{
-                annotations:createMidnightLines(minTime, maxTime)
             }
         },
-
         scales:{
             x:{
                 type:"time",
@@ -220,243 +153,158 @@ function baseOptions(minTime, maxTime){
                         minute:"HH:mm",
                         hour:"HH:mm"
                     }
-                },
-                ticks:{
-                    maxRotation:0,
-                    autoSkip:true
                 }
             }
         }
     };
 }
 
+// ★ 0時ライン（軽量版）
+const midnightLinePlugin = {
+    id:"midnightLine",
+    afterDraw(chart){
+        const xScale = chart.scales.x;
+        const ctx = chart.ctx;
+        const area = chart.chartArea;
+
+        if(!xScale) return;
+
+        const start = new Date(xScale.min);
+        const end = new Date(xScale.max);
+
+        const d = new Date(start);
+        d.setHours(0,0,0,0);
+
+        if(d < start) d.setDate(d.getDate()+1);
+
+        ctx.save();
+        ctx.strokeStyle="rgba(0,0,0,0.3)";
+        ctx.setLineDash([4,4]);
+
+        while(d <= end){
+            const x = xScale.getPixelForValue(d);
+            ctx.beginPath();
+            ctx.moveTo(x, area.top);
+            ctx.lineTo(x, area.bottom);
+            ctx.stroke();
+            d.setDate(d.getDate()+1);
+        }
+
+        ctx.restore();
+    }
+};
+
+Chart.register(midnightLinePlugin);
+
 async function fetchData(userId, pointId){
-    const res = await fetch(
-        `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`
-    );
+    const res = await fetch(`get_data.php?user_id=${userId}&point_id=${pointId}`);
     return await res.json();
 }
 
 function parseData(data, minTime){
-    return data.map(d => ({
+    return data.map(d=>({
         x:new Date(d.recorded_at),
-        temp:d.temperature !== null ? Number(d.temperature) : null,
-        hum:d.humidity !== null ? Number(d.humidity) : null,
-        co2:d.CO2 !== null && d.CO2 !== undefined ? Number(d.CO2) : null,
-        solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
-        volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
-    })).filter(d => d.x >= minTime);
+        temp:Number(d.temperature),
+        hum:Number(d.humidity),
+        co2:d.CO2 ? Number(d.CO2) : null,
+        solar:d.solar_radiation ? Number(d.solar_radiation) : null,
+        volt:d.voltage ? Number(d.voltage) : null
+    })).filter(d=>d.x>=minTime);
 }
 
 function createTempHumChart(canvasId, parsed, minTime, maxTime){
-    return new Chart(document.getElementById(canvasId), {
+    return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
             datasets:[
-                {
-                    label:"湿度 (%)",
-                    data:parsed.map(d => ({x:d.x, y:d.hum})),
-                    yAxisID:"yHum",
-                    borderColor:HUM_COLOR,
-                    backgroundColor:HUM_COLOR,
-                    pointRadius:1.5,
-                    spanGaps:true
-                },
-                {
-                    label:"温度 (℃)",
-                    data:parsed.map(d => ({x:d.x, y:d.temp})),
-                    yAxisID:"yTemp",
-                    borderColor:TEMP_COLOR,
-                    backgroundColor:TEMP_COLOR,
-                    pointRadius:1.5,
-                    spanGaps:true
-                }
+                {label:"湿度", data:parsed.map(d=>({x:d.x,y:d.hum})), yAxisID:"yHum"},
+                {label:"温度", data:parsed.map(d=>({x:d.x,y:d.temp})), yAxisID:"yTemp"}
             ]
         },
         options:{
-            ...baseOptions(minTime, maxTime),
+            ...baseOptions(minTime,maxTime),
             scales:{
-                ...baseOptions(minTime, maxTime).scales,
-                yHum:{
-                    position:"left",
-                    min:0,
-                    max:100,
-                    ticks:{stepSize:10}
-                },
-                yTemp:{
-                    position:"right",
-                    min:0,
-                    max:60,
-                    ticks:{stepSize:10}
-                }
+                ...baseOptions(minTime,maxTime).scales,
+                yHum:{position:"left",min:50,max:100,ticks:{stepSize:10}},
+                yTemp:{position:"right",min:10,max:60,ticks:{stepSize:10}}
             }
         }
     });
 }
 
-function findNearest(targetTime, data, limitMs){
-    let nearest = null;
-    let nearestDiff = limitMs;
-
-    data.forEach(d => {
-        const diff = Math.abs(d.x.getTime() - targetTime.getTime());
-        if(diff <= nearestDiff){
-            nearest = d;
-            nearestDiff = diff;
-        }
-    });
-
-    return nearest;
-}
-
-function createDiffData(p01, p02){
-    const limitMs = 2 * 60 * 1000;
-
-    const tempDiff = [];
-    const humDiff = [];
-
-    p01.forEach(d1 => {
-        const d2 = findNearest(d1.x, p02, limitMs);
-
-        if(!d2) return;
-
-        if(d1.temp !== null && d2.temp !== null){
-            tempDiff.push({
-                x:d1.x,
-                y:d1.temp - d2.temp
-            });
-        }
-
-        if(d1.hum !== null && d2.hum !== null){
-            humDiff.push({
-                x:d1.x,
-                y:d1.hum - d2.hum
-            });
-        }
-    });
-
-    return { tempDiff, humDiff };
-}
-
-function createDiffChart(canvasId, diff, minTime, maxTime){
-    return new Chart(document.getElementById(canvasId), {
+function createSingleChart(canvasId, parsed, key, label, minTime, maxTime){
+    return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
-            datasets:[
-                {
-                    label:"湿度差 P01−P02 (%)",
-                    data:diff.humDiff,
-                    yAxisID:"yHumDiff",
-                    borderColor:HUM_COLOR,
-                    backgroundColor:HUM_COLOR,
-                    pointRadius:1.5,
-                    spanGaps:true
-                },
-                {
-                    label:"温度差 P01−P02 (℃)",
-                    data:diff.tempDiff,
-                    yAxisID:"yTempDiff",
-                    borderColor:TEMP_COLOR,
-                    backgroundColor:TEMP_COLOR,
-                    pointRadius:1.5,
-                    spanGaps:true
-                }
-            ]
+            datasets:[{label:label,data:parsed.map(d=>({x:d.x,y:d[key]}))}]
         },
-        options:{
-            ...baseOptions(minTime, maxTime),
-            scales:{
-                ...baseOptions(minTime, maxTime).scales,
-                yHumDiff:{
-                    position:"left",
-                    ticks:{stepSize:10},
-                    title:{display:true, text:"湿度差 %"}
-                },
-                yTempDiff:{
-                    position:"right",
-                    ticks:{stepSize:10},
-                    title:{display:true, text:"温度差 ℃"}
-                }
-            }
-        }
+        options:{...baseOptions(minTime,maxTime)}
     });
 }
 
-function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime){
-    return new Chart(document.getElementById(canvasId), {
-        type:"line",
-        data:{
-            datasets:[
-                {
-                    label:label,
-                    data:parsed.map(d => ({x:d.x, y:d[key]})),
-                    pointRadius:1.5,
-                    spanGaps:true
-                }
-            ]
-        },
-        options:{
-            ...baseOptions(minTime, maxTime),
-            scales:{
-                ...baseOptions(minTime, maxTime).scales,
-                y:{
-                    title:{display:true, text:unit}
-                }
-            }
-        }
-    });
+function createDiff(p01,p02){
+    return p01.map((d,i)=>{
+        if(!p02[i]) return null;
+        return {
+            x:d.x,
+            y:d.temp - p02[i].temp
+        };
+    }).filter(d=>d);
 }
 
 async function loadData(){
 
-    const userId = document.getElementById("userId").value.trim();
+    const userId = document.getElementById("userId").value;
     const msg = document.getElementById("message");
 
     if(!userId){
-        msg.innerText = "user_id を入力してください";
+        msg.innerText="user_idを入力";
         return;
     }
 
-    msg.innerText = "読み込み中...";
+    msg.innerText="読み込み中...";
 
-    try{
-        const now = new Date();
-        const minTime = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+    const now = new Date();
+    const minTime = new Date(now.getTime()-72*60*60*1000);
 
-        const [dataP01, dataP02, dataP11, dataP21] = await Promise.all([
-            fetchData(userId, "P01"),
-            fetchData(userId, "P02"),
-            fetchData(userId, "P11"),
-            fetchData(userId, "P21")
-        ]);
+    const [d1,d2,d3,d4] = await Promise.all([
+        fetchData(userId,"P01"),
+        fetchData(userId,"P02"),
+        fetchData(userId,"P11"),
+        fetchData(userId,"P21")
+    ]);
 
-        const p01 = parseData(dataP01, minTime);
-        const p02 = parseData(dataP02, minTime);
-        const p11 = parseData(dataP11, minTime);
-        const p21 = parseData(dataP21, minTime);
+    const p01 = parseData(d1,minTime);
+    const p02 = parseData(d2,minTime);
+    const p11 = parseData(d3,minTime);
+    const p21 = parseData(d4,minTime);
 
-        getAllCharts().forEach(c => c.destroy());
+    getAllCharts().forEach(c=>c.destroy());
 
-        chartP01 = createTempHumChart("chartP01", p01, minTime, now);
-        chartP02 = createTempHumChart("chartP02", p02, minTime, now);
-        chartP11 = createTempHumChart("chartP11", p11, minTime, now);
+    chartP01 = createTempHumChart("chartP01",p01,minTime,now);
+    chartP02 = createTempHumChart("chartP02",p02,minTime,now);
+    chartP11 = createTempHumChart("chartP11",p11,minTime,now);
 
-        chartDiff = createDiffChart("chartDiff", createDiffData(p01, p02), minTime, now);
+    chartDiff = new Chart(document.getElementById("chartDiff"),{
+        type:"line",
+        data:{
+            datasets:[{
+                label:"温度差",
+                data:createDiff(p01,p02)
+            }]
+        },
+        options:{...baseOptions(minTime,now)}
+    });
 
-        chartCO2 = createSingleChart("chartCO2", p21, "co2", "CO2 (ppm)", "ppm", minTime, now);
-        chartSolar = createSingleChart("chartSolar", p11, "solar", "日射", "日射", minTime, now);
-        chartVolt = createSingleChart("chartVolt", p11, "volt", "電圧 (V)", "V", minTime, now);
+    chartCO2 = createSingleChart("chartCO2",p21,"co2","CO2",minTime,now);
+    chartSolar = createSingleChart("chartSolar",p11,"solar","日射",minTime,now);
+    chartVolt = createSingleChart("chartVolt",p11,"volt","電圧",minTime,now);
 
-        msg.innerText = "";
-
-    }catch(e){
-        console.error(e);
-        msg.innerText = "通信エラー（get_data.php またはDBを確認してください）";
-    }
+    msg.innerText="";
 }
 
 function resetZoomAll(){
-    getAllCharts().forEach(chart => chart.resetZoom());
+    getAllCharts().forEach(c=>c.resetZoom());
 }
 
 </script>
