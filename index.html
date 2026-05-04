@@ -159,7 +159,8 @@ function baseOptions(minTime,maxTime){
             },
             crosshair:{
                 line:{color:"#000",width:1},
-                sync:{enabled:true, group:1}
+                sync:{enabled:true, group:1, suppressTooltips:false},
+                zoom:{enabled:false}
             },
             annotation:{
                 annotations:createMidnightLines(minTime,maxTime)
@@ -216,21 +217,13 @@ async function fetchDataSafe(userId, pointId){
         clearTimeout(timeoutId);
 
         if(!res.ok){
-            return {
-                pointId:pointId,
-                data:[],
-                error:`${pointId}：HTTPエラー ${res.status}`
-            };
+            return { pointId, data:[], error:`${pointId}：HTTPエラー ${res.status}` };
         }
 
         const text = await res.text();
 
         if(!text.trim()){
-            return {
-                pointId:pointId,
-                data:[],
-                error:`${pointId}：空のレスポンス`
-            };
+            return { pointId, data:[], error:`${pointId}：空のレスポンス` };
         }
 
         let data;
@@ -238,44 +231,24 @@ async function fetchDataSafe(userId, pointId){
         try{
             data = JSON.parse(text);
         }catch(e){
-            return {
-                pointId:pointId,
-                data:[],
-                error:`${pointId}：JSON形式ではありません`
-            };
+            return { pointId, data:[], error:`${pointId}：JSON形式ではありません` };
         }
 
         if(!Array.isArray(data)){
-            return {
-                pointId:pointId,
-                data:[],
-                error:`${pointId}：配列データではありません`
-            };
+            return { pointId, data:[], error:`${pointId}：配列データではありません` };
         }
 
-        return {
-            pointId:pointId,
-            data:data,
-            error:null
-        };
+        return { pointId, data, error:null };
 
     }catch(e){
 
         clearTimeout(timeoutId);
 
         if(e.name === "AbortError"){
-            return {
-                pointId:pointId,
-                data:[],
-                error:`${pointId}：通信タイムアウト`
-            };
+            return { pointId, data:[], error:`${pointId}：通信タイムアウト` };
         }
 
-        return {
-            pointId:pointId,
-            data:[],
-            error:`${pointId}：通信エラー`
-        };
+        return { pointId, data:[], error:`${pointId}：通信エラー` };
     }
 }
 
@@ -341,10 +314,7 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
     const p02Map = new Map(
         p02.map(d=>[
             Math.floor(d.x.getTime()/60000),
-            {
-                temp:d.temp,
-                hum:d.hum
-            }
+            { temp:d.temp, hum:d.hum }
         ])
     );
 
@@ -358,17 +328,11 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
         if(!p02Data) return;
 
         if(d.temp !== null && p02Data.temp !== null && !isNaN(d.temp) && !isNaN(p02Data.temp)){
-            tempDiffData.push({
-                x:d.x,
-                y:d.temp - p02Data.temp
-            });
+            tempDiffData.push({ x:d.x, y:d.temp - p02Data.temp });
         }
 
         if(d.hum !== null && p02Data.hum !== null && !isNaN(d.hum) && !isNaN(p02Data.hum)){
-            humDiffData.push({
-                x:d.x,
-                y:d.hum - p02Data.hum
-            });
+            humDiffData.push({ x:d.x, y:d.hum - p02Data.hum });
         }
     });
 
@@ -417,9 +381,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                y:{
-                    title:{display:true,text:unit}
-                }
+                y:{ title:{display:true,text:unit} }
             }
         }
     });
@@ -523,11 +485,7 @@ async function loadData(){
             voltChart
         ];
 
-        if(errors.length){
-            msg.innerText = errors.join(" / ");
-        }else{
-            msg.innerText = "";
-        }
+        msg.innerText = errors.length ? errors.join(" / ") : "";
 
     }catch(e){
         msg.innerText = "画面側エラー：" + e.message;
