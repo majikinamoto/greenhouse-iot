@@ -10,7 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0"></script>
 
 <style>
-body { font-family: sans-serif; margin:20px; }
+body {
+    font-family: sans-serif;
+    margin:20px;
+    overflow-y:auto;
+}
+
 .box { margin:10px 0; }
 button { margin:5px; }
 
@@ -88,6 +93,9 @@ user_id：
     <div>
         <h4>P02</h4>
         <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
+
+        <h4>水蒸気量・飽差（P01）</h4>
+        <div class="chart-container"><canvas id="vaporChart"></canvas></div>
     </div>
 
     <div>
@@ -100,7 +108,7 @@ user_id：
 <script>
 
 let tempChartP01, tempChartP02, tempChartP11;
-let diffChart, solarChart, voltChart;
+let diffChart, solarChart, voltChart, vaporChart;
 
 let allCharts = [];
 let syncingZoom = false;
@@ -155,6 +163,12 @@ function formatTime(value){
     const h = String(d.getHours()).padStart(2,"0");
     const m = String(d.getMinutes()).padStart(2,"0");
     return h + ":" + m;
+}
+
+function calcVapor(temp, hum){
+    const es = 6.1078 * Math.pow(10, (7.5 * temp) / (237.3 + temp));
+    const ea = es * hum / 100;
+    return 216.7 * (ea / (temp + 273.15));
 }
 
 function baseOptions(minTime,maxTime){
@@ -357,6 +371,50 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
     });
 }
 
+function createVaporChart(canvasId, parsed, minTime, maxTime){
+
+    return new Chart(document.getElementById(canvasId),{
+        type:"line",
+        data:{
+            datasets:[
+                {
+                    label:"水蒸気量 (g/㎥)",
+                    data:parsed
+                        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+                        .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)})),
+                    borderColor:"rgb(75, 192, 192)",
+                    backgroundColor:"rgba(75, 192, 192, 0.15)",
+                    pointBackgroundColor:"rgb(75, 192, 192)",
+                    pointRadius:2,
+                    borderWidth:2,
+                    tension:0.2
+                },
+                {
+                    label:"飽差 (g/㎥)",
+                    data:parsed
+                        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+                        .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
+                    borderColor:"rgb(255, 159, 64)",
+                    backgroundColor:"rgba(255, 159, 64, 0.15)",
+                    pointBackgroundColor:"rgb(255, 159, 64)",
+                    pointRadius:2,
+                    borderWidth:2,
+                    tension:0.2
+                }
+            ]
+        },
+        options:{
+            ...baseOptions(minTime,maxTime),
+            scales:{
+                ...baseOptions(minTime,maxTime).scales,
+                y:{
+                    title:{display:true,text:"g/㎥"}
+                }
+            }
+        }
+    });
+}
+
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     const p02Map = new Map(
@@ -552,6 +610,8 @@ async function loadData(){
         tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
         tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
 
+        vaporChart = createVaporChart("vaporChart", p01, minTime, now);
+
         diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
         solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
@@ -561,6 +621,7 @@ async function loadData(){
             tempChartP01,
             tempChartP02,
             tempChartP11,
+            vaporChart,
             diffChart,
             solarChart,
             voltChart
