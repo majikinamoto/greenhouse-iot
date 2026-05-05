@@ -18,8 +18,8 @@
     right:0;
     z-index:1000;
 
-    background:#eef3f1;   /* ←ここが背景色（好きに変えてOK） */
-    border-bottom:1px solid #ddd;  /* ←区切りライン */
+    background:#eef3f1;
+    border-bottom:1px solid #ddd;
 
     padding:10px 20px;
 }
@@ -75,7 +75,7 @@ body {
     font-family: sans-serif;
     margin:20px;
     overflow-y:auto;
-    padding-top:95px;
+    padding-top:190px;
 }
 
 .box { margin:10px 0; }
@@ -86,7 +86,7 @@ button { margin:5px; }
     flex-wrap:wrap;
     gap:12px;
     align-items:flex-start;
-    justify-content:flex-start;  /* ← 左寄せ */
+    justify-content:flex-start;
 }
 
 .grid > div {
@@ -114,9 +114,15 @@ button { margin:5px; }
     background:rgba(0,0,0,0.03);
 }
 
-@media (max-width: 1100px) {
-    .grid { grid-template-columns: 1fr; }
-    .chart-container { width:100%; }
+@media (max-width: 600px) {
+    .grid > div {
+        width:100%;
+    }
+
+    .chart-container {
+        min-width:0;
+        width:100%;
+    }
 }
 </style>
 </head>
@@ -153,8 +159,6 @@ user_id：
 
 </div>
 
-
-
 <h3>温度・湿度</h3>
 
 <div class="grid">
@@ -162,23 +166,31 @@ user_id：
     <div>
         <h4>ハウス内_P01</h4>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
-
-        <h4>屋外_P11</h4>
-        <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
-
-        <h4>日射（P11）</h4>
-        <div class="chart-container"><canvas id="solarChart"></canvas></div>
-
-        <h4>電圧（P11）</h4>
-        <div class="chart-container"><canvas id="voltChart"></canvas></div>
     </div>
 
     <div>
         <h4>ハウス内_P02</h4>
         <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
+    </div>
 
+    <div>
+        <h4>屋外_P11</h4>
+        <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
+    </div>
+
+    <div>
         <h4>水蒸気量・飽差（P01）</h4>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4>日射（P11）</h4>
+        <div class="chart-container"><canvas id="solarChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4>CO2</h4>
+        <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
     <div>
@@ -186,12 +198,17 @@ user_id：
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
     </div>
 
+    <div>
+        <h4>電圧（P11）</h4>
+        <div class="chart-container"><canvas id="voltChart"></canvas></div>
+    </div>
+
 </div>
 
 <script>
 
 let tempChartP01, tempChartP02, tempChartP11;
-let diffChart, solarChart, voltChart, vaporChart;
+let diffChart, solarChart, voltChart, vaporChart, co2Chart;
 
 let allCharts = [];
 let syncingZoom = false;
@@ -390,6 +407,7 @@ function parseData(data, minTime){
             xValue:date.getTime(),
             temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
             hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
+            co2:d.CO2 !== null && d.CO2 !== undefined ? Number(d.CO2) : null,
             solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
             volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
         };
@@ -576,6 +594,11 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         bg = "rgba(255, 205, 86, 0.2)";
     }
 
+    if(key === "co2"){
+        color = "rgb(100, 100, 100)";
+        bg = "rgba(100, 100, 100, 0.15)";
+    }
+
     if(key === "volt"){
         color = "rgb(201, 203, 207)";
         bg = "rgba(201, 203, 207, 0.2)";
@@ -695,9 +718,11 @@ async function loadData(){
 
         vaporChart = createVaporChart("vaporChart", p01, minTime, now);
 
+        solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
+        co2Chart = createSingleChart("co2Chart", p11, "co2", "CO2", "ppm", minTime, now);
+
         diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
-        solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
         voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
 
         allCharts = [
@@ -705,8 +730,9 @@ async function loadData(){
             tempChartP02,
             tempChartP11,
             vaporChart,
-            diffChart,
             solarChart,
+            co2Chart,
+            diffChart,
             voltChart
         ];
 
