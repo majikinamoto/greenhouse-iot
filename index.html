@@ -11,6 +11,18 @@
 
 <style>
 
+.fixed-header {
+    position:fixed;
+    top:20px;
+    left:20px;
+    right:20px;
+    z-index:1000;
+    background:white;
+    padding-bottom:10px;
+}
+
+
+
 .logo-header {
     display:flex;
     align-items:center;
@@ -22,11 +34,7 @@
     border:1px solid rgba(0,0,0,0.08);
     max-width:100%;
 
-    position:fixed;
-    top:20px;
-    left:20px;
-    right:20px;
-    z-index:1000;
+
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -110,6 +118,8 @@ button { margin:5px; }
 
 <body>
 
+<div class="fixed-header">
+
 <header class="logo-header">
     <div class="logo-mark">
         <span class="logo-u">U</span>
@@ -135,6 +145,18 @@ user_id：
 <div class="status-box">前日最高（P01）：<span id="yMax">-</span>℃</div>
 <div class="status-box">前日最低（P01）：<span id="yMin">-</span>℃</div>
 </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
 
 <h3>温度・湿度</h3>
 
