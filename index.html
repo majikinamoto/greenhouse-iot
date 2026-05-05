@@ -91,6 +91,17 @@ button { margin:5px; }
 
 .grid > div {
     width:500px;
+    border:2px solid #b8d8cf;
+    background:#fbfdfc;
+    padding:10px;
+    box-sizing:border-box;
+}
+
+.grid h4 {
+    margin:0 0 8px 0;
+    padding:6px 8px;
+    background:#eef3f1;
+    border-left:5px solid #1f8f5f;
 }
 
 .chart-container {
@@ -236,7 +247,7 @@ const midnightLinePlugin = {
 
         const ctx = chart.ctx;
         ctx.save();
-        ctx.strokeStyle = "rgba(0,0,0,0.25)";
+        ctx.strokeStyle = "rgba(0,0,0,0.28)";
         ctx.lineWidth = 1;
 
         while(d.getTime() <= max){
@@ -262,7 +273,14 @@ function formatTime(value){
     const d = new Date(value);
     const h = String(d.getHours()).padStart(2,"0");
     const m = String(d.getMinutes()).padStart(2,"0");
-    return h + ":" + m;
+    return h + "時" + m + "分";
+}
+
+function formatTimeTick(value){
+    const d = new Date(value);
+    const h = String(d.getHours()).padStart(2,"0");
+    const m = String(d.getMinutes()).padStart(2,"0");
+    return [h + "時", m + "分"];
 }
 
 function calcVapor(temp, hum){
@@ -316,9 +334,12 @@ function baseOptions(minTime,maxTime){
                 type:"linear",
                 min:minTime.getTime(),
                 max:maxTime.getTime(),
+                grid:{
+                    drawOnChartArea:false
+                },
                 ticks:{
                     callback:function(value){
-                        return formatTime(value);
+                        return formatTimeTick(value);
                     },
                     maxRotation:0,
                     autoSkip:true
