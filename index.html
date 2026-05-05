@@ -267,23 +267,67 @@ const midnightLinePlugin = {
     }
 };
 
-Chart.register(midnightLinePlugin);
+const pointLabelPlugin = {
+    id:"pointLabelPlugin",
+    afterDatasetsDraw(chart){
+        const active = chart.tooltip && chart.tooltip.getActiveElements
+            ? chart.tooltip.getActiveElements()
+            : [];
 
-function formatFullDateTime(value){
+        if(!active.length) return;
+
+        const ctx = chart.ctx;
+        ctx.save();
+
+        active.forEach(activePoint=>{
+            const datasetIndex = activePoint.datasetIndex;
+            const index = activePoint.index;
+            const dataset = chart.data.datasets[datasetIndex];
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const point = meta.data[index];
+
+            if(!point || !dataset || !dataset.data[index]) return;
+
+            const value = dataset.data[index].y;
+
+            if(value === null || value === undefined || isNaN(value)) return;
+
+            const text = dataset.label + "：" + Number(value).toFixed(2);
+
+            const x = point.x + 8;
+            const y = point.y - 8;
+
+            ctx.font = "12px sans-serif";
+            const width = ctx.measureText(text).width + 10;
+
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            ctx.fillRect(x, y - 16, width, 20);
+
+            ctx.strokeStyle = "rgba(0,0,0,0.25)";
+            ctx.strokeRect(x, y - 16, width, 20);
+
+            ctx.fillStyle = "#222";
+            ctx.fillText(text, x + 5, y - 2);
+        });
+
+        ctx.restore();
+    }
+};
+
+Chart.register(midnightLinePlugin, pointLabelPlugin);
+
+function formatTime(value){
     const d = new Date(value);
-    const y = d.getFullYear();
-    const mo = String(d.getMonth() + 1).padStart(2,"0");
-    const da = String(d.getDate()).padStart(2,"0");
     const h = String(d.getHours()).padStart(2,"0");
     const m = String(d.getMinutes()).padStart(2,"0");
-    return y + "年" + mo + "月" + da + "日 " + h + "時" + m + "分";
+    return h + "時" + m + "分";
 }
 
-function formatDateHourTick(value){
+function formatTimeTick(value){
     const d = new Date(value);
-    const da = String(d.getDate()).padStart(2,"0");
     const h = String(d.getHours()).padStart(2,"0");
-    return [da + "日", h + "時"];
+    const m = String(d.getMinutes()).padStart(2,"0");
+    return [h + "時", m + "分"];
 }
 
 function calcVapor(temp, hum){
@@ -297,10 +341,7 @@ function baseOptions(minTime,maxTime){
         parsing:false,
         responsive:true,
         maintainAspectRatio:false,
-        interaction:{
-            mode:"nearest",
-            intersect:false
-        },
+        interaction:{mode:"index",intersect:false},
         plugins:{
             zoom:{
                 zoom:{
@@ -311,7 +352,9 @@ function baseOptions(minTime,maxTime){
                     onZoomComplete({chart}){ syncZoom(chart); }
                 },
                 pan:{
-                    enabled:false
+                    enabled:true,
+                    mode:"x",
+                    onPanComplete({chart}){ syncZoom(chart); }
                 }
             },
             crosshair:{
@@ -325,22 +368,10 @@ function baseOptions(minTime,maxTime){
                 snap:{enabled:false}
             },
             tooltip:{
-                mode:"nearest",
-                intersect:false,
                 callbacks:{
                     title(items){
                         if(!items.length) return "";
-                        return formatFullDateTime(items[0].parsed.x);
-                    },
-                    label(item){
-                        const label = item.dataset.label || "";
-                        const value = item.parsed.y;
-
-                        if(value === null || value === undefined || isNaN(value)){
-                            return label + "：-";
-                        }
-
-                        return label + "：" + Number(value).toFixed(2);
+                        return formatTime(items[0].parsed.x);
                     }
                 }
             }
@@ -355,7 +386,7 @@ function baseOptions(minTime,maxTime){
                 },
                 ticks:{
                     callback:function(value){
-                        return formatDateHourTick(value);
+                        return formatTimeTick(value);
                     },
                     maxRotation:0,
                     autoSkip:true
