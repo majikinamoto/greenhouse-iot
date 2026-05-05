@@ -370,19 +370,10 @@ interaction:{
                 zoom:{enabled:false},
                 snap:{enabled:false}
             },
-tooltip:{
-    enabled:true,
-    mode:"index",
-    intersect:false,
-    displayColors:false,
-    callbacks:{
-        label: function(){ return null; },
-        title(items){
-            if(!items.length) return "";
-            return formatFullDateTime(items[0].parsed.x);
-        }
-    }
-},
+            tooltip:{
+                mode:"index",
+                intersect:false,
+                callbacks:{
                     title(items){
                         if(!items.length) return "";
                         return formatTime(items[0].parsed.x);
