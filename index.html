@@ -341,7 +341,10 @@ function baseOptions(minTime,maxTime){
         parsing:false,
         responsive:true,
         maintainAspectRatio:false,
-        interaction:{mode:"index",intersect:false},
+interaction:{
+    mode:"index",
+    intersect:false
+},
         plugins:{
             zoom:{
                 zoom:{
@@ -368,6 +371,8 @@ function baseOptions(minTime,maxTime){
                 snap:{enabled:false}
             },
             tooltip:{
+                mode:"index",
+                intersect:false,
                 callbacks:{
                     title(items){
                         if(!items.length) return "";
