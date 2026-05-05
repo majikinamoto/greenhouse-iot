@@ -24,7 +24,6 @@
     padding:10px 20px;
 }
 
-
 .logo-header {
     display:flex;
     align-items:center;
@@ -83,10 +82,15 @@ body {
 button { margin:5px; }
 
 .grid {
-    display:grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display:flex;
+    flex-wrap:wrap;
     gap:12px;
-    align-items:start;
+    align-items:flex-start;
+    justify-content:flex-start;  /* ← 左寄せ */
+}
+
+.grid > div {
+    width:200px;
 }
 
 .chart-container {
@@ -148,14 +152,6 @@ user_id：
 </div>
 
 </div>
-
-
-
-
-
-
-
-
 
 
 
