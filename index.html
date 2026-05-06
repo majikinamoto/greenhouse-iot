@@ -419,15 +419,18 @@ pan:{
                 snap:{enabled:false}
             },
             tooltip:{
-                mode:"index",
-                intersect:false,
-                callbacks:{
-                    title(items){
-                        if(!items.length) return "";
-                        return formatTime(items[0].parsed.x);
-                    }
-                }
-            }
+    mode:"index",
+    intersect:false,
+    callbacks:{
+        title(items){
+            if(!items.length) return "";
+            return formatTime(items[0].parsed.x);
+        },
+        label(){
+            return "";
+        }
+    }
+}
         },
         scales:{
             x:{
