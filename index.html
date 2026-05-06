@@ -316,7 +316,7 @@ const pointLabelPlugin = {
 
             if(value === null || value === undefined || isNaN(value)) return;
 
-            const text = dataset.label + "：" + Number(value).toFixed(1            );
+            const text = dataset.label + "：" + Number(value).toFixed(1);
 
 ctx.font = "12px sans-serif";
 
@@ -705,13 +705,19 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                y:{
-                    min:-5,
-                    max:5,
-                    ticks:{stepSize:1},
-                    title:{display:true,text:"差"}
-                }
-            }
+y:{
+    min:-5,
+    max:5,
+    ticks:{
+        stepSize:1,
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"差",
+        color:"#000"
+    }
+}        }
         }
     });
 }
@@ -756,9 +762,16 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                y:{
-                    title:{display:true,text:unit}
-                }
+             y:{
+    ticks:{
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:unit,
+        color:"#000"
+    }
+}
             }
         }
     });
