@@ -294,20 +294,44 @@ const pointLabelPlugin = {
 
             const text = dataset.label + "：" + Number(value).toFixed(2);
 
-            const x = point.x + 8;
-            const y = point.y - 8;
+ctx.font = "12px sans-serif";
 
-            ctx.font = "12px sans-serif";
-            const width = ctx.measureText(text).width + 10;
+const width = ctx.measureText(text).width + 10;
+const height = 20;
 
-            ctx.fillStyle = "rgba(255,255,255,0.9)";
-            ctx.fillRect(x, y - 16, width, 20);
+let x = point.x + 8;
+let y = point.y - 8;
 
-            ctx.strokeStyle = "rgba(0,0,0,0.25)";
-            ctx.strokeRect(x, y - 16, width, 20);
+const chartArea = chart.chartArea;
 
-            ctx.fillStyle = "#222";
-            ctx.fillText(text, x + 5, y - 2);
+/* 右にはみ出す場合は、左側に表示 */
+if(x + width > chartArea.right){
+    x = point.x - width - 8;
+}
+
+/* 左にはみ出す場合は、左端に寄せる */
+if(x < chartArea.left){
+    x = chartArea.left + 2;
+}
+
+/* 上にはみ出す場合は、少し下に表示 */
+if(y - height < chartArea.top){
+    y = point.y + height;
+}
+
+/* 下にはみ出す場合は、少し上に表示 */
+if(y > chartArea.bottom){
+    y = chartArea.bottom - 2;
+}
+
+ctx.fillStyle = "rgba(255,255,255,0.92)";
+ctx.fillRect(x, y - height, width, height);
+
+ctx.strokeStyle = "rgba(0,0,0,0.25)";
+ctx.strokeRect(x, y - height, width, height);
+
+ctx.fillStyle = "#222";
+ctx.fillText(text, x + 5, y - 5);
         });
 
         ctx.restore();
@@ -354,11 +378,9 @@ interaction:{
                     mode:"x",
                     onZoomComplete({chart}){ syncZoom(chart); }
                 },
-                pan:{
-                    enabled:true,
-                    mode:"x",
-                    onPanComplete({chart}){ syncZoom(chart); }
-                }
+pan:{
+    enabled:false
+}
             },
             crosshair:{
                 line:{color:"#000",width:1},
