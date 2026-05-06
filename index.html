@@ -406,7 +406,13 @@ interaction:{
                 zoom:{
                     wheel:{enabled:true},
                     pinch:{enabled:true},
-                    drag:{enabled:true},
+                    drag:{
+    enabled:true,
+    backgroundColor:"rgba(30,120,255,0.35)",
+    borderColor:"rgba(30,120,255,0.8)",
+    borderWidth:1
+},
+
                     mode:"xy",
                     onZoomComplete({chart}){ syncZoom(chart); }
                 },
