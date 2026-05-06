@@ -292,7 +292,7 @@ const pointLabelPlugin = {
 
             if(value === null || value === undefined || isNaN(value)) return;
 
-            const text = dataset.label + "：" + Number(value).toFixed(2);
+            const text = dataset.label + "：" + Number(value).toFixed(1            );
 
 ctx.font = "12px sans-serif";
 
@@ -324,13 +324,10 @@ if(y > chartArea.bottom){
     y = chartArea.bottom - 2;
 }
 
-ctx.fillStyle = "rgba(255,255,255,0.92)";
+ctx.fillStyle = "rgba(255,255,255,0.85)";
 ctx.fillRect(x, y - height, width, height);
 
-ctx.strokeStyle = "rgba(0,0,0,0.25)";
-ctx.strokeRect(x, y - height, width, height);
-
-ctx.fillStyle = "#222";
+ctx.fillStyle = "#000";
 ctx.fillText(text, x + 5, y - 5);
         });
 
