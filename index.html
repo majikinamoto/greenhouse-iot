@@ -231,6 +231,30 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
 });
 
+const chartBackgroundPlugin = {
+    id: 'chartBackgroundPlugin',
+    beforeDraw(chart) {
+
+        const ctx = chart.ctx;
+        const chartArea = chart.chartArea;
+
+        if (!chartArea) return;
+
+        ctx.save();
+
+        ctx.fillStyle = "#ffffff";
+
+        ctx.fillRect(
+            chartArea.left,
+            chartArea.top,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - chartArea.top
+        );
+
+        ctx.restore();
+    }
+};
+
 const midnightLinePlugin = {
     id:"midnightLinePlugin",
     afterDraw(chart){
@@ -335,8 +359,11 @@ ctx.fillText(text, x + 5, y - 5);
     }
 };
 
-Chart.register(midnightLinePlugin, pointLabelPlugin);
-
+Chart.register(
+    chartBackgroundPlugin,
+    midnightLinePlugin,
+    pointLabelPlugin
+);
 function formatTime(value){
     const d = new Date(value);
     const h = String(d.getHours()).padStart(2,"0");
@@ -408,12 +435,14 @@ pan:{
                 grid:{
                     drawOnChartArea:false
                 },
-                ticks:{
-                    callback:function(value){
-                        return formatTimeTick(value);
-                    },
-                    maxRotation:0,
-                    autoSkip:true
+ticks:{
+    color:"#000",
+    callback:function(value){
+        return formatTimeTick(value);
+    },
+    maxRotation:0,
+    autoSkip:true
+}
                 }
             }
         }
@@ -552,12 +581,14 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
                     min:50,
                     max:100,
                     ticks:{stepSize:10}
+                    color:"#000"
                 },
                 yTemp:{
                     position:"right",
                     min:10,
                     max:60,
                     ticks:{stepSize:10}
+                    color:"#000"
                 }
             }
         }
@@ -601,7 +632,8 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
                 y:{
-                    title:{display:true,text:"g/㎥"}
+                    title:{display:true,text:"g/㎥"},
+                    color:"#000"
                 }
             }
         }
