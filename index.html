@@ -443,7 +443,7 @@ ticks:{
     maxRotation:0,
     autoSkip:true
 }
-                }
+                
             }
         }
     };
@@ -576,21 +576,24 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                yHum:{
-                    position:"left",
-                    min:50,
-                    max:100,
-                    ticks:{stepSize:10}
-                    color:"#000"
-                },
-                yTemp:{
-                    position:"right",
-                    min:10,
-                    max:60,
-                    ticks:{stepSize:10}
-                    color:"#000"
-                }
-            }
+yHum:{
+    position:"left",
+    min:50,
+    max:100,
+    ticks:{
+        stepSize:10,
+        color:"#000"
+    }
+},
+yTemp:{
+    position:"right",
+    min:10,
+    max:60,
+    ticks:{
+        stepSize:10,
+        color:"#000"
+    }
+}            }
         }
     });
 }
@@ -631,11 +634,16 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-                y:{
-                    title:{display:true,text:"g/㎥"},
-                    color:"#000"
-                }
-            }
+y:{
+    ticks:{
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"g/㎥",
+        color:"#000"
+    }
+}          }
         }
     });
 }
