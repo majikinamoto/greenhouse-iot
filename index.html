@@ -1,8 +1,12 @@
+// U-Tech Monitor http://163.43.29.108/
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>U-Tech Monitor</title>
+
+// Chart.js とプラグインをCDNから読み込む
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
@@ -196,27 +200,27 @@ user_id：
     </div>
 
     <div>
-        <h4>水蒸気量・飽差（P01）</h4>
+        <h4>水蒸気量・飽差_P01</h4>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
     </div>
 
     <div>
-        <h4>日射（P11）</h4>
+        <h4>日射_P31</h4>
         <div class="chart-container"><canvas id="solarChart"></canvas></div>
     </div>
 
     <div>
-        <h4>CO2</h4>
+        <h4>CO2_P21</h4>
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
     <div>
-        <h4>温度差・湿度差（P01−P02）</h4>
+        <h4>P01−P02_差</h4>
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
     </div>
 
     <div>
-        <h4>電圧（P11）</h4>
+        <h4>電圧_P91</h4>
         <div class="chart-container"><canvas id="voltChart"></canvas></div>
     </div>
 
