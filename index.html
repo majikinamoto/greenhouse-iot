@@ -823,18 +823,30 @@ async function loadData(){
         const minTime = new Date(now.getTime() - 72*60*60*1000);
 
         const results = await Promise.all([
-            fetchDataSafe(userId,"P01"),
-            fetchDataSafe(userId,"P02"),
-            fetchDataSafe(userId,"P11")
-        ]);
+    fetchDataSafe(userId,"P01"),
+    fetchDataSafe(userId,"P02"),
+    fetchDataSafe(userId,"P11"),
+    fetchDataSafe(userId,"P31"),
+    fetchDataSafe(userId,"P21"),
+    fetchDataSafe(userId,"P91")
+]);
 
         const resultP01 = results.find(r=>r.pointId === "P01");
         const resultP02 = results.find(r=>r.pointId === "P02");
         const resultP11 = results.find(r=>r.pointId === "P11");
+const resultP31 = results.find(r=>r.pointId === "P31");
+const resultP21 = results.find(r=>r.pointId === "P21");
+const resultP91 = results.find(r=>r.pointId === "P91");
 
         const p01 = parseData(resultP01.data, minTime);
         const p02 = parseData(resultP02.data, minTime);
         const p11 = parseData(resultP11.data, minTime);
+        const p31 = parseData(resultP31.data, minTime);
+const p21 = parseData(resultP21.data, minTime);
+const p91 = parseData(resultP91.data, minTime);
+
+
+
 
         const errors = results
             .filter(r=>r.error)
@@ -882,12 +894,12 @@ async function loadData(){
 
         vaporChart = createVaporChart("vaporChart", p01, minTime, now);
 
-        solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
-        co2Chart = createSingleChart("co2Chart", p11, "co2", "co2", "ppm", minTime, now);
+        solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", minTime, now);
+        co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", minTime, now);
 
         diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
-        voltChart = createSingleChart("voltChart", p11, "volt", "電圧", "V", minTime, now);
+        voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", minTime, now);
 
         allCharts = [
             tempChartP01,
