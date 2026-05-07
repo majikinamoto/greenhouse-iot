@@ -165,6 +165,20 @@ user_id：
 <button onclick="loadData()">表示</button>
 
 <button onclick="resetZoom()">ズームリセット</button>
+
+<br><br>
+
+温度軸：
+<input type="number" id="tempMin" value="10" style="width:70px;"> ～
+<input type="number" id="tempMax" value="60" style="width:70px;">
+
+&nbsp;&nbsp;
+
+湿度軸：
+<input type="number" id="humMin" value="50" style="width:70px;"> ～
+<input type="number" id="humMax" value="100" style="width:70px;">
+
+<button onclick="applyYAxis()">縦軸反映</button>
 </div>
 
 <div id="message" style="color:#666; margin:10px;"></div>
@@ -231,6 +245,12 @@ let diffChart, solarChart, voltChart, vaporChart, co2Chart;
 
 let allCharts = [];
 let syncingZoom = false;
+
+let tempMin = 10;
+let tempMax = 60;
+
+let humMin = 50;
+let humMax = 100;
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -626,8 +646,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
                 ...baseOptions(minTime,maxTime).scales,
 yHum:{
     position:"left",
-    min:50,
-    max:100,
+    min:humMin,
+    max:humMax,
     ticks:{
         stepSize:10,
         color:"#000"
@@ -635,8 +655,8 @@ yHum:{
 },
 yTemp:{
     position:"right",
-    min:10,
-    max:60,
+    min:tempMin,
+    max:tempMax,
     ticks:{
         stepSize:10,
         color:"#000"
@@ -972,6 +992,17 @@ function resetZoom(){
     allCharts.forEach(c=>{
         if(c) c.resetZoom();
     });
+}
+
+function applyYAxis(){
+
+    tempMin = Number(document.getElementById("tempMin").value);
+    tempMax = Number(document.getElementById("tempMax").value);
+
+    humMin = Number(document.getElementById("humMin").value);
+    humMax = Number(document.getElementById("humMax").value);
+
+    loadData();
 }
 
 </script>
