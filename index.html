@@ -669,21 +669,33 @@ y:{
 
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
-    const p02Map = new Map(
-        p02.map(d=>[
-            Math.floor(d.xValue/60000),
-            { temp:d.temp, hum:d.hum }
-        ])
-    );
-
     const tempDiffData = [];
-    const humDiffData = [];
+const humDiffData = [];
 
-    p01.forEach(d=>{
-        const key = Math.floor(d.xValue/60000);
-        const p02Data = p02Map.get(key);
+// P01の時刻に一番近いP02データを探す
+// ずれ許容：180秒以内
+const toleranceMs = 180 * 1000;
 
-        if(!p02Data) return;
+p01.forEach(d=>{
+
+    let nearestP02 = null;
+    let nearestDiff = Infinity;
+
+    p02.forEach(p=>{
+        const diff = Math.abs(d.xValue - p.xValue);
+
+        if(diff < nearestDiff){
+            nearestDiff = diff;
+            nearestP02 = p;
+        }
+    });
+
+    if(!nearestP02) return;
+
+    // 時刻差が大きすぎるものは使わない
+    if(nearestDiff > toleranceMs) return;
+
+    const p02Data = nearestP02;
 
         if(d.temp !== null && p02Data.temp !== null && !isNaN(d.temp) && !isNaN(p02Data.temp)){
             tempDiffData.push({ x:d.xValue, y:d.temp - p02Data.temp });
