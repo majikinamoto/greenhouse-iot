@@ -367,6 +367,34 @@ ctx.fillText(text, x + 5, y - 5);
     }
 };
 
+const vpdTargetZonePlugin = {
+    id:"vpdTargetZonePlugin",
+    beforeDatasetsDraw(chart){
+        if(chart.canvas.id !== "vaporChart") return;
+
+        const yScale = chart.scales.y;
+        const chartArea = chart.chartArea;
+
+        if(!yScale || !chartArea) return;
+
+        const yTop = yScale.getPixelForValue(10);
+        const yBottom = yScale.getPixelForValue(5);
+
+        const ctx = chart.ctx;
+        ctx.save();
+
+        ctx.fillStyle = "rgba(120, 200, 120, 0.18)";
+        ctx.fillRect(
+            chartArea.left,
+            yTop,
+            chartArea.right - chartArea.left,
+            yBottom - yTop
+        );
+
+        ctx.restore();
+    }
+};
+
 Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
