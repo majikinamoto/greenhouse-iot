@@ -545,7 +545,7 @@ function parseData(data, minTime){
             xValue:date.getTime(),
             temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
             hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
-            co2:d.CO2 !== null && d.CO2 !== undefined ? Number(d.CO2) : null,
+            co2:d.co2 !== null && d.co2 !== undefined ? Number(d.co2) : null,
             solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
             volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
         };
@@ -881,7 +881,7 @@ async function loadData(){
         vaporChart = createVaporChart("vaporChart", p01, minTime, now);
 
         solarChart = createSingleChart("solarChart", p11, "solar", "日射", "日射", minTime, now);
-        co2Chart = createSingleChart("co2Chart", p11, "co2", "CO2", "ppm", minTime, now);
+        co2Chart = createSingleChart("co2Chart", p11, "co2", "co2", "ppm", minTime, now);
 
         diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
