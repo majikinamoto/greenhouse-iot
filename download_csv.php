@@ -57,7 +57,7 @@ $sql = "SELECT
         FROM measurements
         WHERE user_id = ?
           AND recorded_at BETWEEN ? AND ?
-        ORDER BY recorded_at ASC, point_id ASC";
+          ORDER BY point_id ASC, recorded_at ASC";
 
 $stmt = $conn->prepare($sql);
 
