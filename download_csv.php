@@ -8,14 +8,16 @@ if ($conn->connect_error) {
 
 $start = $_GET['start'] ?? '';
 $end   = $_GET['end'] ?? '';
+$user_id = $_GET['user_id'] ?? '';
 
-if (!$start || !$end) {
+
+if (!$user_id || !$start || !$end) {
     exit("パラメータ不足");
 }
 
 // 日付補正
-$start_dt = $start . " 00:00:00";
-$end_dt   = $end   . " 23:59:59";
+$start_dt = str_replace("T", " ", $start) . ":00";
+$end_dt   = str_replace("T", " ", $end) . ":59";
 
 // ファイル名安全化
 $start_safe = preg_replace('/[^0-9\-]/', '', $start);
@@ -31,23 +33,78 @@ echo "\xEF\xBB\xBF";
 
 $output = fopen('php://output', 'w');
 
-// ヘッダー
-fputcsv($output, ['日時', '温度', '湿度']);
+// CSVヘッダー
+fputcsv($output, [
+    '日時',
+    'user_id',
+    'point_id',
+    '温度',
+    '湿度',
+    'CO2',
+    '日射',
+    '電圧',
+    '飽和水蒸気量',
+    '水蒸気量',
+    '飽差'
+]);
 
 $sql = "SELECT
             DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') as recorded_at,
+            user_id,
+            point_id,
             temperature,
-            humidity
+            humidity,
+            CO2,
+            solar_radiation,
+            voltage
         FROM measurements
-        WHERE recorded_at BETWEEN ? AND ?
+        WHERE user_id = ?
+          AND recorded_at BETWEEN ? AND ?
         ORDER BY recorded_at ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $start_dt, $end_dt);
+$stmt->bind_param("sss", $user_id, $start_dt, $end_dt);
 $stmt->execute();
 $result = $stmt->get_result();
 
 while ($row = $result->fetch_assoc()) {
+
+    $sat = "";
+    $vapor = "";
+    $vpd = "";
+
+    if ($row["temperature"] !== null && $row["humidity"] !== null) {
+
+        $temp = floatval($row["temperature"]);
+        $hum  = floatval($row["humidity"]);
+
+        $es = 6.1078 * pow(10, (7.5 * $temp) / (237.3 + $temp));
+
+        $ea = $es * $hum / 100;
+
+        $sat =
+            216.7 * (($es) / ($temp + 273.15));
+
+        $vapor =
+            216.7 * (($ea) / ($temp + 273.15));
+
+        $vpd = $sat - $vapor;
+    }
+
+    fputcsv($output, [
+        $row["recorded_at"],
+        $row["user_id"],
+        $row["point_id"],
+        $row["temperature"],
+        $row["humidity"],
+        $row["CO2"],
+        $row["solar_radiation"],
+        $row["voltage"],
+        round($sat, 3),
+        round($vapor, 3),
+        round($vpd, 3)
+    ]);
+}
     fputcsv($output, $row);
 }
 

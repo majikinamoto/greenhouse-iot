@@ -183,6 +183,16 @@ user_id：
 
 
 <button onclick="applyYAxis()">縦軸反映</button>
+
+<br><br>
+
+CSV期間：
+<input type="datetime-local" id="csvStart">
+～
+<input type="datetime-local" id="csvEnd">
+
+<button onclick="downloadCSV()">CSVダウンロード</button>
+
 </div>
 
 <div id="message" style="color:#666; margin:10px;"></div>
@@ -562,7 +572,7 @@ pan:{
 
             maxRotation:0,
             autoSkip:true,
-            maxTicksLimit:6
+            maxTicksLimit:8
         
                 }
             }
@@ -1072,6 +1082,31 @@ function applyYAxis(){
     humMax = Number(document.getElementById("humMax").value);
 
     loadData();
+}
+
+function downloadCSV(){
+
+    const userId = document.getElementById("userId").value.trim();
+    const start = document.getElementById("csvStart").value;
+    const end = document.getElementById("csvEnd").value;
+
+    if(!userId){
+        alert("user_id を入力してください");
+        return;
+    }
+
+    if(!start || !end){
+        alert("開始日時と終了日時を入力してください");
+        return;
+    }
+
+    const url =
+        "download_csv.php"
+        + "?user_id=" + encodeURIComponent(userId)
+        + "&start=" + encodeURIComponent(start)
+        + "&end=" + encodeURIComponent(end);
+
+    window.open(url, "_blank");
 }
 
 </script>
