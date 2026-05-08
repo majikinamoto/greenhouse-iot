@@ -37,6 +37,15 @@ function calcVapor($temp, $hum) {
     return 216.7 * ($ea / ($temp + 273.15));
 }
 
+$points = [
+    "P01" => [],
+    "P02" => [],
+    "P11" => [],
+    "P21" => [],
+    "P31" => [],
+    "P91" => []
+];
+
 $sql = "SELECT
             DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at,
             point_id,
@@ -48,7 +57,7 @@ $sql = "SELECT
         FROM measurements
         WHERE user_id = ?
           AND recorded_at BETWEEN ? AND ?
-        ORDER BY recorded_at ASC, point_id ASC";
+        ORDER BY point_id ASC, recorded_at ASC";
 
 $stmt = $conn->prepare($sql);
 
@@ -60,34 +69,19 @@ $stmt->bind_param("sss", $user_id, $start_dt, $end_dt);
 $stmt->execute();
 $result = $stmt->get_result();
 
-$rows = [];
-
 while ($row = $result->fetch_assoc()) {
 
-    $time = $row["recorded_at"];
     $point = $row["point_id"];
 
-    if (!isset($rows[$time])) {
-        $rows[$time] = [
-            "日時" => $time,
-            "P01_温度" => "",
-            "P01_湿度" => "",
-            "P01_飽和水蒸気量" => "",
-            "P01_水蒸気量" => "",
-            "P01_飽差" => "",
-            "P02_温度" => "",
-            "P02_湿度" => "",
-            "P11_温度" => "",
-            "P11_湿度" => "",
-            "P21_CO2" => "",
-            "P31_日射" => "",
-            "P91_電圧" => ""
-        ];
+    if (!isset($points[$point])) {
+        continue;
     }
 
     if ($point === "P01") {
-        $rows[$time]["P01_温度"] = $row["temperature"];
-        $rows[$time]["P01_湿度"] = $row["humidity"];
+
+        $sat = "";
+        $vapor = "";
+        $vpd = "";
 
         if ($row["temperature"] !== null && $row["humidity"] !== null) {
             $temp = floatval($row["temperature"]);
@@ -96,56 +90,105 @@ while ($row = $result->fetch_assoc()) {
             $sat = calcVapor($temp, 100);
             $vapor = calcVapor($temp, $hum);
             $vpd = $sat - $vapor;
-
-            $rows[$time]["P01_飽和水蒸気量"] = round($sat, 3);
-            $rows[$time]["P01_水蒸気量"] = round($vapor, 3);
-            $rows[$time]["P01_飽差"] = round($vpd, 3);
         }
+
+        $points["P01"][] = [
+            $row["recorded_at"],
+            $row["temperature"],
+            $row["humidity"],
+            $sat === "" ? "" : round($sat, 3),
+            $vapor === "" ? "" : round($vapor, 3),
+            $vpd === "" ? "" : round($vpd, 3)
+        ];
     }
 
     if ($point === "P02") {
-        $rows[$time]["P02_温度"] = $row["temperature"];
-        $rows[$time]["P02_湿度"] = $row["humidity"];
+        $points["P02"][] = [
+            $row["recorded_at"],
+            $row["temperature"],
+            $row["humidity"]
+        ];
     }
 
     if ($point === "P11") {
-        $rows[$time]["P11_温度"] = $row["temperature"];
-        $rows[$time]["P11_湿度"] = $row["humidity"];
+        $points["P11"][] = [
+            $row["recorded_at"],
+            $row["temperature"],
+            $row["humidity"]
+        ];
     }
 
     if ($point === "P21") {
-        $rows[$time]["P21_CO2"] = $row["CO2"];
+        $points["P21"][] = [
+            $row["recorded_at"],
+            $row["CO2"]
+        ];
     }
 
     if ($point === "P31") {
-        $rows[$time]["P31_日射"] = $row["solar_radiation"];
+        $points["P31"][] = [
+            $row["recorded_at"],
+            $row["solar_radiation"]
+        ];
     }
 
     if ($point === "P91") {
-        $rows[$time]["P91_電圧"] = $row["voltage"];
+        $points["P91"][] = [
+            $row["recorded_at"],
+            $row["voltage"]
+        ];
     }
 }
 
 $header = [
-    "日時",
+    "P01_日時",
     "P01_温度",
     "P01_湿度",
     "P01_飽和水蒸気量",
     "P01_水蒸気量",
     "P01_飽差",
+
+    "P02_日時",
     "P02_温度",
     "P02_湿度",
+
+    "P11_日時",
     "P11_温度",
     "P11_湿度",
+
+    "P21_日時",
     "P21_CO2",
+
+    "P31_日時",
     "P31_日射",
+
+    "P91_日時",
     "P91_電圧"
 ];
 
 fputcsv($output, $header);
 
-foreach ($rows as $row) {
-    fputcsv($output, $row);
+$maxRows = max(
+    count($points["P01"]),
+    count($points["P02"]),
+    count($points["P11"]),
+    count($points["P21"]),
+    count($points["P31"]),
+    count($points["P91"])
+);
+
+for ($i = 0; $i < $maxRows; $i++) {
+
+    $line = [];
+
+    $line = array_merge($line, $points["P01"][$i] ?? ["", "", "", "", "", ""]);
+    $line = array_merge($line, $points["P02"][$i] ?? ["", "", ""]);
+    $line = array_merge($line, $points["P11"][$i] ?? ["", "", ""]);
+    $line = array_merge($line, $points["P21"][$i] ?? ["", ""]);
+    $line = array_merge($line, $points["P31"][$i] ?? ["", ""]);
+    $line = array_merge($line, $points["P91"][$i] ?? ["", ""]);
+
+    fputcsv($output, $line);
 }
 
 fclose($output);
