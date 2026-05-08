@@ -500,35 +500,7 @@ pan:{
 }
         },
         scales:{
-            x:{
-                type:"linear",
-                min:minTime.getTime(),
-                max:maxTime.getTime(),
-                grid:{
-                    drawOnChartArea:false
-                },
-ticks:{
-    color:"#000",
-
-    stepSize:30 * 60 * 1000, // 30分ピッチ
-
-    callback:function(value){
-        const d = new Date(value);
-        const m = d.getMinutes();
-
-        // 00分 または 30分 だけ表示
-        if(m !== 0 && m !== 30){
-            return "";
-        }
-
-        return formatTimeTick(value);
-    },
-
-    maxRotation:0,
-    autoSkip:true
-}
-                
-            }
+            
         }
     };
 }
