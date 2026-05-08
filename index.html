@@ -509,11 +509,18 @@ pan:{
                 },
 ticks:{
     color:"#000",
+
+    stepSize:30 * 60 * 1000, // 30分
+
     callback:function(value){
         return formatTimeTick(value);
     },
+
     maxRotation:0,
-    autoSkip:true
+
+    autoSkip:true,
+
+    maxTicksLimit:12
 }
                 
             }
