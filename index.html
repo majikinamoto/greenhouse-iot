@@ -500,9 +500,70 @@ pan:{
 }
         },
         scales:{
-            
+    x:{
+        type:"linear",
+        min:minTime.getTime(),
+        max:maxTime.getTime(),
+
+        grid:{
+            drawOnChartArea:false
+        },
+
+        afterBuildTicks:function(scale){
+            const min = scale.min;
+            const max = scale.max;
+            const range = max - min;
+
+            const interval =
+                range > 36 * 60 * 60 * 1000
+                ? 60 * 60 * 1000
+                : 30 * 60 * 1000;
+
+            const startDate = new Date(min);
+            startDate.setSeconds(0,0);
+
+            if(interval === 60 * 60 * 1000){
+                startDate.setMinutes(0,0,0);
+                if(startDate.getTime() < min){
+                    startDate.setHours(startDate.getHours() + 1);
+                }
+            }else{
+                const m = startDate.getMinutes();
+
+                if(m < 30){
+                    startDate.setMinutes(30,0,0);
+                }else{
+                    startDate.setHours(startDate.getHours() + 1);
+                    startDate.setMinutes(0,0,0);
+                }
+            }
+
+            const ticks = [];
+
+            for(let t = startDate.getTime(); t <= max; t += interval){
+                ticks.push({ value:t });
+            }
+
+            scale.ticks = ticks;
+        },
+
+        ticks:{
+            color:"#000",
+
+            callback:function(value, index, ticks){
+                const tickValue = ticks[index].value;
+
+                const d = new Date(tickValue);
+                const h = String(d.getHours()).padStart(2,"0");
+                const m = String(d.getMinutes()).padStart(2,"0");
+
+                return [h + "時", m + "分"];
+            },
+
+            maxRotation:0,
+            autoSkip:false
         }
-    };
+    }
 }
 
 function syncZoom(sourceChart){
