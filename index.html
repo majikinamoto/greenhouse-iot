@@ -676,6 +676,22 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
         type:"line",
         data:{
             datasets:[
+{
+    label:"飽和水蒸気量 (g/㎥)",
+    data:parsed
+        .filter(d=>d.temp !== null && !isNaN(d.temp))
+        .map(d=>({
+            x:d.xValue,
+            y:calcVapor(d.temp,100)
+        })),
+    borderColor:"rgb(255, 0, 0)",
+    backgroundColor:"rgba(255, 0, 0, 0.1)",
+    pointBackgroundColor:"rgb(255, 0, 0)",
+    pointRadius:0,
+    borderWidth:2,
+    tension:0.2
+},
+
                 {
                     label:"水蒸気量 (g/㎥)",
                     data:parsed
