@@ -354,41 +354,12 @@ const pointLabelPlugin = {
         if(args.event.type === "mouseout"){
             chart.$pointLabelActive = [];
         }else{
-            let active = chart.getElementsAtEventForMode(
-                args.event.native || args.event,
+            chart.$pointLabelActive = chart.getElementsAtEventForMode(
+                args.event,
                 "index",
                 { intersect:false },
                 false
             );
-
-            if(!active.length && chart.chartArea){
-                let nearestIndex = null;
-                let nearestDistance = Infinity;
-
-                chart.getSortedVisibleDatasetMetas().forEach(meta=>{
-                    meta.data.forEach((point, index)=>{
-                        if(!point || point.skip) return;
-
-                        const distance = Math.abs(point.x - args.event.x);
-
-                        if(distance < nearestDistance){
-                            nearestDistance = distance;
-                            nearestIndex = index;
-                        }
-                    });
-                });
-
-                if(nearestIndex !== null){
-                    active = chart.getSortedVisibleDatasetMetas()
-                        .filter(meta=>meta.data[nearestIndex] && !meta.data[nearestIndex].skip)
-                        .map(meta=>({
-                            datasetIndex:meta.index,
-                            index:nearestIndex
-                        }));
-                }
-            }
-
-            chart.$pointLabelActive = active;
         }
 
         args.changed = true;
