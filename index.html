@@ -450,8 +450,7 @@ const vpdTargetZonePlugin = {
 Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
-    vpdTargetZonePlugin,
-    pointLabelPlugin
+    vpdTargetZonePlugin
 );
 function formatTime(value){
     const d = new Date(value);
@@ -508,12 +507,13 @@ pan:{
                 sync:{
                     enabled:true,
                     group:1,
-                    suppressTooltips:false
+                    suppressTooltips:true
                 },
                 zoom:{enabled:false},
                 snap:{enabled:false}
             },
             tooltip:{
+    enabled:false,
     mode:"index",
     intersect:false,
     callbacks:{
