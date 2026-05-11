@@ -350,22 +350,8 @@ const midnightLinePlugin = {
 
 const pointLabelPlugin = {
     id:"pointLabelPlugin",
-    afterEvent(chart, args){
-        if(args.event.type === "mouseout"){
-            chart.$pointLabelActive = [];
-        }else{
-            chart.$pointLabelActive = chart.getElementsAtEventForMode(
-                args.event,
-                "index",
-                { intersect:false },
-                false
-            );
-        }
-
-        args.changed = true;
-    },
     afterDatasetsDraw(chart){
-        const active = chart.$pointLabelActive || [];
+        const active = chart.getActiveElements();
 
         if(!active.length) return;
 
