@@ -1,3 +1,4 @@
+@ -1,1079 +1,1114 @@
 <!-- U-Tech Monitor http://163.43.29.108/ -->
 
 <!DOCTYPE html>
@@ -572,6 +573,7 @@ pan:{
 
             maxRotation:0,
             autoSkip:true,
+            maxTicksLimit:6
             maxTicksLimit:8
         
                 }
@@ -922,14 +924,8 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
              y:{
-    min: key === 'volt' ? 0 : undefined,
     ticks:{
         color:"#000"
-        color:"#000",
-        callback: function(value) {
-            if (key === 'volt') return value.toFixed(1);
-            return value;
-        }
     },
     title:{
         display:true,
@@ -1118,4 +1114,3 @@ function downloadCSV(){
 </script>
 
 </body>
-</html>
