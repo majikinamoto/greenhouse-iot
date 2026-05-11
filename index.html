@@ -813,8 +813,8 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 const humDiffData = [];
 
 // P01の時刻に一番近いP02データを探す
-// ずれ許容：180秒以内
-const toleranceMs = 180 * 1000;
+// ずれ許容：6分（360秒）以内
+const toleranceMs = 360 * 1000;
 
 p01.forEach(d=>{
 
