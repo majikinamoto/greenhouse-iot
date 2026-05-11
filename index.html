@@ -351,7 +351,9 @@ const midnightLinePlugin = {
 const pointLabelPlugin = {
     id:"pointLabelPlugin",
     afterDatasetsDraw(chart){
-        const active = chart.getActiveElements();
+        const active = chart.tooltip && chart.tooltip.getActiveElements
+            ? chart.tooltip.getActiveElements()
+            : [];
 
         if(!active.length) return;
 
