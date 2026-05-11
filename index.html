@@ -373,7 +373,10 @@ const pointLabelPlugin = {
 
             if(value === null || value === undefined || isNaN(value)) return;
 
-            const text = dataset.label + "：" + Number(value).toFixed(1);
+            const labelMatch = dataset.label.match(/^(.+?)\s*\((.+)\)$/);
+            const labelName = labelMatch ? labelMatch[1] : dataset.label;
+            const unit = labelMatch ? " " + labelMatch[2] : "";
+            const text = formatTime(dataset.data[index].x) + " " + labelName + " " + Number(value).toFixed(1) + unit;
 
 ctx.font = "12px sans-serif";
 
