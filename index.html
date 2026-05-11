@@ -515,7 +515,16 @@ pan:{
             tooltip:{
     enabled:false,
     mode:"index",
-    intersect:false
+    intersect:false,
+    callbacks:{
+        title(items){
+            if(!items.length) return "";
+            return formatTime(items[0].parsed.x);
+        },
+        label(){
+            return "";
+        }
+    }
 }
         },
         scales:{
