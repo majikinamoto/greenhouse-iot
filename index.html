@@ -922,8 +922,14 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
              y:{
+    min: key === 'volt' ? 0 : undefined,
     ticks:{
         color:"#000"
+        color:"#000",
+        callback: function(value) {
+            if (key === 'volt') return value.toFixed(1);
+            return value;
+        }
     },
     title:{
         display:true,
