@@ -990,6 +990,7 @@ async function loadData(){
 
         const now = new Date();
         const minTime = new Date(now.getTime() - 72*60*60*1000);
+        const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
 
         const results = await Promise.all([
     fetchDataSafe(userId,"P01"),
@@ -1012,7 +1013,7 @@ const resultP91 = results.find(r=>r.pointId === "P91");
         const p11 = parseData(resultP11.data, minTime);
         const p31 = parseData(resultP31.data, minTime);
 const p21 = parseData(resultP21.data, minTime);
-const p91 = parseData(resultP91.data, minTime);
+const p91 = parseData(resultP91.data, voltMinTime);
 
 
 
@@ -1068,7 +1069,7 @@ const p91 = parseData(resultP91.data, minTime);
 
         diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
 
-        voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", minTime, now);
+        voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", voltMinTime, now);
 
         allCharts = [
             tempChartP01,
