@@ -453,6 +453,18 @@ Chart.register(
     vpdTargetZonePlugin,
     pointLabelPlugin
 );
+
+Chart.Tooltip.positioners.crosshairBottom = function(elements, eventPosition){
+    const chartArea = this.chart.chartArea;
+
+    return {
+        x:eventPosition.x,
+        y:chartArea.bottom,
+        xAlign:"center",
+        yAlign:"bottom"
+    };
+};
+
 function formatTime(value){
     const d = new Date(value);
     const mo = String(d.getMonth() + 1).padStart(2,"0");
@@ -514,6 +526,7 @@ pan:{
                 snap:{enabled:false}
             },
             tooltip:{
+    position:"crosshairBottom",
     mode:"index",
     intersect:false,
     callbacks:{
