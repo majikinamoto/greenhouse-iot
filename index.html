@@ -529,6 +529,9 @@ pan:{
     position:"crosshairBottom",
     backgroundColor:"rgba(0,0,0,0)",
     titleColor:"#000",
+    caretSize:0,
+    padding:0,
+    titleMarginBottom:0,
     mode:"index",
     intersect:false,
     callbacks:{
@@ -537,7 +540,7 @@ pan:{
             return formatTime(items[0].parsed.x);
         },
         label(){
-            return "";
+            return null;
         }
     }
 }
