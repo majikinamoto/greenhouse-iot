@@ -62,32 +62,38 @@ $result = $stmt->get_result();
 
 $rows = [];
 
+$data = [
+    "P01" => [],
+    "P02" => [],
+    "P11" => [],
+    "P21" => [],
+    "P31" => [],
+    "P91" => []
+];
+
 while ($row = $result->fetch_assoc()) {
 
-    $time = $row["recorded_at"];
     $point = $row["point_id"];
 
-    if (!isset($rows[$time])) {
-        $rows[$time] = [
-            "日時" => $time,
-            "P01_温度" => "",
-            "P01_湿度" => "",
-            "P01_飽和水蒸気量" => "",
-            "P01_水蒸気量" => "",
-            "P01_飽差" => "",
-            "P02_温度" => "",
-            "P02_湿度" => "",
-            "P11_温度" => "",
-            "P11_湿度" => "",
-            "P21_CO2" => "",
-            "P31_日射" => "",
-            "P91_電圧" => ""
-        ];
+    if (!isset($data[$point])) {
+        continue;
     }
 
+    $item = [
+        "日時" => $row["recorded_at"],
+        "温度" => "",
+        "湿度" => "",
+        "飽和水蒸気量" => "",
+        "水蒸気量" => "",
+        "飽差" => "",
+        "CO2" => "",
+        "日射" => "",
+        "電圧" => ""
+    ];
+
     if ($point === "P01") {
-        $rows[$time]["P01_温度"] = $row["temperature"];
-        $rows[$time]["P01_湿度"] = $row["humidity"];
+        $item["温度"] = $row["temperature"];
+        $item["湿度"] = $row["humidity"];
 
         if ($row["temperature"] !== null && $row["humidity"] !== null) {
             $temp = floatval($row["temperature"]);
@@ -97,55 +103,71 @@ while ($row = $result->fetch_assoc()) {
             $vapor = calcVapor($temp, $hum);
             $vpd = $sat - $vapor;
 
-            $rows[$time]["P01_飽和水蒸気量"] = round($sat, 3);
-            $rows[$time]["P01_水蒸気量"] = round($vapor, 3);
-            $rows[$time]["P01_飽差"] = round($vpd, 3);
+            $item["飽和水蒸気量"] = round($sat, 3);
+            $item["水蒸気量"] = round($vapor, 3);
+            $item["飽差"] = round($vpd, 3);
         }
     }
 
-    if ($point === "P02") {
-        $rows[$time]["P02_温度"] = $row["temperature"];
-        $rows[$time]["P02_湿度"] = $row["humidity"];
-    }
-
-    if ($point === "P11") {
-        $rows[$time]["P11_温度"] = $row["temperature"];
-        $rows[$time]["P11_湿度"] = $row["humidity"];
+    if ($point === "P02" || $point === "P11") {
+        $item["温度"] = $row["temperature"];
+        $item["湿度"] = $row["humidity"];
     }
 
     if ($point === "P21") {
-        $rows[$time]["P21_CO2"] = $row["CO2"];
+        $item["CO2"] = $row["CO2"];
     }
 
     if ($point === "P31") {
-        $rows[$time]["P31_日射"] = $row["solar_radiation"];
+        $item["日射"] = $row["solar_radiation"];
     }
 
     if ($point === "P91") {
-        $rows[$time]["P91_電圧"] = $row["voltage"];
+        $item["電圧"] = $row["voltage"];
     }
+
+    $data[$point][] = $item;
 }
 
 $header = [
-    "日時",
-    "P01_温度",
-    "P01_湿度",
-    "P01_飽和水蒸気量",
-    "P01_水蒸気量",
-    "P01_飽差",
-    "P02_温度",
-    "P02_湿度",
-    "P11_温度",
-    "P11_湿度",
-    "P21_CO2",
-    "P31_日射",
-    "P91_電圧"
+    "P01_日時", "P01_温度", "P01_湿度", "P01_飽和水蒸気量", "P01_水蒸気量", "P01_飽差",
+    "P02_日時", "P02_温度", "P02_湿度",
+    "P11_日時", "P11_温度", "P11_湿度",
+    "P21_日時", "P21_CO2",
+    "P31_日時", "P31_日射",
+    "P91_日時", "P91_電圧"
 ];
 
 fputcsv($output, $header);
 
-foreach ($rows as $row) {
-    fputcsv($output, $row);
+$max = max(
+    count($data["P01"]),
+    count($data["P02"]),
+    count($data["P11"]),
+    count($data["P21"]),
+    count($data["P31"]),
+    count($data["P91"])
+);
+
+for ($i = 0; $i < $max; $i++) {
+
+    $p01 = $data["P01"][$i] ?? null;
+    $p02 = $data["P02"][$i] ?? null;
+    $p11 = $data["P11"][$i] ?? null;
+    $p21 = $data["P21"][$i] ?? null;
+    $p31 = $data["P31"][$i] ?? null;
+    $p91 = $data["P91"][$i] ?? null;
+
+    $line = [
+        $p01["日時"] ?? "", $p01["温度"] ?? "", $p01["湿度"] ?? "", $p01["飽和水蒸気量"] ?? "", $p01["水蒸気量"] ?? "", $p01["飽差"] ?? "",
+        $p02["日時"] ?? "", $p02["温度"] ?? "", $p02["湿度"] ?? "",
+        $p11["日時"] ?? "", $p11["温度"] ?? "", $p11["湿度"] ?? "",
+        $p21["日時"] ?? "", $p21["CO2"] ?? "",
+        $p31["日時"] ?? "", $p31["日射"] ?? "",
+        $p91["日時"] ?? "", $p91["電圧"] ?? ""
+    ];
+
+    fputcsv($output, $line);
 }
 
 fclose($output);
