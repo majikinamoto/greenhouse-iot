@@ -176,7 +176,7 @@ button { margin:5px; }
 
 .status-group-title {
     width:100%;
-    font-size:12px;
+    font-size:13px;
     font-weight:800;
     color:#1f3d33;
     line-height:1;
@@ -188,7 +188,7 @@ button { margin:5px; }
 }
 
 .status-group-vertical {
-    width:170px;
+    width:155px;
 }
 
 .status-group-vertical .status-box {
@@ -199,7 +199,7 @@ button { margin:5px; }
 .status-group-current {
     border-left-color:#1f8f5f;
     background:#edf8f4;
-    max-width:330px;
+    max-width:310px;
 }
 
 .status-group-vapor {
@@ -220,7 +220,7 @@ button { margin:5px; }
 .status-group-average {
     border-left-color:#6b7280;
     background:#f3f4f6;
-    max-width:300px;
+    max-width:270px;
 }
 
 .average-box {
@@ -230,6 +230,7 @@ button { margin:5px; }
 .average-box span {
     display:block;
     margin-top:4px;
+    white-space:nowrap;
 }
 
 .status-box {
@@ -237,7 +238,7 @@ button { margin:5px; }
     padding:6px 8px;
     border-radius:6px;
     background:linear-gradient(180deg, #f4fbf8, #e4f3ef);
-    font-size:12px;
+    font-size:13px;
     font-weight:700;
     color:#1f3d33;
     box-shadow:0 2px 6px rgba(31, 143, 95, 0.18);
@@ -457,9 +458,9 @@ button { margin:5px; }
 </div>
 <div class="status-group status-group-average">
 <div class="status-group-title">移動平均（P01）</div>
-<div class="status-box average-box">72時間：<span id="avg72">-</span>℃</div>
-<div class="status-box average-box">48時間：<span id="avg48">-</span>℃</div>
-<div class="status-box average-box">24時間：<span id="avg24">-</span>℃</div>
+<div class="status-box average-box">72時間：<span><span id="avg72">-</span>℃</span></div>
+<div class="status-box average-box">48時間：<span><span id="avg48">-</span>℃</span></div>
+<div class="status-box average-box">24時間：<span><span id="avg24">-</span>℃</span></div>
 </div>
 </div>
 
