@@ -445,6 +445,16 @@ button { margin:5px; }
         flex:1;
     }
 
+    .status-group-current .status-box {
+        flex-basis:calc(50% - 3px);
+        white-space:nowrap;
+    }
+
+    .status-group-daily,
+    .status-group-average {
+        width:65%;
+    }
+
     .status-group-vertical .status-box {
         flex-basis:100%;
     }
@@ -456,6 +466,10 @@ button { margin:5px; }
     .status-subgroup .status-box {
         width:100%;
         flex:none;
+    }
+
+    .average-box {
+        min-width:0;
     }
 
     .grid {
