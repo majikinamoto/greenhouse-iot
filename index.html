@@ -1189,7 +1189,14 @@ function getTempHumAxis(pointId){
     };
 }
 
+function destroyExistingChart(canvasId){
+    const chart = Chart.getChart(canvasId);
+    if(chart) chart.destroy();
+}
+
 function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
+
+    destroyExistingChart(canvasId);
 
     const axis = getTempHumAxis(pointId);
 
@@ -1252,6 +1259,8 @@ yTemp:{
 }
 
 function createVaporChart(canvasId, parsed, minTime, maxTime){
+
+    destroyExistingChart(canvasId);
 
     const yAxisOptions = {
         ticks:{
@@ -1322,6 +1331,8 @@ yRight:createRightYAxis(yAxisOptions)
 }
 
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
+
+    destroyExistingChart(canvasId);
 
     const tempDiffData = [];
 const humDiffData = [];
@@ -1412,6 +1423,8 @@ yRight:createRightYAxis(yAxisOptions)
 
 function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
 
+    destroyExistingChart(canvasId);
+
     const tempDiffData = [];
     const toleranceMs = 360 * 1000;
     const yAxisOptions = {
@@ -1476,6 +1489,8 @@ yRight:createRightYAxis(yAxisOptions)
 }
 
 function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime){
+
+    destroyExistingChart(canvasId);
 
     let color = "rgb(153, 102, 255)";
     let bg = "rgba(153, 102, 255, 0.15)";
@@ -1707,6 +1722,21 @@ function destroyCharts(){
         if(c) c.destroy();
     });
     allCharts = [];
+
+    [
+        "tempChartP01",
+        "tempChartP02",
+        "tempChartP11",
+        "outsideDiffChart",
+        "vaporChart",
+        "solarChart",
+        "co2Chart",
+        "diffChart",
+        "voltChart"
+    ].forEach(canvasId=>{
+        const chart = Chart.getChart(canvasId);
+        if(chart) chart.destroy();
+    });
 }
 
 function resetZoom(){
