@@ -76,6 +76,15 @@ body {
 
 .box { margin:10px 0; }
 button { margin:5px; }
+
+.show-button {
+    background:#1f8f5f;
+    color:white;
+    border:1px solid #176b47;
+    border-radius:4px;
+    font-weight:700;
+}
+
 .control-panel {
     display:flex;
     flex-wrap:wrap;
@@ -296,7 +305,7 @@ button { margin:5px; }
                 onchange="if(this.value){ document.getElementById('userId').value = this.value; }">
             <option value="">履歴</option>
         </select>
-        <button onclick="loadData()">表示</button>
+        <button class="show-button" onclick="loadData()">表示</button>
         <button class="zoom-reset-button" onclick="resetZoom()">ズームリセット</button>
     </div>
 
