@@ -153,6 +153,49 @@ button { margin:5px; }
 }
 
 @media (max-width: 600px) {
+    body {
+        margin:10px;
+    }
+
+    .fixed-header {
+        padding:10px;
+    }
+
+    .logo-header {
+        gap:14px;
+    }
+
+    .logo-title {
+        font-size:24px;
+    }
+
+    .control-panel,
+    .control-group {
+        align-items:stretch;
+    }
+
+    .control-group {
+        width:100%;
+    }
+
+    #userId,
+    #userIdHistorySelect,
+    .control-group input[type="datetime-local"],
+    .control-group button {
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .control-group button {
+        margin:3px 0;
+        padding:8px 10px;
+    }
+
+    .status-box {
+        width:calc(50% - 5px);
+        box-sizing:border-box;
+    }
+
     .grid > div {
         width:100%;
     }
