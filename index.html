@@ -292,7 +292,7 @@ button { margin:5px; }
     display:flex;
     flex-direction:column;
     gap:6px;
-    width:105px;
+    width:118px;
 }
 
 .status-subgroup .status-box {
@@ -1041,6 +1041,7 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
+    const isTempHumSource = ["tempChartP01", "tempChartP02", "tempChartP11"].includes(sourceChart.canvas.id);
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
@@ -1050,6 +1051,25 @@ function syncZoom(sourceChart){
                 chart.options.scales.x.min = xScale.min;
                 chart.options.scales.x.max = xScale.max;
                 chart.update("none");
+            }
+
+            if(isTempHumSource && ["tempChartP01", "tempChartP02", "tempChartP11"].includes(chart.canvas.id)){
+                if(chart.zoomScale){
+                    chart.zoomScale("yHum", {
+                        min:sourceChart.scales.yHum.min,
+                        max:sourceChart.scales.yHum.max
+                    }, "none");
+                    chart.zoomScale("yTemp", {
+                        min:sourceChart.scales.yTemp.min,
+                        max:sourceChart.scales.yTemp.max
+                    }, "none");
+                }else{
+                    chart.options.scales.yHum.min = sourceChart.scales.yHum.min;
+                    chart.options.scales.yHum.max = sourceChart.scales.yHum.max;
+                    chart.options.scales.yTemp.min = sourceChart.scales.yTemp.min;
+                    chart.options.scales.yTemp.max = sourceChart.scales.yTemp.max;
+                    chart.update("none");
+                }
             }
         }
     });
