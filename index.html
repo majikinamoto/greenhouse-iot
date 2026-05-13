@@ -182,6 +182,20 @@ button { margin:5px; }
     line-height:1;
 }
 
+.status-break {
+    flex-basis:100%;
+    height:0;
+}
+
+.status-group-vertical {
+    min-width:120px;
+}
+
+.status-group-vertical .status-box {
+    width:100%;
+    box-sizing:border-box;
+}
+
 .status-group-current {
     border-left-color:#1f8f5f;
     background:#edf8f4;
@@ -338,6 +352,10 @@ button { margin:5px; }
         flex:1;
     }
 
+    .status-group-vertical .status-box {
+        flex-basis:100%;
+    }
+
     .grid {
         width:100vw;
         gap:16px;
@@ -412,15 +430,16 @@ button { margin:5px; }
 <div class="status-group-title">現在（P01）</div>
 <div class="status-box">温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">湿度：<span id="humNow">-</span>%</div>
+<div class="status-break"></div>
 <div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
 <div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
 </div>
-<div class="status-group status-group-yesterday">
+<div class="status-group status-group-yesterday status-group-vertical">
 <div class="status-group-title">前日（P01）</div>
 <div class="status-box">最高：<span id="yMax">-</span>℃</div>
 <div class="status-box">最低：<span id="yMin">-</span>℃</div>
 </div>
-<div class="status-group status-group-today">
+<div class="status-group status-group-today status-group-vertical">
 <div class="status-group-title">本日（P01）</div>
 <div class="status-box today-temp">最高：<span id="todayMax">-</span>℃</div>
 <div class="status-box today-temp">最低：<span id="todayMin">-</span>℃</div>
