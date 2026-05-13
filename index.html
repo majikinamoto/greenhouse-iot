@@ -15,8 +15,8 @@
 <style>
 
 .fixed-header {
-    background:#a4caf5;
-    border-bottom:1px solid #ddd;
+    background:#d8e8e0;
+    border-bottom:1px solid #b7cec4;
 
     padding:10px 20px;
 }
@@ -36,14 +36,29 @@
 }
 
 .logo-mark {
+    position:relative;
     width:52px;
     height:52px;
     border-radius:14px;
-    background:linear-gradient(135deg, #1f8f5f, #2aa7c8);
+    background:linear-gradient(145deg, #2f7d5b, #83b9a0);
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    box-shadow:0 4px 10px rgba(47, 125, 91, 0.25);
+    border:2px solid rgba(255,255,255,0.75);
+}
+
+.logo-mark::after {
+    content:"";
+    position:absolute;
+    right:8px;
+    top:8px;
+    width:13px;
+    height:8px;
+    border-radius:13px 13px 13px 0;
+    background:#dff3e8;
+    transform:rotate(-28deg);
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
 }
 
 .logo-u {
@@ -51,12 +66,13 @@
     font-size:30px;
     font-weight:800;
     letter-spacing:-1px;
+    text-shadow:0 1px 2px rgba(0,0,0,0.18);
 }
 
 .logo-title {
     font-size:28px;
     font-weight:800;
-    color:#1f3d33;
+    color:#214237;
     letter-spacing:0.5px;
     line-height:1;
 }
@@ -64,7 +80,7 @@
 .logo-subtitle {
     margin-top:4px;
     font-size:13px;
-    color:#4f6f66;
+    color:#58776d;
     letter-spacing:1px;
 }
 
@@ -72,7 +88,7 @@ body {
     font-family: sans-serif;
     margin:20px;
     overflow-y:auto;
-    background:#f4f7f5;
+    background:#f3f7f2;
 }
 
 .box { margin:10px 0; }
@@ -137,8 +153,8 @@ button { margin:5px; }
 
 .grid > div {
     width:500px;
-    border:2px solid #b6cec6;
-    background:#eef5f2;
+    border:2px solid #b7d0c5;
+    background:#edf6f1;
     padding:10px;
     box-sizing:border-box;
 }
@@ -146,8 +162,8 @@ button { margin:5px; }
 .grid h4 {
     margin:0 0 8px 0;
     padding:6px 8px;
-    background:#a4caf5;
-    border-left:5px solid #1f8f5f;
+    background:#d6e9df;
+    border-left:5px solid #2f7d5b;
 }
 
 .chart-container {
@@ -198,8 +214,8 @@ button { margin:5px; }
 }
 
 .status-group-current {
-    border-color:#4f6f66;
-    background:#f3f7f5;
+    border-color:#6f9586;
+    background:#f5faf7;
     max-width:310px;
 }
 
@@ -219,25 +235,25 @@ button { margin:5px; }
 }
 
 .status-group-daily {
-    border-color:#8b5cf6;
-    background:#f5f3ff;
+    border-color:#8fa99d;
+    background:#f7faf4;
 }
 
 .status-group-average {
-    border-color:#5f6570;
-    background:#f5f6f8;
+    border-color:#8b9d93;
+    background:#f6f8f3;
     max-width:270px;
 }
 
 .status-group-current .status-box {
-    border-color:#8aa79c;
-    background:#fbfdfc;
+    border-color:#a7c0b5;
+    background:#fbfefc;
     color:#263f38;
 }
 
 .status-group-average .status-box {
-    border-color:#a5abb5;
-    background:#fcfcfd;
+    border-color:#b5c2b9;
+    background:#fdfefb;
     color:#333943;
 }
 
@@ -252,10 +268,10 @@ button { margin:5px; }
 }
 
 .status-box {
-    border:2px solid #1f8f5f;
+    border:2px solid #7fb09b;
     padding:6px 8px;
     border-radius:6px;
-    background:linear-gradient(180deg, #f4fbf8, #e4f3ef);
+    background:linear-gradient(180deg, #fbfefc, #edf7f2);
     font-size:13px;
     font-weight:700;
     color:#1f3d33;
