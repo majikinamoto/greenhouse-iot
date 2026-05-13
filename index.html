@@ -148,6 +148,13 @@ button { margin:5px; }
     box-shadow:0 2px 6px rgba(31, 143, 95, 0.18);
 }
 
+.status-box.today-temp {
+    border-color:#c45a1a;
+    background:linear-gradient(180deg, #fff8ee, #ffe7cf);
+    color:#6b2f0f;
+    box-shadow:0 2px 6px rgba(196, 90, 26, 0.18);
+}
+
 @media (max-width: 600px) {
     .grid > div {
         width:100%;
@@ -221,6 +228,8 @@ button { margin:5px; }
 <div class="status-container">
 <div class="status-box">現在温度（P01）：<span id="tempNow">-</span>℃</div>
 <div class="status-box">現在湿度（P01）：<span id="humNow">-</span>%</div>
+<div class="status-box today-temp">本日最高気温（P01）：<span id="todayMax">-</span>℃</div>
+<div class="status-box today-temp">本日最低気温（P01）：<span id="todayMin">-</span>℃</div>
 <div class="status-box">前日最高（P01）：<span id="yMax">-</span>℃</div>
 <div class="status-box">前日最低（P01）：<span id="yMin">-</span>℃</div>
 </div>
@@ -1054,6 +1063,8 @@ async function loadData(){
 
     document.getElementById("tempNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
+    document.getElementById("todayMax").innerText = "-";
+    document.getElementById("todayMin").innerText = "-";
     document.getElementById("yMax").innerText = "-";
     document.getElementById("yMin").innerText = "-";
 
@@ -1113,6 +1124,17 @@ const p91 = parseData(resultP91.data, voltMinTime);
 
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
+
+                const todayStart = new Date();
+                todayStart.setHours(0,0,0,0);
+
+                const todayData = validP01.filter(d=>d.x>=todayStart && d.x<=now);
+
+                if(todayData.length){
+                    const todayTemps = todayData.map(d=>d.temp);
+                    document.getElementById("todayMax").innerText = Math.max(...todayTemps).toFixed(1);
+                    document.getElementById("todayMin").innerText = Math.min(...todayTemps).toFixed(1);
+                }
 
                 const yStart = new Date();
                 yStart.setDate(yStart.getDate() - 1);
