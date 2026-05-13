@@ -1165,7 +1165,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                     borderColor:"rgb(0, 0, 255)",
                     backgroundColor:"rgba(0, 0, 255, 0.15)",
                     pointBackgroundColor:"rgb(0, 0, 255)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 },
@@ -1178,7 +1178,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                     borderColor:"rgb(255, 0, 0)",
                     backgroundColor:"rgba(255, 0, 0, 0.15)",
                     pointBackgroundColor:"rgb(255, 0, 0)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 }
@@ -1238,7 +1238,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
     borderColor:"rgb(255, 0, 0)",
     backgroundColor:"rgba(255, 0, 0, 0.1)",
     pointBackgroundColor:"rgb(255, 0, 0)",
-    pointRadius:1,
+    pointRadius:0,
     borderWidth:2,
     tension:0.2
 },
@@ -1251,7 +1251,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                     borderColor:"rgb(75, 192, 192)",
                     backgroundColor:"rgba(75, 192, 192, 0.15)",
                     pointBackgroundColor:"rgb(75, 192, 192)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 },
@@ -1263,7 +1263,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                     borderColor:"rgb(255, 159, 64)",
                     backgroundColor:"rgba(255, 159, 64, 0.15)",
                     pointBackgroundColor:"rgb(255, 159, 64)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 }
@@ -1342,7 +1342,7 @@ p01.forEach(d=>{
                     borderColor:"rgb(255, 0, 0)",
                     backgroundColor:"rgba(255, 0, 0, 0.15)",
                     pointBackgroundColor:"rgb(255, 0, 0)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 },
@@ -1352,7 +1352,7 @@ p01.forEach(d=>{
                     borderColor:"rgb(0, 0, 255)",
                     backgroundColor:"rgba(0, 0, 255, 0.15)",
                     pointBackgroundColor:"rgb(0, 0, 255)",
-                    pointRadius:1,
+                    pointRadius:0,
                     borderWidth:2,
                     tension:0.2
                 }
@@ -1418,7 +1418,7 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
                 borderColor:"rgb(255, 99, 132)",
                 backgroundColor:"rgba(255, 99, 132, 0.15)",
                 pointBackgroundColor:"rgb(255, 99, 132)",
-                pointRadius:1,
+                pointRadius:0,
                 borderWidth:2,
                 tension:0.2
             }]
@@ -1487,7 +1487,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
                 borderColor:color,
                 backgroundColor:bg,
                 pointBackgroundColor:color,
-                pointRadius:1,
+                pointRadius:0,
                 borderWidth:2,
                 tension:0.2
             }]
@@ -1667,8 +1667,18 @@ function destroyCharts(){
 }
 
 function resetZoom(){
+    syncingZoom = true;
+
     allCharts.forEach(c=>{
-        if(c) c.resetZoom();
+        if(c) c.resetZoom("none");
+    });
+
+    requestAnimationFrame(()=>{
+        allCharts.forEach(c=>{
+            if(c) c.update("none");
+        });
+
+        syncingZoom = false;
     });
 }
 
