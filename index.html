@@ -108,6 +108,15 @@ button { margin:5px; }
     width:152px;
 }
 
+.chart-axis-control {
+    margin:0 0 6px 0;
+    font-size:13px;
+}
+
+.axis-input {
+    width:40px;
+}
+
 
 .grid {
     display:flex;
@@ -226,16 +235,17 @@ button { margin:5px; }
         white-space:nowrap;
     }
 
-    #humMin,
-    #humMax,
-    #tempMin,
-    #tempMax {
+    .axis-input {
         width:36px !important;
         box-sizing:border-box;
     }
 
     .axis-control-group {
         font-size:12px;
+    }
+
+    .chart-axis-control {
+        flex-wrap:wrap;
     }
 
     .axis-control-group button {
@@ -317,18 +327,6 @@ button { margin:5px; }
         <button class="zoom-reset-button" onclick="resetZoom()">ズームリセット</button>
     </div>
 
-    <div class="control-group axis-control-group">
-        湿度軸：
-        <input type="number" id="humMin" value="50" style="width:40px;"> ～
-        <input type="number" id="humMax" value="100" style="width:40px;">
-
-        温度軸：
-        <input type="number" id="tempMin" value="10" style="width:40px;"> ～
-        <input type="number" id="tempMax" value="60" style="width:40px;">
-
-        <button onclick="applyYAxis()">縦軸反映</button>
-    </div>
-
     <div class="control-group csv-control-group">
         CSV期間：
         <input type="datetime-local" id="csvStart">
@@ -361,16 +359,37 @@ button { margin:5px; }
 
     <div>
         <h4>温湿度_ハウス内_P01</h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            湿度軸：<input class="axis-input" type="number" id="humMinP01" value="50"> ～
+            <input class="axis-input" type="number" id="humMaxP01" value="100">
+            温度軸：<input class="axis-input" type="number" id="tempMinP01" value="10"> ～
+            <input class="axis-input" type="number" id="tempMaxP01" value="60">
+            <button onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
     </div>
 
     <div>
         <h4>温湿度_ハウス内_P02</h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            湿度軸：<input class="axis-input" type="number" id="humMinP02" value="50"> ～
+            <input class="axis-input" type="number" id="humMaxP02" value="100">
+            温度軸：<input class="axis-input" type="number" id="tempMinP02" value="10"> ～
+            <input class="axis-input" type="number" id="tempMaxP02" value="60">
+            <button onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
     </div>
 
     <div>
         <h4>温湿度_屋外_P11</h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            湿度軸：<input class="axis-input" type="number" id="humMinP11" value="50"> ～
+            <input class="axis-input" type="number" id="humMaxP11" value="100">
+            温度軸：<input class="axis-input" type="number" id="tempMinP11" value="10"> ～
+            <input class="axis-input" type="number" id="tempMaxP11" value="60">
+            <button onclick="applyTempHumYAxis(tempChartP11,'P11')">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
 
@@ -901,7 +920,24 @@ function parseData(data, minTime){
     );
 }
 
-function createTempHumChart(canvasId, parsed, minTime, maxTime){
+function getAxisValue(id, fallback){
+    const el = document.getElementById(id);
+    const value = el ? Number(el.value) : NaN;
+    return isNaN(value) ? fallback : value;
+}
+
+function getTempHumAxis(pointId){
+    return {
+        humMin:getAxisValue("humMin" + pointId, humMin),
+        humMax:getAxisValue("humMax" + pointId, humMax),
+        tempMin:getAxisValue("tempMin" + pointId, tempMin),
+        tempMax:getAxisValue("tempMax" + pointId, tempMax)
+    };
+}
+
+function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
+
+    const axis = getTempHumAxis(pointId);
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
@@ -941,8 +977,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime){
                 ...baseOptions(minTime,maxTime).scales,
 yHum:{
     position:"left",
-    min:humMin,
-    max:humMax,
+    min:axis.humMin,
+    max:axis.humMax,
     ticks:{
         stepSize:10,
         color:"#000"
@@ -950,8 +986,8 @@ yHum:{
 },
 yTemp:{
     position:"right",
-    min:tempMin,
-    max:tempMax,
+    min:axis.tempMin,
+    max:axis.tempMax,
     ticks:{
         stepSize:10,
         color:"#000"
@@ -1352,9 +1388,9 @@ const p91 = parseData(resultP91.data, voltMinTime);
             }
         }
 
-        tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
-        tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
-        tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
+        tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now, "P01");
+        tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now, "P02");
+        tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now, "P11");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, minTime, now);
 
         vaporChart = createVaporChart("vaporChart", p01, minTime, now);
@@ -1399,15 +1435,16 @@ function resetZoom(){
     });
 }
 
-function applyYAxis(){
+function applyTempHumYAxis(chart, pointId){
+    if(!chart) return;
 
-    tempMin = Number(document.getElementById("tempMin").value);
-    tempMax = Number(document.getElementById("tempMax").value);
+    const axis = getTempHumAxis(pointId);
 
-    humMin = Number(document.getElementById("humMin").value);
-    humMax = Number(document.getElementById("humMax").value);
-
-    loadData();
+    chart.options.scales.yHum.min = axis.humMin;
+    chart.options.scales.yHum.max = axis.humMax;
+    chart.options.scales.yTemp.min = axis.tempMin;
+    chart.options.scales.yTemp.max = axis.tempMax;
+    chart.update();
 }
 
 function downloadCSV(){
