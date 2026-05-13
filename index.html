@@ -1381,7 +1381,6 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
     destroyExistingChart(canvasId);
 
     const tempDiffData = [];
-    const humDiffData = [];
 const yAxisOptions = {
     min:-5,
     max:5,
@@ -1472,7 +1471,6 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
     destroyExistingChart(canvasId);
 
     const tempDiffData = [];
-    const humDiffData = [];
     const toleranceMs = 360 * 1000;
     const yAxisOptions = {
         min:-2,
@@ -1483,7 +1481,7 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
         },
         title:{
             display:true,
-            text:"℃/％",
+            text:"℃",
             color:"#000"
         }
     };
@@ -1509,36 +1507,21 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
             tempDiffData.push({ x:d.xValue, y:d.temp - nearestP11.temp });
         }
 
-        if(d.hum !== null && nearestP11.hum !== null && !isNaN(d.hum) && !isNaN(nearestP11.hum)){
-            humDiffData.push({ x:d.xValue, y:d.hum - nearestP11.hum });
-        }
     });
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
-            datasets:[
-                {
-                    label:"温度差 (℃)",
-                    data:tempDiffData,
-                    borderColor:"rgb(255, 0, 0)",
-                    backgroundColor:"rgba(255, 0, 0, 0.15)",
-                    pointBackgroundColor:"rgb(255, 0, 0)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2
-                },
-                {
-                    label:"湿度差 (%)",
-                    data:humDiffData,
-                    borderColor:"rgb(0, 0, 255)",
-                    backgroundColor:"rgba(0, 0, 255, 0.15)",
-                    pointBackgroundColor:"rgb(0, 0, 255)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2
-                }
-            ]
+            datasets:[{
+                label:"温度差 (℃)",
+                data:tempDiffData,
+                borderColor:"rgb(255, 0, 0)",
+                backgroundColor:"rgba(255, 0, 0, 0.15)",
+                pointBackgroundColor:"rgb(255, 0, 0)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2
+            }]
         },
         options:{
             ...baseOptions(minTime,maxTime),
