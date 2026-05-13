@@ -117,6 +117,14 @@ button { margin:5px; }
     width:40px;
 }
 
+.axis-label-temp {
+    color:red;
+}
+
+.axis-label-hum {
+    color:blue;
+}
+
 
 .grid {
     display:flex;
@@ -360,9 +368,9 @@ button { margin:5px; }
     <div>
         <h4>温湿度_ハウス内_P01</h4>
         <div class="control-group axis-control-group chart-axis-control">
-            湿度軸：<input class="axis-input" type="number" id="humMinP01" value="50"> ～
+            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP01" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP01" value="100">
-            温度軸：<input class="axis-input" type="number" id="tempMinP01" value="10"> ～
+            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="10"> ～
             <input class="axis-input" type="number" id="tempMaxP01" value="60">
             <button onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
         </div>
@@ -372,9 +380,9 @@ button { margin:5px; }
     <div>
         <h4>温湿度_ハウス内_P02</h4>
         <div class="control-group axis-control-group chart-axis-control">
-            湿度軸：<input class="axis-input" type="number" id="humMinP02" value="50"> ～
+            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP02" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP02" value="100">
-            温度軸：<input class="axis-input" type="number" id="tempMinP02" value="10"> ～
+            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="10"> ～
             <input class="axis-input" type="number" id="tempMaxP02" value="60">
             <button onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
         </div>
@@ -384,9 +392,9 @@ button { margin:5px; }
     <div>
         <h4>温湿度_屋外_P11</h4>
         <div class="control-group axis-control-group chart-axis-control">
-            湿度軸：<input class="axis-input" type="number" id="humMinP11" value="50"> ～
+            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP11" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP11" value="100">
-            温度軸：<input class="axis-input" type="number" id="tempMinP11" value="10"> ～
+            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="10"> ～
             <input class="axis-input" type="number" id="tempMaxP11" value="60">
             <button onclick="applyTempHumYAxis(tempChartP11,'P11')">縦軸反映</button>
         </div>
