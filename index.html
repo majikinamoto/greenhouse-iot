@@ -242,7 +242,7 @@ button { margin:5px; }
 .status-group-average {
     border-color:#6f7f8f;
     background:#f8f9fb;
-    max-width:270px;
+    max-width:243px;
 }
 
 .status-group-current .status-box {
@@ -292,7 +292,7 @@ button { margin:5px; }
     display:flex;
     flex-direction:column;
     gap:6px;
-    width:140px;
+    width:105px;
 }
 
 .status-subgroup .status-box {
@@ -1044,13 +1044,42 @@ function syncZoom(sourceChart){
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
-            chart.options.scales.x.min = xScale.min;
-            chart.options.scales.x.max = xScale.max;
-            chart.update("none");
+            if(chart.zoomScale){
+                chart.zoomScale("x", { min:xScale.min, max:xScale.max }, "none");
+            }else{
+                chart.options.scales.x.min = xScale.min;
+                chart.options.scales.x.max = xScale.max;
+                chart.update("none");
+            }
         }
     });
 
     syncingZoom = false;
+}
+
+function saveInitialScaleLimits(chart){
+    if(!chart || chart.initialScaleLimits) return;
+
+    chart.initialScaleLimits = {};
+
+    Object.keys(chart.options.scales).forEach(scaleId=>{
+        const scale = chart.options.scales[scaleId];
+        chart.initialScaleLimits[scaleId] = {
+            min:scale.min,
+            max:scale.max
+        };
+    });
+}
+
+function restoreInitialScaleLimits(chart){
+    if(!chart || !chart.initialScaleLimits) return;
+
+    Object.keys(chart.initialScaleLimits).forEach(scaleId=>{
+        if(!chart.options.scales[scaleId]) return;
+
+        chart.options.scales[scaleId].min = chart.initialScaleLimits[scaleId].min;
+        chart.options.scales[scaleId].max = chart.initialScaleLimits[scaleId].max;
+    });
 }
 
 async function fetchDataSafe(userId, pointId){
@@ -1642,6 +1671,8 @@ const p91 = parseData(resultP91.data, voltMinTime);
             voltChart
         ];
 
+        allCharts.forEach(saveInitialScaleLimits);
+
         msg.innerText = errors.length ? errors.join(" / ") : "";
 
     }catch(e){
@@ -1661,12 +1692,19 @@ function resetZoom(){
     syncingZoom = true;
 
     allCharts.forEach(c=>{
-        if(c) c.resetZoom("none");
+        if(c){
+            if(c.resetZoom) c.resetZoom("none");
+            restoreInitialScaleLimits(c);
+            c.update("none");
+        }
     });
 
     requestAnimationFrame(()=>{
         allCharts.forEach(c=>{
-            if(c) c.update("none");
+            if(c){
+                restoreInitialScaleLimits(c);
+                c.update("none");
+            }
         });
 
         syncingZoom = false;
@@ -1682,6 +1720,14 @@ function applyTempHumYAxis(chart, pointId){
     chart.options.scales.yHum.max = axis.humMax;
     chart.options.scales.yTemp.min = axis.tempMin;
     chart.options.scales.yTemp.max = axis.tempMax;
+
+    if(chart.initialScaleLimits){
+        chart.initialScaleLimits.yHum.min = axis.humMin;
+        chart.initialScaleLimits.yHum.max = axis.humMax;
+        chart.initialScaleLimits.yTemp.min = axis.tempMin;
+        chart.initialScaleLimits.yTemp.max = axis.tempMax;
+    }
+
     chart.update();
 }
 
