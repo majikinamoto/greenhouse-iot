@@ -216,7 +216,7 @@ button { margin:5px; }
 .status-group-current {
     border-color:#5f758b;
     background:#f8fafc;
-    max-width:310px;
+    max-width:248px;
 }
 
 .status-group-vapor {
@@ -292,7 +292,11 @@ button { margin:5px; }
     display:flex;
     flex-direction:column;
     gap:6px;
-    width:155px;
+    width:140px;
+}
+
+.status-subgroup .status-box {
+    width:60%;
 }
 
 .status-subtitle {
@@ -482,10 +486,8 @@ button { margin:5px; }
         user_id：
         <input type="text"
                id="userId"
-               list="userIdHistory"
                placeholder="例: T0001"
                onkeydown="if(event.key === 'Enter'){ loadData(); }">
-        <datalist id="userIdHistory"></datalist>
         <select id="userIdHistorySelect"
                 onchange="if(this.value){ document.getElementById('userId').value = this.value; }">
             <option value="">履歴</option>
@@ -652,24 +654,13 @@ function saveUserIdHistory(userId){
 }
 
 function updateUserIdHistoryList(){
-    const list = document.getElementById("userIdHistory");
     const select = document.getElementById("userIdHistorySelect");
-
-    if(list){
-        list.innerHTML = "";
-    }
 
     if(select){
         select.innerHTML = '<option value="">履歴</option>';
     }
 
     getUserIdHistory().forEach(userId=>{
-        if(list){
-            const option = document.createElement("option");
-            option.value = userId;
-            list.appendChild(option);
-        }
-
         if(select){
             const option = document.createElement("option");
             option.value = userId;
