@@ -160,10 +160,21 @@ button { margin:5px; }
 }
 
 .grid h4 {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
     margin:0 0 8px 0;
     padding:6px 8px;
     background:#dbe6f0;
     border-left:5px solid #3f6388;
+}
+
+.chart-reset-button {
+    margin:0;
+    padding:3px 8px;
+    font-size:12px;
+    white-space:nowrap;
 }
 
 .chart-container {
@@ -413,7 +424,6 @@ button { margin:5px; }
         padding:8px 10px;
     }
 
-    .zoom-reset-button,
     .csv-control-group {
         display:none;
     }
@@ -494,7 +504,6 @@ button { margin:5px; }
             <option value="">履歴</option>
         </select>
         <button class="show-button" onclick="loadData()">表示</button>
-        <button class="zoom-reset-button" onclick="resetZoom()">ズームリセット</button>
     </div>
 
     <div class="control-group csv-control-group">
@@ -546,7 +555,7 @@ button { margin:5px; }
 <div class="grid">
 
     <div>
-        <h4>温湿度_ハウス内_P01</h4>
+        <h4><span>温湿度_ハウス内_P01</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP01" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP01" value="100">
@@ -558,7 +567,7 @@ button { margin:5px; }
     </div>
 
     <div>
-        <h4>温湿度_ハウス内_P02</h4>
+        <h4><span>温湿度_ハウス内_P02</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP02" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP02" value="100">
@@ -570,7 +579,7 @@ button { margin:5px; }
     </div>
 
     <div>
-        <h4>温湿度_屋外_P11</h4>
+        <h4><span>温湿度_屋外_P11</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP11" value="50"> ～
             <input class="axis-input" type="number" id="humMaxP11" value="100">
@@ -582,32 +591,32 @@ button { margin:5px; }
     </div>
 
     <div>
-        <h4>ハウス内外温度差_P01-P11</h4>
+        <h4><span>ハウス内外温度差_P01-P11</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
 
     <div>
-        <h4>飽和水蒸気量/水蒸気量/飽差_P01</h4>
+        <h4><span>飽和水蒸気量/水蒸気量/飽差_P01</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
     </div>
 
     <div>
-        <h4>日射_P31</h4>
+        <h4><span>日射_P31</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="solarChart"></canvas></div>
     </div>
 
     <div>
-        <h4>CO2_P21</h4>
+        <h4><span>CO2_P21</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
     <div>
-        <h4>温湿度_差_P01−P02</h4>
+        <h4><span>温湿度_差_P01−P02</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
     </div>
 
     <div>
-        <h4>電圧_P91</h4>
+        <h4><span>電圧_P91</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="voltChart"></canvas></div>
     </div>
 
