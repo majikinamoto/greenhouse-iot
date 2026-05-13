@@ -154,7 +154,7 @@ button { margin:5px; }
 
 @media (max-width: 600px) {
     body {
-        margin:10px;
+        margin:0;
     }
 
     .fixed-header {
@@ -198,11 +198,16 @@ button { margin:5px; }
 
     .grid > div {
         width:100%;
+        padding:6px;
+        border-left:none;
+        border-right:none;
     }
 
     .chart-container {
         min-width:0;
         width:100%;
+        height:auto;
+        aspect-ratio:10 / 7;
     }
 }
 </style>
