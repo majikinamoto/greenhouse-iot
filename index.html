@@ -256,6 +256,12 @@ button { margin:5px; }
     max-width:260px;
 }
 
+.status-group-vpd-eval {
+    border-color:#6b879a;
+    background:#f8fafc;
+    max-width:360px;
+}
+
 .status-group-current .status-box {
     border-color:#bcc8d4;
     background:#ffffff;
@@ -277,6 +283,20 @@ button { margin:5px; }
     display:block;
     margin-top:4px;
     white-space:nowrap;
+}
+
+.vpd-eval-line {
+    width:100%;
+    font-size:13px;
+    font-weight:700;
+    color:#000;
+}
+
+.vpd-eval-note {
+    width:100%;
+    font-size:11px;
+    line-height:1.5;
+    color:#000;
 }
 
 .status-box {
@@ -458,7 +478,8 @@ button { margin:5px; }
 
     .status-group-current,
     .status-group-daily,
-    .status-group-average {
+    .status-group-average,
+    .status-group-vpd-eval {
         width:260px;
         max-width:calc(100vw - 24px);
     }
@@ -572,6 +593,16 @@ button { margin:5px; }
 <div class="status-box average-box">72時間：<span><span id="avg72">-</span>℃</span></div>
 <div class="status-box average-box">48時間：<span><span id="avg48">-</span>℃</span></div>
 <div class="status-box average-box">24時間：<span><span id="avg24">-</span>℃</span></div>
+</div>
+<div class="status-group status-group-vpd-eval">
+<div class="status-group-title">昨日の飽差評価</div>
+<div class="vpd-eval-line">午前：<span id="vpdEvalAm">データなし</span></div>
+<div class="vpd-eval-line">午後：<span id="vpdEvalPm">データなし</span></div>
+<div class="vpd-eval-note">
+午前目標：3～7 g/㎥（6:00～12:00）<br>
+午後目標：5～10 g/㎥（12:00～18:00）<br>
+評価：加湿傾向／やや加湿／良好／やや乾燥／乾燥ストレス
+</div>
 </div>
 </div>
 
@@ -922,6 +953,40 @@ function calcAverageTemp(data, hours, now){
     if(!temps.length) return null;
 
     return temps.reduce((sum, temp)=>sum + temp, 0) / temps.length;
+}
+
+function calcVpdAverage(data, startHour, endHour, baseDate){
+    const start = new Date(baseDate);
+    start.setHours(startHour,0,0,0);
+
+    const end = new Date(baseDate);
+    end.setHours(endHour,0,0,0);
+
+    const values = data
+        .filter(d=>d.x>=start && d.x<end && d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+        .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum));
+
+    if(!values.length) return null;
+
+    return values.reduce((sum, value)=>sum + value, 0) / values.length;
+}
+
+function evaluateVpdAverage(value, period){
+    if(value === null) return "データなし";
+
+    if(period === "am"){
+        if(value >= 0 && value < 2) return "平均 " + value.toFixed(1) + " g/㎥　加湿傾向";
+        if(value < 3) return "平均 " + value.toFixed(1) + " g/㎥　やや加湿";
+        if(value <= 7) return "平均 " + value.toFixed(1) + " g/㎥　良好";
+        if(value < 15) return "平均 " + value.toFixed(1) + " g/㎥　やや乾燥";
+        return "平均 " + value.toFixed(1) + " g/㎥　乾燥ストレス";
+    }
+
+    if(value >= 0 && value < 3) return "平均 " + value.toFixed(1) + " g/㎥　加湿傾向";
+    if(value < 5) return "平均 " + value.toFixed(1) + " g/㎥　やや加湿";
+    if(value <= 10) return "平均 " + value.toFixed(1) + " g/㎥　良好";
+    if(value < 15) return "平均 " + value.toFixed(1) + " g/㎥　やや乾燥";
+    return "平均 " + value.toFixed(1) + " g/㎥　乾燥ストレス";
 }
 
 function createRightYAxis(leftAxisOptions){
@@ -1632,6 +1697,8 @@ async function loadData(){
     document.getElementById("avg24").innerText = "-";
     document.getElementById("avg48").innerText = "-";
     document.getElementById("avg72").innerText = "-";
+    document.getElementById("vpdEvalAm").innerText = "データなし";
+    document.getElementById("vpdEvalPm").innerText = "データなし";
 
     destroyCharts();
 
@@ -1725,6 +1792,12 @@ const p91 = parseData(resultP91.data, voltMinTime);
                     document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
                     document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
                 }
+
+                const amVpdAverage = calcVpdAverage(validP01, 6, 12, yStart);
+                const pmVpdAverage = calcVpdAverage(validP01, 12, 18, yStart);
+
+                document.getElementById("vpdEvalAm").innerText = evaluateVpdAverage(amVpdAverage, "am");
+                document.getElementById("vpdEvalPm").innerText = evaluateVpdAverage(pmVpdAverage, "pm");
             }
         }
 
