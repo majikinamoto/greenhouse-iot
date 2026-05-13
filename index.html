@@ -617,6 +617,8 @@ function calcDewPoint(temp, hum){
 }
 
 function baseOptions(minTime,maxTime){
+    const zoomEnabled = !window.matchMedia("(max-width: 600px)").matches;
+
     return {
         parsing:false,
         responsive:true,
@@ -628,10 +630,10 @@ interaction:{
         plugins:{
             zoom:{
                 zoom:{
-                    wheel:{enabled:true},
-                    pinch:{enabled:true},
+                    wheel:{enabled:zoomEnabled},
+                    pinch:{enabled:zoomEnabled},
                     drag:{
-    enabled:true,
+    enabled:zoomEnabled,
     backgroundColor:"rgba(30,120,255,0.35)",
     borderColor:"rgba(30,120,255,0.8)",
     borderWidth:1
