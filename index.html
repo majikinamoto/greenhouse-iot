@@ -217,6 +217,11 @@ button { margin:5px; }
     background:#fff1e5;
 }
 
+.status-group-daily {
+    border-left-color:#8b5cf6;
+    background:#f5f3ff;
+}
+
 .status-group-average {
     border-left-color:#6b7280;
     background:#f3f4f6;
@@ -246,6 +251,32 @@ button { margin:5px; }
 
 .status-group .status-box {
     box-shadow:none;
+}
+
+.status-subgroup {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:155px;
+}
+
+.status-subtitle {
+    font-size:13px;
+    font-weight:800;
+    color:#1f3d33;
+    line-height:1;
+}
+
+.status-box.temp-high {
+    border-color:#c45a1a;
+    background:linear-gradient(180deg, #fff8ee, #ffe7cf);
+    color:#6b2f0f;
+}
+
+.status-box.temp-low {
+    border-color:#2563eb;
+    background:linear-gradient(180deg, #eff6ff, #dbeafe);
+    color:#1e3a8a;
 }
 
 .status-box.today-temp {
@@ -368,6 +399,10 @@ button { margin:5px; }
         flex-basis:100%;
     }
 
+    .status-subgroup {
+        width:100%;
+    }
+
     .grid {
         width:100vw;
         gap:16px;
@@ -446,15 +481,17 @@ button { margin:5px; }
 <div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
 <div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
 </div>
-<div class="status-group status-group-yesterday status-group-vertical">
-<div class="status-group-title">前日（P01）</div>
-<div class="status-box">最高：<span id="yMax">-</span>℃</div>
-<div class="status-box">最低：<span id="yMin">-</span>℃</div>
+<div class="status-group status-group-daily">
+<div class="status-subgroup">
+<div class="status-subtitle">前日（P01）</div>
+<div class="status-box temp-high">最高：<span id="yMax">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="yMin">-</span>℃</div>
 </div>
-<div class="status-group status-group-today status-group-vertical">
-<div class="status-group-title">本日（P01）</div>
-<div class="status-box today-temp">最高：<span id="todayMax">-</span>℃</div>
-<div class="status-box today-temp">最低：<span id="todayMin">-</span>℃</div>
+<div class="status-subgroup">
+<div class="status-subtitle">本日（P01）</div>
+<div class="status-box temp-high">最高：<span id="todayMax">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="todayMin">-</span>℃</div>
+</div>
 </div>
 <div class="status-group status-group-average">
 <div class="status-group-title">移動平均（P01）</div>
