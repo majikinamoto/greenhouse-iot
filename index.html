@@ -182,12 +182,49 @@ button { margin:5px; }
         width:100%;
     }
 
+    .user-id-control-group,
+    .axis-control-group {
+        flex-wrap:nowrap;
+        gap:3px;
+    }
+
     #userId,
     #userIdHistorySelect,
     .control-group input[type="datetime-local"],
     .control-group button {
         width:100%;
         box-sizing:border-box;
+    }
+
+    #userId {
+        width:86px;
+    }
+
+    #userIdHistorySelect {
+        width:62px;
+    }
+
+    .user-id-control-group button {
+        width:auto;
+        white-space:nowrap;
+    }
+
+    #humMin,
+    #humMax,
+    #tempMin,
+    #tempMax {
+        width:36px !important;
+        box-sizing:border-box;
+    }
+
+    .axis-control-group {
+        font-size:12px;
+    }
+
+    .axis-control-group button {
+        width:auto;
+        min-width:62px;
+        white-space:nowrap;
     }
 
     .control-group button {
@@ -247,7 +284,7 @@ button { margin:5px; }
 
 <div class="box control-panel">
 
-    <div class="control-group">
+    <div class="control-group user-id-control-group">
         user_id：
         <input type="text"
                id="userId"
@@ -263,7 +300,7 @@ button { margin:5px; }
         <button class="zoom-reset-button" onclick="resetZoom()">ズームリセット</button>
     </div>
 
-    <div class="control-group">
+    <div class="control-group axis-control-group">
         湿度軸：
         <input type="number" id="humMin" value="50" style="width:40px;"> ～
         <input type="number" id="humMax" value="100" style="width:40px;">
