@@ -299,6 +299,11 @@ button { margin:5px; }
     color:#000;
 }
 
+.vpd-eval-note summary {
+    cursor:pointer;
+    font-weight:700;
+}
+
 .status-box {
     border:2px solid #b6c2cf;
     padding:6px 8px;
@@ -484,6 +489,10 @@ button { margin:5px; }
         max-width:calc(100vw - 24px);
     }
 
+    .status-group-vpd-eval {
+        width:100%;
+    }
+
     .status-group-vertical .status-box {
         flex-basis:100%;
     }
@@ -598,11 +607,24 @@ button { margin:5px; }
 <div class="status-group-title">昨日の飽差評価</div>
 <div class="vpd-eval-line">午前：<span id="vpdEvalAm">データなし</span></div>
 <div class="vpd-eval-line">午後：<span id="vpdEvalPm">データなし</span></div>
-<div class="vpd-eval-note">
-午前目標：3～7 g/㎥（6:00～12:00）<br>
-午後目標：5～10 g/㎥（12:00～18:00）<br>
-評価：加湿傾向／やや加湿／良好／やや乾燥／乾燥ストレス
-</div>
+<details class="vpd-eval-note">
+<summary>評価基準と注意事項</summary>
+※昨日の飽差評価は、P01の温度・湿度データから算出した平均飽差（g/㎥）を、以下の基準に当てはめて機械的に評価したものです。実際のハウス環境や作物の状態とは異なる場合がありますので、管理判断の参考情報としてご利用ください。<br>
+<br>
+午前（6:00～12:00）の評価基準：<br>
+0以上 2未満：加湿傾向<br>
+2以上 3未満：やや加湿<br>
+3以上 7以下：良好<br>
+7超 15未満：やや乾燥<br>
+15以上：乾燥ストレス<br>
+<br>
+午後（12:00～18:00）の評価基準：<br>
+0以上 3未満：加湿傾向<br>
+3以上 5未満：やや加湿<br>
+5以上 10以下：良好<br>
+10超 15未満：やや乾燥<br>
+15以上：乾燥ストレス
+</details>
 </div>
 </div>
 
