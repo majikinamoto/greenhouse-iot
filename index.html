@@ -83,6 +83,7 @@ button { margin:5px; }
     border:1px solid #176b47;
     border-radius:4px;
     font-weight:700;
+    min-width:56px;
 }
 
 .control-panel {
@@ -1143,7 +1144,7 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
         type:"line",
         data:{
             datasets:[{
-                label:"温度差 P01-P11 (℃)",
+                label:"温度差 (℃)",
                 data:tempDiffData,
                 borderColor:"rgb(255, 99, 132)",
                 backgroundColor:"rgba(255, 99, 132, 0.15)",
@@ -1185,8 +1186,8 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
     }
 
     if(key === "co2"){
-        color = "rgb(100, 100, 100)";
-        bg = "rgba(100, 100, 100, 0.15)";
+        color = "rgb(0, 0, 0)";
+        bg = "rgba(0, 0, 0, 0.12)";
     }
 
     if(key === "volt"){
