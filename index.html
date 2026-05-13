@@ -158,19 +158,60 @@ button { margin:5px; }
 
 .status-container {
     display:flex;
-    gap:10px;
+    gap:8px;
     flex-wrap:wrap;
     margin:10px 0;
 }
 
+.status-group {
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    align-items:stretch;
+    padding:7px;
+    border-radius:8px;
+    border-left:5px solid #1f8f5f;
+    background:#edf8f4;
+}
+
+.status-group-current {
+    border-left-color:#1f8f5f;
+    background:#edf8f4;
+}
+
+.status-group-vapor {
+    border-left-color:rgb(255, 159, 64);
+    background:#fff4e8;
+}
+
+.status-group-yesterday {
+    border-left-color:#5470c6;
+    background:#eef3ff;
+}
+
+.status-group-today {
+    border-left-color:#c45a1a;
+    background:#fff1e5;
+}
+
+.status-group-average {
+    border-left-color:#6b7280;
+    background:#f3f4f6;
+}
+
 .status-box {
     border:2px solid #1f8f5f;
-    padding:10px;
-    border-radius:8px;
+    padding:6px 8px;
+    border-radius:6px;
     background:linear-gradient(180deg, #f4fbf8, #e4f3ef);
+    font-size:12px;
     font-weight:700;
     color:#1f3d33;
     box-shadow:0 2px 6px rgba(31, 143, 95, 0.18);
+}
+
+.status-group .status-box {
+    box-shadow:none;
 }
 
 .status-box.today-temp {
@@ -279,6 +320,16 @@ button { margin:5px; }
         overflow-wrap:anywhere;
     }
 
+    .status-group {
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .status-group .status-box {
+        width:auto;
+        flex:1;
+    }
+
     .grid {
         width:100vw;
         gap:16px;
@@ -349,17 +400,27 @@ button { margin:5px; }
 <div id="message" style="color:#666; margin:10px;"></div>
 
 <div class="status-container">
+<div class="status-group status-group-current">
 <div class="status-box">現在温度（P01）：<span id="tempNow">-</span>℃</div>
 <div class="status-box">現在湿度（P01）：<span id="humNow">-</span>%</div>
+</div>
+<div class="status-group status-group-vapor">
 <div class="status-box">現在露点温度（P01）：<span id="dewNow">-</span>℃</div>
 <div class="status-box vpd-now">現在飽差（P01）：<span id="vpdNow">-</span>g/㎥</div>
+</div>
+<div class="status-group status-group-yesterday">
 <div class="status-box">前日最高（P01）：<span id="yMax">-</span>℃</div>
 <div class="status-box">前日最低（P01）：<span id="yMin">-</span>℃</div>
+</div>
+<div class="status-group status-group-today">
 <div class="status-box today-temp">本日最高（P01）：<span id="todayMax">-</span>℃</div>
 <div class="status-box today-temp">本日最低（P01）：<span id="todayMin">-</span>℃</div>
-<div class="status-box">移動平均24H（P01）：<span id="avg24">-</span>℃</div>
-<div class="status-box">移動平均48H（P01）：<span id="avg48">-</span>℃</div>
-<div class="status-box">移動平均72H（P01）：<span id="avg72">-</span>℃</div>
+</div>
+<div class="status-group status-group-average">
+<div class="status-box">移動平均24時間（P01）：<span id="avg24">-</span>℃</div>
+<div class="status-box">移動平均48時間（P01）：<span id="avg48">-</span>℃</div>
+<div class="status-box">移動平均72時間（P01）：<span id="avg72">-</span>℃</div>
+</div>
 </div>
 
 </div>
