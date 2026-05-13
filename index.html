@@ -1112,6 +1112,16 @@ function restoreInitialScaleLimits(chart){
     });
 }
 
+function redrawChart(chart){
+    if(!chart) return;
+
+    if(chart.stop) chart.stop();
+    restoreInitialScaleLimits(chart);
+    chart.update("none");
+    chart.resize();
+    chart.draw();
+}
+
 async function fetchDataSafe(userId, pointId){
 
     const controller = new AbortController();
@@ -1754,20 +1764,22 @@ function resetZoom(){
     allCharts.forEach(c=>{
         if(c){
             if(c.resetZoom) c.resetZoom("none");
-            restoreInitialScaleLimits(c);
-            c.update("none");
+            redrawChart(c);
         }
     });
 
     requestAnimationFrame(()=>{
         allCharts.forEach(c=>{
-            if(c){
-                restoreInitialScaleLimits(c);
-                c.update("none");
-            }
+            redrawChart(c);
         });
 
-        syncingZoom = false;
+        requestAnimationFrame(()=>{
+            allCharts.forEach(c=>{
+                redrawChart(c);
+            });
+
+            syncingZoom = false;
+        });
     });
 }
 
