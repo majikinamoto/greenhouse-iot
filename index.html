@@ -357,6 +357,9 @@ button { margin:5px; }
 <div class="status-box">前日最低（P01）：<span id="yMin">-</span>℃</div>
 <div class="status-box today-temp">本日最高（P01）：<span id="todayMax">-</span>℃</div>
 <div class="status-box today-temp">本日最低（P01）：<span id="todayMin">-</span>℃</div>
+<div class="status-box">24時間平均温度（P01）：<span id="avg24">-</span>℃</div>
+<div class="status-box">48時間平均温度（P01）：<span id="avg48">-</span>℃</div>
+<div class="status-box">72時間平均温度（P01）：<span id="avg72">-</span>℃</div>
 </div>
 
 </div>
@@ -706,6 +709,17 @@ function calcDewPoint(temp, hum){
     const b = 237.7;
     const alpha = ((a * temp) / (b + temp)) + Math.log(hum / 100);
     return (b * alpha) / (a - alpha);
+}
+
+function calcAverageTemp(data, hours, now){
+    const start = new Date(now.getTime() - hours*60*60*1000);
+    const temps = data
+        .filter(d=>d.x>=start && d.x<=now && d.temp !== null && !isNaN(d.temp))
+        .map(d=>d.temp);
+
+    if(!temps.length) return null;
+
+    return temps.reduce((sum, temp)=>sum + temp, 0) / temps.length;
 }
 
 function baseOptions(minTime,maxTime){
@@ -1308,6 +1322,9 @@ async function loadData(){
     document.getElementById("todayMin").innerText = "-";
     document.getElementById("yMax").innerText = "-";
     document.getElementById("yMin").innerText = "-";
+    document.getElementById("avg24").innerText = "-";
+    document.getElementById("avg48").innerText = "-";
+    document.getElementById("avg72").innerText = "-";
 
     destroyCharts();
 
@@ -1367,6 +1384,14 @@ const p91 = parseData(resultP91.data, voltMinTime);
                 document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
                 document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
+
+                const avg24 = calcAverageTemp(p01, 24, now);
+                const avg48 = calcAverageTemp(p01, 48, now);
+                const avg72 = calcAverageTemp(p01, 72, now);
+
+                if(avg24 !== null) document.getElementById("avg24").innerText = avg24.toFixed(1);
+                if(avg48 !== null) document.getElementById("avg48").innerText = avg48.toFixed(1);
+                if(avg72 !== null) document.getElementById("avg72").innerText = avg72.toFixed(1);
 
                 const todayStart = new Date();
                 todayStart.setHours(0,0,0,0);
