@@ -188,7 +188,7 @@ button { margin:5px; }
 }
 
 .status-group-vertical {
-    min-width:120px;
+    width:170px;
 }
 
 .status-group-vertical .status-box {
@@ -199,6 +199,7 @@ button { margin:5px; }
 .status-group-current {
     border-left-color:#1f8f5f;
     background:#edf8f4;
+    max-width:330px;
 }
 
 .status-group-vapor {
@@ -219,6 +220,16 @@ button { margin:5px; }
 .status-group-average {
     border-left-color:#6b7280;
     background:#f3f4f6;
+    max-width:300px;
+}
+
+.average-box {
+    text-align:center;
+}
+
+.average-box span {
+    display:block;
+    margin-top:4px;
 }
 
 .status-box {
@@ -446,9 +457,9 @@ button { margin:5px; }
 </div>
 <div class="status-group status-group-average">
 <div class="status-group-title">移動平均（P01）</div>
-<div class="status-box">72時間：<span id="avg72">-</span>℃</div>
-<div class="status-box">48時間：<span id="avg48">-</span>℃</div>
-<div class="status-box">24時間：<span id="avg24">-</span>℃</div>
+<div class="status-box average-box">72時間：<span id="avg72">-</span>℃</div>
+<div class="status-box average-box">48時間：<span id="avg48">-</span>℃</div>
+<div class="status-box average-box">24時間：<span id="avg24">-</span>℃</div>
 </div>
 </div>
 
