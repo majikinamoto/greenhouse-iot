@@ -195,6 +195,11 @@ button { margin:5px; }
         padding:8px 10px;
     }
 
+    .zoom-reset-button,
+    .csv-control-group {
+        display:none;
+    }
+
     .status-box {
         width:calc(50% - 5px);
         box-sizing:border-box;
@@ -255,7 +260,7 @@ button { margin:5px; }
             <option value="">履歴</option>
         </select>
         <button onclick="loadData()">表示</button>
-        <button onclick="resetZoom()">ズームリセット</button>
+        <button class="zoom-reset-button" onclick="resetZoom()">ズームリセット</button>
     </div>
 
     <div class="control-group">
@@ -270,7 +275,7 @@ button { margin:5px; }
         <button onclick="applyYAxis()">縦軸反映</button>
     </div>
 
-    <div class="control-group">
+    <div class="control-group csv-control-group">
         CSV期間：
         <input type="datetime-local" id="csvStart">
         ～
