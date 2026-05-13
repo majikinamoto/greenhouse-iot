@@ -205,9 +205,11 @@ button { margin:5px; }
 
     .chart-container {
         min-width:0;
-        width:100%;
+        width:min(100%, calc((100vh - 44px) * 10 / 7));
         height:auto;
         aspect-ratio:10 / 7;
+        margin-left:auto;
+        margin-right:auto;
     }
 }
 </style>
