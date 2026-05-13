@@ -783,6 +783,23 @@ function calcAverageTemp(data, hours, now){
     return temps.reduce((sum, temp)=>sum + temp, 0) / temps.length;
 }
 
+function createRightYAxis(leftAxisOptions){
+    return {
+        ...leftAxisOptions,
+        position:"right",
+        grid:{
+            drawOnChartArea:false
+        },
+        afterDataLimits(scale){
+            const leftScale = scale.chart.scales.y;
+            if(leftScale){
+                scale.min = leftScale.min;
+                scale.max = leftScale.max;
+            }
+        }
+    };
+}
+
 function baseOptions(minTime,maxTime){
     const zoomEnabled = !window.matchMedia("(max-width: 600px)").matches;
 
@@ -1082,6 +1099,17 @@ yTemp:{
 
 function createVaporChart(canvasId, parsed, minTime, maxTime){
 
+    const yAxisOptions = {
+        ticks:{
+            color:"#000"
+        },
+        title:{
+            display:true,
+            text:"g/㎥",
+            color:"#000"
+        }
+    };
+
     return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
@@ -1132,16 +1160,9 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-y:{
-    ticks:{
-        color:"#000"
-    },
-    title:{
-        display:true,
-        text:"g/㎥",
-        color:"#000"
-    }
-}          }
+y:yAxisOptions,
+yRight:createRightYAxis(yAxisOptions)
+            }
         }
     });
 }
@@ -1150,6 +1171,19 @@ function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     const tempDiffData = [];
 const humDiffData = [];
+const yAxisOptions = {
+    min:-5,
+    max:5,
+    ticks:{
+        stepSize:1,
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"差",
+        color:"#000"
+    }
+};
 
 // P01の時刻に一番近いP02データを探す
 // ずれ許容：6分（360秒）以内
@@ -1215,19 +1249,9 @@ p01.forEach(d=>{
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-y:{
-    min:-5,
-    max:5,
-    ticks:{
-        stepSize:1,
-        color:"#000"
-    },
-    title:{
-        display:true,
-        text:"差",
-        color:"#000"
-    }
-}        }
+y:yAxisOptions,
+yRight:createRightYAxis(yAxisOptions)
+            }
         }
     });
 }
@@ -1236,6 +1260,19 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
 
     const tempDiffData = [];
     const toleranceMs = 360 * 1000;
+    const yAxisOptions = {
+        min:-2,
+        max:10,
+        ticks:{
+            stepSize:1,
+            color:"#000"
+        },
+        title:{
+            display:true,
+            text:"℃",
+            color:"#000"
+        }
+    };
 
     p01.forEach(d=>{
 
@@ -1277,19 +1314,9 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-y:{
-    min:-2,
-    max:10,
-    ticks:{
-        stepSize:1,
-        color:"#000"
-    },
-    title:{
-        display:true,
-        text:"℃",
-        color:"#000"
-    }
-}        }
+y:yAxisOptions,
+yRight:createRightYAxis(yAxisOptions)
+            }
         }
     });
 }
@@ -1314,6 +1341,28 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         bg = "rgba(0, 160, 80, 0.2)";
     }
 
+    const yAxisOptions = {
+        min: key === "volt" || key === "co2" ? 0 : undefined,
+
+        ticks:{
+            stepSize: key === "co2" ? 50 : undefined,
+            color:"#000",
+
+            callback:function(value){
+                if(key === "volt"){
+                    return Math.round(value);
+                }
+                return value;
+            }
+        },
+
+        title:{
+            display:true,
+            text:unit,
+            color:"#000"
+        }
+    };
+
     return new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
@@ -1334,27 +1383,8 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             ...baseOptions(minTime,maxTime),
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
-            y:{
-    min: key === "volt" || key === "co2" ? 0 : undefined,
-
-    ticks:{
-        stepSize: key === "co2" ? 50 : undefined,
-        color:"#000",
-
-        callback:function(value){
-            if(key === "volt"){
-                return Math.round(value);
-            }
-            return value;
-        }
-    },
-
-    title:{
-        display:true,
-        text:unit,
-        color:"#000"
-    }
-}
+y:yAxisOptions,
+yRight:createRightYAxis(yAxisOptions)
             }
         }
     });
