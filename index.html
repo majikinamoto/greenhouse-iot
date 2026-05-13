@@ -227,6 +227,7 @@ button { margin:5px; }
 
 <div class="status-container">
 <div class="status-box">現在温度（P01）：<span id="tempNow">-</span>℃</div>
+<div class="status-box">現在露点温度（P01）：<span id="dewNow">-</span>℃</div>
 <div class="status-box">現在湿度（P01）：<span id="humNow">-</span>%</div>
 <div class="status-box today-temp">本日最高気温（P01）：<span id="todayMax">-</span>℃</div>
 <div class="status-box today-temp">本日最低気温（P01）：<span id="todayMin">-</span>℃</div>
@@ -548,6 +549,13 @@ function calcVapor(temp, hum){
     const es = 6.1078 * Math.pow(10, (7.5 * temp) / (237.3 + temp));
     const ea = es * hum / 100;
     return 216.7 * (ea / (temp + 273.15));
+}
+
+function calcDewPoint(temp, hum){
+    const a = 17.27;
+    const b = 237.7;
+    const alpha = ((a * temp) / (b + temp)) + Math.log(hum / 100);
+    return (b * alpha) / (a - alpha);
 }
 
 function baseOptions(minTime,maxTime){
@@ -1062,6 +1070,7 @@ async function loadData(){
     msg.innerText = "読み込み中...";
 
     document.getElementById("tempNow").innerText = "-";
+    document.getElementById("dewNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
     document.getElementById("todayMax").innerText = "-";
     document.getElementById("todayMin").innerText = "-";
@@ -1123,6 +1132,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
                 const last = validP01[validP01.length - 1];
 
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
+                document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
                 const todayStart = new Date();
