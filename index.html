@@ -366,6 +366,11 @@ button { margin:5px; }
     </div>
 
     <div>
+        <h4>ハウス内外温度差_P01-P11</h4>
+        <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
+    </div>
+
+    <div>
         <h4>飽和水蒸気量/水蒸気量/飽差_P01</h4>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
     </div>
@@ -395,7 +400,7 @@ button { margin:5px; }
 <script>
 
 let tempChartP01, tempChartP02, tempChartP11;
-let diffChart, solarChart, voltChart, vaporChart, co2Chart;
+let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
 
 let allCharts = [];
 let syncingZoom = false;
@@ -1099,6 +1104,68 @@ y:{
     });
 }
 
+function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
+
+    const tempDiffData = [];
+    const toleranceMs = 360 * 1000;
+
+    p01.forEach(d=>{
+
+        let nearestP11 = null;
+        let nearestDiff = Infinity;
+
+        p11.forEach(p=>{
+            const diff = Math.abs(d.xValue - p.xValue);
+
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearestP11 = p;
+            }
+        });
+
+        if(!nearestP11) return;
+        if(nearestDiff > toleranceMs) return;
+
+        if(d.temp !== null && nearestP11.temp !== null && !isNaN(d.temp) && !isNaN(nearestP11.temp)){
+            tempDiffData.push({ x:d.xValue, y:d.temp - nearestP11.temp });
+        }
+    });
+
+    return new Chart(document.getElementById(canvasId),{
+        type:"line",
+        data:{
+            datasets:[{
+                label:"温度差 P01-P11 (℃)",
+                data:tempDiffData,
+                borderColor:"rgb(255, 99, 132)",
+                backgroundColor:"rgba(255, 99, 132, 0.15)",
+                pointBackgroundColor:"rgb(255, 99, 132)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2
+            }]
+        },
+        options:{
+            ...baseOptions(minTime,maxTime),
+            scales:{
+                ...baseOptions(minTime,maxTime).scales,
+y:{
+    min:-5,
+    max:10,
+    ticks:{
+        stepSize:1,
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"℃",
+        color:"#000"
+    }
+}        }
+        }
+    });
+}
+
 function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime){
 
     let color = "rgb(153, 102, 255)";
@@ -1277,6 +1344,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
         tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now);
         tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now);
         tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now);
+        outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, minTime, now);
 
         vaporChart = createVaporChart("vaporChart", p01, minTime, now);
 
@@ -1291,6 +1359,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
             tempChartP01,
             tempChartP02,
             tempChartP11,
+            outsideDiffChart,
             vaporChart,
             solarChart,
             co2Chart,
