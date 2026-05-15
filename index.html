@@ -1669,6 +1669,28 @@ function getTempHumAxis(pointId){
     };
 }
 
+function getChartDisplayMinTime(canvasId, minTime, maxTime){
+    const mobile24HourCharts = [
+        "tempChartP01",
+        "tempChartP02",
+        "tempChartP11",
+        "outsideDiffChart",
+        "vaporChart",
+        "solarChart",
+        "co2Chart",
+        "diffChart"
+    ];
+
+    if(
+        window.matchMedia("(max-width: 600px)").matches &&
+        mobile24HourCharts.includes(canvasId)
+    ){
+        return new Date(maxTime.getTime() - 24*60*60*1000);
+    }
+
+    return minTime;
+}
+
 function destroyExistingChart(canvasId){
     const chart = Chart.getChart(canvasId);
     if(chart) chart.destroy();
@@ -1679,6 +1701,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
     destroyExistingChart(canvasId);
 
     const axis = getTempHumAxis(pointId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
@@ -1713,9 +1736,9 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
             ]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...baseOptions(displayMinTime,maxTime),
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...baseOptions(displayMinTime,maxTime).scales,
 yHum:{
     position:"left",
     min:axis.humMin,
@@ -1741,6 +1764,7 @@ yTemp:{
 function createVaporChart(canvasId, parsed, minTime, maxTime){
 
     destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
     const yAxisOptions = {
         ticks:{
@@ -1800,9 +1824,9 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             ]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...baseOptions(displayMinTime,maxTime),
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
 yRight:createRightYAxis(yAxisOptions)
             }
@@ -1813,6 +1837,7 @@ yRight:createRightYAxis(yAxisOptions)
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
 
     destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
     const tempDiffData = [];
     const humDiffData = [];
@@ -1891,9 +1916,9 @@ p01.forEach(d=>{
             ]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...baseOptions(displayMinTime,maxTime),
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
 yRight:createRightYAxis(yAxisOptions)
             }
@@ -1904,6 +1929,7 @@ yRight:createRightYAxis(yAxisOptions)
 function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
 
     destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
     const tempDiffData = [];
     const toleranceMs = 360 * 1000;
@@ -1959,9 +1985,9 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
             }]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...baseOptions(displayMinTime,maxTime),
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
 yRight:createRightYAxis(yAxisOptions)
             }
@@ -1972,6 +1998,7 @@ yRight:createRightYAxis(yAxisOptions)
 function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime){
 
     destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
     let color = "rgb(153, 102, 255)";
     let bg = "rgba(153, 102, 255, 0.15)";
@@ -2031,9 +2058,9 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             }]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...baseOptions(displayMinTime,maxTime),
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
 yRight:createRightYAxis(yAxisOptions)
             }
