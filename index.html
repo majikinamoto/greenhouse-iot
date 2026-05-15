@@ -1217,7 +1217,7 @@ const syncedCrosshairPlugin = {
 
         if(event.type === "mouseout"){
             syncedCrosshairValue = null;
-            drawAllCharts();
+            clearSyncedTooltips();
             return;
         }
 
@@ -1233,7 +1233,7 @@ const syncedCrosshairPlugin = {
         }
 
         syncedCrosshairValue = xScale.getValueForPixel(event.x);
-        drawAllCharts();
+        syncAllChartTooltips(syncedCrosshairValue);
     },
     afterDraw(chart){
         if(syncedCrosshairValue === null) return;
@@ -1258,9 +1258,85 @@ const syncedCrosshairPlugin = {
     }
 };
 
-function drawAllCharts(){
+function getNearestPointIndex(data, xValue){
+    if(!data || !data.length) return -1;
+
+    let nearestIndex = -1;
+    let nearestDiff = Infinity;
+
+    data.forEach((point, index)=>{
+        if(!point || point.x === null || point.x === undefined) return;
+
+        const diff = Math.abs(point.x - xValue);
+
+        if(diff < nearestDiff){
+            nearestDiff = diff;
+            nearestIndex = index;
+        }
+    });
+
+    return nearestIndex;
+}
+
+function syncChartTooltip(chart, xValue){
+    if(!chart || !chart.scales || !chart.scales.x || !chart.chartArea) return;
+
+    const xScale = chart.scales.x;
+
+    if(xValue < xScale.min || xValue > xScale.max){
+        chart.setActiveElements([]);
+
+        if(chart.tooltip && chart.tooltip.setActiveElements){
+            chart.tooltip.setActiveElements([], { x:0, y:0 });
+        }
+
+        chart.draw();
+        return;
+    }
+
+    const active = [];
+
+    chart.data.datasets.forEach((dataset, datasetIndex)=>{
+        if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
+
+        const index = getNearestPointIndex(dataset.data, xValue);
+        if(index < 0) return;
+
+        active.push({
+            datasetIndex:datasetIndex,
+            index:index
+        });
+    });
+
+    const x = xScale.getPixelForValue(xValue);
+    const y = chart.chartArea.bottom;
+
+    chart.setActiveElements(active);
+
+    if(chart.tooltip && chart.tooltip.setActiveElements){
+        chart.tooltip.setActiveElements(active, { x:x, y:y });
+    }
+
+    chart.draw();
+}
+
+function syncAllChartTooltips(xValue){
     allCharts.forEach(chart=>{
-        if(chart) chart.draw();
+        syncChartTooltip(chart, xValue);
+    });
+}
+
+function clearSyncedTooltips(){
+    allCharts.forEach(chart=>{
+        if(chart){
+            chart.setActiveElements([]);
+
+            if(chart.tooltip && chart.tooltip.setActiveElements){
+                chart.tooltip.setActiveElements([], { x:0, y:0 });
+            }
+
+            chart.draw();
+        }
     });
 }
 
