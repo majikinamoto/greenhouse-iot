@@ -146,7 +146,7 @@ button { margin:5px; }
 .grid {
     display:flex;
     flex-wrap:wrap;
-    gap:16px 18px;
+    gap:8px 10px;
     align-items:flex-start;
     justify-content:flex-start;
 }
@@ -155,7 +155,7 @@ button { margin:5px; }
     width:500px;
     border:2px solid #c4ccd6;
     background:#f7f9fb;
-    padding:10px;
+    padding:8px;
     box-sizing:border-box;
 }
 
@@ -181,7 +181,7 @@ button { margin:5px; }
     width:100%;
     min-width:320px;
     height:350px;
-    margin-bottom:8px;
+    margin-bottom:0;
 }
 
 .tab-nav {
@@ -629,7 +629,7 @@ button { margin:5px; }
 
     .grid {
         width:100vw;
-        gap:10px;
+        gap:6px;
     }
 
     .grid > div {
@@ -865,6 +865,7 @@ let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
 
 let allCharts = [];
 let syncingZoom = false;
+let syncedCrosshairValue = null;
 
 let tempMin = 10;
 let tempMax = 60;
@@ -1104,10 +1105,69 @@ const vpdTargetZonePlugin = {
     }
 };
 
+const syncedCrosshairPlugin = {
+    id:"syncedCrosshairPlugin",
+    afterEvent(chart, args){
+        const event = args.event;
+        const xScale = chart.scales.x;
+        const chartArea = chart.chartArea;
+
+        if(!event || !xScale || !chartArea) return;
+
+        if(event.type === "mouseout"){
+            syncedCrosshairValue = null;
+            drawAllCharts();
+            return;
+        }
+
+        if(event.type !== "mousemove") return;
+
+        if(
+            event.x < chartArea.left ||
+            event.x > chartArea.right ||
+            event.y < chartArea.top ||
+            event.y > chartArea.bottom
+        ){
+            return;
+        }
+
+        syncedCrosshairValue = xScale.getValueForPixel(event.x);
+        drawAllCharts();
+    },
+    afterDraw(chart){
+        if(syncedCrosshairValue === null) return;
+
+        const xScale = chart.scales.x;
+        const chartArea = chart.chartArea;
+
+        if(!xScale || !chartArea) return;
+        if(syncedCrosshairValue < xScale.min || syncedCrosshairValue > xScale.max) return;
+
+        const x = xScale.getPixelForValue(syncedCrosshairValue);
+        const ctx = chart.ctx;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,0,0,0.75)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+        ctx.restore();
+    }
+};
+
+function drawAllCharts(){
+    allCharts.forEach(chart=>{
+        if(chart) chart.draw();
+    });
+}
+
 Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
     vpdTargetZonePlugin,
+    syncedCrosshairPlugin,
     pointLabelPlugin
 );
 
