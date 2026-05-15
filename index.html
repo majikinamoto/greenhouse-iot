@@ -267,10 +267,32 @@ button { margin:5px; }
 
 .tab-panel {
     display:none;
+    padding:10px;
+    box-sizing:border-box;
 }
 
 .tab-panel.active {
     display:block;
+}
+
+.tab-panel-monitor {
+    background:#e7f6ee;
+}
+
+.tab-panel-analysis {
+    background:#eaf1ff;
+}
+
+.tab-panel-review {
+    background:#fff5df;
+}
+
+.tab-panel-alert {
+    background:#ffecec;
+}
+
+.tab-panel-maintenance {
+    background:#f0ecff;
 }
 
 .tab-placeholder {
@@ -693,7 +715,7 @@ button { margin:5px; }
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
 </div>
 
-<section id="tab-monitor" class="tab-panel active" role="tabpanel">
+<section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
 <div class="status-group status-group-current">
 <div class="status-group-title">現在（P01）</div>
@@ -796,19 +818,19 @@ button { margin:5px; }
 </div>
 </section>
 
-<section id="tab-analysis" class="tab-panel" role="tabpanel">
+<section id="tab-analysis" class="tab-panel tab-panel-analysis" role="tabpanel">
     <div class="tab-placeholder">分析タブは今後追加予定です</div>
 </section>
 
-<section id="tab-review" class="tab-panel" role="tabpanel">
+<section id="tab-review" class="tab-panel tab-panel-review" role="tabpanel">
     <div class="tab-placeholder">振返りタブは今後追加予定です</div>
 </section>
 
-<section id="tab-alert" class="tab-panel" role="tabpanel">
+<section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
     <div class="tab-placeholder">アラートタブは今後追加予定です</div>
 </section>
 
-<section id="tab-maintenance" class="tab-panel" role="tabpanel">
+<section id="tab-maintenance" class="tab-panel tab-panel-maintenance" role="tabpanel">
 <div class="grid">
 
     <div>
