@@ -204,10 +204,65 @@ button { margin:5px; }
     cursor:pointer;
 }
 
+.tab-button-monitor {
+    background:#e7f6ee;
+    border-color:#7cc59f;
+    color:#14613a;
+}
+
+.tab-button-analysis {
+    background:#eaf1ff;
+    border-color:#86a9e8;
+    color:#264f9b;
+}
+
+.tab-button-review {
+    background:#fff5df;
+    border-color:#e1b75c;
+    color:#7a4b00;
+}
+
+.tab-button-alert {
+    background:#ffecec;
+    border-color:#e18b8b;
+    color:#9a2a2a;
+}
+
+.tab-button-maintenance {
+    background:#f0ecff;
+    border-color:#a999df;
+    color:#4b338f;
+}
+
 .tab-button.active {
     background:#3f6388;
     border-color:#3f6388;
     color:#fff;
+}
+
+.tab-button-monitor.active {
+    background:#1f8f5f;
+    border-color:#176b47;
+}
+
+.tab-button-analysis.active {
+    background:#3f6fc2;
+    border-color:#2f5598;
+}
+
+.tab-button-review.active {
+    background:#c88413;
+    border-color:#9d650b;
+}
+
+.tab-button-alert.active {
+    background:#c94b4b;
+    border-color:#9f3636;
+}
+
+.tab-button-maintenance.active {
+    background:#7258b8;
+    border-color:#5a4394;
 }
 
 .tab-panel {
@@ -631,11 +686,11 @@ button { margin:5px; }
 <div id="message" style="color:#666; margin:10px;"></div>
 
 <div class="tab-nav" role="tablist" aria-label="画面切り替え">
-    <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">モニター</button>
-    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
-    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">振返り</button>
-    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
-    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
+    <button class="tab-button tab-button-monitor active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">モニター</button>
+    <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
+    <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">振返り</button>
+    <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
+    <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
 </div>
 
 <section id="tab-monitor" class="tab-panel active" role="tabpanel">
