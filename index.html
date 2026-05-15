@@ -1890,7 +1890,8 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
     }
 
     const yAxisOptions = {
-        min: key === "volt" || key === "co2" ? 0 : undefined,
+        min: key === "volt" ? 11 : key === "co2" ? 0 : undefined,
+        max: key === "volt" ? 14 : undefined,
 
         ticks:{
             stepSize: key === "co2" ? 50 : undefined,
