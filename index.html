@@ -1098,8 +1098,8 @@ const pointLabelPlugin = {
 
             const labelMatch = dataset.label.match(/^(.+?)\s*\((.+)\)$/);
             const labelName = labelMatch ? labelMatch[1] : dataset.label;
-            const unit = labelMatch ? " " + labelMatch[2] : "";
-            const text = formatTime(dataset.data[index].x) + " " + labelName + " " + Number(value).toFixed(1) + unit;
+            const unit = labelMatch ? labelMatch[2] : "";
+            const text = labelName + Number(value).toFixed(1) + unit;
 
 ctx.font = "12px sans-serif";
 
