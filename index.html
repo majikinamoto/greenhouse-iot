@@ -1583,6 +1583,43 @@ function redrawChart(chart){
     chart.draw();
 }
 
+function isMobileView(){
+    return window.matchMedia("(max-width: 600px)").matches ||
+        window.innerWidth <= 600 ||
+        document.documentElement.clientWidth <= 600;
+}
+
+function applyChartXRange(chart, minTime, maxTime){
+    if(!chart || !chart.options.scales || !chart.options.scales.x) return;
+
+    chart.options.scales.x.min = minTime.getTime();
+    chart.options.scales.x.max = maxTime.getTime();
+
+    if(chart.initialScaleLimits && chart.initialScaleLimits.x){
+        chart.initialScaleLimits.x.min = minTime.getTime();
+        chart.initialScaleLimits.x.max = maxTime.getTime();
+    }
+
+    chart.update("none");
+}
+
+function applyMobileChartRanges(minTime, maxTime){
+    if(!isMobileView()) return;
+
+    [
+        tempChartP01,
+        tempChartP02,
+        tempChartP11,
+        outsideDiffChart,
+        vaporChart,
+        solarChart,
+        co2Chart,
+        diffChart
+    ].forEach(chart=>{
+        applyChartXRange(chart, minTime, maxTime);
+    });
+}
+
 async function fetchDataSafe(userId, pointId){
 
     const controller = new AbortController();
@@ -2103,7 +2140,7 @@ async function loadData(){
 
         const now = new Date();
         const minTime = new Date(now.getTime() - 72*60*60*1000);
-        const chartMinTime = window.matchMedia("(max-width: 600px)").matches
+        const chartMinTime = isMobileView()
             ? new Date(now.getTime() - 48*60*60*1000)
             : minTime;
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
@@ -2228,6 +2265,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
         ];
 
         allCharts.forEach(saveInitialScaleLimits);
+        applyMobileChartRanges(chartMinTime, now);
         refreshVisibleCharts();
 
         msg.innerText = errors.length ? errors.join(" / ") : "";
