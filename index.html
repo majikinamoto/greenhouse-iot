@@ -1936,7 +1936,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
 
             callback:function(value){
                 if(key === "volt"){
-                    return Math.round(value);
+                    return Number(value).toFixed(1);
                 }
                 return value;
             }
