@@ -2103,6 +2103,9 @@ async function loadData(){
 
         const now = new Date();
         const minTime = new Date(now.getTime() - 72*60*60*1000);
+        const chartMinTime = window.matchMedia("(max-width: 600px)").matches
+            ? new Date(now.getTime() - 48*60*60*1000)
+            : minTime;
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
 
         const results = await Promise.all([
@@ -2198,17 +2201,17 @@ const p91 = parseData(resultP91.data, voltMinTime);
             }
         }
 
-        tempChartP01 = createTempHumChart("tempChartP01", p01, minTime, now, "P01");
-        tempChartP02 = createTempHumChart("tempChartP02", p02, minTime, now, "P02");
-        tempChartP11 = createTempHumChart("tempChartP11", p11, minTime, now, "P11");
-        outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, minTime, now);
+        tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
+        tempChartP02 = createTempHumChart("tempChartP02", p02, chartMinTime, now, "P02");
+        tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
+        outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
-        vaporChart = createVaporChart("vaporChart", p01, minTime, now);
+        vaporChart = createVaporChart("vaporChart", p01, chartMinTime, now);
 
-        solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", minTime, now);
-        co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", minTime, now);
+        solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
+        co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
 
-        diffChart = createDiffChart("diffChart", p01, p02, minTime, now);
+        diffChart = createDiffChart("diffChart", p01, p02, chartMinTime, now);
 
         voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", voltMinTime, now);
 
