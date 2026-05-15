@@ -1931,12 +1931,12 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         max: key === "volt" ? 14 : undefined,
 
         ticks:{
-            stepSize: key === "co2" ? 50 : undefined,
+            stepSize: key === "volt" ? 1 : key === "co2" ? 50 : undefined,
             color:"#000",
 
             callback:function(value){
                 if(key === "volt"){
-                    return Number(value).toFixed(1);
+                    return Math.round(value);
                 }
                 return value;
             }
