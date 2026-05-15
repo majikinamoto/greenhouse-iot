@@ -1105,6 +1105,42 @@ const vpdTargetZonePlugin = {
     }
 };
 
+const voltTargetZonePlugin = {
+    id:"voltTargetZonePlugin",
+    beforeDatasetsDraw(chart){
+        if(chart.canvas.id !== "voltChart") return;
+
+        const yScale = chart.scales.y;
+        const chartArea = chart.chartArea;
+
+        if(!yScale || !chartArea) return;
+
+        const ctx = chart.ctx;
+        const redTop = yScale.getPixelForValue(12);
+        const orangeTop = yScale.getPixelForValue(12.75);
+
+        ctx.save();
+
+        ctx.fillStyle = "rgba(255, 80, 80, 0.16)";
+        ctx.fillRect(
+            chartArea.left,
+            redTop,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - redTop
+        );
+
+        ctx.fillStyle = "rgba(255, 159, 64, 0.18)";
+        ctx.fillRect(
+            chartArea.left,
+            orangeTop,
+            chartArea.right - chartArea.left,
+            redTop - orangeTop
+        );
+
+        ctx.restore();
+    }
+};
+
 const syncedCrosshairPlugin = {
     id:"syncedCrosshairPlugin",
     afterEvent(chart, args){
@@ -1167,6 +1203,7 @@ Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
     vpdTargetZonePlugin,
+    voltTargetZonePlugin,
     syncedCrosshairPlugin,
     pointLabelPlugin
 );
