@@ -184,6 +184,46 @@ button { margin:5px; }
     margin-bottom:8px;
 }
 
+.tab-nav {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:12px 0 10px;
+    padding:0 0 8px;
+    border-bottom:2px solid #c4ccd6;
+}
+
+.tab-button {
+    margin:0;
+    padding:8px 14px;
+    border:1px solid #9eadbd;
+    border-radius:6px 6px 0 0;
+    background:#eef3f7;
+    color:#25384d;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.tab-button.active {
+    background:#3f6388;
+    border-color:#3f6388;
+    color:#fff;
+}
+
+.tab-panel {
+    display:none;
+}
+
+.tab-panel.active {
+    display:block;
+}
+
+.tab-placeholder {
+    padding:24px 10px;
+    color:#33475b;
+    font-weight:700;
+}
+
 .status-container {
     display:flex;
     gap:5px;
@@ -530,6 +570,19 @@ button { margin:5px; }
         margin-left:auto;
         margin-right:auto;
     }
+
+    .tab-nav {
+        gap:5px;
+        padding:0 10px 8px;
+    }
+
+    .tab-button {
+        flex:1 1 calc(33.333% - 5px);
+        min-width:92px;
+        padding:9px 8px;
+        font-size:14px;
+        white-space:nowrap;
+    }
 }
 </style>
 </head>
@@ -573,9 +626,19 @@ button { margin:5px; }
 
 </div>
 
+</div>
 
 <div id="message" style="color:#666; margin:10px;"></div>
 
+<div class="tab-nav" role="tablist" aria-label="画面切り替え">
+    <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">モニター</button>
+    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
+    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">振返り</button>
+    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
+    <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
+</div>
+
+<section id="tab-monitor" class="tab-panel active" role="tabpanel">
 <div class="status-container">
 <div class="status-group status-group-current">
 <div class="status-group-title">現在（P01）</div>
@@ -628,9 +691,6 @@ button { margin:5px; }
 </div>
 </div>
 
-</div>
-
-
 
 <div class="grid">
 
@@ -644,18 +704,6 @@ button { margin:5px; }
             <button onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>メンテナンス用ハウス内_P02</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP02" value="50"> ～
-            <input class="axis-input" type="number" id="humMaxP02" value="100">
-            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="10"> ～
-            <input class="axis-input" type="number" id="tempMaxP02" value="60">
-            <button onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
     </div>
 
     <div>
@@ -690,6 +738,36 @@ button { margin:5px; }
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
+</div>
+</section>
+
+<section id="tab-analysis" class="tab-panel" role="tabpanel">
+    <div class="tab-placeholder">分析タブは今後追加予定です</div>
+</section>
+
+<section id="tab-review" class="tab-panel" role="tabpanel">
+    <div class="tab-placeholder">振返りタブは今後追加予定です</div>
+</section>
+
+<section id="tab-alert" class="tab-panel" role="tabpanel">
+    <div class="tab-placeholder">アラートタブは今後追加予定です</div>
+</section>
+
+<section id="tab-maintenance" class="tab-panel" role="tabpanel">
+<div class="grid">
+
+    <div>
+        <h4><span>メンテナンス用ハウス内_P02</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP02" value="50"> ～
+            <input class="axis-input" type="number" id="humMaxP02" value="100">
+            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="10"> ～
+            <input class="axis-input" type="number" id="tempMaxP02" value="60">
+            <button onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
+    </div>
+
     <div>
         <h4><span>メンテナンス用（P01−P02_差）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
@@ -701,6 +779,7 @@ button { margin:5px; }
     </div>
 
 </div>
+</section>
 
 <script>
 
@@ -758,6 +837,35 @@ function updateUserIdHistoryList(){
             select.appendChild(option);
         }
     });
+}
+
+function refreshVisibleCharts(){
+    requestAnimationFrame(()=>{
+        document.querySelectorAll(".tab-panel.active canvas").forEach(canvas=>{
+            const chart = Chart.getChart(canvas);
+
+            if(chart){
+                chart.resize();
+                chart.update("none");
+            }
+        });
+    });
+}
+
+function switchTab(tabName){
+    const targetId = "tab-" + tabName;
+
+    document.querySelectorAll(".tab-panel").forEach(panel=>{
+        panel.classList.toggle("active", panel.id === targetId);
+    });
+
+    document.querySelectorAll(".tab-button").forEach(button=>{
+        const isActive = button.getAttribute("aria-controls") === targetId;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    refreshVisibleCharts();
 }
 
 const chartBackgroundPlugin = {
@@ -1850,6 +1958,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
         ];
 
         allCharts.forEach(saveInitialScaleLimits);
+        refreshVisibleCharts();
 
         msg.innerText = errors.length ? errors.join(" / ") : "";
 
