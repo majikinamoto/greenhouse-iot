@@ -1920,9 +1920,9 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .filter(d=>d.hum !== null && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
-                    borderColor:"rgb(70, 130, 255)",
-                    backgroundColor:"rgba(70, 130, 255, 0.14)",
-                    pointBackgroundColor:"rgb(70, 130, 255)",
+                    borderColor:"rgb(120, 170, 255)",
+                    backgroundColor:"rgba(120, 170, 255, 0.12)",
+                    pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2
@@ -2114,9 +2114,9 @@ p01.forEach(d=>{
                 {
                     label:"湿度差 P01−P02 (%)",
                     data:humDiffData,
-                    borderColor:"rgb(70, 130, 255)",
-                    backgroundColor:"rgba(70, 130, 255, 0.14)",
-                    pointBackgroundColor:"rgb(70, 130, 255)",
+                    borderColor:"rgb(120, 170, 255)",
+                    backgroundColor:"rgba(120, 170, 255, 0.12)",
+                    pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2
