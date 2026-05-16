@@ -142,6 +142,10 @@ button { margin:5px; }
     color:blue;
 }
 
+.axis-label-co2 {
+    color:#464646;
+}
+
 
 .grid {
     display:flex;
@@ -850,6 +854,11 @@ button { margin:5px; }
 
     <div>
         <h4><span>CO2（P21）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="co2Min" value="350"> ～
+            <input class="axis-input" type="number" id="co2Max" value="550">
+            <button onclick="applyCo2YAxis(co2Chart)">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
@@ -937,6 +946,9 @@ let tempMax = 60;
 
 let humMin = 50;
 let humMax = 100;
+
+let co2Min = 350;
+let co2Max = 550;
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -1784,6 +1796,13 @@ function getTempHumAxis(pointId){
     };
 }
 
+function getCo2Axis(){
+    return {
+        min:getAxisValue("co2Min", co2Min),
+        max:getAxisValue("co2Max", co2Max)
+    };
+}
+
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
         "tempChartP01",
@@ -2133,9 +2152,11 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         bg = "rgba(0, 160, 80, 0.2)";
     }
 
+    const co2Axis = key === "co2" ? getCo2Axis() : null;
+
     const yAxisOptions = {
-        min: key === "volt" ? 11 : key === "co2" ? 300 : undefined,
-        max: key === "volt" ? 14 : key === "co2" ? 600 : undefined,
+        min: key === "volt" ? 11 : co2Axis ? co2Axis.min : undefined,
+        max: key === "volt" ? 14 : co2Axis ? co2Axis.max : undefined,
 
         ticks:{
             stepSize: key === "volt" ? 1 : key === "co2" ? 50 : undefined,
@@ -2416,6 +2437,26 @@ function applyTempHumYAxis(chart, pointId){
         chart.initialScaleLimits.yHum.max = axis.humMax;
         chart.initialScaleLimits.yTemp.min = axis.tempMin;
         chart.initialScaleLimits.yTemp.max = axis.tempMax;
+    }
+
+    chart.update();
+}
+
+function applyCo2YAxis(chart){
+    if(!chart) return;
+
+    const axis = getCo2Axis();
+
+    chart.options.scales.y.min = axis.min;
+    chart.options.scales.y.max = axis.max;
+    chart.options.scales.yRight.min = axis.min;
+    chart.options.scales.yRight.max = axis.max;
+
+    if(chart.initialScaleLimits){
+        chart.initialScaleLimits.y.min = axis.min;
+        chart.initialScaleLimits.y.max = axis.max;
+        chart.initialScaleLimits.yRight.min = axis.min;
+        chart.initialScaleLimits.yRight.max = axis.max;
     }
 
     chart.update();
