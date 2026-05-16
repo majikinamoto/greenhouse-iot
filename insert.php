@@ -15,6 +15,7 @@ $json = file_get_contents('php://input');
 
 // ログ出力（デバッグ用）
 file_put_contents("/tmp/debug.log", $json . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . "/debug.log", $json . "\n", FILE_APPEND);
 
 $data = json_decode($json, true);
 
@@ -38,7 +39,7 @@ if (!$user_id) {
 
 // ===== SQL =====
 $sql = "INSERT INTO measurements 
-(user_id, point_id, temperature, humidity, CO2, solar_radiation, voltage) 
+(user_id, point_id, temperature, humidity, co2, solar_radiation, voltage) 
 VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
