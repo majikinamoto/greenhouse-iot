@@ -1239,14 +1239,6 @@ const voltTargetZonePlugin = {
 
         ctx.save();
 
-        ctx.fillStyle = "rgba(255, 80, 80, 0.16)";
-        ctx.fillRect(
-            chartArea.left,
-            redTop,
-            chartArea.right - chartArea.left,
-            chartArea.bottom - redTop
-        );
-
         ctx.fillStyle = "rgba(255, 159, 64, 0.18)";
         ctx.fillRect(
             chartArea.left,
@@ -1928,9 +1920,9 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .filter(d=>d.hum !== null && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
-                    borderColor:"rgb(0, 0, 255)",
-                    backgroundColor:"rgba(0, 0, 255, 0.15)",
-                    pointBackgroundColor:"rgb(0, 0, 255)",
+                    borderColor:"rgb(70, 130, 255)",
+                    backgroundColor:"rgba(70, 130, 255, 0.14)",
+                    pointBackgroundColor:"rgb(70, 130, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2
@@ -2122,9 +2114,9 @@ p01.forEach(d=>{
                 {
                     label:"湿度差 P01−P02 (%)",
                     data:humDiffData,
-                    borderColor:"rgb(0, 0, 255)",
-                    backgroundColor:"rgba(0, 0, 255, 0.15)",
-                    pointBackgroundColor:"rgb(0, 0, 255)",
+                    borderColor:"rgb(70, 130, 255)",
+                    backgroundColor:"rgba(70, 130, 255, 0.14)",
+                    pointBackgroundColor:"rgb(70, 130, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2
