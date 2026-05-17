@@ -1,16 +1,23 @@
 <?php
 
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 header('Content-Type: application/json; charset=UTF-8');
+
+function send_json($success, $message, $status_code = 200) {
+    http_response_code($status_code);
+    echo json_encode([
+        "success" => $success,
+        "message" => $message
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $conn = new mysqli("localhost", "iot", "password123", "greenhouse");
 
 if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode([
-        "success" => false,
-        "message" => "DB接続に失敗しました"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    send_json(false, "DB接続に失敗しました", 500);
 }
 
 $conn->set_charset("utf8mb4");
@@ -19,12 +26,8 @@ $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
 if (!is_array($data)) {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "JSONデータが正しくありません"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "JSONデータが正しくありません", 400);
 }
 
 $user_id = trim($data["user_id"] ?? "");
@@ -36,12 +39,8 @@ $webhook_url = trim($data["webhook_url"] ?? "");
 $enabled = !empty($data["enabled"]) ? 1 : 0;
 
 if ($user_id === "") {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "user_idを入力してください"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "user_idを入力してください", 400);
 }
 
 if ($point_id === "") {
@@ -49,39 +48,23 @@ if ($point_id === "") {
 }
 
 if (!is_numeric($temperature_threshold)) {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "温度を入力してください"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "温度を入力してください", 400);
 }
 
 if (!in_array($condition_type, ["above", "below"], true)) {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "条件が正しくありません"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "条件が正しくありません", 400);
 }
 
 if (!in_array($notify_target, ["line", "discord"], true)) {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "通知先が正しくありません"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "通知先が正しくありません", 400);
 }
 
 if ($webhook_url === "") {
-    http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "Webhook URLを入力してください"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "Webhook URLを入力してください", 400);
 }
 
 $sql = "INSERT INTO alert_settings
@@ -91,12 +74,8 @@ $sql = "INSERT INTO alert_settings
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
-    http_response_code(500);
-    echo json_encode([
-        "success" => false,
-        "message" => "SQL準備に失敗しました"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $conn->close();
+    send_json(false, "SQL準備に失敗しました", 500);
 }
 
 $temperature_threshold = (float)$temperature_threshold;
@@ -113,22 +92,12 @@ $stmt->bind_param(
 );
 
 if (!$stmt->execute()) {
-    http_response_code(500);
-    echo json_encode([
-        "success" => false,
-        "message" => "アラート設定の保存に失敗しました"
-    ], JSON_UNESCAPED_UNICODE);
     $stmt->close();
     $conn->close();
-    exit;
+    send_json(false, "アラート設定の保存に失敗しました", 500);
 }
-
-echo json_encode([
-    "success" => true,
-    "message" => "アラート設定を保存しました"
-], JSON_UNESCAPED_UNICODE);
 
 $stmt->close();
 $conn->close();
 
-?>
+send_json(true, "アラート設定を保存しました");
