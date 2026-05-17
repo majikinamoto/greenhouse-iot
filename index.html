@@ -332,6 +332,50 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.alert-setting-form {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 14px;
+    align-items:center;
+    max-width:900px;
+    padding:0 10px 18px;
+    color:#1f3038;
+}
+
+.alert-setting-form label {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:14px;
+    font-weight:700;
+}
+
+.alert-setting-form input,
+.alert-setting-form select {
+    box-sizing:border-box;
+    height:34px;
+}
+
+.alert-temperature-input {
+    width:90px;
+}
+
+.alert-webhook-input {
+    width:320px;
+    max-width:100%;
+}
+
+.alert-enabled-label {
+    white-space:nowrap;
+}
+
+.alert-message {
+    width:100%;
+    min-height:20px;
+    color:#33475b;
+    font-weight:700;
+}
+
 .guide-content {
     max-width:850px;
     padding:12px 8px;
@@ -713,6 +757,27 @@ button { margin:5px; }
         font-size:14px;
         white-space:nowrap;
     }
+
+    .alert-setting-form {
+        padding:0 10px 16px;
+        align-items:stretch;
+    }
+
+    .alert-setting-form label,
+    .alert-setting-form button {
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .alert-setting-form input,
+    .alert-setting-form select {
+        flex:1;
+        min-width:0;
+    }
+
+    .alert-webhook-input {
+        width:100%;
+    }
 }
 </style>
 </head>
@@ -897,6 +962,42 @@ button { margin:5px; }
 
 <section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
     <div class="tab-placeholder">アラートタブは今後追加予定です。ＬＩＮＥやDiscord等にある状態になったときに通知するサービスを予定しています。</div>
+    <div class="alert-setting-form">
+        <label>
+            温度
+            <input class="alert-temperature-input" type="number" id="alertTemperatureThreshold" step="0.1">
+            ℃
+        </label>
+
+        <label>
+            条件
+            <select id="alertConditionType">
+                <option value="above">以上</option>
+                <option value="below">以下</option>
+            </select>
+        </label>
+
+        <label>
+            通知先
+            <select id="alertNotifyTarget">
+                <option value="line">LINE</option>
+                <option value="discord">Discord</option>
+            </select>
+        </label>
+
+        <label>
+            Webhook URL
+            <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
+        </label>
+
+        <label class="alert-enabled-label">
+            <input type="checkbox" id="alertEnabled" checked>
+            有効
+        </label>
+
+        <button type="button" onclick="saveAlertSetting()">保存</button>
+        <div id="alertMessage" class="alert-message"></div>
+    </div>
 </section>
 
 <section id="tab-maintenance" class="tab-panel tab-panel-maintenance" role="tabpanel">
@@ -2607,6 +2708,64 @@ function downloadCSV(){
         + "&end=" + encodeURIComponent(end);
 
     window.open(url, "_blank");
+}
+
+async function saveAlertSetting(){
+
+    const userId = document.getElementById("userId").value.trim();
+    const alertMessage = document.getElementById("alertMessage");
+    const temperatureThreshold = document.getElementById("alertTemperatureThreshold").value;
+    const conditionType = document.getElementById("alertConditionType").value;
+    const notifyTarget = document.getElementById("alertNotifyTarget").value;
+    const webhookUrl = document.getElementById("alertWebhookUrl").value.trim();
+    const enabled = document.getElementById("alertEnabled").checked ? 1 : 0;
+
+    if(!userId){
+        alertMessage.innerText = "user_idを入力してください";
+        return;
+    }
+
+    if(temperatureThreshold === ""){
+        alertMessage.innerText = "温度を入力してください";
+        return;
+    }
+
+    if(!webhookUrl){
+        alertMessage.innerText = "Webhook URLを入力してください";
+        return;
+    }
+
+    alertMessage.innerText = "保存中...";
+
+    try{
+        const res = await fetch("save_alert_setting.php", {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                user_id:userId,
+                point_id:"P01",
+                temperature_threshold:Number(temperatureThreshold),
+                condition_type:conditionType,
+                notify_target:notifyTarget,
+                webhook_url:webhookUrl,
+                enabled:enabled
+            })
+        });
+
+        const result = await res.json();
+
+        if(!res.ok || !result.success){
+            alertMessage.innerText = result.message || "アラート設定の保存に失敗しました";
+            return;
+        }
+
+        alertMessage.innerText = "アラート設定を保存しました";
+
+    }catch(e){
+        alertMessage.innerText = "通信エラー：" + e.message;
+    }
 }
 
 </script>
