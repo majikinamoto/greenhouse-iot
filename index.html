@@ -1091,16 +1091,58 @@ let solarAxisMin = undefined;
 let solarAxisMax = undefined;
 let voltAxisMin = 11;
 let voltAxisMax = 14;
+let alertFormUserId = "";
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
         saveUserIdHistory(savedUserId);
+        alertFormUserId = savedUserId;
     }
 
     updateUserIdHistoryList();
+
+    const userIdInput = document.getElementById("userId");
+    const userIdHistorySelect = document.getElementById("userIdHistorySelect");
+
+    if(userIdInput){
+        userIdInput.addEventListener("input", clearAlertFormIfUserChanged);
+        userIdInput.addEventListener("change", clearAlertFormIfUserChanged);
+    }
+
+    if(userIdHistorySelect){
+        userIdHistorySelect.addEventListener("change", ()=>{
+            setTimeout(clearAlertFormIfUserChanged, 0);
+        });
+    }
 });
+
+function clearAlertForm(){
+    const temperature = document.getElementById("alertTemperatureThreshold");
+    const condition = document.getElementById("alertConditionType");
+    const notifyTarget = document.getElementById("alertNotifyTarget");
+    const webhookUrl = document.getElementById("alertWebhookUrl");
+    const enabled = document.getElementById("alertEnabled");
+    const message = document.getElementById("alertMessage");
+
+    if(temperature) temperature.value = "";
+    if(condition) condition.value = "above";
+    if(notifyTarget) notifyTarget.value = "discord";
+    if(webhookUrl) webhookUrl.value = "";
+    if(enabled) enabled.checked = true;
+    if(message) message.innerText = "";
+}
+
+function clearAlertFormIfUserChanged(){
+    const userIdInput = document.getElementById("userId");
+    const currentUserId = userIdInput ? userIdInput.value.trim() : "";
+
+    if(currentUserId !== alertFormUserId){
+        clearAlertForm();
+        alertFormUserId = currentUserId;
+    }
+}
 
 function getUserIdHistory(){
     try{
@@ -2385,6 +2427,8 @@ async function loadData(){
     const userId = document.getElementById("userId").value.trim();
     const msg = document.getElementById("message");
 
+    clearAlertFormIfUserChanged();
+
     if(!userId){
         msg.innerText = "user_id を入力してください";
         return;
@@ -2774,6 +2818,7 @@ async function saveAlertSetting(){
             return;
         }
 
+        document.getElementById("alertWebhookUrl").value = "";
         alertMessage.innerText = result.message || "アラート設定を保存しました";
 
     }catch(e){
