@@ -5,11 +5,7 @@ error_reporting(E_ALL);
 
 header('Content-Type: application/json; charset=UTF-8');
 
-echo json_encode([
-    "success" => true,
-    "message" => "PHPまで到達しています"
-], JSON_UNESCAPED_UNICODE);
-exit;
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 function send_json($success, $message, $status_code = 200) {
     http_response_code($status_code);
@@ -20,90 +16,73 @@ function send_json($success, $message, $status_code = 200) {
     exit;
 }
 
-$conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+try {
+    $conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+    $conn->set_charset("utf8mb4");
 
-if ($conn->connect_error) {
-    send_json(false, "DB接続に失敗しました", 500);
-}
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
 
-$conn->set_charset("utf8mb4");
+    if (!is_array($data)) {
+        send_json(false, "JSONデータが正しくありません", 400);
+    }
 
-$json = file_get_contents('php://input');
-$data = json_decode($json, true);
+    $user_id = trim($data["user_id"] ?? "");
+    $point_id = trim($data["point_id"] ?? "P01");
+    $temperature_threshold = $data["temperature_threshold"] ?? null;
+    $condition_type = $data["condition_type"] ?? "";
+    $notify_target = $data["notify_target"] ?? "";
+    $webhook_url = trim($data["webhook_url"] ?? "");
+    $enabled = !empty($data["enabled"]) ? 1 : 0;
 
-if (!is_array($data)) {
-    $conn->close();
-    send_json(false, "JSONデータが正しくありません", 400);
-}
+    if ($user_id === "") {
+        send_json(false, "user_idを入力してください", 400);
+    }
 
-$user_id = trim($data["user_id"] ?? "");
-$point_id = trim($data["point_id"] ?? "P01");
-$temperature_threshold = $data["temperature_threshold"] ?? null;
-$condition_type = $data["condition_type"] ?? "";
-$notify_target = $data["notify_target"] ?? "";
-$webhook_url = trim($data["webhook_url"] ?? "");
-$enabled = !empty($data["enabled"]) ? 1 : 0;
+    if ($point_id === "") {
+        $point_id = "P01";
+    }
 
-if ($user_id === "") {
-    $conn->close();
-    send_json(false, "user_idを入力してください", 400);
-}
+    if (!is_numeric($temperature_threshold)) {
+        send_json(false, "温度を入力してください", 400);
+    }
 
-if ($point_id === "") {
-    $point_id = "P01";
-}
+    if (!in_array($condition_type, ["above", "below"], true)) {
+        send_json(false, "条件が正しくありません", 400);
+    }
 
-if (!is_numeric($temperature_threshold)) {
-    $conn->close();
-    send_json(false, "温度を入力してください", 400);
-}
+    if (!in_array($notify_target, ["line", "discord"], true)) {
+        send_json(false, "通知先が正しくありません", 400);
+    }
 
-if (!in_array($condition_type, ["above", "below"], true)) {
-    $conn->close();
-    send_json(false, "条件が正しくありません", 400);
-}
+    if ($webhook_url === "") {
+        send_json(false, "Webhook URLを入力してください", 400);
+    }
 
-if (!in_array($notify_target, ["line", "discord"], true)) {
-    $conn->close();
-    send_json(false, "通知先が正しくありません", 400);
-}
+    $sql = "INSERT INTO alert_settings
+            (user_id, point_id, temperature_threshold, condition_type, notify_target, webhook_url, enabled)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-if ($webhook_url === "") {
-    $conn->close();
-    send_json(false, "Webhook URLを入力してください", 400);
-}
+    $stmt = $conn->prepare($sql);
+    $temperature_threshold = (float)$temperature_threshold;
 
-$sql = "INSERT INTO alert_settings
-        (user_id, point_id, temperature_threshold, condition_type, notify_target, webhook_url, enabled)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmt->bind_param(
+        "ssdsssi",
+        $user_id,
+        $point_id,
+        $temperature_threshold,
+        $condition_type,
+        $notify_target,
+        $webhook_url,
+        $enabled
+    );
 
-$stmt = $conn->prepare($sql);
-
-if (!$stmt) {
-    $conn->close();
-    send_json(false, "SQL準備に失敗しました", 500);
-}
-
-$temperature_threshold = (float)$temperature_threshold;
-
-$stmt->bind_param(
-    "ssdsssi",
-    $user_id,
-    $point_id,
-    $temperature_threshold,
-    $condition_type,
-    $notify_target,
-    $webhook_url,
-    $enabled
-);
-
-if (!$stmt->execute()) {
+    $stmt->execute();
     $stmt->close();
     $conn->close();
-    send_json(false, "アラート設定の保存に失敗しました", 500);
+
+    send_json(true, "アラート設定を保存しました");
+
+} catch (Throwable $e) {
+    send_json(false, "エラー：" . $e->getMessage(), 500);
 }
-
-$stmt->close();
-$conn->close();
-
-send_json(true, "アラート設定を保存しました");
