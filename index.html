@@ -2754,14 +2754,27 @@ async function saveAlertSetting(){
             })
         });
 
-        const result = await res.json();
+        const text = await res.text();
+        console.log("save_alert_setting.php response:", text);
+
+        if(!text.trim()){
+            throw new Error("save_alert_setting.php から空のレスポンスが返りました");
+        }
+
+        let result;
+
+        try{
+            result = JSON.parse(text);
+        }catch(e){
+            throw new Error("JSONではないレスポンスです：" + text);
+        }
 
         if(!res.ok || !result.success){
             alertMessage.innerText = result.message || "アラート設定の保存に失敗しました";
             return;
         }
 
-        alertMessage.innerText = "アラート設定を保存しました";
+        alertMessage.innerText = result.message || "アラート設定を保存しました";
 
     }catch(e){
         alertMessage.innerText = "通信エラー：" + e.message;

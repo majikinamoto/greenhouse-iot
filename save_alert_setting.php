@@ -5,6 +5,12 @@ error_reporting(E_ALL);
 
 header('Content-Type: application/json; charset=UTF-8');
 
+echo json_encode([
+    "success" => true,
+    "message" => "PHPまで到達しています"
+], JSON_UNESCAPED_UNICODE);
+exit;
+
 function send_json($success, $message, $status_code = 200) {
     http_response_code($status_code);
     echo json_encode([
