@@ -376,6 +376,27 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.active-alert-setting {
+    max-width:520px;
+    margin:0 10px 18px;
+    padding:10px 12px;
+    border:2px solid #d08a8a;
+    background:#fffafa;
+    color:#1f3038;
+    font-size:14px;
+    line-height:1.7;
+}
+
+.active-alert-setting-title {
+    margin-bottom:4px;
+    font-weight:800;
+    color:#8a2424;
+}
+
+.active-alert-setting-empty {
+    font-weight:700;
+}
+
 .guide-content {
     max-width:850px;
     padding:12px 8px;
@@ -778,6 +799,12 @@ button { margin:5px; }
     .alert-webhook-input {
         width:100%;
     }
+
+    .active-alert-setting {
+        margin:0 10px 16px;
+        box-sizing:border-box;
+        max-width:calc(100vw - 20px);
+    }
 }
 </style>
 </head>
@@ -998,6 +1025,10 @@ button { margin:5px; }
         <button type="button" onclick="saveAlertSetting()">保存</button>
         <div id="alertMessage" class="alert-message"></div>
     </div>
+    <div id="activeAlertSetting" class="active-alert-setting">
+        <div class="active-alert-setting-title">現在有効なアラート設定</div>
+        <div class="active-alert-setting-empty">有効なアラート設定はありません。</div>
+    </div>
 </section>
 
 <section id="tab-maintenance" class="tab-panel tab-panel-maintenance" role="tabpanel">
@@ -1099,6 +1130,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
         document.getElementById("userId").value = savedUserId;
         saveUserIdHistory(savedUserId);
         alertFormUserId = savedUserId;
+        loadActiveAlertSetting(savedUserId);
     }
 
     updateUserIdHistoryList();
@@ -1141,6 +1173,79 @@ function clearAlertFormIfUserChanged(){
     if(currentUserId !== alertFormUserId){
         clearAlertForm();
         alertFormUserId = currentUserId;
+        loadActiveAlertSetting(currentUserId);
+    }
+}
+
+function renderActiveAlertSettingEmpty(message){
+    const container = document.getElementById("activeAlertSetting");
+    if(!container) return;
+
+    container.innerHTML =
+        '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
+        '<div class="active-alert-setting-empty">' + (message || "有効なアラート設定はありません。") + '</div>';
+}
+
+function renderActiveAlertSetting(setting){
+    const container = document.getElementById("activeAlertSetting");
+    if(!container) return;
+
+    if(!setting || Number(setting.enabled) !== 1){
+        renderActiveAlertSettingEmpty();
+        return;
+    }
+
+    const threshold = Number(setting.temperature_threshold);
+    const condition = setting.condition_type === "below" ? "以下" : "以上";
+    const notifyTarget = setting.notify_target === "line" ? "LINE" : "Discord";
+
+    container.innerHTML =
+        '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
+        '<div>対象：P01 温度</div>' +
+        '<div>条件：' + (isNaN(threshold) ? "-" : threshold.toFixed(1)) + '℃ ' + condition + '</div>' +
+        '<div>通知先：' + notifyTarget + '</div>' +
+        '<div>状態：有効</div>';
+}
+
+async function loadActiveAlertSetting(userId){
+    if(!userId){
+        renderActiveAlertSettingEmpty();
+        return;
+    }
+
+    const requestedUserId = userId;
+    renderActiveAlertSettingEmpty("読み込み中...");
+
+    try{
+        const res = await fetch(
+            "get_alert_setting.php?user_id=" + encodeURIComponent(requestedUserId) + "&point_id=P01",
+            { cache:"no-store" }
+        );
+
+        const text = await res.text();
+        let result;
+
+        try{
+            result = JSON.parse(text);
+        }catch(e){
+            throw new Error("JSONではないレスポンスです：" + text);
+        }
+
+        const currentUserId = document.getElementById("userId").value.trim();
+        if(currentUserId !== requestedUserId) return;
+
+        if(!res.ok || !result.success){
+            renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+            return;
+        }
+
+        renderActiveAlertSetting(result.setting);
+
+    }catch(e){
+        const currentUserId = document.getElementById("userId").value.trim();
+        if(currentUserId === requestedUserId){
+            renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+        }
     }
 }
 
@@ -2456,6 +2561,8 @@ async function loadData(){
 
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
+    alertFormUserId = userId;
+    loadActiveAlertSetting(userId);
 
     msg.innerText = "読み込み中...";
 
@@ -2853,6 +2960,8 @@ async function saveAlertSetting(){
 
         document.getElementById("alertWebhookUrl").value = "";
         alertMessage.innerText = result.message || "アラート設定を保存しました";
+        alertFormUserId = userId;
+        loadActiveAlertSetting(userId);
 
     }catch(e){
         alertMessage.innerText = "通信エラー：" + e.message;
