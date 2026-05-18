@@ -857,10 +857,10 @@ button { margin:5px; }
 </div>
 </div>
 <div class="status-group status-group-average">
-<div class="status-group-title">移動平均（P01）</div>
-<div class="status-box average-box">72時間：<span><span id="avg72">-</span>℃</span></div>
-<div class="status-box average-box">48時間：<span><span id="avg48">-</span>℃</span></div>
-<div class="status-box average-box">24時間：<span><span id="avg24">-</span>℃</span></div>
+<div class="status-group-title">日平均気温（P01）</div>
+<div class="status-box average-box">前々日：<span><span id="avgTwoDaysAgo">-</span>℃</span></div>
+<div class="status-box average-box">前日：<span><span id="avgYesterday">-</span>℃</span></div>
+<div class="status-box average-box">今日：<span><span id="avgToday">-</span>℃</span></div>
 </div>
 <div class="status-group status-group-vpd-eval">
 <div class="status-group-title">昨日の飽差評価</div>
@@ -1577,10 +1577,20 @@ function calcDewPoint(temp, hum){
     return (b * alpha) / (a - alpha);
 }
 
-function calcAverageTemp(data, hours, now){
-    const start = new Date(now.getTime() - hours*60*60*1000);
+function calcDailyAverageTemp(data, targetDate, isToday){
+    const start = new Date(targetDate);
+    start.setHours(0,0,0,0);
+
+    const end = new Date(targetDate);
+
+    if(isToday){
+        end.setTime(new Date().getTime());
+    }else{
+        end.setHours(23,59,59,999);
+    }
+
     const temps = data
-        .filter(d=>d.x>=start && d.x<=now && d.temp !== null && !isNaN(d.temp))
+        .filter(d=>d.x>=start && d.x<=end && d.temp !== null && d.temp !== undefined && !isNaN(d.temp))
         .map(d=>d.temp);
 
     if(!temps.length) return null;
@@ -2447,9 +2457,9 @@ async function loadData(){
     document.getElementById("todayMin").innerText = "-";
     document.getElementById("yMax").innerText = "-";
     document.getElementById("yMin").innerText = "-";
-    document.getElementById("avg24").innerText = "-";
-    document.getElementById("avg48").innerText = "-";
-    document.getElementById("avg72").innerText = "-";
+    document.getElementById("avgToday").innerText = "-";
+    document.getElementById("avgYesterday").innerText = "-";
+    document.getElementById("avgTwoDaysAgo").innerText = "-";
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
 
@@ -2487,6 +2497,27 @@ const resultP91 = results.find(r=>r.pointId === "P91");
 const p21 = parseData(resultP21.data, minTime);
 const p91 = parseData(resultP91.data, voltMinTime);
 
+        const today = new Date(now);
+
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        const twoDaysAgo = new Date(today);
+        twoDaysAgo.setDate(today.getDate() - 2);
+
+        const avgToday = calcDailyAverageTemp(p01, today, true);
+        const avgYesterday = calcDailyAverageTemp(p01, yesterday, false);
+        const avgTwoDaysAgo = calcDailyAverageTemp(p01, twoDaysAgo, false);
+
+        document.getElementById("avgToday").innerText =
+            avgToday === null ? "-" : avgToday.toFixed(1);
+
+        document.getElementById("avgYesterday").innerText =
+            avgYesterday === null ? "-" : avgYesterday.toFixed(1);
+
+        document.getElementById("avgTwoDaysAgo").innerText =
+            avgTwoDaysAgo === null ? "-" : avgTwoDaysAgo.toFixed(1);
+
 
 
 
@@ -2514,14 +2545,6 @@ const p91 = parseData(resultP91.data, voltMinTime);
                 document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
                 document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
-
-                const avg24 = calcAverageTemp(p01, 24, now);
-                const avg48 = calcAverageTemp(p01, 48, now);
-                const avg72 = calcAverageTemp(p01, 72, now);
-
-                if(avg24 !== null) document.getElementById("avg24").innerText = avg24.toFixed(1);
-                if(avg48 !== null) document.getElementById("avg48").innerText = avg48.toFixed(1);
-                if(avg72 !== null) document.getElementById("avg72").innerText = avg72.toFixed(1);
 
                 const todayStart = new Date();
                 todayStart.setHours(0,0,0,0);
