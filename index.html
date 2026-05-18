@@ -918,7 +918,7 @@ button { margin:5px; }
         <h4><span>温度差_内外（P01-P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="outsideDiffMin" value="-1"> ～
-            <input class="axis-input" type="number" id="outsideDiffMax" value="8">
+            <input class="axis-input" type="number" id="outsideDiffMax" value="5">
             <button onclick="applyOutsideDiffYAxis(outsideDiffChart)">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
@@ -1086,7 +1086,7 @@ let co2Max = 550;
 let diffAxisMin = -5;
 let diffAxisMax = 5;
 let outsideDiffAxisMin = -1;
-let outsideDiffAxisMax = 8;
+let outsideDiffAxisMax = 5;
 let solarAxisMin = undefined;
 let solarAxisMax = undefined;
 let voltAxisMin = 11;
