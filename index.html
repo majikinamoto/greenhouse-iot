@@ -1679,6 +1679,8 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     destroyExistingChart(canvasId);
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
     const axis = getAnalysisTempAxis(graphId);
+    const lineColor = graphId === "A" ? "rgb(0, 160, 80)" : "rgb(70, 130, 220)";
+    const fillColor = graphId === "A" ? "rgba(0, 160, 80, 0.18)" : "rgba(70, 130, 220, 0.14)";
     const options = baseOptions(minTime,maxTime);
 
     options.plugins = {
@@ -1703,9 +1705,9 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
                 data:parsed
                     .filter(d=>d.temp !== null && !isNaN(d.temp))
                     .map(d=>({x:d.xValue,y:d.temp})),
-                borderColor:"rgb(255, 0, 0)",
-                backgroundColor:"rgba(255, 0, 0, 0.15)",
-                pointBackgroundColor:"rgb(255, 0, 0)",
+                borderColor:lineColor,
+                backgroundColor:fillColor,
+                pointBackgroundColor:lineColor,
                 pointRadius:0,
                 borderWidth:2,
                 tension:0.2
@@ -1952,9 +1954,9 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
             datasets:[{
                 label:"温度差 (℃)",
                 data:calcAnalysisDiffData(analysisCompareData.A, analysisCompareData[targetGraphId]),
-                borderColor:"#000",
+                borderColor:"rgba(0, 0, 0, 0.6)",
                 backgroundColor:"rgba(0, 0, 0, 0.08)",
-                pointBackgroundColor:"#000",
+                pointBackgroundColor:"rgba(0, 0, 0, 0.6)",
                 pointRadius:0,
                 borderWidth:2,
                 tension:0.2
