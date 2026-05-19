@@ -1190,7 +1190,7 @@ button { margin:5px; }
     <div class="tab-placeholder">分析タブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
     <div class="analysis-compare-grid">
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleA">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('A')">ズームリセット</button></h4>
+            <h4><span id="analysisTitleA">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
@@ -1199,15 +1199,15 @@ button { margin:5px; }
                 <button type="button" onclick="loadAnalysisCompareChart('A')">表示</button>
             </div>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMin" value="20"> ～
-                <input class="axis-input" type="number" id="analysisTempMax" value="40">
-                <button onclick="applyAnalysisTempYAxis()">縦軸反映</button>
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinA" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxA" value="40">
+                <button onclick="applyAnalysisTempYAxis('A')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="analysisChartA"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleB">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('B')">ズームリセット</button></h4>
+            <h4><span id="analysisTitleB">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
@@ -1215,11 +1215,16 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P01" onchange="saveAnalysisCompareSetting('B')">
                 <button type="button" onclick="loadAnalysisCompareChart('B')">表示</button>
             </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinB" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxB" value="40">
+                <button onclick="applyAnalysisTempYAxis('B')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="analysisChartB"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleC">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('C')">ズームリセット</button></h4>
+            <h4><span id="analysisTitleC">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
@@ -1227,17 +1232,27 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P01" onchange="saveAnalysisCompareSetting('C')">
                 <button type="button" onclick="loadAnalysisCompareChart('C')">表示</button>
             </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinC" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxC" value="40">
+                <button onclick="applyAnalysisTempYAxis('C')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="analysisChartC"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleD">グラフD</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('D')">ズームリセット</button></h4>
+            <h4><span id="analysisTitleD">グラフD</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdD" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('D')">
                 point_id
                 <input class="analysis-compare-input" type="text" id="analysisPointIdD" placeholder="例: P01" onchange="saveAnalysisCompareSetting('D')">
                 <button type="button" onclick="loadAnalysisCompareChart('D')">表示</button>
+            </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinD" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxD" value="40">
+                <button onclick="applyAnalysisTempYAxis('D')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="analysisChartD"></canvas></div>
         </div>
@@ -1362,6 +1377,7 @@ button { margin:5px; }
 let tempChartP01, tempChartP02, tempChartP11;
 let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
 let analysisCompareCharts = {};
+let syncingAnalysisZoom = false;
 
 let allCharts = [];
 let syncingZoom = false;
@@ -1555,11 +1571,21 @@ function setAnalysisCompareTitle(graphId, userId, pointId){
         : "グラフ" + graphId;
 }
 
-function getAnalysisTempAxis(){
+function getAnalysisTempAxis(graphId){
     return {
-        min:getAxisValue("analysisTempMin", 20),
-        max:getAxisValue("analysisTempMax", 40)
+        min:getAxisValue("analysisTempMin" + graphId, 20),
+        max:getAxisValue("analysisTempMax" + graphId, 40)
     };
+}
+
+function setAnalysisTempAxisInputs(axis){
+    analysisCompareGraphs.forEach(graphId=>{
+        const minInput = document.getElementById("analysisTempMin" + graphId);
+        const maxInput = document.getElementById("analysisTempMax" + graphId);
+
+        if(minInput) minInput.value = axis.min;
+        if(maxInput) maxInput.value = axis.max;
+    });
 }
 
 function registerAnalysisChart(chart){
@@ -1573,7 +1599,22 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     const canvasId = "analysisChart" + graphId;
     destroyExistingChart(canvasId);
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
-    const axis = getAnalysisTempAxis();
+    const axis = getAnalysisTempAxis(graphId);
+    const options = baseOptions(minTime,maxTime);
+
+    options.plugins = {
+        ...options.plugins,
+        legend:{
+            display:false
+        },
+        zoom:{
+            ...options.plugins.zoom,
+            zoom:{
+                ...options.plugins.zoom.zoom,
+                onZoomComplete({chart}){ syncAnalysisZoom(chart); }
+            }
+        }
+    };
 
     const chart = new Chart(document.getElementById(canvasId),{
         type:"line",
@@ -1592,9 +1633,9 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
             }]
         },
         options:{
-            ...baseOptions(minTime,maxTime),
+            ...options,
             scales:{
-                ...baseOptions(minTime,maxTime).scales,
+                ...options.scales,
                 y:{
                     min:axis.min,
                     max:axis.max,
@@ -1618,8 +1659,34 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     return chart;
 }
 
-function applyAnalysisTempYAxis(){
-    const axis = getAnalysisTempAxis();
+function syncAnalysisZoom(sourceChart){
+    if(syncingAnalysisZoom) return;
+    if(!sourceChart || !sourceChart.scales || !sourceChart.scales.x || !sourceChart.scales.y) return;
+
+    syncingAnalysisZoom = true;
+
+    const xMin = sourceChart.scales.x.min;
+    const xMax = sourceChart.scales.x.max;
+    const yMin = sourceChart.scales.y.min;
+    const yMax = sourceChart.scales.y.max;
+
+    analysisCompareGraphs.forEach(graphId=>{
+        const chart = analysisCompareCharts[graphId];
+        if(!chart || chart === sourceChart || !chart.options || !chart.options.scales) return;
+
+        chart.options.scales.x.min = xMin;
+        chart.options.scales.x.max = xMax;
+        chart.options.scales.y.min = yMin;
+        chart.options.scales.y.max = yMax;
+        chart.update("none");
+    });
+
+    syncingAnalysisZoom = false;
+}
+
+function applyAnalysisTempYAxis(graphId){
+    const axis = getAnalysisTempAxis(graphId);
+    setAnalysisTempAxisInputs(axis);
 
     analysisCompareGraphs.forEach(graphId=>{
         const chart = analysisCompareCharts[graphId];
@@ -1637,12 +1704,63 @@ function applyAnalysisTempYAxis(){
     });
 }
 
-function resetAnalysisCompareZoom(graphId){
-    const chart = analysisCompareCharts[graphId];
-    if(!chart) return;
+function resetAnalysisZoom(){
+    syncingAnalysisZoom = true;
 
-    if(chart.resetZoom) chart.resetZoom("none");
-    redrawChart(chart);
+    const referenceChart = analysisCompareGraphs
+        .map(graphId=>analysisCompareCharts[graphId])
+        .find(chart=>chart && chart.initialScaleLimits);
+
+    const referenceLimits = referenceChart ? referenceChart.initialScaleLimits : null;
+
+    analysisCompareGraphs.forEach(graphId=>{
+        const chart = analysisCompareCharts[graphId];
+        if(!chart) return;
+
+        if(chart.resetZoom) chart.resetZoom("none");
+
+        if(referenceLimits && chart.options && chart.options.scales){
+            Object.keys(referenceLimits).forEach(scaleId=>{
+                if(!chart.options.scales[scaleId]) return;
+
+                chart.options.scales[scaleId].min = referenceLimits[scaleId].min;
+                chart.options.scales[scaleId].max = referenceLimits[scaleId].max;
+            });
+
+            chart.update("none");
+            chart.resize();
+            chart.draw();
+        }else{
+            redrawChart(chart);
+        }
+    });
+
+    requestAnimationFrame(()=>{
+        analysisCompareGraphs.forEach(graphId=>{
+            const chart = analysisCompareCharts[graphId];
+            if(!chart) return;
+
+            if(referenceLimits && chart.options && chart.options.scales){
+                Object.keys(referenceLimits).forEach(scaleId=>{
+                    if(!chart.options.scales[scaleId]) return;
+
+                    chart.options.scales[scaleId].min = referenceLimits[scaleId].min;
+                    chart.options.scales[scaleId].max = referenceLimits[scaleId].max;
+                });
+
+                chart.update("none");
+                chart.resize();
+                chart.draw();
+            }else{
+                redrawChart(chart);
+            }
+        });
+        syncingAnalysisZoom = false;
+    });
+}
+
+function resetAnalysisCompareZoom(){
+    resetAnalysisZoom();
 }
 
 async function loadAnalysisCompareChart(graphId){
