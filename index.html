@@ -1414,6 +1414,16 @@ button { margin:5px; }
 
 <script>
 
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    var message = document.getElementById("message");
+    if(message){
+        message.style.color = "red";
+        message.innerHTML =
+            "JavaScriptエラー：" + msg +
+            "<br>line:" + lineNo;
+    }
+};
+
 let tempChartP01, tempChartP02, tempChartP11;
 let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
 let analysisCompareCharts = {};
