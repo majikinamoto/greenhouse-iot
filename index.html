@@ -376,6 +376,14 @@ button { margin:5px; }
     box-sizing:border-box;
 }
 
+.analysis-divider {
+    flex-basis:100%;
+    width:100%;
+    border:none;
+    border-top:2px solid #9eadbd;
+    margin:8px 0;
+}
+
 @media (max-width: 760px) {
     .analysis-compare-card {
         width:100%;
@@ -1256,6 +1264,28 @@ button { margin:5px; }
             </div>
             <div class="chart-container"><canvas id="analysisChartD"></canvas></div>
         </div>
+
+        <hr class="analysis-divider">
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisDiffTitleB">グラフ（A-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMin" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMax" value="8">
+                <button onclick="applyAnalysisDiffYAxis()">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisDiffChartB"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisDiffTitleC">グラフ（A-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisDiffTitleD">グラフ（A-D）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="analysisDiffChartD"></canvas></div>
+        </div>
     </div>
 </section>
 
@@ -1377,6 +1407,9 @@ button { margin:5px; }
 let tempChartP01, tempChartP02, tempChartP11;
 let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
 let analysisCompareCharts = {};
+let analysisCompareData = {};
+let analysisCompareMeta = {};
+let analysisDiffCharts = {};
 let syncingAnalysisZoom = false;
 
 let allCharts = [];
@@ -1409,6 +1442,7 @@ const outsideSourceStorageKeys = {
 };
 
 const analysisCompareGraphs = ["A", "B", "C", "D"];
+const analysisDiffGraphs = ["B", "C", "D"];
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -1578,6 +1612,13 @@ function getAnalysisTempAxis(graphId){
     };
 }
 
+function getAnalysisDiffAxis(){
+    return {
+        min:getAxisValue("analysisDiffMin", -8),
+        max:getAxisValue("analysisDiffMax", 8)
+    };
+}
+
 function setAnalysisTempAxisInputs(axis){
     analysisCompareGraphs.forEach(graphId=>{
         const minInput = document.getElementById("analysisTempMin" + graphId);
@@ -1593,6 +1634,27 @@ function registerAnalysisChart(chart){
 
     allCharts = allCharts.filter(c=>c && c.canvas && c.canvas.id !== chart.canvas.id);
     allCharts.push(chart);
+}
+
+function getAnalysisChartGroup(chart){
+    if(!chart || !chart.canvas) return "";
+
+    if(/^analysisChart[A-D]$/.test(chart.canvas.id)){
+        return "temp";
+    }
+
+    if(/^analysisDiffChart[B-D]$/.test(chart.canvas.id)){
+        return "diff";
+    }
+
+    return "";
+}
+
+function getAnalysisCharts(){
+    return [
+        ...analysisCompareGraphs.map(graphId=>analysisCompareCharts[graphId]),
+        ...analysisDiffGraphs.map(graphId=>analysisDiffCharts[graphId])
+    ].filter(Boolean);
 }
 
 function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
@@ -1669,15 +1731,19 @@ function syncAnalysisZoom(sourceChart){
     const xMax = sourceChart.scales.x.max;
     const yMin = sourceChart.scales.y.min;
     const yMax = sourceChart.scales.y.max;
+    const sourceGroup = getAnalysisChartGroup(sourceChart);
 
-    analysisCompareGraphs.forEach(graphId=>{
-        const chart = analysisCompareCharts[graphId];
+    getAnalysisCharts().forEach(chart=>{
         if(!chart || chart === sourceChart || !chart.options || !chart.options.scales) return;
 
         chart.options.scales.x.min = xMin;
         chart.options.scales.x.max = xMax;
-        chart.options.scales.y.min = yMin;
-        chart.options.scales.y.max = yMax;
+
+        if(getAnalysisChartGroup(chart) === sourceGroup){
+            chart.options.scales.y.min = yMin;
+            chart.options.scales.y.max = yMax;
+        }
+
         chart.update("none");
     });
 
@@ -1704,28 +1770,58 @@ function applyAnalysisTempYAxis(graphId){
     });
 }
 
+function applyAnalysisDiffYAxis(){
+    const axis = getAnalysisDiffAxis();
+
+    analysisDiffGraphs.forEach(graphId=>{
+        const chart = analysisDiffCharts[graphId];
+        if(!chart || !chart.options || !chart.options.scales || !chart.options.scales.y) return;
+
+        chart.options.scales.y.min = axis.min;
+        chart.options.scales.y.max = axis.max;
+
+        if(chart.initialScaleLimits && chart.initialScaleLimits.y){
+            chart.initialScaleLimits.y.min = axis.min;
+            chart.initialScaleLimits.y.max = axis.max;
+        }
+
+        chart.update();
+    });
+}
+
 function resetAnalysisZoom(){
     syncingAnalysisZoom = true;
 
-    const referenceChart = analysisCompareGraphs
-        .map(graphId=>analysisCompareCharts[graphId])
+    const referenceChart = getAnalysisCharts()
         .find(chart=>chart && chart.initialScaleLimits);
+    const tempReferenceChart = analysisCompareGraphs
+        .map(graphId=>analysisCompareCharts[graphId])
+        .find(chart=>chart && chart.initialScaleLimits && chart.initialScaleLimits.y);
+    const diffReferenceChart = analysisDiffGraphs
+        .map(graphId=>analysisDiffCharts[graphId])
+        .find(chart=>chart && chart.initialScaleLimits && chart.initialScaleLimits.y);
 
     const referenceLimits = referenceChart ? referenceChart.initialScaleLimits : null;
+    const tempYLimits = tempReferenceChart ? tempReferenceChart.initialScaleLimits.y : null;
+    const diffYLimits = diffReferenceChart ? diffReferenceChart.initialScaleLimits.y : null;
 
-    analysisCompareGraphs.forEach(graphId=>{
-        const chart = analysisCompareCharts[graphId];
+    getAnalysisCharts().forEach(chart=>{
         if(!chart) return;
 
         if(chart.resetZoom) chart.resetZoom("none");
 
         if(referenceLimits && chart.options && chart.options.scales){
-            Object.keys(referenceLimits).forEach(scaleId=>{
-                if(!chart.options.scales[scaleId]) return;
+            if(chart.options.scales.x && referenceLimits.x){
+                chart.options.scales.x.min = referenceLimits.x.min;
+                chart.options.scales.x.max = referenceLimits.x.max;
+            }
 
-                chart.options.scales[scaleId].min = referenceLimits[scaleId].min;
-                chart.options.scales[scaleId].max = referenceLimits[scaleId].max;
-            });
+            const yLimits = getAnalysisChartGroup(chart) === "diff" ? diffYLimits : tempYLimits;
+
+            if(chart.options.scales.y && yLimits){
+                chart.options.scales.y.min = yLimits.min;
+                chart.options.scales.y.max = yLimits.max;
+            }
 
             chart.update("none");
             chart.resize();
@@ -1736,17 +1832,21 @@ function resetAnalysisZoom(){
     });
 
     requestAnimationFrame(()=>{
-        analysisCompareGraphs.forEach(graphId=>{
-            const chart = analysisCompareCharts[graphId];
+        getAnalysisCharts().forEach(chart=>{
             if(!chart) return;
 
             if(referenceLimits && chart.options && chart.options.scales){
-                Object.keys(referenceLimits).forEach(scaleId=>{
-                    if(!chart.options.scales[scaleId]) return;
+                if(chart.options.scales.x && referenceLimits.x){
+                    chart.options.scales.x.min = referenceLimits.x.min;
+                    chart.options.scales.x.max = referenceLimits.x.max;
+                }
 
-                    chart.options.scales[scaleId].min = referenceLimits[scaleId].min;
-                    chart.options.scales[scaleId].max = referenceLimits[scaleId].max;
-                });
+                const yLimits = getAnalysisChartGroup(chart) === "diff" ? diffYLimits : tempYLimits;
+
+                if(chart.options.scales.y && yLimits){
+                    chart.options.scales.y.min = yLimits.min;
+                    chart.options.scales.y.max = yLimits.max;
+                }
 
                 chart.update("none");
                 chart.resize();
@@ -1761,6 +1861,125 @@ function resetAnalysisZoom(){
 
 function resetAnalysisCompareZoom(){
     resetAnalysisZoom();
+}
+
+function calcAnalysisDiffData(baseData, targetData){
+    const diffData = [];
+    const toleranceMs = 360 * 1000;
+
+    if(!baseData || !targetData) return diffData;
+
+    baseData.forEach(d=>{
+        let nearest = null;
+        let nearestDiff = Infinity;
+
+        targetData.forEach(p=>{
+            const diff = Math.abs(d.xValue - p.xValue);
+
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearest = p;
+            }
+        });
+
+        if(!nearest || nearestDiff > toleranceMs) return;
+
+        if(d.temp !== null && nearest.temp !== null && !isNaN(d.temp) && !isNaN(nearest.temp)){
+            diffData.push({
+                x:d.xValue,
+                y:d.temp - nearest.temp
+            });
+        }
+    });
+
+    return diffData;
+}
+
+function setAnalysisDiffTitle(targetGraphId){
+    const title = document.getElementById("analysisDiffTitle" + targetGraphId);
+    if(!title) return;
+
+    const baseMeta = analysisCompareMeta.A;
+    const targetMeta = analysisCompareMeta[targetGraphId];
+
+    title.innerText = baseMeta && targetMeta
+        ? "グラフ（A-" + targetGraphId + "）（A: " + baseMeta.userId + "/" + baseMeta.pointId + " − " + targetGraphId + ": " + targetMeta.userId + "/" + targetMeta.pointId + "）"
+        : "グラフ（A-" + targetGraphId + "）";
+}
+
+function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
+    const canvasId = "analysisDiffChart" + targetGraphId;
+    destroyExistingChart(canvasId);
+    allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
+    setAnalysisDiffTitle(targetGraphId);
+
+    const axis = getAnalysisDiffAxis();
+    const options = baseOptions(minTime,maxTime);
+
+    options.plugins = {
+        ...options.plugins,
+        legend:{
+            display:false
+        },
+        zoom:{
+            ...options.plugins.zoom,
+            zoom:{
+                ...options.plugins.zoom.zoom,
+                onZoomComplete({chart}){ syncAnalysisZoom(chart); }
+            }
+        }
+    };
+
+    const chart = new Chart(document.getElementById(canvasId),{
+        type:"line",
+        data:{
+            datasets:[{
+                label:"温度差 (℃)",
+                data:calcAnalysisDiffData(analysisCompareData.A, analysisCompareData[targetGraphId]),
+                borderColor:"rgb(255, 0, 0)",
+                backgroundColor:"rgba(255, 0, 0, 0.15)",
+                pointBackgroundColor:"rgb(255, 0, 0)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2
+            }]
+        },
+        options:{
+            ...options,
+            scales:{
+                ...options.scales,
+                y:{
+                    min:axis.min,
+                    max:axis.max,
+                    ticks:{
+                        stepSize:2,
+                        color:"#000"
+                    },
+                    title:{
+                        display:true,
+                        text:"差",
+                        color:"#000"
+                    }
+                }
+            }
+        }
+    });
+
+    saveInitialScaleLimits(chart);
+    analysisDiffCharts[targetGraphId] = chart;
+    registerAnalysisChart(chart);
+}
+
+function refreshAnalysisDiffCharts(minTime, maxTime){
+    if(!analysisCompareData.A) return;
+
+    analysisDiffGraphs.forEach(graphId=>{
+        if(analysisCompareData[graphId]){
+            createAnalysisDiffChart(graphId, minTime, maxTime);
+        }else{
+            setAnalysisDiffTitle(graphId);
+        }
+    });
 }
 
 async function loadAnalysisCompareChart(graphId){
@@ -1783,8 +2002,14 @@ async function loadAnalysisCompareChart(graphId){
     const minTime = new Date(now.getTime() - 72*60*60*1000);
     const result = await fetchDataSafe(userId, pointId);
     const parsed = parseData(result.data, minTime);
+    analysisCompareData[graphId] = parsed;
+    analysisCompareMeta[graphId] = {
+        userId:userId,
+        pointId:pointId
+    };
 
     createAnalysisTempChart(graphId, parsed, minTime, now);
+    refreshAnalysisDiffCharts(minTime, now);
 
     if(result.error){
         alert(result.error);
