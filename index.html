@@ -1198,7 +1198,7 @@ button { margin:5px; }
     <div class="tab-placeholder">分析タブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
     <div class="analysis-compare-grid">
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleA">マスター（M）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisTitleA">マスターグラフ（M）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
@@ -1268,22 +1268,32 @@ button { margin:5px; }
         <hr class="analysis-divider">
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleB">グラフ（M-A）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleB">グラフ差（M-A）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMin" value="-8"> ～
-                <input class="axis-input" type="number" id="analysisDiffMax" value="8">
-                <button onclick="applyAnalysisDiffYAxis()">縦軸反映</button>
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinB" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMaxB" value="8">
+                <button onclick="applyAnalysisDiffYAxis('B')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="analysisDiffChartB"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleC">グラフ（M-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleC">グラフ差（M-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinC" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMaxC" value="8">
+                <button onclick="applyAnalysisDiffYAxis('C')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleD">グラフ（M-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleD">グラフ差（M-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinD" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMaxD" value="8">
+                <button onclick="applyAnalysisDiffYAxis('D')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="analysisDiffChartD"></canvas></div>
         </div>
     </div>
@@ -1600,7 +1610,7 @@ function setAnalysisCompareTitle(graphId, userId, pointId){
     const title = document.getElementById("analysisTitle" + graphId);
     if(!title) return;
     const displayNameMap = {
-        A:"マスター（M）",
+        A:"マスターグラフ（M）",
         B:"グラフA",
         C:"グラフB",
         D:"グラフC"
@@ -1619,10 +1629,10 @@ function getAnalysisTempAxis(graphId){
     };
 }
 
-function getAnalysisDiffAxis(){
+function getAnalysisDiffAxis(graphId){
     return {
-        min:getAxisValue("analysisDiffMin", -8),
-        max:getAxisValue("analysisDiffMax", 8)
+        min:getAxisValue("analysisDiffMin" + graphId, -8),
+        max:getAxisValue("analysisDiffMax" + graphId, 8)
     };
 }
 
@@ -1777,23 +1787,20 @@ function applyAnalysisTempYAxis(graphId){
     });
 }
 
-function applyAnalysisDiffYAxis(){
-    const axis = getAnalysisDiffAxis();
+function applyAnalysisDiffYAxis(graphId){
+    const axis = getAnalysisDiffAxis(graphId);
+    const chart = analysisDiffCharts[graphId];
+    if(!chart || !chart.options || !chart.options.scales || !chart.options.scales.y) return;
 
-    analysisDiffGraphs.forEach(graphId=>{
-        const chart = analysisDiffCharts[graphId];
-        if(!chart || !chart.options || !chart.options.scales || !chart.options.scales.y) return;
+    chart.options.scales.y.min = axis.min;
+    chart.options.scales.y.max = axis.max;
 
-        chart.options.scales.y.min = axis.min;
-        chart.options.scales.y.max = axis.max;
+    if(chart.initialScaleLimits && chart.initialScaleLimits.y){
+        chart.initialScaleLimits.y.min = axis.min;
+        chart.initialScaleLimits.y.max = axis.max;
+    }
 
-        if(chart.initialScaleLimits && chart.initialScaleLimits.y){
-            chart.initialScaleLimits.y.min = axis.min;
-            chart.initialScaleLimits.y.max = axis.max;
-        }
-
-        chart.update();
-    });
+    chart.update();
 }
 
 function resetAnalysisZoom(){
@@ -1906,24 +1913,14 @@ function setAnalysisDiffTitle(targetGraphId){
     const title = document.getElementById("analysisDiffTitle" + targetGraphId);
     if(!title) return;
 
-    const baseMeta = analysisCompareMeta.A;
-    const targetMeta = analysisCompareMeta[targetGraphId];
     const diffNameMap = {
-        B:"グラフ（M-A）",
-        C:"グラフ（M-B）",
-        D:"グラフ（M-C）"
+        B:"グラフ差（M-A）",
+        C:"グラフ差（M-B）",
+        D:"グラフ差（M-C）"
     };
-    const targetNameMap = {
-        B:"A",
-        C:"B",
-        D:"C"
-    };
-    const diffName = diffNameMap[targetGraphId] || "グラフ（M-" + targetGraphId + "）";
-    const targetName = targetNameMap[targetGraphId] || targetGraphId;
+    const diffName = diffNameMap[targetGraphId] || "グラフ差（M-" + targetGraphId + "）";
 
-    title.innerText = baseMeta && targetMeta
-        ? diffName + "（M: " + baseMeta.userId + "/" + baseMeta.pointId + " − " + targetName + ": " + targetMeta.userId + "/" + targetMeta.pointId + "）"
-        : diffName;
+    title.innerText = diffName;
 }
 
 function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
@@ -1932,7 +1929,7 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
     setAnalysisDiffTitle(targetGraphId);
 
-    const axis = getAnalysisDiffAxis();
+    const axis = getAnalysisDiffAxis(targetGraphId);
     const options = baseOptions(minTime,maxTime);
 
     options.plugins = {
@@ -1955,9 +1952,9 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
             datasets:[{
                 label:"温度差 (℃)",
                 data:calcAnalysisDiffData(analysisCompareData.A, analysisCompareData[targetGraphId]),
-                borderColor:"rgb(255, 0, 0)",
-                backgroundColor:"rgba(255, 0, 0, 0.15)",
-                pointBackgroundColor:"rgb(255, 0, 0)",
+                borderColor:"#000",
+                backgroundColor:"rgba(0, 0, 0, 0.08)",
+                pointBackgroundColor:"#000",
                 pointRadius:0,
                 borderWidth:2,
                 tension:0.2
