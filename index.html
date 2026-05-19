@@ -333,20 +333,27 @@ button { margin:5px; }
 }
 
 .analysis-compare-grid {
-    display:grid;
-    grid-template-columns:repeat(2, minmax(320px, 1fr));
-    gap:10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 10px;
+    align-items:flex-start;
+    justify-content:flex-start;
     margin-top:10px;
 }
 
 .analysis-compare-card {
-    border:2px solid #b8c7e6;
-    background:#f7faff;
+    width:500px;
+    border:2px solid #c4ccd6;
+    background:#f7f9fb;
     padding:8px;
     box-sizing:border-box;
 }
 
 .analysis-compare-card h4 {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
     margin:0 0 8px 0;
     padding:6px 8px;
     background:#dbe6f8;
@@ -369,15 +376,12 @@ button { margin:5px; }
     box-sizing:border-box;
 }
 
-.analysis-chart-container {
-    width:100%;
-    min-width:0;
-    height:260px;
-}
-
 @media (max-width: 760px) {
-    .analysis-compare-grid {
-        grid-template-columns:1fr;
+    .analysis-compare-card {
+        width:100%;
+        padding:6px;
+        border-left:none;
+        border-right:none;
     }
 }
 
@@ -1186,7 +1190,7 @@ button { margin:5px; }
     <div class="tab-placeholder">分析タブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
     <div class="analysis-compare-grid">
         <div class="analysis-compare-card">
-            <h4 id="analysisTitleA">グラフA</h4>
+            <h4><span id="analysisTitleA">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('A')">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
@@ -1194,11 +1198,16 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdA" placeholder="例: P01" onchange="saveAnalysisCompareSetting('A')">
                 <button type="button" onclick="loadAnalysisCompareChart('A')">表示</button>
             </div>
-            <div class="analysis-chart-container"><canvas id="analysisChartA"></canvas></div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMin" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMax" value="40">
+                <button onclick="applyAnalysisTempYAxis()">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisChartA"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4 id="analysisTitleB">グラフB</h4>
+            <h4><span id="analysisTitleB">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('B')">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
@@ -1206,11 +1215,11 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P01" onchange="saveAnalysisCompareSetting('B')">
                 <button type="button" onclick="loadAnalysisCompareChart('B')">表示</button>
             </div>
-            <div class="analysis-chart-container"><canvas id="analysisChartB"></canvas></div>
+            <div class="chart-container"><canvas id="analysisChartB"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4 id="analysisTitleC">グラフC</h4>
+            <h4><span id="analysisTitleC">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('C')">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
@@ -1218,11 +1227,11 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P01" onchange="saveAnalysisCompareSetting('C')">
                 <button type="button" onclick="loadAnalysisCompareChart('C')">表示</button>
             </div>
-            <div class="analysis-chart-container"><canvas id="analysisChartC"></canvas></div>
+            <div class="chart-container"><canvas id="analysisChartC"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4 id="analysisTitleD">グラフD</h4>
+            <h4><span id="analysisTitleD">グラフD</span><button class="chart-reset-button" onclick="resetAnalysisCompareZoom('D')">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdD" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('D')">
@@ -1230,7 +1239,7 @@ button { margin:5px; }
                 <input class="analysis-compare-input" type="text" id="analysisPointIdD" placeholder="例: P01" onchange="saveAnalysisCompareSetting('D')">
                 <button type="button" onclick="loadAnalysisCompareChart('D')">表示</button>
             </div>
-            <div class="analysis-chart-container"><canvas id="analysisChartD"></canvas></div>
+            <div class="chart-container"><canvas id="analysisChartD"></canvas></div>
         </div>
     </div>
 </section>
@@ -1546,9 +1555,25 @@ function setAnalysisCompareTitle(graphId, userId, pointId){
         : "グラフ" + graphId;
 }
 
+function getAnalysisTempAxis(){
+    return {
+        min:getAxisValue("analysisTempMin", 20),
+        max:getAxisValue("analysisTempMax", 40)
+    };
+}
+
+function registerAnalysisChart(chart){
+    if(!chart) return;
+
+    allCharts = allCharts.filter(c=>c && c.canvas && c.canvas.id !== chart.canvas.id);
+    allCharts.push(chart);
+}
+
 function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     const canvasId = "analysisChart" + graphId;
     destroyExistingChart(canvasId);
+    allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
+    const axis = getAnalysisTempAxis();
 
     const chart = new Chart(document.getElementById(canvasId),{
         type:"line",
@@ -1571,7 +1596,10 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
             scales:{
                 ...baseOptions(minTime,maxTime).scales,
                 y:{
+                    min:axis.min,
+                    max:axis.max,
                     ticks:{
+                        stepSize:5,
                         color:"#000"
                     },
                     title:{
@@ -1586,7 +1614,35 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
 
     saveInitialScaleLimits(chart);
     analysisCompareCharts[graphId] = chart;
+    registerAnalysisChart(chart);
     return chart;
+}
+
+function applyAnalysisTempYAxis(){
+    const axis = getAnalysisTempAxis();
+
+    analysisCompareGraphs.forEach(graphId=>{
+        const chart = analysisCompareCharts[graphId];
+        if(!chart || !chart.options || !chart.options.scales || !chart.options.scales.y) return;
+
+        chart.options.scales.y.min = axis.min;
+        chart.options.scales.y.max = axis.max;
+
+        if(chart.initialScaleLimits && chart.initialScaleLimits.y){
+            chart.initialScaleLimits.y.min = axis.min;
+            chart.initialScaleLimits.y.max = axis.max;
+        }
+
+        chart.update();
+    });
+}
+
+function resetAnalysisCompareZoom(graphId){
+    const chart = analysisCompareCharts[graphId];
+    if(!chart) return;
+
+    if(chart.resetZoom) chart.resetZoom("none");
+    redrawChart(chart);
 }
 
 async function loadAnalysisCompareChart(graphId){
