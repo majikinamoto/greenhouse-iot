@@ -397,6 +397,38 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.outside-source-setting {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 12px;
+    align-items:center;
+    margin:0 0 10px;
+    padding:8px 10px;
+    border:2px solid #c4ccd6;
+    background:#f7f9fb;
+    color:#1f3038;
+    font-size:13px;
+    font-weight:700;
+}
+
+.outside-source-setting label {
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.outside-source-input {
+    width:82px;
+    box-sizing:border-box;
+}
+
+.outside-source-note {
+    margin-left:8px;
+    color:#c00000;
+    font-size:12px;
+    font-weight:800;
+}
+
 .guide-content {
     max-width:850px;
     padding:12px 8px;
@@ -785,6 +817,12 @@ button { margin:5px; }
         font-size:12px;
     }
 
+    .status-group-temp-summary .status-temp-value {
+        width:100%;
+        padding:4px 3px;
+        font-size:12px;
+    }
+
     .status-group-vpd-eval {
         width:100%;
     }
@@ -865,6 +903,21 @@ button { margin:5px; }
         margin:0 10px 16px;
         box-sizing:border-box;
         max-width:calc(100vw - 20px);
+    }
+
+    .outside-source-setting {
+        align-items:stretch;
+    }
+
+    .outside-source-setting label,
+    .outside-source-setting button {
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    .outside-source-input {
+        flex:1;
+        min-width:0;
     }
 }
 </style>
@@ -999,6 +1052,22 @@ button { margin:5px; }
 </div>
 </div>
 
+<div class="outside-source-setting">
+    <label>
+        <input type="checkbox" id="outsideSourceEnabled" onchange="handleOutsideSourceEnabledChange()">
+        外気（P11）を別のuser_idから入手する
+    </label>
+    <label>
+        入手元 user_id
+        <input class="outside-source-input" type="text" id="outsideSourceUserId" placeholder="例: T9999" onchange="saveOutsideSourceSetting()">
+    </label>
+    <label>
+        入手元 point_id
+        <input class="outside-source-input" type="text" id="outsideSourcePointId" placeholder="例: P11" onchange="saveOutsideSourceSetting()">
+    </label>
+    <button type="button" onclick="applyOutsideSourceSetting()">入手する</button>
+</div>
+
 
 <div class="grid">
 
@@ -1015,7 +1084,7 @@ button { margin:5px; }
     </div>
 
     <div>
-        <h4><span>外気（P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>外気（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP11" value="40"> ～
             <input class="axis-input" type="number" id="humMaxP11" value="100">
@@ -1209,6 +1278,12 @@ let voltAxisMin = 11;
 let voltAxisMax = 14;
 let alertFormUserId = "";
 
+const outsideSourceStorageKeys = {
+    enabled:"usui_outside_source_enabled",
+    userId:"usui_outside_source_user_id",
+    pointId:"usui_outside_source_point_id"
+};
+
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
@@ -1219,6 +1294,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
 
     updateUserIdHistoryList();
+    restoreOutsideSourceSetting();
 
     const userIdInput = document.getElementById("userId");
     const userIdHistorySelect = document.getElementById("userIdHistorySelect");
@@ -1234,6 +1310,96 @@ window.addEventListener("DOMContentLoaded", ()=>{
         });
     }
 });
+
+function restoreOutsideSourceSetting(){
+    const enabled = document.getElementById("outsideSourceEnabled");
+    const userId = document.getElementById("outsideSourceUserId");
+    const pointId = document.getElementById("outsideSourcePointId");
+
+    if(enabled){
+        enabled.checked = localStorage.getItem(outsideSourceStorageKeys.enabled) === "1";
+    }
+
+    if(userId){
+        userId.value = localStorage.getItem(outsideSourceStorageKeys.userId) || "";
+    }
+
+    if(pointId){
+        pointId.value = localStorage.getItem(outsideSourceStorageKeys.pointId) || "P11";
+    }
+
+    updateOutsideSourceControls();
+}
+
+function saveOutsideSourceSetting(){
+    const enabled = document.getElementById("outsideSourceEnabled");
+    const userId = document.getElementById("outsideSourceUserId");
+    const pointId = document.getElementById("outsideSourcePointId");
+
+    localStorage.setItem(outsideSourceStorageKeys.enabled, enabled && enabled.checked ? "1" : "0");
+    localStorage.setItem(outsideSourceStorageKeys.userId, userId ? userId.value.trim() : "");
+    localStorage.setItem(outsideSourceStorageKeys.pointId, pointId ? pointId.value.trim() : "");
+}
+
+function updateOutsideSourceControls(){
+    const enabled = document.getElementById("outsideSourceEnabled");
+    const userId = document.getElementById("outsideSourceUserId");
+    const pointId = document.getElementById("outsideSourcePointId");
+    const button = document.querySelector(".outside-source-setting button");
+    const isEnabled = enabled && enabled.checked;
+
+    if(userId) userId.disabled = !isEnabled;
+    if(pointId) pointId.disabled = !isEnabled;
+    if(button) button.disabled = !isEnabled;
+}
+
+function handleOutsideSourceEnabledChange(){
+    updateOutsideSourceControls();
+    saveOutsideSourceSetting();
+
+    if(!document.getElementById("outsideSourceEnabled").checked){
+        updateOutsideSourceNote(null);
+        if(document.getElementById("userId").value.trim()){
+            loadData();
+        }
+    }
+}
+
+function applyOutsideSourceSetting(){
+    saveOutsideSourceSetting();
+    loadData();
+}
+
+function getOutsideSourceRequest(currentUserId){
+    const enabled = document.getElementById("outsideSourceEnabled");
+    const sourceUserId = document.getElementById("outsideSourceUserId");
+    const sourcePointId = document.getElementById("outsideSourcePointId");
+    const userId = sourceUserId ? sourceUserId.value.trim() : "";
+    const pointId = sourcePointId ? sourcePointId.value.trim() : "";
+
+    if(enabled && enabled.checked && userId && pointId){
+        return {
+            useAlternate:true,
+            userId:userId,
+            pointId:pointId
+        };
+    }
+
+    return {
+        useAlternate:false,
+        userId:currentUserId,
+        pointId:"P11"
+    };
+}
+
+function updateOutsideSourceNote(source){
+    const note = document.getElementById("outsideSourceNote");
+    if(!note) return;
+
+    note.innerText = source && source.useAlternate
+        ? "※user_id " + source.userId + "、point_id " + source.pointId + " から入手"
+        : "";
+}
 
 function clearAlertForm(){
     const temperature = document.getElementById("alertTemperatureThreshold");
@@ -2687,6 +2853,9 @@ async function loadData(){
     alertFormUserId = userId;
     loadActiveAlertSetting(userId);
 
+    const outsideSource = getOutsideSourceRequest(userId);
+    updateOutsideSourceNote(outsideSource);
+
     msg.innerText = "読み込み中...";
 
     document.getElementById("tempNow").innerText = "-";
@@ -2711,18 +2880,18 @@ async function loadData(){
         const results = await Promise.all([
     fetchDataSafe(userId,"P01"),
     fetchDataSafe(userId,"P02"),
-    fetchDataSafe(userId,"P11"),
+    fetchDataSafe(outsideSource.userId,outsideSource.pointId),
     fetchDataSafe(userId,"P31"),
     fetchDataSafe(userId,"P21"),
     fetchDataSafe(userId,"P91")
 ]);
 
-        const resultP01 = results.find(r=>r.pointId === "P01");
-        const resultP02 = results.find(r=>r.pointId === "P02");
-        const resultP11 = results.find(r=>r.pointId === "P11");
-const resultP31 = results.find(r=>r.pointId === "P31");
-const resultP21 = results.find(r=>r.pointId === "P21");
-const resultP91 = results.find(r=>r.pointId === "P91");
+        const resultP01 = results[0];
+        const resultP02 = results[1];
+        const resultP11 = results[2];
+const resultP31 = results[3];
+const resultP21 = results[4];
+const resultP91 = results[5];
 
         const p01 = parseData(resultP01.data, minTime);
         const p02 = parseData(resultP02.data, minTime);
