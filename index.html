@@ -491,6 +491,29 @@ button { margin:5px; }
     max-width:260px;
 }
 
+.status-group-temp-summary {
+    border-color:#7f8fa3;
+    background:#f7f9fc;
+}
+
+.status-day-column {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:96px;
+}
+
+.status-day-column .status-box {
+    width:100%;
+    box-sizing:border-box;
+}
+
+.status-group-temp-summary .average-box span {
+    display:inline;
+    margin-top:0;
+    white-space:normal;
+}
+
 .status-group-vpd-eval {
     border-color:#6b879a;
     background:#f8fafc;
@@ -719,9 +742,19 @@ button { margin:5px; }
     .status-group-current,
     .status-group-daily,
     .status-group-average,
+    .status-group-temp-summary,
     .status-group-vpd-eval {
         width:260px;
         max-width:calc(100vw - 24px);
+    }
+
+    .status-day-column {
+        width:calc(33.333% - 4px);
+    }
+
+    .status-day-column .status-box {
+        width:100%;
+        flex:none;
     }
 
     .status-group-vpd-eval {
@@ -871,23 +904,47 @@ button { margin:5px; }
 <div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
 <div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
 </div>
-<div class="status-group status-group-daily">
-<div class="status-subgroup">
-<div class="status-subtitle">前日（P01）</div>
-<div class="status-box temp-high">最高：<span id="yMax">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="yMin">-</span>℃</div>
+<div class="status-group status-group-temp-summary">
+<div class="status-group-title">ハウス内（P01）</div>
+<div class="status-day-column">
+<div class="status-subtitle">前々日</div>
+<div class="status-box temp-high">最高：<span id="houseTwoDaysAgoMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="houseTwoDaysAgoAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="houseTwoDaysAgoMin">-</span>℃</div>
 </div>
-<div class="status-subgroup">
-<div class="status-subtitle">本日（P01）</div>
-<div class="status-box temp-high">最高：<span id="todayMax">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="todayMin">-</span>℃</div>
+<div class="status-day-column">
+<div class="status-subtitle">前日</div>
+<div class="status-box temp-high">最高：<span id="houseYesterdayMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="houseYesterdayAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="houseYesterdayMin">-</span>℃</div>
+</div>
+<div class="status-day-column">
+<div class="status-subtitle">本日</div>
+<div class="status-box temp-high">最高：<span id="houseTodayMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="houseTodayAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="houseTodayMin">-</span>℃</div>
 </div>
 </div>
-<div class="status-group status-group-average">
-<div class="status-group-title">日平均気温（P01）</div>
-<div class="status-box average-box">前々日：<span><span id="avgTwoDaysAgo">-</span>℃</span></div>
-<div class="status-box average-box">前日：<span><span id="avgYesterday">-</span>℃</span></div>
-<div class="status-box average-box">今日：<span><span id="avgToday">-</span>℃</span></div>
+<div class="status-group status-group-temp-summary">
+<div class="status-group-title">外気（P11）</div>
+<div class="status-day-column">
+<div class="status-subtitle">前々日</div>
+<div class="status-box temp-high">最高：<span id="outsideTwoDaysAgoMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="outsideTwoDaysAgoAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="outsideTwoDaysAgoMin">-</span>℃</div>
+</div>
+<div class="status-day-column">
+<div class="status-subtitle">前日</div>
+<div class="status-box temp-high">最高：<span id="outsideYesterdayMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="outsideYesterdayAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="outsideYesterdayMin">-</span>℃</div>
+</div>
+<div class="status-day-column">
+<div class="status-subtitle">本日</div>
+<div class="status-box temp-high">最高：<span id="outsideTodayMax">-</span>℃</div>
+<div class="status-box average-box">平均：<span id="outsideTodayAvg">-</span>℃</div>
+<div class="status-box temp-low">最低：<span id="outsideTodayMin">-</span>℃</div>
+</div>
 </div>
 <div class="status-group status-group-vpd-eval">
 <div class="status-group-title">昨日の飽差評価</div>
@@ -1682,7 +1739,7 @@ function calcDewPoint(temp, hum){
     return (b * alpha) / (a - alpha);
 }
 
-function calcDailyAverageTemp(data, targetDate, isToday){
+function calcDailyTempStats(data, targetDate, isToday){
     const start = new Date(targetDate);
     start.setHours(0,0,0,0);
 
@@ -1698,9 +1755,47 @@ function calcDailyAverageTemp(data, targetDate, isToday){
         .filter(d=>d.x>=start && d.x<=end && d.temp !== null && d.temp !== undefined && !isNaN(d.temp))
         .map(d=>d.temp);
 
-    if(!temps.length) return null;
+    if(!temps.length){
+        return {
+            max:null,
+            avg:null,
+            min:null
+        };
+    }
 
-    return temps.reduce((sum, temp)=>sum + temp, 0) / temps.length;
+    return {
+        max:Math.max(...temps),
+        avg:temps.reduce((sum, temp)=>sum + temp, 0) / temps.length,
+        min:Math.min(...temps)
+    };
+}
+
+function renderDailyTempStats(prefix, stats){
+    const values = {
+        Max:stats.max,
+        Avg:stats.avg,
+        Min:stats.min
+    };
+
+    Object.keys(values).forEach(key=>{
+        const el = document.getElementById(prefix + key);
+        if(el){
+            el.innerText = values[key] === null ? "-" : values[key].toFixed(1);
+        }
+    });
+}
+
+function resetDailyTempStats(){
+    [
+        "houseTwoDaysAgo",
+        "houseYesterday",
+        "houseToday",
+        "outsideTwoDaysAgo",
+        "outsideYesterday",
+        "outsideToday"
+    ].forEach(prefix=>{
+        renderDailyTempStats(prefix, { max:null, avg:null, min:null });
+    });
 }
 
 function calcVpdAverage(data, startHour, endHour, baseDate){
@@ -2570,13 +2665,7 @@ async function loadData(){
     document.getElementById("vpdNow").innerText = "-";
     document.getElementById("dewNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
-    document.getElementById("todayMax").innerText = "-";
-    document.getElementById("todayMin").innerText = "-";
-    document.getElementById("yMax").innerText = "-";
-    document.getElementById("yMin").innerText = "-";
-    document.getElementById("avgToday").innerText = "-";
-    document.getElementById("avgYesterday").innerText = "-";
-    document.getElementById("avgTwoDaysAgo").innerText = "-";
+    resetDailyTempStats();
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
 
@@ -2622,20 +2711,12 @@ const p91 = parseData(resultP91.data, voltMinTime);
         const twoDaysAgo = new Date(today);
         twoDaysAgo.setDate(today.getDate() - 2);
 
-        const avgToday = calcDailyAverageTemp(p01, today, true);
-        const avgYesterday = calcDailyAverageTemp(p01, yesterday, false);
-        const avgTwoDaysAgo = calcDailyAverageTemp(p01, twoDaysAgo, false);
-
-        document.getElementById("avgToday").innerText =
-            avgToday === null ? "-" : avgToday.toFixed(1);
-
-        document.getElementById("avgYesterday").innerText =
-            avgYesterday === null ? "-" : avgYesterday.toFixed(1);
-
-        document.getElementById("avgTwoDaysAgo").innerText =
-            avgTwoDaysAgo === null ? "-" : avgTwoDaysAgo.toFixed(1);
-
-
+        renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
+        renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
+        renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
+        renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
+        renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
+        renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
 
 
         const errors = results
@@ -2663,31 +2744,12 @@ const p91 = parseData(resultP91.data, voltMinTime);
                 document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
-                const todayStart = new Date();
-                todayStart.setHours(0,0,0,0);
-
-                const todayData = validP01.filter(d=>d.x>=todayStart && d.x<=now);
-
-                if(todayData.length){
-                    const todayTemps = todayData.map(d=>d.temp);
-                    document.getElementById("todayMax").innerText = Math.max(...todayTemps).toFixed(1);
-                    document.getElementById("todayMin").innerText = Math.min(...todayTemps).toFixed(1);
-                }
-
                 const yStart = new Date();
                 yStart.setDate(yStart.getDate() - 1);
                 yStart.setHours(0,0,0,0);
 
                 const yEnd = new Date(yStart);
                 yEnd.setHours(23,59,59,999);
-
-                const yData = validP01.filter(d=>d.x>=yStart && d.x<=yEnd);
-
-                if(yData.length){
-                    const temps = yData.map(d=>d.temp);
-                    document.getElementById("yMax").innerText = Math.max(...temps).toFixed(1);
-                    document.getElementById("yMin").innerText = Math.min(...temps).toFixed(1);
-                }
 
                 const amVpdAverage = calcVpdAverage(validP01, 6, 12, yStart);
                 const pmVpdAverage = calcVpdAverage(validP01, 12, 18, yStart);
