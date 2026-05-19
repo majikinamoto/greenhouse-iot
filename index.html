@@ -1198,7 +1198,7 @@ button { margin:5px; }
     <div class="tab-placeholder">分析タブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
     <div class="analysis-compare-grid">
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleA">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisTitleA">マスター（M）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
@@ -1215,7 +1215,7 @@ button { margin:5px; }
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleB">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisTitleB">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
@@ -1232,7 +1232,7 @@ button { margin:5px; }
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleC">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisTitleC">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
@@ -1249,7 +1249,7 @@ button { margin:5px; }
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisTitleD">グラフD</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisTitleD">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="analysis-compare-controls">
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdD" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('D')">
@@ -1268,7 +1268,7 @@ button { margin:5px; }
         <hr class="analysis-divider">
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleB">グラフ（A-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleB">グラフ（M-A）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
                 <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMin" value="-8"> ～
                 <input class="axis-input" type="number" id="analysisDiffMax" value="8">
@@ -1278,12 +1278,12 @@ button { margin:5px; }
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleC">グラフ（A-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleC">グラフ（M-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
         </div>
 
         <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleD">グラフ（A-D）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <h4><span id="analysisDiffTitleD">グラフ（M-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
             <div class="chart-container"><canvas id="analysisDiffChartD"></canvas></div>
         </div>
     </div>
@@ -1599,10 +1599,17 @@ function saveAnalysisCompareSetting(graphId){
 function setAnalysisCompareTitle(graphId, userId, pointId){
     const title = document.getElementById("analysisTitle" + graphId);
     if(!title) return;
+    const displayNameMap = {
+        A:"マスター（M）",
+        B:"グラフA",
+        C:"グラフB",
+        D:"グラフC"
+    };
+    const displayName = displayNameMap[graphId] || "グラフ" + graphId;
 
     title.innerText = userId && pointId
-        ? "グラフ" + graphId + "（" + userId + " / " + pointId + "）"
-        : "グラフ" + graphId;
+        ? displayName + "（" + userId + " / " + pointId + "）"
+        : displayName;
 }
 
 function getAnalysisTempAxis(graphId){
@@ -1901,10 +1908,22 @@ function setAnalysisDiffTitle(targetGraphId){
 
     const baseMeta = analysisCompareMeta.A;
     const targetMeta = analysisCompareMeta[targetGraphId];
+    const diffNameMap = {
+        B:"グラフ（M-A）",
+        C:"グラフ（M-B）",
+        D:"グラフ（M-C）"
+    };
+    const targetNameMap = {
+        B:"A",
+        C:"B",
+        D:"C"
+    };
+    const diffName = diffNameMap[targetGraphId] || "グラフ（M-" + targetGraphId + "）";
+    const targetName = targetNameMap[targetGraphId] || targetGraphId;
 
     title.innerText = baseMeta && targetMeta
-        ? "グラフ（A-" + targetGraphId + "）（A: " + baseMeta.userId + "/" + baseMeta.pointId + " − " + targetGraphId + ": " + targetMeta.userId + "/" + targetMeta.pointId + "）"
-        : "グラフ（A-" + targetGraphId + "）";
+        ? diffName + "（M: " + baseMeta.userId + "/" + baseMeta.pointId + " − " + targetName + ": " + targetMeta.userId + "/" + targetMeta.pointId + "）"
+        : diffName;
 }
 
 function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
