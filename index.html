@@ -332,6 +332,55 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.analysis-compare-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(320px, 1fr));
+    gap:10px;
+    margin-top:10px;
+}
+
+.analysis-compare-card {
+    border:2px solid #b8c7e6;
+    background:#f7faff;
+    padding:8px;
+    box-sizing:border-box;
+}
+
+.analysis-compare-card h4 {
+    margin:0 0 8px 0;
+    padding:6px 8px;
+    background:#dbe6f8;
+    border-left:5px solid #3f6fc2;
+    color:#1f3038;
+}
+
+.analysis-compare-controls {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+    margin-bottom:6px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.analysis-compare-input {
+    width:82px;
+    box-sizing:border-box;
+}
+
+.analysis-chart-container {
+    width:100%;
+    min-width:0;
+    height:260px;
+}
+
+@media (max-width: 760px) {
+    .analysis-compare-grid {
+        grid-template-columns:1fr;
+    }
+}
+
 .alert-setting-form {
     display:flex;
     flex-wrap:wrap;
@@ -1135,6 +1184,55 @@ button { margin:5px; }
 
 <section id="tab-analysis" class="tab-panel tab-panel-analysis" role="tabpanel">
     <div class="tab-placeholder">分析タブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
+    <div class="analysis-compare-grid">
+        <div class="analysis-compare-card">
+            <h4 id="analysisTitleA">グラフA</h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdA" placeholder="例: P01" onchange="saveAnalysisCompareSetting('A')">
+                <button type="button" onclick="loadAnalysisCompareChart('A')">表示</button>
+            </div>
+            <div class="analysis-chart-container"><canvas id="analysisChartA"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4 id="analysisTitleB">グラフB</h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P01" onchange="saveAnalysisCompareSetting('B')">
+                <button type="button" onclick="loadAnalysisCompareChart('B')">表示</button>
+            </div>
+            <div class="analysis-chart-container"><canvas id="analysisChartB"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4 id="analysisTitleC">グラフC</h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P01" onchange="saveAnalysisCompareSetting('C')">
+                <button type="button" onclick="loadAnalysisCompareChart('C')">表示</button>
+            </div>
+            <div class="analysis-chart-container"><canvas id="analysisChartC"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4 id="analysisTitleD">グラフD</h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdD" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('D')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdD" placeholder="例: P01" onchange="saveAnalysisCompareSetting('D')">
+                <button type="button" onclick="loadAnalysisCompareChart('D')">表示</button>
+            </div>
+            <div class="analysis-chart-container"><canvas id="analysisChartD"></canvas></div>
+        </div>
+    </div>
 </section>
 
 <section id="tab-review" class="tab-panel tab-panel-review" role="tabpanel">
@@ -1254,6 +1352,7 @@ button { margin:5px; }
 
 let tempChartP01, tempChartP02, tempChartP11;
 let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart;
+let analysisCompareCharts = {};
 
 let allCharts = [];
 let syncingZoom = false;
@@ -1284,6 +1383,8 @@ const outsideSourceStorageKeys = {
     pointId:"usui_outside_source_point_id"
 };
 
+const analysisCompareGraphs = ["A", "B", "C", "D"];
+
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
@@ -1295,6 +1396,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
+    restoreAnalysisCompareSettings();
 
     const userIdInput = document.getElementById("userId");
     const userIdHistorySelect = document.getElementById("userIdHistorySelect");
@@ -1399,6 +1501,120 @@ function updateOutsideSourceNote(source){
     note.innerText = source && source.useAlternate
         ? "※user_id " + source.userId + "、point_id " + source.pointId + " から入手"
         : "";
+}
+
+function getAnalysisCompareStorageKey(graphId, field){
+    return "usui_analysis_" + graphId + "_" + field;
+}
+
+function restoreAnalysisCompareSettings(){
+    analysisCompareGraphs.forEach(graphId=>{
+        const userId = document.getElementById("analysisUserId" + graphId);
+        const pointId = document.getElementById("analysisPointId" + graphId);
+
+        if(userId){
+            userId.value = localStorage.getItem(getAnalysisCompareStorageKey(graphId, "user_id")) || "";
+        }
+
+        if(pointId){
+            pointId.value = localStorage.getItem(getAnalysisCompareStorageKey(graphId, "point_id")) || "";
+        }
+    });
+}
+
+function saveAnalysisCompareSetting(graphId){
+    const userId = document.getElementById("analysisUserId" + graphId);
+    const pointId = document.getElementById("analysisPointId" + graphId);
+
+    localStorage.setItem(
+        getAnalysisCompareStorageKey(graphId, "user_id"),
+        userId ? userId.value.trim() : ""
+    );
+
+    localStorage.setItem(
+        getAnalysisCompareStorageKey(graphId, "point_id"),
+        pointId ? pointId.value.trim() : ""
+    );
+}
+
+function setAnalysisCompareTitle(graphId, userId, pointId){
+    const title = document.getElementById("analysisTitle" + graphId);
+    if(!title) return;
+
+    title.innerText = userId && pointId
+        ? "グラフ" + graphId + "（" + userId + " / " + pointId + "）"
+        : "グラフ" + graphId;
+}
+
+function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
+    const canvasId = "analysisChart" + graphId;
+    destroyExistingChart(canvasId);
+
+    const chart = new Chart(document.getElementById(canvasId),{
+        type:"line",
+        data:{
+            datasets:[{
+                label:"温度 (℃)",
+                data:parsed
+                    .filter(d=>d.temp !== null && !isNaN(d.temp))
+                    .map(d=>({x:d.xValue,y:d.temp})),
+                borderColor:"rgb(255, 0, 0)",
+                backgroundColor:"rgba(255, 0, 0, 0.15)",
+                pointBackgroundColor:"rgb(255, 0, 0)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2
+            }]
+        },
+        options:{
+            ...baseOptions(minTime,maxTime),
+            scales:{
+                ...baseOptions(minTime,maxTime).scales,
+                y:{
+                    ticks:{
+                        color:"#000"
+                    },
+                    title:{
+                        display:true,
+                        text:"℃",
+                        color:"#000"
+                    }
+                }
+            }
+        }
+    });
+
+    saveInitialScaleLimits(chart);
+    analysisCompareCharts[graphId] = chart;
+    return chart;
+}
+
+async function loadAnalysisCompareChart(graphId){
+    const userIdInput = document.getElementById("analysisUserId" + graphId);
+    const pointIdInput = document.getElementById("analysisPointId" + graphId);
+    const userId = userIdInput ? userIdInput.value.trim() : "";
+    const pointId = pointIdInput ? pointIdInput.value.trim() : "";
+
+    saveAnalysisCompareSetting(graphId);
+
+    if(!userId || !pointId){
+        setAnalysisCompareTitle(graphId, "", "");
+        alert("グラフ" + graphId + "のuser_idとpoint_idを入力してください");
+        return;
+    }
+
+    setAnalysisCompareTitle(graphId, userId, pointId);
+
+    const now = new Date();
+    const minTime = new Date(now.getTime() - 72*60*60*1000);
+    const result = await fetchDataSafe(userId, pointId);
+    const parsed = parseData(result.data, minTime);
+
+    createAnalysisTempChart(graphId, parsed, minTime, now);
+
+    if(result.error){
+        alert(result.error);
+    }
 }
 
 function clearAlertForm(){
