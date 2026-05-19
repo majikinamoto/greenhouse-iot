@@ -494,24 +494,43 @@ button { margin:5px; }
 .status-group-temp-summary {
     border-color:#7f8fa3;
     background:#f7f9fc;
+    display:block;
+    width:max-content;
 }
 
-.status-day-column {
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    width:96px;
+.status-temp-grid {
+    display:grid;
+    grid-template-columns:32px repeat(3, 62px);
+    gap:4px;
+    align-items:center;
+    margin-top:6px;
 }
 
-.status-day-column .status-box {
-    width:100%;
+.status-temp-col-heading,
+.status-temp-row-heading {
+    font-size:12px;
+    font-weight:800;
+    color:#000;
+    line-height:1;
+    text-align:center;
+}
+
+.status-temp-row-heading {
+    text-align:left;
+}
+
+.status-temp-value {
     box-sizing:border-box;
+    min-width:0;
+    padding:4px 5px;
+    text-align:center;
+    white-space:nowrap;
 }
 
 .status-group-temp-summary .average-box span {
     display:inline;
     margin-top:0;
-    white-space:normal;
+    white-space:nowrap;
 }
 
 .status-group-vpd-eval {
@@ -748,13 +767,15 @@ button { margin:5px; }
         max-width:calc(100vw - 24px);
     }
 
-    .status-day-column {
-        width:calc(33.333% - 4px);
+    .status-temp-grid {
+        grid-template-columns:32px repeat(3, minmax(0, 1fr));
     }
 
-    .status-day-column .status-box {
+    .status-temp-value {
         width:100%;
         flex:none;
+        padding:4px 3px;
+        font-size:12px;
     }
 
     .status-group-vpd-eval {
@@ -906,44 +927,44 @@ button { margin:5px; }
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">ハウス内（P01）</div>
-<div class="status-day-column">
-<div class="status-subtitle">前々日</div>
-<div class="status-box temp-high">最高：<span id="houseTwoDaysAgoMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="houseTwoDaysAgoAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="houseTwoDaysAgoMin">-</span>℃</div>
-</div>
-<div class="status-day-column">
-<div class="status-subtitle">前日</div>
-<div class="status-box temp-high">最高：<span id="houseYesterdayMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="houseYesterdayAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="houseYesterdayMin">-</span>℃</div>
-</div>
-<div class="status-day-column">
-<div class="status-subtitle">本日</div>
-<div class="status-box temp-high">最高：<span id="houseTodayMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="houseTodayAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="houseTodayMin">-</span>℃</div>
+<div class="status-temp-grid">
+<div></div>
+<div class="status-temp-col-heading">前々日</div>
+<div class="status-temp-col-heading">前日</div>
+<div class="status-temp-col-heading">本日</div>
+<div class="status-temp-row-heading">最高</div>
+<div class="status-box temp-high status-temp-value"><span id="houseTwoDaysAgoMax">-</span></div>
+<div class="status-box temp-high status-temp-value"><span id="houseYesterdayMax">-</span></div>
+<div class="status-box temp-high status-temp-value"><span id="houseTodayMax">-</span></div>
+<div class="status-temp-row-heading">平均</div>
+<div class="status-box average-box status-temp-value"><span id="houseTwoDaysAgoAvg">-</span></div>
+<div class="status-box average-box status-temp-value"><span id="houseYesterdayAvg">-</span></div>
+<div class="status-box average-box status-temp-value"><span id="houseTodayAvg">-</span></div>
+<div class="status-temp-row-heading">最低</div>
+<div class="status-box temp-low status-temp-value"><span id="houseTwoDaysAgoMin">-</span></div>
+<div class="status-box temp-low status-temp-value"><span id="houseYesterdayMin">-</span></div>
+<div class="status-box temp-low status-temp-value"><span id="houseTodayMin">-</span></div>
 </div>
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">外気（P11）</div>
-<div class="status-day-column">
-<div class="status-subtitle">前々日</div>
-<div class="status-box temp-high">最高：<span id="outsideTwoDaysAgoMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="outsideTwoDaysAgoAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="outsideTwoDaysAgoMin">-</span>℃</div>
-</div>
-<div class="status-day-column">
-<div class="status-subtitle">前日</div>
-<div class="status-box temp-high">最高：<span id="outsideYesterdayMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="outsideYesterdayAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="outsideYesterdayMin">-</span>℃</div>
-</div>
-<div class="status-day-column">
-<div class="status-subtitle">本日</div>
-<div class="status-box temp-high">最高：<span id="outsideTodayMax">-</span>℃</div>
-<div class="status-box average-box">平均：<span id="outsideTodayAvg">-</span>℃</div>
-<div class="status-box temp-low">最低：<span id="outsideTodayMin">-</span>℃</div>
+<div class="status-temp-grid">
+<div></div>
+<div class="status-temp-col-heading">前々日</div>
+<div class="status-temp-col-heading">前日</div>
+<div class="status-temp-col-heading">本日</div>
+<div class="status-temp-row-heading">最高</div>
+<div class="status-box temp-high status-temp-value"><span id="outsideTwoDaysAgoMax">-</span></div>
+<div class="status-box temp-high status-temp-value"><span id="outsideYesterdayMax">-</span></div>
+<div class="status-box temp-high status-temp-value"><span id="outsideTodayMax">-</span></div>
+<div class="status-temp-row-heading">平均</div>
+<div class="status-box average-box status-temp-value"><span id="outsideTwoDaysAgoAvg">-</span></div>
+<div class="status-box average-box status-temp-value"><span id="outsideYesterdayAvg">-</span></div>
+<div class="status-box average-box status-temp-value"><span id="outsideTodayAvg">-</span></div>
+<div class="status-temp-row-heading">最低</div>
+<div class="status-box temp-low status-temp-value"><span id="outsideTwoDaysAgoMin">-</span></div>
+<div class="status-box temp-low status-temp-value"><span id="outsideYesterdayMin">-</span></div>
+<div class="status-box temp-low status-temp-value"><span id="outsideTodayMin">-</span></div>
 </div>
 </div>
 <div class="status-group status-group-vpd-eval">
@@ -1780,7 +1801,7 @@ function renderDailyTempStats(prefix, stats){
     Object.keys(values).forEach(key=>{
         const el = document.getElementById(prefix + key);
         if(el){
-            el.innerText = values[key] === null ? "-" : values[key].toFixed(1);
+            el.innerText = values[key] === null ? "-" : values[key].toFixed(1) + "℃";
         }
     });
 }
