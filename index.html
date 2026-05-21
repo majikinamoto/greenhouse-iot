@@ -3863,12 +3863,12 @@ async function saveAlertSetting(){
     const enabled = document.getElementById("alertEnabled").checked ? 1 : 0;
 
     if(!userId){
-        alertMessage.innerText = "user_idを入力してください";
+        alert("user_idを入力してください");
         return;
     }
 
     if(temperatureThreshold === ""){
-        alertMessage.innerText = "温度を入力してください";
+        alert("温度を入力してください");
         return;
     }
 
@@ -3892,6 +3892,7 @@ async function saveAlertSetting(){
                 condition_type:conditionType,
                 notify_target:notifyTarget,
                 webhook_url:webhookUrl,
+                cooldown_minutes:180,
                 enabled:enabled
             })
         });
@@ -3912,17 +3913,17 @@ async function saveAlertSetting(){
         }
 
         if(!res.ok || !result.success){
-            alertMessage.innerText = result.message || "アラート設定の保存に失敗しました";
+            alertMessage.innerText = "保存失敗：" + (result.error || result.message || "アラート設定の保存に失敗しました");
             return;
         }
 
         document.getElementById("alertWebhookUrl").value = "";
-        alertMessage.innerText = result.message || "アラート設定を保存しました";
+        alertMessage.innerText = "保存しました";
         alertFormUserId = userId;
         loadActiveAlertSetting(userId);
 
     }catch(e){
-        alertMessage.innerText = "通信エラー：" + e.message;
+        alertMessage.innerText = "保存失敗：" + e.message;
     }
 }
 
