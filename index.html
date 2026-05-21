@@ -1970,6 +1970,18 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
                 pointRadius:0,
                 borderWidth:2,
                 tension:0.2
+            },
+            {
+                label:"ゼロライン",
+                data:[
+                    {x:minTime, y:0},
+                    {x:maxTime, y:0}
+                ],
+                borderColor:"rgba(0, 120, 255, 0.8)",
+                borderWidth:1.5,
+                pointRadius:0,
+                tension:0,
+                fill:false
             }]
         },
         options:{
