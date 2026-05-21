@@ -3320,11 +3320,33 @@ p01.forEach(d=>{
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2
+                },
+                {
+                    label:"ゼロライン",
+                    data:[
+                        {x:minTime, y:0},
+                        {x:maxTime, y:0}
+                    ],
+                    borderColor:"rgba(0, 120, 255, 0.8)",
+                    borderWidth:1.5,
+                    pointRadius:0,
+                    tension:0,
+                    fill:false
                 }
             ]
         },
         options:{
             ...baseOptions(displayMinTime,maxTime),
+            plugins:{
+                ...baseOptions(displayMinTime,maxTime).plugins,
+                legend:{
+                    labels:{
+                        filter(item){
+                            return item.text !== "ゼロライン";
+                        }
+                    }
+                }
+            },
             scales:{
                 ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
@@ -3385,16 +3407,38 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
             datasets:[{
                 label:"温度差 (℃)",
                 data:tempDiffData,
-                borderColor:"rgb(255, 0, 0)",
-                backgroundColor:"rgba(255, 0, 0, 0.15)",
+                borderColor:"rgba(0, 0, 0, 0.55)",
+                backgroundColor:"rgba(0, 0, 0, 0.08)",
                 pointBackgroundColor:"rgb(255, 0, 0)",
                 pointRadius:0,
                 borderWidth:2,
                 tension:0.2
+            },
+            {
+                label:"ゼロライン",
+                data:[
+                    {x:minTime, y:0},
+                    {x:maxTime, y:0}
+                ],
+                borderColor:"rgba(0, 120, 255, 0.8)",
+                borderWidth:1.5,
+                pointRadius:0,
+                tension:0,
+                fill:false
             }]
         },
         options:{
             ...baseOptions(displayMinTime,maxTime),
+            plugins:{
+                ...baseOptions(displayMinTime,maxTime).plugins,
+                legend:{
+                    labels:{
+                        filter(item){
+                            return item.text !== "ゼロライン";
+                        }
+                    }
+                }
+            },
             scales:{
                 ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
