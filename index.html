@@ -2111,6 +2111,12 @@ function applyAlertSettingToForm(setting){
     if(enabled) enabled.checked = Number(setting.enabled) === 1;
 }
 
+function maskWebhookUrl(url){
+    if(!url) return "-";
+    if(url.length <= 42) return url;
+    return url.slice(0, 30) + "..." + url.slice(-8);
+}
+
 function renderActiveAlertSetting(setting){
     const container = document.getElementById("activeAlertSetting");
     if(!container) return;
@@ -2122,6 +2128,7 @@ function renderActiveAlertSetting(setting){
 
     const threshold = Number(setting.temperature_threshold);
     const cooldownMinutes = Number(setting.cooldown_minutes);
+    const webhook = maskWebhookUrl(setting.webhook_url || "");
     const condition = setting.condition_type === "above"
         ? "以上"
         : setting.condition_type === "below"
@@ -2138,6 +2145,7 @@ function renderActiveAlertSetting(setting){
         '<div>対象：P01 温度</div>' +
         '<div>条件：' + (isNaN(threshold) ? "-" : threshold.toFixed(1)) + '℃ ' + condition + '</div>' +
         '<div>通知先：' + notifyTarget + '</div>' +
+        '<div>Webhook：' + webhook + '</div>' +
         '<div>再通知間隔：' + (isNaN(cooldownMinutes) ? "-" : cooldownMinutes) + '分</div>' +
         '<div>状態：有効</div>';
 }
