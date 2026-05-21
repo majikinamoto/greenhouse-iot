@@ -458,6 +458,42 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.alert-history {
+    max-width:620px;
+    margin:0 10px 18px;
+    padding:10px 12px;
+    border:2px solid #c4ccd6;
+    background:#f7f9fb;
+    color:#1f3038;
+    font-size:14px;
+    line-height:1.6;
+}
+
+.alert-history-title {
+    margin-bottom:8px;
+    font-weight:800;
+    color:#263f38;
+}
+
+.alert-history-empty {
+    font-weight:700;
+}
+
+.alert-history-item {
+    padding:8px 0;
+    border-top:1px solid #d9e0e8;
+}
+
+.alert-history-item:first-of-type {
+    border-top:none;
+    padding-top:0;
+}
+
+.alert-history-time,
+.alert-history-type {
+    font-weight:700;
+}
+
 .outside-source-setting {
     display:flex;
     flex-wrap:wrap;
@@ -966,6 +1002,12 @@ button { margin:5px; }
         max-width:calc(100vw - 20px);
     }
 
+    .alert-history {
+        margin:0 10px 16px;
+        box-sizing:border-box;
+        max-width:calc(100vw - 20px);
+    }
+
     .outside-source-setting {
         align-items:stretch;
     }
@@ -1365,6 +1407,10 @@ button { margin:5px; }
     <div id="activeAlertSetting" class="active-alert-setting">
         <div class="active-alert-setting-title">現在有効なアラート設定</div>
         <div class="active-alert-setting-empty">有効なアラート設定はありません。</div>
+    </div>
+    <div id="alertHistory" class="alert-history">
+        <div class="alert-history-title">直近3日間のアラート履歴</div>
+        <div class="alert-history-empty">直近3日間のアラート履歴はありません。</div>
     </div>
 </section>
 
@@ -2177,6 +2223,54 @@ function maskWebhookUrl(url){
     return url.slice(0, 30) + "..." + url.slice(-8);
 }
 
+function getAlertTypeLabel(alertType){
+    if(alertType === "temperature_high") return "高温アラート";
+    if(alertType === "temperature_low") return "低温アラート";
+    return alertType || "-";
+}
+
+function formatAlertValue(value){
+    const number = Number(value);
+    return isNaN(number) ? "-" : number.toFixed(1);
+}
+
+function escapeHtml(value){
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function renderAlertHistory(history){
+    const container = document.getElementById("alertHistory");
+    if(!container) return;
+
+    if(!Array.isArray(history) || !history.length){
+        container.innerHTML =
+            '<div class="alert-history-title">直近3日間のアラート履歴</div>' +
+            '<div class="alert-history-empty">直近3日間のアラート履歴はありません。</div>';
+        return;
+    }
+
+    container.innerHTML =
+        '<div class="alert-history-title">直近3日間のアラート履歴</div>' +
+        history.map(item=>{
+            const pointId = escapeHtml(item.point_id || "-");
+            const alertType = escapeHtml(getAlertTypeLabel(item.alert_type));
+            const value = formatAlertValue(item.value);
+            const threshold = formatAlertValue(item.threshold_value);
+            const notifiedAt = escapeHtml(item.notified_at || "-");
+
+            return '<div class="alert-history-item">' +
+                '<div class="alert-history-time">' + notifiedAt + '</div>' +
+                '<div class="alert-history-type">' + pointId + ' ' + alertType + '</div>' +
+                '<div>' + value + '℃（しきい値 ' + threshold + '℃）</div>' +
+            '</div>';
+        }).join("");
+}
+
 function renderActiveAlertSetting(setting){
     const container = document.getElementById("activeAlertSetting");
     if(!container) return;
@@ -2215,6 +2309,7 @@ async function loadActiveAlertSetting(userId, pointId){
     if(!userId){
         clearAlertForm();
         renderActiveAlertSettingEmpty();
+        renderAlertHistory([]);
         return;
     }
 
@@ -2244,19 +2339,53 @@ async function loadActiveAlertSetting(userId, pointId){
         if(!res.ok || !result.success){
             clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+            loadAlertHistory(requestedUserId);
             return;
         }
 
         const setting = result.setting || null;
         applyAlertSettingToForm(setting);
         renderActiveAlertSetting(setting);
+        loadAlertHistory(requestedUserId);
 
     }catch(e){
         const currentUserId = document.getElementById("userId").value.trim();
         if(currentUserId === requestedUserId){
             clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+            loadAlertHistory(requestedUserId);
         }
+    }
+}
+
+async function loadAlertHistory(userId){
+    if(!userId){
+        renderAlertHistory([]);
+        return;
+    }
+
+    try{
+        const res = await fetch(
+            "get_alert_history.php?user_id=" + encodeURIComponent(userId),
+            { cache:"no-store" }
+        );
+        const text = await res.text();
+
+        if(!text.trim()){
+            throw new Error("get_alert_history.php から空のレスポンスが返りました");
+        }
+
+        const result = JSON.parse(text);
+
+        if(!res.ok || !result.success){
+            renderAlertHistory([]);
+            return;
+        }
+
+        renderAlertHistory(result.history || []);
+
+    }catch(e){
+        renderAlertHistory([]);
     }
 }
 
