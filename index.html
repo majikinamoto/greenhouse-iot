@@ -1307,6 +1307,15 @@ button { margin:5px; }
     <div class="tab-placeholder">アラートタブは今後追加予定です。ＬＩＮＥやDiscord等にある状態になったときに通知するサービスを予定しています。</div>
     <div class="alert-setting-form">
         <label>
+            point_id：
+            <select id="alertPointId" onchange="handleAlertPointChange()">
+                <option value="P01">P01 ハウス内</option>
+                <option value="P02">P02 メンテナンス用ハウス内</option>
+                <option value="P11">P11 外気</option>
+            </select>
+        </label>
+
+        <label>
             温度
             <input class="alert-temperature-input" type="number" id="alertTemperatureThreshold" step="0.1">
             ℃
@@ -1463,6 +1472,11 @@ const outsideSourceStorageKeys = {
 
 const analysisCompareGraphs = ["A", "B", "C", "D"];
 const analysisDiffGraphs = ["B", "C", "D"];
+const alertPointLabels = {
+    P01:"P01 ハウス内",
+    P02:"P02 メンテナンス用ハウス内",
+    P11:"P11 外気"
+};
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -2083,6 +2097,27 @@ function clearAlertFormIfUserChanged(){
     }
 }
 
+function getSelectedAlertPointId(){
+    const pointId = document.getElementById("alertPointId");
+    return pointId && pointId.value ? pointId.value : "P01";
+}
+
+function getAlertPointLabel(pointId){
+    return alertPointLabels[pointId] || pointId || "P01";
+}
+
+function handleAlertPointChange(){
+    const userId = document.getElementById("userId").value.trim();
+
+    if(!userId){
+        clearAlertForm();
+        renderActiveAlertSettingEmpty();
+        return;
+    }
+
+    loadActiveAlertSetting(userId);
+}
+
 function renderActiveAlertSettingEmpty(message){
     const container = document.getElementById("activeAlertSetting");
     if(!container) return;
@@ -2103,12 +2138,16 @@ function applyAlertSettingToForm(setting){
     const notifyTarget = document.getElementById("alertNotifyTarget");
     const webhookUrl = document.getElementById("alertWebhookUrl");
     const enabled = document.getElementById("alertEnabled");
+    const pointId = document.getElementById("alertPointId");
 
     if(temperature) temperature.value = setting.temperature_threshold ?? "";
     if(condition) condition.value = setting.condition_type || "above";
     if(notifyTarget) notifyTarget.value = setting.notify_target || "discord";
     if(webhookUrl) webhookUrl.value = setting.webhook_url || "";
     if(enabled) enabled.checked = Number(setting.enabled) === 1;
+    if(pointId && setting.point_id && alertPointLabels[setting.point_id]){
+        pointId.value = setting.point_id;
+    }
 }
 
 function maskWebhookUrl(url){
@@ -2129,6 +2168,7 @@ function renderActiveAlertSetting(setting){
     const threshold = Number(setting.temperature_threshold);
     const cooldownMinutes = Number(setting.cooldown_minutes);
     const webhook = maskWebhookUrl(setting.webhook_url || "");
+    const pointLabel = getAlertPointLabel(setting.point_id || getSelectedAlertPointId());
     const condition = setting.condition_type === "above"
         ? "以上"
         : setting.condition_type === "below"
@@ -2142,7 +2182,7 @@ function renderActiveAlertSetting(setting){
 
     container.innerHTML =
         '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
-        '<div>対象：P01 温度</div>' +
+        '<div>対象：' + pointLabel + ' 温度</div>' +
         '<div>条件：' + (isNaN(threshold) ? "-" : threshold.toFixed(1)) + '℃ ' + condition + '</div>' +
         '<div>通知先：' + notifyTarget + '</div>' +
         '<div>Webhook：' + webhook + '</div>' +
@@ -2150,18 +2190,20 @@ function renderActiveAlertSetting(setting){
         '<div>状態：有効</div>';
 }
 
-async function loadActiveAlertSetting(userId){
+async function loadActiveAlertSetting(userId, pointId){
     if(!userId){
+        clearAlertForm();
         renderActiveAlertSettingEmpty();
         return;
     }
 
     const requestedUserId = userId;
+    const requestedPointId = pointId || getSelectedAlertPointId();
     renderActiveAlertSettingEmpty("読み込み中...");
 
     try{
         const res = await fetch(
-            "get_alert_setting.php?user_id=" + encodeURIComponent(requestedUserId) + "&point_id=P01",
+            "get_alert_setting.php?user_id=" + encodeURIComponent(requestedUserId) + "&point_id=" + encodeURIComponent(requestedPointId),
             { cache:"no-store" }
         );
 
@@ -2176,6 +2218,7 @@ async function loadActiveAlertSetting(userId){
 
         const currentUserId = document.getElementById("userId").value.trim();
         if(currentUserId !== requestedUserId) return;
+        if(getSelectedAlertPointId() !== requestedPointId) return;
 
         if(!res.ok || !result.success){
             clearAlertForm();
@@ -3896,6 +3939,7 @@ function downloadCSV(){
 async function saveAlertSetting(){
 
     const userId = document.getElementById("userId").value.trim();
+    const pointId = getSelectedAlertPointId();
     const alertMessage = document.getElementById("alertMessage");
     const temperatureThreshold = document.getElementById("alertTemperatureThreshold").value;
     const conditionType = document.getElementById("alertConditionType").value;
@@ -3928,7 +3972,7 @@ async function saveAlertSetting(){
             },
             body:JSON.stringify({
                 user_id:userId,
-                point_id:"P01",
+                point_id:pointId,
                 temperature_threshold:Number(temperatureThreshold),
                 condition_type:conditionType,
                 notify_target:notifyTarget,
