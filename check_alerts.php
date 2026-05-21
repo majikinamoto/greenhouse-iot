@@ -106,7 +106,13 @@ $normalStmt = $conn->prepare(
      WHERE id = ?"
 );
 
-if (!$latestStmt || !$updateStmt || !$normalStmt) {
+$historyStmt = $conn->prepare(
+    "INSERT INTO alert_history
+     (setting_id, user_id, point_id, sensor_type, alert_type, value, threshold_value, message, notified_at)
+     VALUES (?, ?, ?, 'temperature', ?, ?, ?, ?, NOW())"
+);
+
+if (!$latestStmt || !$updateStmt || !$normalStmt || !$historyStmt) {
     http_response_code(500);
     echo json_encode([
         "success" => false,
@@ -145,12 +151,15 @@ while ($setting = $settingsResult->fetch_assoc()) {
     $threshold = (float)$setting["temperature_threshold"];
     $conditionType = $setting["condition_type"];
     $shouldNotify = false;
+    $alertType = "";
 
     if ($conditionType === "above" && $temperature >= $threshold) {
         $shouldNotify = true;
+        $alertType = "temperature_high";
         $message = "設定した温度を超えました。現在の温度は" . round($temperature, 1) . "℃です。";
     } elseif ($conditionType === "below" && $temperature <= $threshold) {
         $shouldNotify = true;
+        $alertType = "temperature_low";
         $message = "設定した温度を下回りました。現在の温度は" . round($temperature, 1) . "℃です。";
     }
 
@@ -193,12 +202,25 @@ while ($setting = $settingsResult->fetch_assoc()) {
     if ($postResult["success"]) {
         $updateStmt->bind_param("i", $id);
         $updateStmt->execute();
+
+        $historyStmt->bind_param(
+            "isssdds",
+            $id,
+            $userId,
+            $pointId,
+            $alertType,
+            $temperature,
+            $threshold,
+            $message
+        );
+        $historyStmt->execute();
         $notified++;
 
         $details[] = [
             "id" => $id,
             "status" => "notified",
-            "temperature" => $temperature
+            "temperature" => $temperature,
+            "history_saved" => true
         ];
     } else {
         $failed++;
@@ -224,6 +246,7 @@ echo json_encode([
 $latestStmt->close();
 $updateStmt->close();
 $normalStmt->close();
+$historyStmt->close();
 $conn->close();
 
 ?>
