@@ -2092,6 +2092,25 @@ function renderActiveAlertSettingEmpty(message){
         '<div class="active-alert-setting-empty">' + (message || "有効なアラート設定はありません。") + '</div>';
 }
 
+function applyAlertSettingToForm(setting){
+    if(!setting){
+        clearAlertForm();
+        return;
+    }
+
+    const temperature = document.getElementById("alertTemperatureThreshold");
+    const condition = document.getElementById("alertConditionType");
+    const notifyTarget = document.getElementById("alertNotifyTarget");
+    const webhookUrl = document.getElementById("alertWebhookUrl");
+    const enabled = document.getElementById("alertEnabled");
+
+    if(temperature) temperature.value = setting.temperature_threshold ?? "";
+    if(condition) condition.value = setting.condition_type || "above";
+    if(notifyTarget) notifyTarget.value = setting.notify_target || "discord";
+    if(webhookUrl) webhookUrl.value = setting.webhook_url || "";
+    if(enabled) enabled.checked = Number(setting.enabled) === 1;
+}
+
 function renderActiveAlertSetting(setting){
     const container = document.getElementById("activeAlertSetting");
     if(!container) return;
@@ -2151,15 +2170,19 @@ async function loadActiveAlertSetting(userId){
         if(currentUserId !== requestedUserId) return;
 
         if(!res.ok || !result.success){
+            clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
             return;
         }
 
-        renderActiveAlertSetting(result.setting || null);
+        const setting = result.setting || null;
+        applyAlertSettingToForm(setting);
+        renderActiveAlertSetting(setting);
 
     }catch(e){
         const currentUserId = document.getElementById("userId").value.trim();
         if(currentUserId === requestedUserId){
+            clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
         }
     }
