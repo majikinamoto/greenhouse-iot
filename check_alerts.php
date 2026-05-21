@@ -49,9 +49,12 @@ function postWebhook($url, $payload) {
 
     $result = @file_get_contents($url, false, $context);
     $httpCode = 0;
+    $responseHeaders = function_exists('http_get_last_response_headers')
+        ? http_get_last_response_headers()
+        : (${'http_response_header'} ?? []);
 
-    if (isset($http_response_header[0]) &&
-        preg_match('/\s([0-9]{3})\s/', $http_response_header[0], $matches)) {
+    if (isset($responseHeaders[0]) &&
+        preg_match('/\s([0-9]{3})\s/', $responseHeaders[0], $matches)) {
         $httpCode = (int)$matches[1];
     }
 
@@ -65,10 +68,7 @@ function postWebhook($url, $payload) {
 $settingsSql = "SELECT *
                 FROM alert_settings
                 WHERE enabled = 1
-                  AND (
-                      last_notified_at IS NULL
-                      OR last_notified_at <= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
-                  )
+                  AND notify_target = 'discord'
                 ORDER BY id ASC";
 
 $settingsResult = $conn->query($settingsSql);
@@ -95,11 +95,18 @@ $latestStmt = $conn->prepare(
 
 $updateStmt = $conn->prepare(
     "UPDATE alert_settings
-     SET last_notified_at = NOW()
+     SET last_notified_at = NOW(),
+         last_status = 'alert'
      WHERE id = ?"
 );
 
-if (!$latestStmt || !$updateStmt) {
+$normalStmt = $conn->prepare(
+    "UPDATE alert_settings
+     SET last_status = 'normal'
+     WHERE id = ?"
+);
+
+if (!$latestStmt || !$updateStmt || !$normalStmt) {
     http_response_code(500);
     echo json_encode([
         "success" => false,
@@ -117,6 +124,7 @@ $details = [];
 while ($setting = $settingsResult->fetch_assoc()) {
     $checked++;
 
+    $id = (int)$setting["id"];
     $userId = $setting["user_id"];
     $pointId = $setting["point_id"] ?: "P01";
 
@@ -127,7 +135,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
 
     if (!$latest || $latest["temperature"] === null) {
         $details[] = [
-            "id" => (int)$setting["id"],
+            "id" => $id,
             "status" => "no_temperature"
         ];
         continue;
@@ -147,12 +155,33 @@ while ($setting = $settingsResult->fetch_assoc()) {
     }
 
     if (!$shouldNotify) {
+        $normalStmt->bind_param("i", $id);
+        $normalStmt->execute();
+
         $details[] = [
-            "id" => (int)$setting["id"],
+            "id" => $id,
             "status" => "not_matched",
             "temperature" => $temperature
         ];
         continue;
+    }
+
+    $cooldownMinutes = isset($setting["cooldown_minutes"]) && is_numeric($setting["cooldown_minutes"])
+        ? (int)$setting["cooldown_minutes"]
+        : 180;
+    $lastNotifiedAt = $setting["last_notified_at"] ?? null;
+
+    if ($lastNotifiedAt) {
+        $lastNotifiedTime = strtotime($lastNotifiedAt);
+
+        if ($lastNotifiedTime !== false && time() - $lastNotifiedTime < $cooldownMinutes * 60) {
+            $details[] = [
+                "id" => $id,
+                "status" => "cooldown",
+                "temperature" => $temperature
+            ];
+            continue;
+        }
     }
 
     $payload = $setting["notify_target"] === "discord"
@@ -162,7 +191,6 @@ while ($setting = $settingsResult->fetch_assoc()) {
     $postResult = postWebhook($setting["webhook_url"], $payload);
 
     if ($postResult["success"]) {
-        $id = (int)$setting["id"];
         $updateStmt->bind_param("i", $id);
         $updateStmt->execute();
         $notified++;
@@ -176,7 +204,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
         $failed++;
 
         $details[] = [
-            "id" => (int)$setting["id"],
+            "id" => $id,
             "status" => "notify_failed",
             "temperature" => $temperature,
             "http_code" => $postResult["http_code"],
@@ -195,6 +223,7 @@ echo json_encode([
 
 $latestStmt->close();
 $updateStmt->close();
+$normalStmt->close();
 $conn->close();
 
 ?>
