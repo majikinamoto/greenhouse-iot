@@ -1342,6 +1342,18 @@ button { margin:5px; }
             <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
         </label>
 
+        <label>
+            再通知間隔：
+            <select id="alertCooldownMinutes">
+                <option value="30">30分</option>
+                <option value="60">1時間</option>
+                <option value="120">2時間</option>
+                <option value="180" selected>3時間</option>
+                <option value="360">6時間</option>
+                <option value="720">12時間</option>
+            </select>
+        </label>
+
         <label class="alert-enabled-label">
             <input type="checkbox" id="alertEnabled" checked>
             有効
@@ -2075,6 +2087,7 @@ function clearAlertForm(){
     const condition = document.getElementById("alertConditionType");
     const notifyTarget = document.getElementById("alertNotifyTarget");
     const webhookUrl = document.getElementById("alertWebhookUrl");
+    const cooldownMinutes = document.getElementById("alertCooldownMinutes");
     const enabled = document.getElementById("alertEnabled");
     const message = document.getElementById("alertMessage");
 
@@ -2082,6 +2095,7 @@ function clearAlertForm(){
     if(condition) condition.value = "above";
     if(notifyTarget) notifyTarget.value = "discord";
     if(webhookUrl) webhookUrl.value = "";
+    if(cooldownMinutes) cooldownMinutes.value = "180";
     if(enabled) enabled.checked = true;
     if(message) message.innerText = "";
 }
@@ -2137,6 +2151,7 @@ function applyAlertSettingToForm(setting){
     const condition = document.getElementById("alertConditionType");
     const notifyTarget = document.getElementById("alertNotifyTarget");
     const webhookUrl = document.getElementById("alertWebhookUrl");
+    const cooldownMinutes = document.getElementById("alertCooldownMinutes");
     const enabled = document.getElementById("alertEnabled");
     const pointId = document.getElementById("alertPointId");
 
@@ -2144,6 +2159,12 @@ function applyAlertSettingToForm(setting){
     if(condition) condition.value = setting.condition_type || "above";
     if(notifyTarget) notifyTarget.value = setting.notify_target || "discord";
     if(webhookUrl) webhookUrl.value = setting.webhook_url || "";
+    if(cooldownMinutes){
+        const cooldownValue = String(setting.cooldown_minutes || 180);
+        cooldownMinutes.value = [...cooldownMinutes.options].some(option=>option.value === cooldownValue)
+            ? cooldownValue
+            : "180";
+    }
     if(enabled) enabled.checked = Number(setting.enabled) === 1;
     if(pointId && setting.point_id && alertPointLabels[setting.point_id]){
         pointId.value = setting.point_id;
@@ -3945,6 +3966,7 @@ async function saveAlertSetting(){
     const conditionType = document.getElementById("alertConditionType").value;
     const notifyTarget = document.getElementById("alertNotifyTarget").value;
     const webhookUrl = document.getElementById("alertWebhookUrl").value.trim();
+    const cooldownMinutes = Number(document.getElementById("alertCooldownMinutes").value || 180);
     const enabled = document.getElementById("alertEnabled").checked ? 1 : 0;
 
     if(!userId){
@@ -3977,7 +3999,7 @@ async function saveAlertSetting(){
                 condition_type:conditionType,
                 notify_target:notifyTarget,
                 webhook_url:webhookUrl,
-                cooldown_minutes:180,
+                cooldown_minutes:cooldownMinutes,
                 enabled:enabled
             })
         });
