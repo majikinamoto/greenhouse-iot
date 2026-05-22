@@ -1798,9 +1798,7 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
                     .filter(d=>d.temp !== null && !isNaN(d.temp))
                     .map(d=>({x:d.xValue,y:d.temp})),
                 borderColor:lineColor,
-                backgroundColor(context){
-                    return createVerticalGradient(context, fillStops[0], fillStops[1], fillStops[2]);
-                },
+                backgroundColor:graphId === "A" ? "rgba(0, 160, 80, 0.30)" : "rgba(70, 130, 220, 0.28)",
                 pointBackgroundColor:lineColor,
                 pointRadius:0,
                 borderWidth:2,
@@ -3394,14 +3392,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
                     borderColor:"rgb(120, 170, 255)",
-                    backgroundColor(context){
-                        return createVerticalGradient(
-                            context,
-                            "rgba(120, 170, 255, 0.34)",
-                            "rgba(120, 170, 255, 0.14)",
-                            "rgba(120, 170, 255, 0.00)"
-                        );
-                    },
+                    backgroundColor:"rgba(120, 170, 255, 0.20)",
                     pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
@@ -3415,14 +3406,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .map(d=>({x:d.xValue,y:d.temp})),
                     yAxisID:"yTemp",
                     borderColor:"rgb(255, 0, 0)",
-                    backgroundColor(context){
-                        return createVerticalGradient(
-                            context,
-                            "rgba(255, 0, 0, 0.42)",
-                            "rgba(255, 0, 0, 0.18)",
-                            "rgba(255, 0, 0, 0.00)"
-                        );
-                    },
+                    backgroundColor:"rgba(255, 0, 0, 0.25)",
                     pointBackgroundColor:"rgb(255, 0, 0)",
                     pointRadius:0,
                     borderWidth:2,
@@ -3496,14 +3480,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             y:calcVapor(d.temp,100)
     })),
     borderColor:"rgb(255, 0, 0)",
-    backgroundColor:function(context){
-        return createVerticalGradient(
-            context,
-            "rgba(255, 0, 0, 0.22)",
-            "rgba(255, 0, 0, 0.08)",
-            "rgba(255, 0, 0, 0.00)"
-        );
-    },
+    backgroundColor:"rgba(255, 0, 0, 0.14)",
     pointBackgroundColor:"rgb(255, 0, 0)",
     pointRadius:0,
     borderWidth:2,
@@ -3517,14 +3494,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(75, 192, 192)",
-                    backgroundColor:function(context){
-                        return createVerticalGradient(
-                            context,
-                            "rgba(75, 192, 192, 0.22)",
-                            "rgba(75, 192, 192, 0.08)",
-                            "rgba(75, 192, 192, 0.00)"
-                        );
-                    },
+                    backgroundColor:"rgba(75, 192, 192, 0.14)",
                     pointBackgroundColor:"rgb(75, 192, 192)",
                     pointRadius:0,
                     borderWidth:2,
@@ -3537,14 +3507,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(255, 159, 64)",
-                    backgroundColor:function(context){
-                        return createVerticalGradient(
-                            context,
-                            "rgba(255, 159, 64, 0.32)",
-                            "rgba(255, 159, 64, 0.12)",
-                            "rgba(255, 159, 64, 0.00)"
-                        );
-                    },
+                    backgroundColor:"rgba(255, 159, 64, 0.25)",
                     pointBackgroundColor:"rgb(255, 159, 64)",
                     pointRadius:0,
                     borderWidth:2,
