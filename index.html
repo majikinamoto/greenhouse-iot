@@ -3527,7 +3527,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
     pointRadius:0,
     borderWidth:2,
     tension:0.2,
-    fill:true
+    fill:false
 },
 
                 {
@@ -3541,7 +3541,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
-                    fill:true
+                    fill:false
                 },
                 {
                     label:"飽差 (g/㎥)",
@@ -3549,19 +3549,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(255, 159, 64)",
-                    backgroundColor:function(context){
-                        const chart = context.chart;
-                        const {ctx, chartArea} = chart;
-                        if(!chartArea){
-                            return "rgba(255, 159, 64, 0.25)";
-                        }
-                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                        gradient.addColorStop(0, "rgba(255, 159, 64, 0.75)");
-                        gradient.addColorStop(0.15, "rgba(255, 159, 64, 0.40)");
-                        gradient.addColorStop(0.50, "rgba(255, 159, 64, 0.12)");
-                        gradient.addColorStop(1.00, "rgba(255, 159, 64, 0.00)");
-                        return gradient;
-                    },
+                    backgroundColor:"rgba(255, 159, 64, 0.28)",
                     pointBackgroundColor:"rgb(255, 159, 64)",
                     pointRadius:0,
                     borderWidth:2,
