@@ -2055,6 +2055,12 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
         }
     };
 
+    const zeroOriginFill = {
+        target:"origin",
+        above:"rgba(120,120,120,0.18)",
+        below:"rgba(120,120,120,0.18)"
+    };
+
     const chart = new Chart(document.getElementById(canvasId),{
         type:"line",
         data:{
@@ -2066,7 +2072,8 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
                 pointBackgroundColor:"rgba(0, 0, 0, 0.6)",
                 pointRadius:0,
                 borderWidth:2,
-                tension:0.2
+                tension:0.2,
+                fill:zeroOriginFill
             },
             {
                 label:"ゼロライン",
@@ -3567,6 +3574,11 @@ const yAxisOptions = {
 // P01の時刻に一番近いP02データを探す
 // ずれ許容：6分（360秒）以内
 const toleranceMs = 360 * 1000;
+const zeroOriginFill = {
+    target:"origin",
+    above:"rgba(120,120,120,0.18)",
+    below:"rgba(120,120,120,0.18)"
+};
 
 p01.forEach(d=>{
 
@@ -3610,7 +3622,8 @@ p01.forEach(d=>{
                     pointBackgroundColor:"rgb(255, 0, 0)",
                     pointRadius:0,
                     borderWidth:2,
-                    tension:0.2
+                    tension:0.2,
+                    fill:zeroOriginFill
                 },
                 {
                     label:"湿度差 P01−P02 (%)",
@@ -3620,7 +3633,8 @@ p01.forEach(d=>{
                     pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
-                    tension:0.2
+                    tension:0.2,
+                    fill:zeroOriginFill
                 },
                 {
                     label:"ゼロライン",
@@ -3678,6 +3692,11 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
             color:"#000"
         }
     };
+    const zeroOriginFill = {
+        target:"origin",
+        above:"rgba(120,120,120,0.18)",
+        below:"rgba(120,120,120,0.18)"
+    };
 
     p01.forEach(d=>{
 
@@ -3713,7 +3732,8 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
                 pointBackgroundColor:"rgb(255, 0, 0)",
                 pointRadius:0,
                 borderWidth:2,
-                tension:0.2
+                tension:0.2,
+                fill:zeroOriginFill
             },
             {
                 label:"ゼロライン",
