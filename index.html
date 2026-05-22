@@ -3522,21 +3522,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(255, 159, 64)",
-                    backgroundColor(context){
-                        const chart = context.chart;
-                        const {ctx, chartArea} = chart;
-
-                        if(!chartArea){
-                            return "rgba(255, 159, 64, 0.45)";
-                        }
-
-                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                        gradient.addColorStop(0, "rgba(255, 159, 64, 0.80)");
-                        gradient.addColorStop(0.25, "rgba(255, 159, 64, 0.45)");
-                        gradient.addColorStop(0.75, "rgba(255, 159, 64, 0.00)");
-
-                        return gradient;
-                    },
+                    backgroundColor:"rgba(255, 159, 64, 0.45)",
                     pointBackgroundColor:"rgb(255, 159, 64)",
                     pointRadius:0,
                     borderWidth:2,
