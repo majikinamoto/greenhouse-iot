@@ -1762,7 +1762,17 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
     const axis = getAnalysisTempAxis(graphId);
     const lineColor = graphId === "A" ? "rgb(0, 160, 80)" : "rgb(70, 130, 220)";
-    const fillColor = graphId === "A" ? "rgba(0, 160, 80, 0.18)" : "rgba(70, 130, 220, 0.14)";
+    const fillStops = graphId === "A"
+        ? [
+            "rgba(0, 160, 80, 0.28)",
+            "rgba(0, 160, 80, 0.10)",
+            "rgba(0, 160, 80, 0.00)"
+        ]
+        : [
+            "rgba(70, 130, 220, 0.22)",
+            "rgba(70, 130, 220, 0.08)",
+            "rgba(70, 130, 220, 0.00)"
+        ];
     const options = baseOptions(minTime,maxTime);
 
     options.plugins = {
@@ -1788,11 +1798,26 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
                     .filter(d=>d.temp !== null && !isNaN(d.temp))
                     .map(d=>({x:d.xValue,y:d.temp})),
                 borderColor:lineColor,
-                backgroundColor:fillColor,
+                backgroundColor(context){
+                    const {chart} = context;
+                    const {ctx, chartArea} = chart;
+
+                    if(!chartArea){
+                        return fillStops[1];
+                    }
+
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, fillStops[0]);
+                    gradient.addColorStop(0.5, fillStops[1]);
+                    gradient.addColorStop(1, fillStops[2]);
+
+                    return gradient;
+                },
                 pointBackgroundColor:lineColor,
                 pointRadius:0,
                 borderWidth:2,
-                tension:0.2
+                tension:0.2,
+                fill:true
             }]
         },
         options:{
