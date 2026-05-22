@@ -3369,8 +3369,9 @@ function createVerticalGradient(context, topColor, midColor, bottomColor){
 
     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
     gradient.addColorStop(0, topColor);
-    gradient.addColorStop(0.25, midColor);
-    gradient.addColorStop(0.75, bottomColor);
+    gradient.addColorStop(0.15, midColor);
+    gradient.addColorStop(0.45, bottomColor);
+    gradient.addColorStop(1, bottomColor);
 
     return gradient;
 }
@@ -3396,8 +3397,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                     backgroundColor(context){
                         return createVerticalGradient(
                             context,
-                            "rgba(120, 170, 255, 0.22)",
-                            "rgba(120, 170, 255, 0.08)",
+                            "rgba(120, 170, 255, 0.34)",
+                            "rgba(120, 170, 255, 0.14)",
                             "rgba(120, 170, 255, 0.00)"
                         );
                     },
@@ -3417,8 +3418,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                     backgroundColor(context){
                         return createVerticalGradient(
                             context,
-                            "rgba(255, 0, 0, 0.30)",
-                            "rgba(255, 0, 0, 0.10)",
+                            "rgba(255, 0, 0, 0.42)",
+                            "rgba(255, 0, 0, 0.18)",
                             "rgba(255, 0, 0, 0.00)"
                         );
                     },
@@ -3493,14 +3494,21 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
         .map(d=>({
             x:d.xValue,
             y:calcVapor(d.temp,100)
-        })),
+    })),
     borderColor:"rgb(255, 0, 0)",
-    backgroundColor:"rgba(255, 0, 0, 0.1)",
+    backgroundColor:function(context){
+        return createVerticalGradient(
+            context,
+            "rgba(255, 0, 0, 0.22)",
+            "rgba(255, 0, 0, 0.08)",
+            "rgba(255, 0, 0, 0.00)"
+        );
+    },
     pointBackgroundColor:"rgb(255, 0, 0)",
     pointRadius:0,
     borderWidth:2,
     tension:0.2,
-    fill:false
+    fill:true
 },
 
                 {
@@ -3509,12 +3517,19 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(75, 192, 192)",
-                    backgroundColor:"rgba(75, 192, 192, 0.15)",
+                    backgroundColor:function(context){
+                        return createVerticalGradient(
+                            context,
+                            "rgba(75, 192, 192, 0.22)",
+                            "rgba(75, 192, 192, 0.08)",
+                            "rgba(75, 192, 192, 0.00)"
+                        );
+                    },
                     pointBackgroundColor:"rgb(75, 192, 192)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
-                    fill:false
+                    fill:true
                 },
                 {
                     label:"飽差 (g/㎥)",
@@ -3522,7 +3537,14 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
                     borderColor:"rgb(255, 159, 64)",
-                    backgroundColor:"rgba(255, 159, 64, 0.45)",
+                    backgroundColor:function(context){
+                        return createVerticalGradient(
+                            context,
+                            "rgba(255, 159, 64, 0.32)",
+                            "rgba(255, 159, 64, 0.12)",
+                            "rgba(255, 159, 64, 0.00)"
+                        );
+                    },
                     pointBackgroundColor:"rgb(255, 159, 64)",
                     pointRadius:0,
                     borderWidth:2,
