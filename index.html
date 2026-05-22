@@ -3357,12 +3357,26 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
                     borderColor:"rgb(120, 170, 255)",
-                    backgroundColor:"rgba(120, 170, 255, 0.12)",
+                    backgroundColor(context){
+                        const {chart} = context;
+                        const {ctx, chartArea} = chart;
+
+                        if(!chartArea){
+                            return "rgba(120, 170, 255, 0.08)";
+                        }
+
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, "rgba(120, 170, 255, 0.20)");
+                        gradient.addColorStop(0.5, "rgba(120, 170, 255, 0.08)");
+                        gradient.addColorStop(1, "rgba(120, 170, 255, 0.00)");
+
+                        return gradient;
+                    },
                     pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
-                    fill:false
+                    fill:true
                 },
                 {
                     label:"温度 (℃)",
