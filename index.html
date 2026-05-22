@@ -1798,7 +1798,26 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
                     .filter(d=>d.temp !== null && !isNaN(d.temp))
                     .map(d=>({x:d.xValue,y:d.temp})),
                 borderColor:lineColor,
-                backgroundColor:graphId === "A" ? "rgba(0, 160, 80, 0.30)" : "rgba(70, 130, 220, 0.28)",
+                backgroundColor:function(context){
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+                    if(!chartArea){
+                        return graphId === "A" ? "rgba(0, 160, 80, 0.30)" : "rgba(70, 130, 220, 0.28)";
+                    }
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    if(graphId === "A"){
+                        gradient.addColorStop(0, "rgba(0, 160, 80, 0.70)");
+                        gradient.addColorStop(0.15, "rgba(0, 160, 80, 0.38)");
+                        gradient.addColorStop(0.50, "rgba(0, 160, 80, 0.10)");
+                        gradient.addColorStop(1.00, "rgba(0, 160, 80, 0.00)");
+                    }else{
+                        gradient.addColorStop(0, "rgba(70, 130, 220, 0.70)");
+                        gradient.addColorStop(0.15, "rgba(70, 130, 220, 0.36)");
+                        gradient.addColorStop(0.50, "rgba(70, 130, 220, 0.10)");
+                        gradient.addColorStop(1.00, "rgba(70, 130, 220, 0.00)");
+                    }
+                    return gradient;
+                },
                 pointBackgroundColor:lineColor,
                 pointRadius:0,
                 borderWidth:2,
