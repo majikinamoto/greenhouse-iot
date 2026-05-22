@@ -3445,21 +3445,21 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .filter(d=>d.hum !== null && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
-                    borderColor:"rgb(120, 170, 255)",
+                    borderColor:"rgb(0, 100, 255)",
                     backgroundColor:function(context){
                         const chart = context.chart;
                         const {ctx, chartArea} = chart;
                         if(!chartArea){
-                            return "rgba(120, 170, 255, 0.20)";
+                            return "rgba(0, 100, 255, 0.45)";
                         }
                         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                        gradient.addColorStop(0, "rgba(120, 170, 255, 0.60)");
-                        gradient.addColorStop(0.08, "rgba(120, 170, 255, 0.28)");
-                        gradient.addColorStop(0.20, "rgba(120, 170, 255, 0.08)");
-                        gradient.addColorStop(0.35, "rgba(120, 170, 255, 0.00)");
+                        gradient.addColorStop(0, "rgba(0, 100, 255, 0.90)");
+                        gradient.addColorStop(0.08, "rgba(0, 100, 255, 0.45)");
+                        gradient.addColorStop(0.20, "rgba(0, 100, 255, 0.15)");
+                        gradient.addColorStop(0.35, "rgba(0, 100, 255, 0.00)");
                         return gradient;
                     },
-                    pointBackgroundColor:"rgb(120, 170, 255)",
+                    pointBackgroundColor:"rgb(0, 100, 255)",
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
