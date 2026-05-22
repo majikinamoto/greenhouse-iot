@@ -1764,13 +1764,13 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     const lineColor = graphId === "A" ? "rgb(0, 160, 80)" : "rgb(70, 130, 220)";
     const fillStops = graphId === "A"
         ? [
-            "rgba(0, 160, 80, 0.42)",
-            "rgba(0, 160, 80, 0.18)",
+            "rgba(0, 160, 80, 0.55)",
+            "rgba(0, 160, 80, 0.25)",
             "rgba(0, 160, 80, 0.00)"
         ]
         : [
-            "rgba(70, 130, 220, 0.36)",
-            "rgba(70, 130, 220, 0.15)",
+            "rgba(70, 130, 220, 0.50)",
+            "rgba(70, 130, 220, 0.22)",
             "rgba(70, 130, 220, 0.00)"
         ];
     const options = baseOptions(minTime,maxTime);
