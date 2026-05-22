@@ -1009,18 +1009,48 @@ button { margin:5px; }
     }
 
     .outside-source-setting {
-        align-items:stretch;
+        flex-wrap:nowrap;
+        align-items:center;
+        gap:4px;
+        padding:6px;
+        font-size:12px;
+        overflow-x:auto;
     }
 
     .outside-source-setting label,
     .outside-source-setting button {
-        width:100%;
+        width:auto;
         box-sizing:border-box;
+        flex:0 0 auto;
+        white-space:nowrap;
+    }
+
+    .outside-source-setting label {
+        gap:3px;
     }
 
     .outside-source-input {
-        flex:1;
+        flex:0 0 auto;
         min-width:0;
+    }
+
+    #outsideSourceUserId {
+        width:60px;
+    }
+
+    #outsideSourcePointId {
+        width:50px;
+    }
+
+    .outside-source-setting button {
+        margin:0;
+        padding:4px 7px;
+        font-size:0;
+    }
+
+    .outside-source-setting button::after {
+        content:"入手";
+        font-size:12px;
     }
 }
 </style>
