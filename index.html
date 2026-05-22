@@ -3454,8 +3454,9 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         }
                         const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
                         gradient.addColorStop(0, "rgba(120, 170, 255, 0.34)");
-                        gradient.addColorStop(0.25, "rgba(120, 170, 255, 0.14)");
-                        gradient.addColorStop(0.75, "rgba(120, 170, 255, 0.00)");
+                        gradient.addColorStop(0.08, "rgba(120, 170, 255, 0.12)");
+                        gradient.addColorStop(0.20, "rgba(120, 170, 255, 0.03)");
+                        gradient.addColorStop(0.35, "rgba(120, 170, 255, 0.00)");
                         return gradient;
                     },
                     pointBackgroundColor:"rgb(120, 170, 255)",
