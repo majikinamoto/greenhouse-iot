@@ -497,10 +497,10 @@ button { margin:5px; }
 .outside-source-setting {
     display:flex;
     flex-wrap:wrap;
-    gap:8px 12px;
+    gap:6px 8px;
     align-items:center;
     margin:0 0 10px;
-    padding:8px 10px;
+    padding:6px 8px;
     border:2px solid #c4ccd6;
     background:#f7f9fb;
     color:#1f3038;
@@ -511,12 +511,22 @@ button { margin:5px; }
 .outside-source-setting label {
     display:flex;
     align-items:center;
-    gap:6px;
+    gap:4px;
+    white-space:nowrap;
 }
 
 .outside-source-input {
-    width:82px;
+    width:70px;
     box-sizing:border-box;
+}
+
+#outsideSourcePointId {
+    width:55px;
+}
+
+.outside-source-setting button {
+    margin:0;
+    padding:4px 8px;
 }
 
 .outside-source-note {
@@ -1035,21 +1045,16 @@ button { margin:5px; }
     }
 
     #outsideSourceUserId {
-        width:60px;
+        width:70px;
     }
 
     #outsideSourcePointId {
-        width:50px;
+        width:55px;
     }
 
     .outside-source-setting button {
         margin:0;
         padding:4px 7px;
-        font-size:0;
-    }
-
-    .outside-source-setting button::after {
-        content:"入手";
         font-size:12px;
     }
 }
@@ -1188,17 +1193,17 @@ button { margin:5px; }
 <div class="outside-source-setting">
     <label>
         <input type="checkbox" id="outsideSourceEnabled" onchange="handleOutsideSourceEnabledChange()">
-        外気（P11）を別のuser_idから入手する
+        外気を別userから取得
     </label>
     <label>
-        入手元 user_id
+        user
         <input class="outside-source-input" type="text" id="outsideSourceUserId" placeholder="例: T9999" onchange="saveOutsideSourceSetting()">
     </label>
     <label>
-        入手元 point_id
+        point
         <input class="outside-source-input" type="text" id="outsideSourcePointId" placeholder="例: P11" onchange="saveOutsideSourceSetting()">
     </label>
-    <button type="button" onclick="applyOutsideSourceSetting()">入手する</button>
+    <button type="button" onclick="applyOutsideSourceSetting()">取得</button>
 </div>
 
 
