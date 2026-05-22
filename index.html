@@ -2577,7 +2577,7 @@ const pointLabelPlugin = {
             const labelMatch = dataset.label.match(/^(.+?)\s*\((.+)\)$/);
             const labelName = labelMatch ? labelMatch[1] : dataset.label;
             const unit = labelMatch ? labelMatch[2] : "";
-            const text = labelName + Number(value).toFixed(1) + unit;
+            const text = labelName + "_" + Number(value).toFixed(1) + unit;
 
 ctx.font = "12px sans-serif";
 
