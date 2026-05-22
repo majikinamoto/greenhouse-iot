@@ -3361,7 +3361,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                     pointBackgroundColor:"rgb(120, 170, 255)",
                     pointRadius:0,
                     borderWidth:2,
-                    tension:0.2
+                    tension:0.2,
+                    fill:false
                 },
                 {
                     label:"温度 (℃)",
@@ -3370,11 +3371,26 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .map(d=>({x:d.xValue,y:d.temp})),
                     yAxisID:"yTemp",
                     borderColor:"rgb(255, 0, 0)",
-                    backgroundColor:"rgba(255, 0, 0, 0.15)",
+                    backgroundColor(context){
+                        const {chart} = context;
+                        const {ctx, chartArea} = chart;
+
+                        if(!chartArea){
+                            return "rgba(255, 0, 0, 0.10)";
+                        }
+
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, "rgba(255, 0, 0, 0.28)");
+                        gradient.addColorStop(0.5, "rgba(255, 0, 0, 0.10)");
+                        gradient.addColorStop(1, "rgba(255, 0, 0, 0.00)");
+
+                        return gradient;
+                    },
                     pointBackgroundColor:"rgb(255, 0, 0)",
                     pointRadius:0,
                     borderWidth:2,
-                    tension:0.2
+                    tension:0.2,
+                    fill:true
                 }
             ]
         },
