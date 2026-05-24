@@ -65,10 +65,26 @@ function postWebhook($url, $payload) {
     ];
 }
 
+function sendEmailAlert($to, $message) {
+    $subject = "U-Techアラート";
+    if (function_exists("mb_encode_mimeheader")) {
+        $subject = mb_encode_mimeheader($subject, "UTF-8");
+    }
+
+    $headers = "Content-Type: text/plain; charset=UTF-8\r\n";
+    $sent = mail($to, $subject, $message, $headers);
+
+    return [
+        "success" => $sent,
+        "http_code" => null,
+        "error" => $sent ? "" : "mail failed"
+    ];
+}
+
 $settingsSql = "SELECT *
                 FROM alert_settings
                 WHERE enabled = 1
-                  AND notify_target = 'discord'
+                  AND notify_target IN ('discord', 'email')
                 ORDER BY id ASC";
 
 $settingsResult = $conn->query($settingsSql);
@@ -193,11 +209,11 @@ while ($setting = $settingsResult->fetch_assoc()) {
         }
     }
 
-    $payload = $setting["notify_target"] === "discord"
-        ? ["content" => $message]
-        : ["message" => $message];
-
-    $postResult = postWebhook($setting["webhook_url"], $payload);
+    if ($setting["notify_target"] === "email") {
+        $postResult = sendEmailAlert($setting["webhook_url"], $message);
+    } else {
+        $postResult = postWebhook($setting["webhook_url"], ["content" => $message]);
+    }
 
     if ($postResult["success"]) {
         $updateStmt->bind_param("i", $id);

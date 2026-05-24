@@ -64,12 +64,16 @@ try {
         send_error("condition_typeはaboveまたはbelowで指定してください");
     }
 
-    if (!in_array($notify_target, ["line", "discord"], true)) {
-        send_error("notify_targetはlineまたはdiscordで指定してください");
+    if (!in_array($notify_target, ["discord", "email", "line"], true)) {
+        send_error("notify_targetはdiscord、emailまたはlineで指定してください");
     }
 
     if ($webhook_url === "") {
         send_error("webhook_urlを入力してください");
+    }
+
+    if ($notify_target === "email" && !filter_var($webhook_url, FILTER_VALIDATE_EMAIL)) {
+        send_error("メールアドレスを正しく入力してください");
     }
 
     if (!is_numeric($cooldown_minutes)) {

@@ -1415,7 +1415,6 @@ button { margin:5px; }
 </section>
 
 <section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
-    <div class="tab-placeholder">アラートタブは今後追加予定です。ＬＩＮＥやDiscord等にある状態になったときに通知するサービスを予定しています。</div>
     <div class="alert-setting-form">
         <label>
             point_id：
@@ -1442,14 +1441,15 @@ button { margin:5px; }
 
         <label>
             通知先
-            <select id="alertNotifyTarget">
-                <option value="line">LINE</option>
+            <select id="alertNotifyTarget" onchange="handleAlertNotifyTargetChange()">
                 <option value="discord">Discord</option>
+                <option value="email">メール</option>
+                <option value="line">LINE</option>
             </select>
         </label>
 
         <label>
-            Webhook URL
+            <span id="alertDestinationLabel">Webhook URL</span>
             <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
         </label>
 
@@ -1617,6 +1617,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
     restoreAnalysisCompareSettings();
+    handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
     if(qrImage){
@@ -2241,6 +2242,17 @@ async function loadAnalysisCompareChart(graphId){
     }
 }
 
+function handleAlertNotifyTargetChange(){
+    const notifyTarget = document.getElementById("alertNotifyTarget");
+    const destinationLabel = document.getElementById("alertDestinationLabel");
+
+    if(destinationLabel){
+        destinationLabel.innerText = notifyTarget && notifyTarget.value === "email"
+            ? "メールアドレス"
+            : "Webhook URL";
+    }
+}
+
 function clearAlertForm(){
     const temperature = document.getElementById("alertTemperatureThreshold");
     const condition = document.getElementById("alertConditionType");
@@ -2257,6 +2269,7 @@ function clearAlertForm(){
     if(cooldownMinutes) cooldownMinutes.value = "180";
     if(enabled) enabled.checked = true;
     if(message) message.innerText = "";
+    handleAlertNotifyTargetChange();
 }
 
 function clearAlertFormIfUserChanged(){
@@ -2328,6 +2341,7 @@ function applyAlertSettingToForm(setting){
     if(pointId && setting.point_id && alertPointLabels[setting.point_id]){
         pointId.value = setting.point_id;
     }
+    handleAlertNotifyTargetChange();
 }
 
 function maskWebhookUrl(url){
@@ -2404,16 +2418,19 @@ function renderActiveAlertSetting(setting){
             : "-";
     const notifyTarget = setting.notify_target === "discord"
         ? "Discord"
+        : setting.notify_target === "email"
+            ? "メール"
         : setting.notify_target === "line"
             ? "LINE"
             : "-";
+    const destinationLabel = setting.notify_target === "email" ? "メールアドレス" : "Webhook";
 
     container.innerHTML =
         '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
         '<div>対象：' + pointLabel + ' 温度</div>' +
         '<div>条件：' + (isNaN(threshold) ? "-" : threshold.toFixed(1)) + '℃ ' + condition + '</div>' +
         '<div>通知先：' + notifyTarget + '</div>' +
-        '<div>Webhook：' + webhook + '</div>' +
+        '<div>' + destinationLabel + '：' + webhook + '</div>' +
         '<div>再通知間隔：' + (isNaN(cooldownMinutes) ? "-" : cooldownMinutes) + '分</div>' +
         '<div>状態：有効</div>';
 }
@@ -4337,7 +4354,9 @@ async function saveAlertSetting(){
     }
 
     if(!webhookUrl){
-        alertMessage.innerText = "Webhook URLを入力してください";
+        alertMessage.innerText = notifyTarget === "email"
+            ? "メールアドレスを入力してください"
+            : "Webhook URLを入力してください";
         return;
     }
 
