@@ -1149,6 +1149,9 @@ button { margin:5px; }
 <div class="status-break"></div>
 <div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
 <div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
+<div class="status-break"></div>
+<div class="status-box">日射量：<span id="solarNow">-</span> W/㎡</div>
+<div class="status-box">CO2：<span id="co2Now">-</span> ppm</div>
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">ハウス内（P01）</div>
@@ -4007,6 +4010,8 @@ async function loadData(){
     document.getElementById("vpdNow").innerText = "-";
     document.getElementById("dewNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
+    document.getElementById("solarNow").innerText = "-";
+    document.getElementById("co2Now").innerText = "-";
     resetDailyTempStats();
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
@@ -4044,6 +4049,17 @@ const resultP91 = results[5];
         const p31 = parseData(resultP31.data, minTime);
 const p21 = parseData(resultP21.data, minTime);
 const p91 = parseData(resultP91.data, voltMinTime);
+
+        const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
+        const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
+
+        if(validP31.length){
+            document.getElementById("solarNow").innerText = validP31[validP31.length - 1].solar.toFixed(1);
+        }
+
+        if(validP21.length){
+            document.getElementById("co2Now").innerText = validP21[validP21.length - 1].co2.toFixed(0);
+        }
 
         const today = new Date(now);
 
