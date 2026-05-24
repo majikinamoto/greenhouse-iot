@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中学社会 3択クイズ | U-Tech</title>
+<style>
+:root {
+    --ink:#243447;
+    --sub:#5b6c7f;
+    --line:#d4dde7;
+    --paper:#ffffff;
+    --sky:#edf5ff;
+    --blue:#3467b4;
+    --blue-dark:#254d8b;
+    --green:#178653;
+    --green-soft:#e8f7ef;
+    --red:#c54343;
+    --red-soft:#fff0f0;
+    --yellow:#fff6e5;
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+    margin:0;
+    min-height:100vh;
+    font-family:-apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+        "Yu Gothic", Meiryo, sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg, #eaf3fc 0, #f6f8fb 260px);
+}
+
+button {
+    font:inherit;
+}
+
+.page {
+    max-width:720px;
+    margin:0 auto;
+    padding:20px 14px 32px;
+}
+
+.app-header {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.logo {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:48px;
+    height:48px;
+    border-radius:13px;
+    background:linear-gradient(145deg, #2f4f6f, #5f7f9f);
+    color:#fff;
+    font-size:28px;
+    font-weight:800;
+}
+
+.app-title {
+    margin:0;
+    font-size:24px;
+    line-height:1.2;
+}
+
+.app-subtitle {
+    margin:3px 0 0;
+    color:var(--sub);
+    font-size:13px;
+}
+
+.card {
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:var(--paper);
+    box-shadow:0 8px 28px rgba(42, 59, 80, 0.08);
+    overflow:hidden;
+}
+
+.status-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:12px 16px;
+    color:var(--sub);
+    background:var(--sky);
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+    font-weight:700;
+}
+
+.mode {
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:4px 10px;
+    border-radius:999px;
+    color:var(--blue-dark);
+    background:#dbeaff;
+}
+
+.mode.review {
+    color:#875100;
+    background:#ffedc4;
+}
+
+.content {
+    padding:22px 18px 20px;
+}
+
+.loading,
+.error {
+    padding:42px 18px;
+    text-align:center;
+    color:var(--sub);
+    font-size:16px;
+    font-weight:700;
+}
+
+.error {
+    color:var(--red);
+}
+
+.question-number {
+    margin:0 0 10px;
+    color:var(--blue);
+    font-size:14px;
+    font-weight:800;
+}
+
+.question {
+    margin:0 0 22px;
+    min-height:58px;
+    font-size:21px;
+    line-height:1.6;
+    font-weight:700;
+}
+
+.choices {
+    display:grid;
+    gap:10px;
+}
+
+.choice-button {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    width:100%;
+    min-height:58px;
+    padding:13px 14px;
+    border:2px solid #bdcbdc;
+    border-radius:12px;
+    background:#fff;
+    color:var(--ink);
+    text-align:left;
+    cursor:pointer;
+    transition:border-color 0.15s, background 0.15s, transform 0.05s;
+}
+
+.choice-button:hover:not(:disabled),
+.choice-button:focus-visible:not(:disabled) {
+    border-color:var(--blue);
+    background:#f3f8ff;
+}
+
+.choice-button:active:not(:disabled) {
+    transform:translateY(1px);
+}
+
+.choice-button:disabled {
+    cursor:default;
+}
+
+.choice-key {
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:#e7eef8;
+    color:var(--blue-dark);
+    font-weight:800;
+}
+
+.choice-text {
+    padding-top:3px;
+    line-height:1.5;
+}
+
+.choice-button.correct {
+    border-color:var(--green);
+    background:var(--green-soft);
+}
+
+.choice-button.correct .choice-key {
+    background:var(--green);
+    color:#fff;
+}
+
+.choice-button.incorrect {
+    border-color:var(--red);
+    background:var(--red-soft);
+}
+
+.choice-button.incorrect .choice-key {
+    background:var(--red);
+    color:#fff;
+}
+
+.feedback {
+    display:none;
+    margin-top:18px;
+    padding:14px;
+    border-radius:12px;
+    background:var(--yellow);
+    line-height:1.65;
+}
+
+.feedback.visible {
+    display:block;
+}
+
+.feedback-result {
+    margin:0 0 6px;
+    font-size:18px;
+    font-weight:800;
+}
+
+.feedback-result.correct {
+    color:var(--green);
+}
+
+.feedback-result.incorrect {
+    color:var(--red);
+}
+
+.explanation {
+    margin:0;
+    color:#38495c;
+}
+
+.action-button {
+    display:none;
+    width:100%;
+    min-height:52px;
+    margin-top:18px;
+    padding:12px 16px;
+    border:none;
+    border-radius:11px;
+    background:var(--blue);
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.action-button.visible {
+    display:block;
+}
+
+.action-button:hover {
+    background:var(--blue-dark);
+}
+
+.result {
+    padding:32px 18px 28px;
+    text-align:center;
+}
+
+.result h2 {
+    margin:0 0 18px;
+    font-size:24px;
+}
+
+.score {
+    margin:0;
+    font-size:46px;
+    line-height:1.1;
+    font-weight:800;
+    color:var(--blue-dark);
+}
+
+.rank {
+    margin:15px auto 18px;
+    width:104px;
+    padding:9px 0;
+    border-radius:999px;
+    color:#fff;
+    background:var(--green);
+    font-size:25px;
+    font-weight:800;
+}
+
+.result-message {
+    margin:0 0 20px;
+    color:var(--sub);
+    line-height:1.6;
+    font-weight:700;
+}
+
+.result-actions {
+    display:grid;
+    gap:10px;
+}
+
+.result-button {
+    min-height:52px;
+    padding:12px 14px;
+    border:2px solid var(--blue);
+    border-radius:11px;
+    background:var(--blue);
+    color:#fff;
+    font-weight:800;
+    cursor:pointer;
+}
+
+.result-button.secondary {
+    background:#fff;
+    color:var(--blue-dark);
+}
+
+.hidden {
+    display:none;
+}
+
+@media (max-width: 520px) {
+    .page {
+        padding:12px 10px 18px;
+    }
+
+    .app-title {
+        font-size:21px;
+    }
+
+    .content {
+        padding:18px 12px 14px;
+    }
+
+    .question {
+        min-height:0;
+        margin-bottom:18px;
+        font-size:18px;
+    }
+
+    .choice-button {
+        min-height:58px;
+        padding:12px 10px;
+    }
+
+    .status-bar {
+        padding:10px 12px;
+        font-size:13px;
+    }
+}
+</style>
+</head>
+<body>
+<main class="page">
+    <header class="app-header">
+        <div class="logo">U</div>
+        <div>
+            <h1 class="app-title">中学社会 3択クイズ</h1>
+            <p class="app-subtitle">地理・歴史・公民の力をチェック</p>
+        </div>
+    </header>
+
+    <section class="card" aria-live="polite">
+        <div id="loading" class="loading">問題を読み込んでいます...</div>
+        <div id="loadError" class="error hidden">問題を読み込めませんでした</div>
+
+        <div id="quizScreen" class="hidden">
+            <div class="status-bar">
+                <span id="modeLabel" class="mode">本番</span>
+                <span id="progressLabel">1 / 10 問</span>
+                <span id="scoreLabel">正解 0</span>
+            </div>
+            <div class="content">
+                <p id="questionNumber" class="question-number"></p>
+                <h2 id="questionText" class="question"></h2>
+                <div id="choices" class="choices"></div>
+                <div id="feedback" class="feedback">
+                    <p id="feedbackResult" class="feedback-result"></p>
+                    <p id="explanation" class="explanation"></p>
+                </div>
+                <button id="nextButton" class="action-button" type="button">次の問題へ</button>
+            </div>
+        </div>
+
+        <div id="resultScreen" class="result hidden">
+            <h2 id="resultTitle">結果発表</h2>
+            <p id="finalScore" class="score"></p>
+            <div id="rank" class="rank"></div>
+            <p id="resultMessage" class="result-message"></p>
+            <div class="result-actions">
+                <button id="reviewButton" class="result-button hidden" type="button">間違えた問題を復習する</button>
+                <button id="restartButton" class="result-button secondary" type="button">新しい問題に挑戦する</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+"use strict";
+
+const API_URL = "/get_quiz_questions.php";
+const MAX_QUESTIONS = 10;
+const CHOICE_KEYS = ["A", "B", "C"];
+
+let activeQuestions = [];
+let missedQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let reviewMode = false;
+let answerLocked = false;
+
+const loading = document.getElementById("loading");
+const loadError = document.getElementById("loadError");
+const quizScreen = document.getElementById("quizScreen");
+const resultScreen = document.getElementById("resultScreen");
+const modeLabel = document.getElementById("modeLabel");
+const progressLabel = document.getElementById("progressLabel");
+const scoreLabel = document.getElementById("scoreLabel");
+const questionNumber = document.getElementById("questionNumber");
+const questionText = document.getElementById("questionText");
+const choices = document.getElementById("choices");
+const feedback = document.getElementById("feedback");
+const feedbackResult = document.getElementById("feedbackResult");
+const explanation = document.getElementById("explanation");
+const nextButton = document.getElementById("nextButton");
+const resultTitle = document.getElementById("resultTitle");
+const finalScore = document.getElementById("finalScore");
+const rank = document.getElementById("rank");
+const resultMessage = document.getElementById("resultMessage");
+const reviewButton = document.getElementById("reviewButton");
+const restartButton = document.getElementById("restartButton");
+
+function showOnly(target) {
+    [loading, loadError, quizScreen, resultScreen].forEach(element => {
+        element.classList.toggle("hidden", element !== target);
+    });
+}
+
+function normaliseQuestion(item) {
+    const correctChoice = String(item.correct_choice || "").toUpperCase();
+
+    if (
+        !item ||
+        typeof item.question !== "string" ||
+        !CHOICE_KEYS.includes(correctChoice)
+    ) {
+        return null;
+    }
+
+    return {
+        id:item.id,
+        question:item.question,
+        choices:{
+            A:String(item.choice_a || ""),
+            B:String(item.choice_b || ""),
+            C:String(item.choice_c || "")
+        },
+        correctChoice:correctChoice,
+        explanation:String(item.explanation || "解説はありません。")
+    };
+}
+
+async function loadQuestions() {
+    showOnly(loading);
+
+    try {
+        const response = await fetch(API_URL, { cache:"no-store" });
+        const result = await response.json();
+
+        if (!response.ok || !result.success || !Array.isArray(result.questions)) {
+            throw new Error("Invalid API response");
+        }
+
+        const questions = result.questions
+            .map(normaliseQuestion)
+            .filter(Boolean)
+            .slice(0, MAX_QUESTIONS);
+
+        if (!questions.length) {
+            throw new Error("No questions");
+        }
+
+        startRound(questions, false);
+    } catch (error) {
+        showOnly(loadError);
+    }
+}
+
+function startRound(questions, isReview) {
+    activeQuestions = questions.slice();
+    missedQuestions = [];
+    currentIndex = 0;
+    score = 0;
+    reviewMode = isReview;
+    modeLabel.textContent = reviewMode ? "復習" : "本番";
+    modeLabel.classList.toggle("review", reviewMode);
+    showOnly(quizScreen);
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const currentQuestion = activeQuestions[currentIndex];
+
+    answerLocked = false;
+    feedback.classList.remove("visible");
+    feedbackResult.className = "feedback-result";
+    nextButton.classList.remove("visible");
+
+    progressLabel.textContent = (currentIndex + 1) + " / " + activeQuestions.length + " 問";
+    scoreLabel.textContent = "正解 " + score;
+    questionNumber.textContent = reviewMode ? "復習問題 " + (currentIndex + 1) : "第" + (currentIndex + 1) + "問";
+    questionText.textContent = currentQuestion.question;
+    choices.replaceChildren();
+
+    CHOICE_KEYS.forEach(key => {
+        const button = document.createElement("button");
+        const keySpan = document.createElement("span");
+        const textSpan = document.createElement("span");
+
+        button.className = "choice-button";
+        button.type = "button";
+        button.dataset.choice = key;
+        button.addEventListener("click", () => answerQuestion(key));
+
+        keySpan.className = "choice-key";
+        keySpan.textContent = key;
+        textSpan.className = "choice-text";
+        textSpan.textContent = currentQuestion.choices[key];
+
+        button.append(keySpan, textSpan);
+        choices.appendChild(button);
+    });
+}
+
+function answerQuestion(selectedChoice) {
+    if (answerLocked) return;
+
+    answerLocked = true;
+    const currentQuestion = activeQuestions[currentIndex];
+    const isCorrect = selectedChoice === currentQuestion.correctChoice;
+
+    choices.querySelectorAll(".choice-button").forEach(button => {
+        const choice = button.dataset.choice;
+        button.disabled = true;
+
+        if (choice === currentQuestion.correctChoice) {
+            button.classList.add("correct");
+        } else if (choice === selectedChoice) {
+            button.classList.add("incorrect");
+        }
+    });
+
+    if (isCorrect) {
+        score += 1;
+        feedbackResult.textContent = "正解！";
+        feedbackResult.classList.add("correct");
+    } else {
+        missedQuestions.push(currentQuestion);
+        feedbackResult.textContent = "不正解。正解は " + currentQuestion.correctChoice + " です。";
+        feedbackResult.classList.add("incorrect");
+    }
+
+    scoreLabel.textContent = "正解 " + score;
+    explanation.textContent = "解説：" + currentQuestion.explanation;
+    feedback.classList.add("visible");
+    nextButton.textContent = currentIndex + 1 === activeQuestions.length ? "結果を見る" : "次の問題へ";
+    nextButton.classList.add("visible");
+}
+
+function getRank(correctCount, totalCount) {
+    const rate = totalCount ? correctCount / totalCount : 0;
+
+    if (rate >= 0.9) return "S";
+    if (rate >= 0.7) return "A";
+    if (rate >= 0.5) return "B";
+    return "C";
+}
+
+function showResult() {
+    const total = activeQuestions.length;
+    const currentRank = getRank(score, total);
+
+    resultTitle.textContent = reviewMode ? "復習結果" : "結果発表";
+    finalScore.textContent = score + " / " + total;
+    rank.textContent = "ランク " + currentRank;
+
+    if (missedQuestions.length) {
+        resultMessage.textContent = missedQuestions.length + "問を復習できます。解説を確認して、もう一度挑戦しましょう。";
+        reviewButton.classList.remove("hidden");
+    } else {
+        resultMessage.textContent = reviewMode ? "復習完了です。全問正解しました。" : "全問正解です。すばらしい結果です。";
+        reviewButton.classList.add("hidden");
+    }
+
+    showOnly(resultScreen);
+}
+
+nextButton.addEventListener("click", () => {
+    if (!answerLocked) return;
+
+    if (currentIndex + 1 >= activeQuestions.length) {
+        showResult();
+        return;
+    }
+
+    currentIndex += 1;
+    renderQuestion();
+});
+
+reviewButton.addEventListener("click", () => {
+    startRound(missedQuestions, true);
+});
+
+restartButton.addEventListener("click", () => {
+    loadQuestions();
+});
+
+window.addEventListener("DOMContentLoaded", loadQuestions);
+</script>
+</body>
+</html>
