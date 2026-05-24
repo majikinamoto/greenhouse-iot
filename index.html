@@ -684,6 +684,30 @@ button { margin:5px; }
     max-width:360px;
 }
 
+.status-group-mobile-qr {
+    border-color:#83c2ca;
+    background:#eef7f8;
+    width:150px;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.mobile-qr-image {
+    width:140px;
+    height:140px;
+    background:#fff;
+    padding:4px;
+    box-sizing:border-box;
+}
+
+.mobile-qr-note {
+    width:100%;
+    font-size:12px;
+    font-weight:700;
+    color:#24606a;
+}
+
 .status-group-current .status-box {
     border-color:#bcc8d4;
     background:#ffffff;
@@ -931,6 +955,10 @@ button { margin:5px; }
 
     .status-group-vpd-eval {
         width:100%;
+    }
+
+    .status-group-mobile-qr {
+        display:none;
     }
 
     .status-group-vertical .status-box {
@@ -1186,6 +1214,11 @@ button { margin:5px; }
 10超 15未満：やや乾燥<br>
 15以上：乾燥ストレス
 </details>
+</div>
+<div class="status-group status-group-mobile-qr">
+<div class="status-group-title">スマホで開く</div>
+<img id="mobileQrImage" class="mobile-qr-image" alt="スマホ用URL QRコード">
+<div class="mobile-qr-note">スマホで読み取って表示</div>
 </div>
 </div>
 
@@ -1581,6 +1614,13 @@ window.addEventListener("DOMContentLoaded", ()=>{
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
     restoreAnalysisCompareSettings();
+
+    const qrImage = document.getElementById("mobileQrImage");
+    if(qrImage){
+        qrImage.src =
+            "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=" +
+            encodeURIComponent(window.location.href);
+    }
 
     const userIdInput = document.getElementById("userId");
     const userIdHistorySelect = document.getElementById("userIdHistorySelect");
