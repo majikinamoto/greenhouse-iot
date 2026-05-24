@@ -3434,6 +3434,8 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
 
     const axis = getTempHumAxis(pointId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+    const humColor = "rgb(0, 100, 255)";
+    const tempColor = "rgb(255, 0, 0)";
 
     return new Chart(document.getElementById(canvasId),{
         type:"line",
@@ -3445,7 +3447,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .filter(d=>d.hum !== null && !isNaN(d.hum))
                         .map(d=>({x:d.xValue,y:d.hum})),
                     yAxisID:"yHum",
-                    borderColor:"rgb(0, 100, 255)",
+                    borderColor:humColor,
                     backgroundColor:function(context){
                         const chart = context.chart;
                         const {ctx, chartArea} = chart;
@@ -3459,7 +3461,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         gradient.addColorStop(0.35, "rgba(0, 100, 255, 0.00)");
                         return gradient;
                     },
-                    pointBackgroundColor:"rgb(0, 100, 255)",
+                    pointBackgroundColor:humColor,
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
@@ -3471,7 +3473,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         .filter(d=>d.temp !== null && !isNaN(d.temp))
                         .map(d=>({x:d.xValue,y:d.temp})),
                     yAxisID:"yTemp",
-                    borderColor:"rgb(255, 0, 0)",
+                    borderColor:tempColor,
                     backgroundColor:function(context){
                         const chart = context.chart;
                         const {ctx, chartArea} = chart;
@@ -3485,7 +3487,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                         gradient.addColorStop(1.00, "rgba(255, 0, 0, 0.00)");
                         return gradient;
                     },
-                    pointBackgroundColor:"rgb(255, 0, 0)",
+                    pointBackgroundColor:tempColor,
                     pointRadius:0,
                     borderWidth:2,
                     tension:0.2,
@@ -3503,12 +3505,15 @@ yHum:{
     max:axis.humMax,
     ticks:{
         stepSize:10,
-        color:"#000"
+        color:humColor
     },
     title:{
         display:true,
         text:"%",
-        color:"#000"
+        color:humColor
+    },
+    grid:{
+        borderColor:humColor
     }
 },
 yTemp:{
@@ -3517,12 +3522,15 @@ yTemp:{
     max:axis.tempMax,
     ticks:{
         stepSize:5,
-        color:"#000"
+        color:tempColor
     },
     title:{
         display:true,
         text:"℃",
-        color:"#000"
+        color:tempColor
+    },
+    grid:{
+        borderColor:tempColor
     }
 }            }
         }
