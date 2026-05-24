@@ -172,11 +172,11 @@ while ($setting = $settingsResult->fetch_assoc()) {
     if ($conditionType === "above" && $temperature >= $threshold) {
         $shouldNotify = true;
         $alertType = "temperature_high";
-        $message = "設定した温度を超えました。現在の温度は" . round($temperature, 1) . "℃です。";
+        $message = "設定した温度を超えました。現在の温度は" . number_format($temperature, 1, ".", "") . "℃です。";
     } elseif ($conditionType === "below" && $temperature <= $threshold) {
         $shouldNotify = true;
         $alertType = "temperature_low";
-        $message = "設定した温度を下回りました。現在の温度は" . round($temperature, 1) . "℃です。";
+        $message = "設定した温度を下回りました。現在の温度は" . number_format($temperature, 1, ".", "") . "℃です。";
     }
 
     if (!$shouldNotify) {

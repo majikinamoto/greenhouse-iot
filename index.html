@@ -1420,7 +1420,6 @@ button { margin:5px; }
             point_id：
             <select id="alertPointId" onchange="handleAlertPointChange()">
                 <option value="P01">P01 ハウス内</option>
-                <option value="P02">P02 メンテナンス用ハウス内</option>
                 <option value="P11">P11 外気</option>
             </select>
         </label>
@@ -2327,7 +2326,10 @@ function applyAlertSettingToForm(setting){
     const enabled = document.getElementById("alertEnabled");
     const pointId = document.getElementById("alertPointId");
 
-    if(temperature) temperature.value = setting.temperature_threshold ?? "";
+    if(temperature){
+        const threshold = Number(setting.temperature_threshold);
+        temperature.value = isNaN(threshold) ? "" : threshold.toFixed(1);
+    }
     if(condition) condition.value = setting.condition_type || "above";
     if(notifyTarget) notifyTarget.value = setting.notify_target || "discord";
     if(webhookUrl) webhookUrl.value = setting.webhook_url || "";
@@ -4342,6 +4344,7 @@ async function saveAlertSetting(){
     const webhookUrl = document.getElementById("alertWebhookUrl").value.trim();
     const cooldownMinutes = Number(document.getElementById("alertCooldownMinutes").value || 180);
     const enabled = document.getElementById("alertEnabled").checked ? 1 : 0;
+    const roundedTemperatureThreshold = Number(Number(temperatureThreshold).toFixed(1));
 
     if(!userId){
         alert("user_idを入力してください");
@@ -4352,6 +4355,8 @@ async function saveAlertSetting(){
         alert("温度を入力してください");
         return;
     }
+
+    document.getElementById("alertTemperatureThreshold").value = roundedTemperatureThreshold.toFixed(1);
 
     if(!webhookUrl){
         alertMessage.innerText = notifyTarget === "email"
@@ -4371,7 +4376,7 @@ async function saveAlertSetting(){
             body:JSON.stringify({
                 user_id:userId,
                 point_id:pointId,
-                temperature_threshold:Number(temperatureThreshold),
+                temperature_threshold:roundedTemperatureThreshold,
                 condition_type:conditionType,
                 notify_target:notifyTarget,
                 webhook_url:webhookUrl,

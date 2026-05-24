@@ -56,6 +56,10 @@ try {
         send_error("point_idを入力してください");
     }
 
+    if (!in_array($point_id, ["P01", "P11"], true)) {
+        send_error("point_idはP01またはP11で指定してください");
+    }
+
     if (!is_numeric($temperature_threshold)) {
         send_error("temperature_thresholdは数値で指定してください");
     }
@@ -80,7 +84,7 @@ try {
         send_error("cooldown_minutesは数値で指定してください");
     }
 
-    $temperature_threshold = (float)$temperature_threshold;
+    $temperature_threshold = round((float)$temperature_threshold, 1);
     $cooldown_minutes = (int)$cooldown_minutes;
 
     if ($cooldown_minutes < 0) {
