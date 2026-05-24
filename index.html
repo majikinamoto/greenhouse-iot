@@ -2612,7 +2612,10 @@ const pointLabelPlugin = {
             const labelMatch = dataset.label.match(/^(.+?)\s*\((.+)\)$/);
             const labelName = labelMatch ? labelMatch[1] : dataset.label;
             const unit = labelMatch ? labelMatch[2] : "";
-            const text = labelName + "_" + Number(value).toFixed(1) + unit;
+            const displayValue = chart.canvas.id === "co2Chart"
+                ? Number(value).toFixed(0)
+                : Number(value).toFixed(1);
+            const text = labelName + "_" + displayValue + unit;
 
 ctx.font = "12px sans-serif";
 
