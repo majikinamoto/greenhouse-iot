@@ -1359,23 +1359,6 @@ button { margin:5px; }
             <div class="chart-container"><canvas id="analysisChartC"></canvas></div>
         </div>
 
-        <div class="analysis-compare-card">
-            <h4><span id="analysisTitleD">グラフC</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
-            <div class="analysis-compare-controls">
-                user_id
-                <input class="analysis-compare-input" type="text" id="analysisUserIdD" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('D')">
-                point_id
-                <input class="analysis-compare-input" type="text" id="analysisPointIdD" placeholder="例: P01" onchange="saveAnalysisCompareSetting('D')">
-                <button type="button" onclick="loadAnalysisCompareChart('D')">表示</button>
-            </div>
-            <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinD" value="20"> ～
-                <input class="axis-input" type="number" id="analysisTempMaxD" value="40">
-                <button onclick="applyAnalysisTempYAxis('D')">縦軸反映</button>
-            </div>
-            <div class="chart-container"><canvas id="analysisChartD"></canvas></div>
-        </div>
-
         <hr class="analysis-divider">
 
         <div class="analysis-compare-card">
@@ -1398,15 +1381,6 @@ button { margin:5px; }
             <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
         </div>
 
-        <div class="analysis-compare-card">
-            <h4><span id="analysisDiffTitleD">温度差（M-C）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
-            <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinD" value="-8"> ～
-                <input class="axis-input" type="number" id="analysisDiffMaxD" value="8">
-                <button onclick="applyAnalysisDiffYAxis('D')">縦軸反映</button>
-            </div>
-            <div class="chart-container"><canvas id="analysisDiffChartD"></canvas></div>
-        </div>
     </div>
 </section>
 
@@ -1602,8 +1576,8 @@ const outsideSourceStorageKeys = {
     pointId:"usui_outside_source_point_id"
 };
 
-const analysisCompareGraphs = ["A", "B", "C", "D"];
-const analysisDiffGraphs = ["B", "C", "D"];
+const analysisCompareGraphs = ["A", "B", "C"];
+const analysisDiffGraphs = ["B", "C"];
 const alertPointLabels = {
     P01:"P01 ハウス内",
     P02:"P02 メンテナンス用ハウス内",
@@ -1776,8 +1750,7 @@ function setAnalysisCompareTitle(graphId, userId, pointId){
     const displayNameMap = {
         A:"マスターグラフ（M）",
         B:"グラフA",
-        C:"グラフB",
-        D:"グラフC"
+        C:"グラフB"
     };
     const displayName = displayNameMap[graphId] || "グラフ" + graphId;
 
@@ -1820,11 +1793,11 @@ function registerAnalysisChart(chart){
 function getAnalysisChartGroup(chart){
     if(!chart || !chart.canvas) return "";
 
-    if(/^analysisChart[A-D]$/.test(chart.canvas.id)){
+    if(/^analysisChart[A-C]$/.test(chart.canvas.id)){
         return "temp";
     }
 
-    if(/^analysisDiffChart[B-D]$/.test(chart.canvas.id)){
+    if(/^analysisDiffChart[B-C]$/.test(chart.canvas.id)){
         return "diff";
     }
 
@@ -2111,8 +2084,7 @@ function setAnalysisDiffTitle(targetGraphId){
 
     const diffNameMap = {
         B:"グラフ差（M-A）",
-        C:"グラフ差（M-B）",
-        D:"グラフ差（M-C）"
+        C:"グラフ差（M-B）"
     };
     const diffName = diffNameMap[targetGraphId] || "グラフ差（M-" + targetGraphId + "）";
 
