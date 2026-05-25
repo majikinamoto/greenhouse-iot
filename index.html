@@ -340,6 +340,13 @@ button { margin:5px; }
     justify-content:flex-start;
 }
 
+.analysis-description {
+    margin:0 0 12px;
+    padding:8px;
+    color:#33475b;
+    line-height:1.7;
+}
+
 .analysis-compare-card {
     width:500px;
     border:2px solid #c4ccd6;
@@ -1307,6 +1314,7 @@ button { margin:5px; }
 </section>
 
 <section id="tab-analysis" class="tab-panel tab-panel-analysis" role="tabpanel">
+    <p class="analysis-description">マスターグラフ（M）に基準とするハウスのIDを入力し、グラフAやグラフBに比較したいハウスのIDを入力すると、同じ時間帯の環境データを並べて比較できます。また、グラフ差を見ることで、ハウス間の温度差や、その日の最大温度差などを確認できます。</p>
     <div class="analysis-compare-grid">
         <div class="analysis-compare-card">
             <h4><span id="analysisTitleA">マスターグラフ（M）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
