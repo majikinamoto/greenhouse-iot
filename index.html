@@ -1303,20 +1303,30 @@ button { margin:5px; }
     <div>
         <h4><span>CO2_ハウス内_P21</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="co2Min" value="350"> ～
-            <input class="axis-input" type="number" id="co2Max" value="550">
-            <button onclick="applyCo2YAxis(co2Chart);applyCo2YAxis(co2OutsideChart)">縦軸反映</button>
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="co2Min" value="200"> ～
+            <input class="axis-input" type="number" id="co2Max" value="500">
+            <button onclick="applyCo2YAxis(co2Chart)">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
     <div>
         <h4><span>CO2_外気_P26</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="co2OutsideMin" value="200"> ～
+            <input class="axis-input" type="number" id="co2OutsideMax" value="500">
+            <button onclick="applyCo2OutsideYAxis(co2OutsideChart)">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="co2OutsideChart"></canvas></div>
     </div>
 
     <div>
         <h4><span>CO2差内外_P21-P26</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="co2DiffMin" value="-250"> ～
+            <input class="axis-input" type="number" id="co2DiffMax" value="250">
+            <button onclick="applyCo2DiffYAxis(co2DiffChart)">縦軸反映</button>
+        </div>
         <div class="chart-container"><canvas id="co2DiffChart"></canvas></div>
     </div>
 
@@ -1575,8 +1585,12 @@ let tempMax = 40;
 let humMin = 40;
 let humMax = 100;
 
-let co2Min = 350;
-let co2Max = 550;
+let co2Min = 200;
+let co2Max = 500;
+let co2OutsideMin = 200;
+let co2OutsideMax = 500;
+let co2DiffMin = -250;
+let co2DiffMax = 250;
 
 let diffAxisMin = -5;
 let diffAxisMax = 5;
@@ -3406,6 +3420,20 @@ function getCo2Axis(){
     };
 }
 
+function getCo2OutsideAxis(){
+    return {
+        min:getAxisValue("co2OutsideMin", co2OutsideMin),
+        max:getAxisValue("co2OutsideMax", co2OutsideMax)
+    };
+}
+
+function getCo2DiffAxis(){
+    return {
+        min:getAxisValue("co2DiffMin", co2DiffMin),
+        max:getAxisValue("co2DiffMax", co2DiffMax)
+    };
+}
+
 function getDiffAxis(){
     return {
         min:getAxisValue("diffMin", diffAxisMin),
@@ -3423,6 +3451,10 @@ function getOutsideDiffAxis(){
 function getSingleAxis(key){
     if(key === "co2"){
         return getCo2Axis();
+    }
+
+    if(key === "co2Outside"){
+        return getCo2OutsideAxis();
     }
 
     if(key === "solar"){
@@ -3903,9 +3935,10 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
 
     const co2DiffData = [];
     const toleranceMs = 360 * 1000;
+    const axis = getCo2DiffAxis();
     const yAxisOptions = {
-        min:-150,
-        max:150,
+        min:axis.min,
+        max:axis.max,
         ticks:{
             color:"#000"
         },
@@ -4010,7 +4043,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         ];
     }
 
-    if(key === "co2"){
+    if(key === "co2" || key === "co2Outside"){
         color = "rgb(70, 70, 70)";
         bg = "rgba(70, 70, 70, 0.12)";
         fill = true;
@@ -4241,7 +4274,7 @@ const p91 = parseData(resultP91.data, voltMinTime);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
-        co2OutsideChart = createSingleChart("co2OutsideChart", p26, "co2", "co2", "ppm", chartMinTime, now);
+        co2OutsideChart = createSingleChart("co2OutsideChart", p26, "co2Outside", "co2", "ppm", chartMinTime, now);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
 
         diffChart = createDiffChart("diffChart", p01, p02, chartMinTime, now);
@@ -4347,6 +4380,10 @@ function applyCo2YAxis(chart){
     applySingleYAxis(chart, "co2");
 }
 
+function applyCo2OutsideYAxis(chart){
+    applySingleYAxis(chart, "co2Outside");
+}
+
 function applySingleYAxis(chart, key){
     if(!chart) return;
 
@@ -4371,6 +4408,26 @@ function applyDiffYAxis(chart){
     if(!chart) return;
 
     const axis = getDiffAxis();
+
+    chart.options.scales.y.min = axis.min;
+    chart.options.scales.y.max = axis.max;
+    chart.options.scales.yRight.min = axis.min;
+    chart.options.scales.yRight.max = axis.max;
+
+    if(chart.initialScaleLimits){
+        chart.initialScaleLimits.y.min = axis.min;
+        chart.initialScaleLimits.y.max = axis.max;
+        chart.initialScaleLimits.yRight.min = axis.min;
+        chart.initialScaleLimits.yRight.max = axis.max;
+    }
+
+    chart.update();
+}
+
+function applyCo2DiffYAxis(chart){
+    if(!chart) return;
+
+    const axis = getCo2DiffAxis();
 
     chart.options.scales.y.min = axis.min;
     chart.options.scales.y.max = axis.max;
