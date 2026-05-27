@@ -3334,6 +3334,10 @@ async function fetchDataSafe(userId, pointId){
     try{
         const url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
 
+        if(pointId === "P26"){
+            console.log("[CO2_外気_P26] request:", url);
+        }
+
         const res = await fetch(url, {
             signal:controller.signal,
             cache:"no-store"
@@ -3363,6 +3367,10 @@ async function fetchDataSafe(userId, pointId){
             return { pointId, data:[], error:`${pointId}：配列データではありません` };
         }
 
+        if(pointId === "P26"){
+            console.log("[CO2_外気_P26] JSON取得件数:", data.length);
+        }
+
         return { pointId, data, error:null };
 
     }catch(e){
@@ -3381,13 +3389,14 @@ function parseData(data, minTime){
 
     return data.map(d=>{
         const date = new Date(d.recorded_at);
+        const co2Value = d.co2 !== null && d.co2 !== undefined ? d.co2 : d.CO2;
 
         return {
             x:date,
             xValue:date.getTime(),
             temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
             hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
-            co2:d.co2 !== null && d.co2 !== undefined ? Number(d.co2) : null,
+            co2:co2Value !== null && co2Value !== undefined ? Number(co2Value) : null,
             solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
             volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
         };
@@ -4200,6 +4209,9 @@ const p91 = parseData(resultP91.data, voltMinTime);
 
         const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
         const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
+        const validP26 = p26.filter(d=>d.co2 !== null && !isNaN(d.co2));
+
+        console.log("[CO2_外気_P26] 描画可能CO2件数:", validP26.length);
 
         if(validP31.length){
             document.getElementById("solarNow").innerText = validP31[validP31.length - 1].solar.toFixed(1);
