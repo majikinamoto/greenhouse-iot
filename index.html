@@ -4035,6 +4035,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
 
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+    const dataKey = key === "co2Outside" ? "co2" : key;
 
     let color = "rgb(153, 102, 255)";
     let bg = "rgba(153, 102, 255, 0.15)";
@@ -4092,7 +4093,7 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         max:axis.max,
 
         ticks:{
-            stepSize: key === "volt" ? 1 : key === "co2" ? 50 : undefined,
+            stepSize: key === "volt" ? 1 : dataKey === "co2" ? 50 : undefined,
             color:"#000",
 
             callback:function(value){
@@ -4116,8 +4117,8 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             datasets:[{
                 label:label,
                 data:parsed
-                    .filter(d=>d[key] !== null && !isNaN(d[key]))
-                    .map(d=>({x:d.xValue,y:d[key]})),
+                    .filter(d=>d[dataKey] !== null && !isNaN(d[dataKey]))
+                    .map(d=>({x:d.xValue,y:d[dataKey]})),
                 borderColor:color,
                 backgroundColor:backgroundColor,
                 pointBackgroundColor:color,
