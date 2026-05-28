@@ -2673,9 +2673,14 @@ const pointLabelPlugin = {
             const meta = chart.getDatasetMeta(datasetIndex);
             const point = meta.data[index];
 
-            if(!point || !dataset || !dataset.data[index]) return;
+            if(!dataset || !dataset.data[index]) return;
 
-            const value = dataset.data[index].y;
+            const rawData = dataset.data[index];
+            const value = rawData.y !== null && rawData.y !== undefined
+                ? rawData.y
+                : point && point.$context && point.$context.parsed
+                    ? point.$context.parsed.y
+                    : null;
 
             if(value === null || value === undefined || isNaN(value)) return;
 
@@ -2685,21 +2690,30 @@ const pointLabelPlugin = {
             const displayValue = chart.canvas.id === "co2Chart" || chart.canvas.id === "co2OutsideChart"
                 ? Number(value).toFixed(0)
                 : Number(value).toFixed(1);
-            const text = labelName + "_" + displayValue + unit;
+            const labelText = labelName + "_";
+            const valueText = displayValue + unit;
 
 ctx.font = "12px sans-serif";
 
-const width = ctx.measureText(text).width + 10;
+const labelWidth = ctx.measureText(labelText).width;
+ctx.font = "bold 12px sans-serif";
+const valueWidth = ctx.measureText(valueText).width;
+const width = labelWidth + valueWidth + 10;
 const height = 20;
 
-let x = point.x + 8;
-let y = point.y - 8;
+const xScale = chart.scales.x;
+const yScale = chart.scales[dataset.yAxisID || "y"];
+const pointX = xScale ? xScale.getPixelForValue(rawData.x) : point.x;
+const pointY = yScale ? yScale.getPixelForValue(value) : point.y;
+
+let x = pointX + 8;
+let y = pointY - 8;
 
 const chartArea = chart.chartArea;
 
 /* 右にはみ出す場合は、左側に表示 */
 if(x + width > chartArea.right){
-    x = point.x - width - 8;
+    x = pointX - width - 8;
 }
 
 /* 左にはみ出す場合は、左端に寄せる */
@@ -2709,7 +2723,7 @@ if(x < chartArea.left){
 
 /* 上にはみ出す場合は、少し下に表示 */
 if(y - height < chartArea.top){
-    y = point.y + height;
+    y = Math.max(pointY + height, chartArea.top + height + 2);
 }
 
 /* 下にはみ出す場合は、少し上に表示 */
@@ -2721,7 +2735,10 @@ ctx.fillStyle = "rgba(255,255,255,0.85)";
 ctx.fillRect(x, y - height, width, height);
 
 ctx.fillStyle = "#000";
-ctx.fillText(text, x + 5, y - 5);
+ctx.font = "12px sans-serif";
+ctx.fillText(labelText, x + 5, y - 5);
+ctx.font = "bold 12px sans-serif";
+ctx.fillText(valueText, x + 5 + labelWidth, y - 5);
         });
 
         ctx.restore();
