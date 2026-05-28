@@ -1979,11 +1979,6 @@ function applyAnalysisTempYAxis(graphId){
         chart.options.scales.y.min = axis.min;
         chart.options.scales.y.max = axis.max;
 
-        if(chart.initialScaleLimits && chart.initialScaleLimits.y){
-            chart.initialScaleLimits.y.min = axis.min;
-            chart.initialScaleLimits.y.max = axis.max;
-        }
-
         chart.update();
     });
 }
@@ -1995,11 +1990,6 @@ function applyAnalysisDiffYAxis(graphId){
 
     chart.options.scales.y.min = axis.min;
     chart.options.scales.y.max = axis.max;
-
-    if(chart.initialScaleLimits && chart.initialScaleLimits.y){
-        chart.initialScaleLimits.y.min = axis.min;
-        chart.initialScaleLimits.y.max = axis.max;
-    }
 
     chart.update();
 }
@@ -4396,13 +4386,6 @@ function applyTempHumYAxis(chart, pointId){
     chart.options.scales.yTemp.min = axis.tempMin;
     chart.options.scales.yTemp.max = axis.tempMax;
 
-    if(chart.initialScaleLimits){
-        chart.initialScaleLimits.yHum.min = axis.humMin;
-        chart.initialScaleLimits.yHum.max = axis.humMax;
-        chart.initialScaleLimits.yTemp.min = axis.tempMin;
-        chart.initialScaleLimits.yTemp.max = axis.tempMax;
-    }
-
     chart.update();
 }
 
@@ -4424,13 +4407,6 @@ function applySingleYAxis(chart, key){
     chart.options.scales.yRight.min = axis.min;
     chart.options.scales.yRight.max = axis.max;
 
-    if(chart.initialScaleLimits){
-        chart.initialScaleLimits.y.min = axis.min;
-        chart.initialScaleLimits.y.max = axis.max;
-        chart.initialScaleLimits.yRight.min = axis.min;
-        chart.initialScaleLimits.yRight.max = axis.max;
-    }
-
     chart.update();
 }
 
@@ -4443,13 +4419,6 @@ function applyDiffYAxis(chart){
     chart.options.scales.y.max = axis.max;
     chart.options.scales.yRight.min = axis.min;
     chart.options.scales.yRight.max = axis.max;
-
-    if(chart.initialScaleLimits){
-        chart.initialScaleLimits.y.min = axis.min;
-        chart.initialScaleLimits.y.max = axis.max;
-        chart.initialScaleLimits.yRight.min = axis.min;
-        chart.initialScaleLimits.yRight.max = axis.max;
-    }
 
     chart.update();
 }
@@ -4464,13 +4433,6 @@ function applyCo2DiffYAxis(chart){
     chart.options.scales.yRight.min = axis.min;
     chart.options.scales.yRight.max = axis.max;
 
-    if(chart.initialScaleLimits){
-        chart.initialScaleLimits.y.min = axis.min;
-        chart.initialScaleLimits.y.max = axis.max;
-        chart.initialScaleLimits.yRight.min = axis.min;
-        chart.initialScaleLimits.yRight.max = axis.max;
-    }
-
     chart.update();
 }
 
@@ -4483,13 +4445,6 @@ function applyOutsideDiffYAxis(chart){
     chart.options.scales.y.max = axis.max;
     chart.options.scales.yRight.min = axis.min;
     chart.options.scales.yRight.max = axis.max;
-
-    if(chart.initialScaleLimits){
-        chart.initialScaleLimits.y.min = axis.min;
-        chart.initialScaleLimits.y.max = axis.max;
-        chart.initialScaleLimits.yRight.min = axis.min;
-        chart.initialScaleLimits.yRight.max = axis.max;
-    }
 
     chart.update();
 }
