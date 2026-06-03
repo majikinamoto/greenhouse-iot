@@ -2509,6 +2509,8 @@ function maskWebhookUrl(url){
 function getAlertTypeLabel(alertType){
     if(alertType === "temperature_high") return "高温アラート";
     if(alertType === "temperature_low") return "低温アラート";
+    if(alertType === "temperature_high_recovery") return "高温復帰";
+    if(alertType === "temperature_low_recovery") return "低温復帰";
     return alertType || "-";
 }
 
