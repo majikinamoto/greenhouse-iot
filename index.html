@@ -79,7 +79,7 @@
 .logo-title-row {
     display:flex;
     flex-wrap:wrap;
-    gap:6px 18px;
+    gap:6px 28px;
     align-items:baseline;
 }
 
@@ -91,9 +91,10 @@
 }
 
 .header-time-info {
-    font-size:12px;
+    font-size:14px;
     line-height:1.5;
     color:#42566b;
+    font-weight:700;
 }
 
 .header-info-card {
@@ -103,7 +104,7 @@
     gap:4px 14px;
     align-items:center;
     width:fit-content;
-    max-width:100%;
+    max-width:calc(100vw - 40px);
     padding:5px 8px;
     border:1px solid #c7d0da;
     border-radius:4px;
@@ -1191,7 +1192,7 @@ button { margin:5px; }
             <span>昼：-</span>
             <span>夜：-</span>
         </div>
-        <div class="header-info-card farm-calendar-card">
+        <div id="farmCalendarInfo" class="header-info-card farm-calendar-card">
             <span class="farm-calendar-title">農作業こよみ</span>
             <span>旧暦：取得予定</span>
             <span>月齢：取得予定</span>
@@ -3709,12 +3710,64 @@ function formatDurationMinutes(totalMinutes){
     return hours + "時間" + minutes + "分";
 }
 
+function calculateMoonInfo(date){
+    const synodicMonth = 29.530588853;
+    const baseNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+    const jstDate = getJapanDateParts(date);
+    const currentNoon = Date.UTC(jstDate.year, jstDate.month - 1, jstDate.day, 3, 0);
+    const daysSinceBase = (currentNoon - baseNewMoon) / (24*60*60*1000);
+    const lunation = Math.floor(daysSinceBase / synodicMonth);
+    const age = ((daysSinceBase % synodicMonth) + synodicMonth) % synodicMonth;
+    const lunarDay = Math.floor(age) + 1;
+    const lunarMonth = ((lunation + 1) % 12) + 1;
+
+    let phase = "新月";
+    if(age < 1.5){
+        phase = "新月";
+    }else if(age < 6.5){
+        phase = "上弦に向かう月";
+    }else if(age < 8.5){
+        phase = "上弦の月";
+    }else if(age < 13.5){
+        phase = "満月に向かう月";
+    }else if(age < 16.5){
+        phase = "満月";
+    }else if(age < 21.5){
+        phase = "満月の後／下弦に向かう月";
+    }else if(age < 23.5){
+        phase = "下弦の月";
+    }else{
+        phase = "新月に向かう月";
+    }
+
+    return {
+        lunarMonth:lunarMonth,
+        lunarDay:lunarDay,
+        age:age,
+        phase:phase
+    };
+}
+
+function updateFarmCalendarInfo(now){
+    const container = document.getElementById("farmCalendarInfo");
+    if(!container) return;
+
+    const moon = calculateMoonInfo(now);
+    container.innerHTML =
+        '<span class="farm-calendar-title">農作業こよみ</span>' +
+        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
+        '<span>月齢：' + moon.age.toFixed(1) + '</span>' +
+        '<span>月相：' + moon.phase + '</span>';
+}
+
 function updateHeaderTimeInfo(){
     const timeContainer = document.getElementById("headerTimeInfo");
     const sunContainer = document.getElementById("headerSunInfo");
-    if(!timeContainer && !sunContainer) return;
+    const farmContainer = document.getElementById("farmCalendarInfo");
+    if(!timeContainer && !sunContainer && !farmContainer) return;
 
     const now = new Date();
+    updateFarmCalendarInfo(now);
     const parts = getJapanDateParts(now);
     const currentText =
         parts.year + "年" +
