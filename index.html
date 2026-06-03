@@ -4659,8 +4659,12 @@ async function loadReviewData(){
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
 
-    const minTime = new Date(dateValue + "T00:00:00");
-    const maxTime = new Date(dateValue + "T23:59:59");
+    const selectedDate = new Date(dateValue + "T00:00:00");
+    const minTime = new Date(selectedDate);
+    minTime.setDate(minTime.getDate() - 1);
+    const maxTime = new Date(selectedDate);
+    maxTime.setDate(maxTime.getDate() + 1);
+    maxTime.setHours(23, 59, 59, 999);
     const start = formatSqlDateTime(minTime);
     const end = formatSqlDateTime(maxTime);
 
