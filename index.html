@@ -3721,22 +3721,31 @@ function calculateMoonInfo(date){
     const lunarDay = Math.floor(age) + 1;
     const lunarMonth = ((lunation + 1) % 12) + 1;
 
+    let moonMark = "🌑";
     let phase = "新月";
-    if(age < 1.5){
+    if(age < 1){
+        moonMark = "🌑";
         phase = "新月";
-    }else if(age < 6.5){
-        phase = "上弦に向かう月";
-    }else if(age < 8.5){
-        phase = "上弦の月";
-    }else if(age < 13.5){
+    }else if(age < 6){
+        moonMark = "🌒";
+        phase = "三日月";
+    }else if(age < 9){
+        moonMark = "🌓";
+        phase = "上弦";
+    }else if(age < 14){
+        moonMark = "🌔";
         phase = "満月に向かう月";
-    }else if(age < 16.5){
+    }else if(age < 16){
+        moonMark = "🌕";
         phase = "満月";
-    }else if(age < 21.5){
+    }else if(age < 21){
+        moonMark = "🌖";
         phase = "満月の後／下弦に向かう月";
-    }else if(age < 23.5){
-        phase = "下弦の月";
+    }else if(age < 24){
+        moonMark = "🌗";
+        phase = "下弦";
     }else{
+        moonMark = "🌘";
         phase = "新月に向かう月";
     }
 
@@ -3744,6 +3753,7 @@ function calculateMoonInfo(date){
         lunarMonth:lunarMonth,
         lunarDay:lunarDay,
         age:age,
+        moonMark:moonMark,
         phase:phase
     };
 }
@@ -3756,7 +3766,7 @@ function updateFarmCalendarInfo(now){
     container.innerHTML =
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
-        '<span>月齢：' + moon.age.toFixed(1) + '</span>' +
+        '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>';
 }
 
