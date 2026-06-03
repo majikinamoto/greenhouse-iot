@@ -81,6 +81,42 @@
     flex-wrap:wrap;
     gap:6px 28px;
     align-items:baseline;
+    position:relative;
+}
+
+.logo-info-button {
+    width:32px;
+    height:32px;
+    margin:0 0 0 -20px;
+    padding:0;
+    border:1px solid #aeb9c5;
+    border-radius:50%;
+    background:#f7fbff;
+    color:#25384d;
+    font-size:16px;
+    line-height:30px;
+    cursor:pointer;
+}
+
+.logo-info-popup {
+    display:none;
+    position:absolute;
+    top:36px;
+    left:0;
+    z-index:20;
+    max-width:360px;
+    padding:10px 12px;
+    border:1px solid #aeb9c5;
+    border-radius:6px;
+    background:#fff;
+    box-shadow:0 4px 12px rgba(0,0,0,0.16);
+    color:#1f3038;
+    font-size:13px;
+    line-height:1.6;
+}
+
+.logo-info-popup.active {
+    display:block;
 }
 
 .logo-subtitle {
@@ -1224,6 +1260,15 @@ button { margin:5px; }
     <div>
         <div class="logo-title-row">
             <div class="logo-title">U-Tech</div>
+            <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
+            <div id="logoInfoPopup" class="logo-info-popup">
+                <div>U-Techの「U」には、</div>
+                <div>User（利用者）</div>
+                <div>Understand（気づき・理解）</div>
+                <div>Utility（役立つ）</div>
+                <div>という意味を込めています。</div>
+                <div>U-Techは、生産者が環境変化に気づき、自ら考え、行動するための支援を目的として開発されたシステムです。</div>
+            </div>
             <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
@@ -1763,8 +1808,11 @@ button { margin:5px; }
         <p>温度、湿度、飽差、日射量、CO2などのデータを通じて、日々の栽培管理を振り返り、よりよい環境づくりに取り組むきっかけをつくることを目的としています。</p>
 
         <h3>U-Techの考え方</h3>
-        <p>U-Techは、画面に表示された数値だけで正解を決めるものではありません。生産者が自分のハウスの変化を見て、昨日との違い、天候との関係、作業後の反応に気づくための道具です。</p>
-        <p>データを見ることで「少し見直してみよう」「次はこうしてみよう」と思えることがあります。このような行動したくなるきっかけを、少し専門的にはインセンティブと呼びます。U-Techは、そのきっかけづくりを大切にしています。</p>
+        <p>U-Techの「U」には、User（利用者）、Understand（気づき・理解）、Utility（役立つ）という意味を込めています。</p>
+        <p>U-Techは、生産者自身が環境を理解し（Understand）、気づきを得て、自ら考え行動することを大切にしています。また、利用者（User）にとって役立つ（Utility）情報を提供し、日々の栽培管理を振り返りながら、より良い環境づくりへ取り組むためのきっかけを提供することを目指しています。</p>
+        <p>U-Techは、生産者へ一方的に指示を出すシステムではありません。温度、湿度、飽差、日射量、CO2などの環境データを見える化し、生産者自身が気づき、考え、行動するための「気づき支援型・自律型環境モニタリングシステム」です。</p>
+        <p>また、日々の環境データや振り返り情報を通じて、生産者が自ら改善点を発見し、より良い管理へ取り組みたくなる「きっかけ」を提供することを目指しています。このような「行動したくなるきっかけ」は、少し専門的には「インセンティブ」と呼ばれます。</p>
+        <p>U-Techは、答えを与えるシステムではなく、生産者自身が気づき、考え、行動したくなるきっかけ（インセンティブ）を提供することを目指しています。</p>
 
         <h3>使い方</h3>
         <ul>
@@ -1914,10 +1962,25 @@ window.addEventListener("DOMContentLoaded", ()=>{
         reviewDate.value = formatDateInputValue(new Date());
     }
 
+    document.addEventListener("click", closeLogoInfoOnOutsideClick);
+
     updateHeaderTimeInfo();
     loadTideCalendarInfo();
     setInterval(updateHeaderTimeInfo, 60*1000);
 });
+
+function toggleLogoInfo(){
+    const popup = document.getElementById("logoInfoPopup");
+    if(popup) popup.classList.toggle("active");
+}
+
+function closeLogoInfoOnOutsideClick(event){
+    const popup = document.getElementById("logoInfoPopup");
+    const button = document.querySelector(".logo-info-button");
+    if(!popup || !popup.classList.contains("active")) return;
+    if(popup.contains(event.target) || (button && button.contains(event.target))) return;
+    popup.classList.remove("active");
+}
 
 function restoreOutsideSourceSetting(){
     const enabled = document.getElementById("outsideSourceEnabled");
