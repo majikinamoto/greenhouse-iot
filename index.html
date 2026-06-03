@@ -456,6 +456,29 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.alert-status-card {
+    max-width:620px;
+    margin:0 10px 14px;
+    padding:12px 14px;
+    border:2px solid #d08a8a;
+    background:#fffafa;
+    color:#1f3038;
+    font-size:14px;
+    line-height:1.7;
+    box-sizing:border-box;
+}
+
+.alert-status-title {
+    margin-bottom:4px;
+    font-weight:800;
+    color:#8a2424;
+}
+
+.alert-status-current {
+    font-size:16px;
+    font-weight:800;
+}
+
 .active-alert-setting {
     max-width:520px;
     margin:0 10px 18px;
@@ -1053,6 +1076,7 @@ button { margin:5px; }
         width:100%;
     }
 
+    .alert-status-card,
     .active-alert-setting {
         margin:0 10px 16px;
         box-sizing:border-box;
@@ -1521,6 +1545,14 @@ button { margin:5px; }
 </section>
 
 <section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
+    <div id="alertStatusCard" class="alert-status-card">
+        <div class="alert-status-title">現在のアラート状態</div>
+        <div class="alert-status-current">現在の状態：-</div>
+        <div>ハウス内温度（P01）：-</div>
+        <div>外気温度（P11）：-</div>
+        <div>設定条件：-</div>
+        <div>再通知間隔：-</div>
+    </div>
     <div class="alert-setting-form">
         <label>
             point_id：
@@ -2418,6 +2450,7 @@ function handleAlertPointChange(){
     if(!userId){
         clearAlertForm();
         renderActiveAlertSettingEmpty();
+        renderAlertStatusCard(null, null, null);
         return;
     }
 
@@ -2493,6 +2526,98 @@ function escapeHtml(value){
         .replace(/'/g, "&#39;");
 }
 
+function getLatestTemperature(data){
+    const parsed = parseData(data || [], new Date(0))
+        .filter(d=>d.temp !== null && !isNaN(d.temp));
+
+    if(!parsed.length) return null;
+    return parsed[parsed.length - 1].temp;
+}
+
+function formatAlertTemperature(value){
+    return value === null || value === undefined || isNaN(value)
+        ? "データなし"
+        : Number(value).toFixed(1) + "℃";
+}
+
+function getAlertConditionText(setting){
+    if(!setting || Number(setting.enabled) !== 1) return "-";
+
+    const threshold = Number(setting.temperature_threshold);
+    const condition = setting.condition_type === "above"
+        ? "以上"
+        : setting.condition_type === "below"
+            ? "以下"
+            : "-";
+
+    return getAlertPointLabel(setting.point_id || getSelectedAlertPointId()) +
+        " 温度 " +
+        (isNaN(threshold) ? "-" : threshold.toFixed(1)) +
+        "℃" +
+        condition;
+}
+
+function getAlertStatusText(setting, p01Temp, p11Temp){
+    if(!setting || Number(setting.enabled) !== 1){
+        return "設定なし";
+    }
+
+    const threshold = Number(setting.temperature_threshold);
+    if(isNaN(threshold)) return "データなし";
+
+    const pointId = setting.point_id || getSelectedAlertPointId();
+    const currentTemp = pointId === "P11" ? p11Temp : p01Temp;
+    if(currentTemp === null || currentTemp === undefined || isNaN(currentTemp)){
+        return "データなし";
+    }
+
+    if(setting.condition_type === "below"){
+        return currentTemp <= threshold ? "🔴 低温になりました" : "🟢 正常値に戻りました";
+    }
+
+    return currentTemp >= threshold ? "🔴 高温になりました" : "🟢 正常値に戻りました";
+}
+
+function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
+    const card = document.getElementById("alertStatusCard");
+    if(!card) return;
+
+    const cooldownMinutes = setting ? Number(setting.cooldown_minutes) : NaN;
+    const statusText = statusOverride || getAlertStatusText(setting, p01Temp, p11Temp);
+
+    card.innerHTML =
+        '<div class="alert-status-title">現在のアラート状態</div>' +
+        '<div class="alert-status-current">現在の状態：' + escapeHtml(statusText) + '</div>' +
+        '<div>ハウス内温度（P01）：' + escapeHtml(formatAlertTemperature(p01Temp)) + '</div>' +
+        '<div>外気温度（P11）：' + escapeHtml(formatAlertTemperature(p11Temp)) + '</div>' +
+        '<div>設定条件：' + escapeHtml(getAlertConditionText(setting)) + '</div>' +
+        '<div>再通知間隔：' + escapeHtml(isNaN(cooldownMinutes) ? "-" : cooldownMinutes + "分") + '</div>';
+}
+
+async function loadAlertStatusCard(userId, setting, requestedPointId){
+    if(!userId){
+        renderAlertStatusCard(null, null, null);
+        return;
+    }
+
+    renderAlertStatusCard(setting, null, null, "読み込み中...");
+
+    const results = await Promise.all([
+        fetchDataSafe(userId, "P01"),
+        fetchDataSafe(userId, "P11")
+    ]);
+
+    const currentUserId = document.getElementById("userId").value.trim();
+    if(currentUserId !== userId) return;
+    if(requestedPointId && getSelectedAlertPointId() !== requestedPointId) return;
+
+    renderAlertStatusCard(
+        setting,
+        getLatestTemperature(results[0].data),
+        getLatestTemperature(results[1].data)
+    );
+}
+
 function renderAlertHistory(history){
     const container = document.getElementById("alertHistory");
     if(!container) return;
@@ -2562,6 +2687,7 @@ async function loadActiveAlertSetting(userId, pointId){
     if(!userId){
         clearAlertForm();
         renderActiveAlertSettingEmpty();
+        renderAlertStatusCard(null, null, null);
         renderAlertHistory([]);
         return;
     }
@@ -2569,6 +2695,7 @@ async function loadActiveAlertSetting(userId, pointId){
     const requestedUserId = userId;
     const requestedPointId = pointId || getSelectedAlertPointId();
     renderActiveAlertSettingEmpty("読み込み中...");
+    renderAlertStatusCard(null, null, null, "読み込み中...");
 
     try{
         const res = await fetch(
@@ -2592,6 +2719,7 @@ async function loadActiveAlertSetting(userId, pointId){
         if(!res.ok || !result.success){
             clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+            loadAlertStatusCard(requestedUserId, null, requestedPointId);
             loadAlertHistory(requestedUserId);
             return;
         }
@@ -2599,6 +2727,7 @@ async function loadActiveAlertSetting(userId, pointId){
         const setting = result.setting || null;
         applyAlertSettingToForm(setting);
         renderActiveAlertSetting(setting);
+        loadAlertStatusCard(requestedUserId, setting, requestedPointId);
         loadAlertHistory(requestedUserId);
 
     }catch(e){
@@ -2606,6 +2735,7 @@ async function loadActiveAlertSetting(userId, pointId){
         if(currentUserId === requestedUserId){
             clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
+            loadAlertStatusCard(requestedUserId, null, requestedPointId);
             loadAlertHistory(requestedUserId);
         }
     }
