@@ -1154,7 +1154,7 @@ button { margin:5px; }
 <div class="tab-nav" role="tablist" aria-label="画面切り替え">
     <button class="tab-button tab-button-monitor active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">メインモニター</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
-    <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">振返り</button>
+    <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">振り返り</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
     <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-guide" onclick="switchTab('guide')">利用案内</button>
@@ -1437,9 +1437,9 @@ button { margin:5px; }
         <div>
             <h4><span>温湿度_ハウス内_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP01" value="0"> ～
+                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP01" value="40"> ～
                 <input class="axis-input" type="number" id="reviewHumMaxP01" value="100">
-                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP01" value="10"> ～
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP01" value="20"> ～
                 <input class="axis-input" type="number" id="reviewTempMaxP01" value="40">
                 <button onclick="applyReviewTempHumYAxis(reviewCharts[0],'P01')">縦軸反映</button>
             </div>
@@ -1449,9 +1449,9 @@ button { margin:5px; }
         <div>
             <h4><span>温湿度_屋外_P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP11" value="0"> ～
+                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP11" value="40"> ～
                 <input class="axis-input" type="number" id="reviewHumMaxP11" value="100">
-                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP11" value="10"> ～
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP11" value="20"> ～
                 <input class="axis-input" type="number" id="reviewTempMaxP11" value="40">
                 <button onclick="applyReviewTempHumYAxis(reviewCharts[1],'P11')">縦軸反映</button>
             </div>
@@ -1461,8 +1461,8 @@ button { margin:5px; }
         <div>
             <h4><span>温度差_内外_P01-P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewOutsideDiffMin" value="-8"> ～
-                <input class="axis-input" type="number" id="reviewOutsideDiffMax" value="8">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewOutsideDiffMin" value="-1"> ～
+                <input class="axis-input" type="number" id="reviewOutsideDiffMax" value="5">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[2], 'outsideDiff')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewOutsideDiffChart"></canvas></div>
@@ -1471,8 +1471,8 @@ button { margin:5px; }
         <div>
             <h4><span>飽和水蒸気量/水蒸気量/飽差_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin" value="0"> ～
-                <input class="axis-input" type="number" id="reviewVaporMax" value="20">
+                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin"> ～
+                <input class="axis-input" type="number" id="reviewVaporMax">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewVaporChart"></canvas></div>
@@ -1481,8 +1481,8 @@ button { margin:5px; }
         <div>
             <h4><span>日射量_P31</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-solar">日射軸：</span><input class="axis-input" type="number" id="reviewSolarMin" value="0"> ～
-                <input class="axis-input" type="number" id="reviewSolarMax" value="1200">
+                <span class="axis-label-solar">日射軸：</span><input class="axis-input" type="number" id="reviewSolarMin"> ～
+                <input class="axis-input" type="number" id="reviewSolarMax">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[4], 'solar')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewSolarChart"></canvas></div>
@@ -1699,10 +1699,10 @@ let co2DiffMin = -250;
 let co2DiffMax = 250;
 
 const reviewAxisDefaults = {
-    tempHum:{ humMin:0, humMax:100, tempMin:10, tempMax:40 },
-    outsideDiff:{ min:-8, max:8 },
-    vapor:{ min:0, max:20 },
-    solar:{ min:0, max:1200 },
+    tempHum:{ humMin:40, humMax:100, tempMin:20, tempMax:40 },
+    outsideDiff:{ min:-1, max:5 },
+    vapor:{ min:undefined, max:undefined },
+    solar:{ min:undefined, max:undefined },
     co2:{ min:200, max:500 },
     co2Outside:{ min:200, max:500 },
     co2Diff:{ min:-250, max:250 }
@@ -4403,7 +4403,7 @@ function resetReviewAxisInputs(){
         ["reviewCo2DiffMax", reviewAxisDefaults.co2Diff.max]
     ].forEach(([id, value])=>{
         const input = document.getElementById(id);
-        if(input) input.value = value;
+        if(input) input.value = value === undefined ? "" : value;
     });
 }
 
@@ -4568,7 +4568,7 @@ async function loadReviewData(){
         if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
 
     }catch(e){
-        if(msg) msg.innerText = "振返り表示エラー：" + e.message;
+        if(msg) msg.innerText = "振り返り表示エラー：" + e.message;
         console.error(e);
     }
 }
