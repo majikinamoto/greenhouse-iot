@@ -96,11 +96,30 @@
     color:#42566b;
 }
 
-.header-sun-info {
+.header-info-card {
     margin-top:6px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 14px;
+    align-items:center;
+    width:fit-content;
+    max-width:100%;
+    padding:5px 8px;
+    border:1px solid #c7d0da;
+    border-radius:4px;
+    background:rgba(255,255,255,0.45);
     font-size:12px;
     line-height:1.5;
     color:#42566b;
+}
+
+.farm-calendar-card {
+    margin-top:5px;
+}
+
+.farm-calendar-title {
+    font-weight:700;
+    color:#25384d;
 }
 
 body {
@@ -1166,9 +1185,17 @@ button { margin:5px; }
             <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
-        <div id="headerSunInfo" class="header-sun-info">
-            <div>那覇 日の出：-　日の入り：-</div>
-            <div>昼の時間：-　夜の時間：-</div>
+        <div id="headerSunInfo" class="header-info-card">
+            <span>那覇 日の出：-</span>
+            <span>日の入り：-</span>
+            <span>昼：-</span>
+            <span>夜：-</span>
+        </div>
+        <div class="header-info-card farm-calendar-card">
+            <span class="farm-calendar-title">農作業こよみ</span>
+            <span>旧暦：取得予定</span>
+            <span>月齢：取得予定</span>
+            <span>月相：取得予定</span>
         </div>
     </div>
 </header>
@@ -3707,7 +3734,7 @@ function updateHeaderTimeInfo(){
     const sunriseMinutes = timeTextToMinutes(sunrise);
     const sunsetMinutes = timeTextToMinutes(sunset);
     if(sunriseMinutes === null || sunsetMinutes === null || sunsetMinutes <= sunriseMinutes){
-        sunContainer.innerHTML = "<div>日の出・日の入り：取得できません</div>";
+        sunContainer.innerHTML = "<span>日の出・日の入り：取得できません</span>";
         return;
     }
 
@@ -3715,9 +3742,10 @@ function updateHeaderTimeInfo(){
     const nightMinutes = 24*60 - dayMinutes;
 
     sunContainer.innerHTML =
-        "<div>那覇 日の出：" + sunrise + "　日の入り：" + sunset + "</div>" +
-        "<div>昼の時間：" + formatDurationMinutes(dayMinutes) +
-        "　夜の時間：" + formatDurationMinutes(nightMinutes) + "</div>";
+        "<span>那覇 日の出：" + sunrise + "</span>" +
+        "<span>日の入り：" + sunset + "</span>" +
+        "<span>昼：" + formatDurationMinutes(dayMinutes) + "</span>" +
+        "<span>夜：" + formatDurationMinutes(nightMinutes) + "</span>";
 }
 
 function formatSqlDateTime(date){
