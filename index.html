@@ -123,6 +123,47 @@
     color:#25384d;
 }
 
+.moon-progress {
+    flex-basis:100%;
+    margin-top:2px;
+}
+
+.moon-progress-track {
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    max-width:360px;
+    padding:0 4px 16px;
+    color:#42566b;
+    font-size:13px;
+}
+
+.moon-progress-track::before {
+    content:"";
+    position:absolute;
+    left:16px;
+    right:16px;
+    top:10px;
+    border-top:1px solid #8fa0b2;
+}
+
+.moon-progress-track span {
+    position:relative;
+    z-index:1;
+    background:rgba(255,255,255,0.75);
+}
+
+.moon-progress-today {
+    position:absolute;
+    top:16px;
+    transform:translateX(-50%);
+    white-space:nowrap;
+    color:#25384d;
+    font-size:11px;
+    font-weight:700;
+}
+
 body {
     font-family: sans-serif;
     margin:20px;
@@ -3775,12 +3816,20 @@ function updateFarmCalendarInfo(now){
     if(!container) return;
 
     const moon = calculateMoonInfo(now);
+    const moonPosition = Math.max(0, Math.min(100, (moon.age / 29.5) * 100));
     container.innerHTML =
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>' +
         '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
-        '<span>潮：' + moon.tideName + '</span>';
+        '<span>潮：' + moon.tideName + '</span>' +
+        '<div class="moon-progress">' +
+            '<div>月の満ち欠け：</div>' +
+            '<div class="moon-progress-track">' +
+                '<span>🌑</span><span>🌒</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌘</span><span>🌑</span>' +
+                '<div class="moon-progress-today" style="left:' + moonPosition.toFixed(1) + '%">▲ 今日</div>' +
+            '</div>' +
+        '</div>';
 }
 
 function updateHeaderTimeInfo(){
