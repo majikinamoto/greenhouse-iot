@@ -3749,12 +3749,24 @@ function calculateMoonInfo(date){
         phase = "新月に向かう月";
     }
 
+    let tideName = "中潮";
+    if(age < 1.5 || (age >= 14 && age < 16.5) || age >= 29){
+        tideName = "大潮";
+    }else if((age >= 6 && age < 9) || (age >= 21 && age < 24)){
+        tideName = "小潮";
+    }else if((age >= 9 && age < 10) || (age >= 24 && age < 25)){
+        tideName = "長潮";
+    }else if((age >= 10 && age < 12) || (age >= 25 && age < 27)){
+        tideName = "若潮";
+    }
+
     return {
         lunarMonth:lunarMonth,
         lunarDay:lunarDay,
         age:age,
         moonMark:moonMark,
-        phase:phase
+        phase:phase,
+        tideName:tideName
     };
 }
 
@@ -3767,7 +3779,8 @@ function updateFarmCalendarInfo(now){
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>' +
-        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>';
+        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
+        '<span>潮：' + moon.tideName + '</span>';
 }
 
 function updateHeaderTimeInfo(){
