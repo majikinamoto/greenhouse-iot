@@ -1845,6 +1845,7 @@ let solarAxisMax = undefined;
 let voltAxisMin = 11;
 let voltAxisMax = 14;
 let alertFormUserId = "";
+let tideCalendarText = "満潮・干潮：読み込み中...";
 
 const outsideSourceStorageKeys = {
     enabled:"usui_outside_source_enabled",
@@ -1901,6 +1902,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
 
     updateHeaderTimeInfo();
+    loadTideCalendarInfo();
     setInterval(updateHeaderTimeInfo, 60*1000);
 });
 
@@ -3751,6 +3753,30 @@ function formatDurationMinutes(totalMinutes){
     return hours + "時間" + minutes + "分";
 }
 
+function formatTideTimes(items){
+    if(!Array.isArray(items) || !items.length) return "-";
+    return items.map(item=>item && item.time ? item.time : "").filter(Boolean).join(" / ") || "-";
+}
+
+async function loadTideCalendarInfo(){
+    try{
+        const res = await fetch("get_tide_calendar.php", { cache:"no-store" });
+        const result = await res.json();
+
+        if(!res.ok || !result.success){
+            throw new Error(result.error || "潮汐情報を取得できません");
+        }
+
+        tideCalendarText = "那覇 満潮：" + formatTideTimes(result.high_tides) +
+            "　干潮：" + formatTideTimes(result.low_tides);
+
+    }catch(e){
+        tideCalendarText = "満潮・干潮：取得できません";
+    }
+
+    updateHeaderTimeInfo();
+}
+
 function calculateMoonInfo(date){
     const synodicMonth = 29.530588853;
     const baseNewMoon = Date.UTC(2000, 0, 6, 18, 14);
@@ -3823,6 +3849,8 @@ function updateFarmCalendarInfo(now){
         '<span>月相：' + moon.phase + '</span>' +
         '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>潮：' + moon.tideName + '</span>' +
+        '<span>' + tideCalendarText + '</span>' +
+        '<span>潮汐情報：気象庁潮位表データを基に表示</span>' +
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
