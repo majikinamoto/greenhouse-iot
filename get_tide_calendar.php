@@ -46,13 +46,26 @@ function fetch_url($url) {
 }
 
 function format_tide_time($value) {
-    $value = preg_replace('/\D/', '', (string)$value);
-    if ($value === "" || $value === "9999") {
+    $value = str_pad((string)$value, 4, " ", STR_PAD_LEFT);
+    if (trim($value) === "" || trim($value) === "9999") {
         return null;
     }
 
-    $value = str_pad($value, 4, "0", STR_PAD_LEFT);
-    return substr($value, 0, 2) . ":" . substr($value, 2, 2);
+    $hour = trim(substr($value, 0, 2));
+    $minute = trim(substr($value, 2, 2));
+
+    if ($hour === "" || $minute === "" || !is_numeric($hour) || !is_numeric($minute)) {
+        return null;
+    }
+
+    $hour = (int)$hour;
+    $minute = (int)$minute;
+
+    if ($hour < 0 || $hour > 23 || $minute < 0 || $minute > 59) {
+        return null;
+    }
+
+    return sprintf("%02d:%02d", $hour, $minute);
 }
 
 function parse_tide_items($text) {
