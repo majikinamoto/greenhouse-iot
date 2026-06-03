@@ -1436,41 +1436,85 @@ button { margin:5px; }
     <div class="grid">
         <div>
             <h4><span>温湿度_ハウス内_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP01" value="0"> ～
+                <input class="axis-input" type="number" id="reviewHumMaxP01" value="100">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP01" value="10"> ～
+                <input class="axis-input" type="number" id="reviewTempMaxP01" value="40">
+                <button onclick="applyReviewTempHumYAxis(reviewCharts[0],'P01')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewTempChartP01"></canvas></div>
         </div>
 
         <div>
             <h4><span>温湿度_屋外_P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="reviewHumMinP11" value="0"> ～
+                <input class="axis-input" type="number" id="reviewHumMaxP11" value="100">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP11" value="10"> ～
+                <input class="axis-input" type="number" id="reviewTempMaxP11" value="40">
+                <button onclick="applyReviewTempHumYAxis(reviewCharts[1],'P11')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewTempChartP11"></canvas></div>
         </div>
 
         <div>
             <h4><span>温度差_内外_P01-P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewOutsideDiffMin" value="-8"> ～
+                <input class="axis-input" type="number" id="reviewOutsideDiffMax" value="8">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[2], 'outsideDiff')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewOutsideDiffChart"></canvas></div>
         </div>
 
         <div>
             <h4><span>飽和水蒸気量/水蒸気量/飽差_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin" value="0"> ～
+                <input class="axis-input" type="number" id="reviewVaporMax" value="20">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewVaporChart"></canvas></div>
         </div>
 
         <div>
             <h4><span>日射量_P31</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-solar">日射軸：</span><input class="axis-input" type="number" id="reviewSolarMin" value="0"> ～
+                <input class="axis-input" type="number" id="reviewSolarMax" value="1200">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[4], 'solar')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewSolarChart"></canvas></div>
         </div>
 
         <div>
             <h4><span>CO2_P21</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="reviewCo2Min" value="200"> ～
+                <input class="axis-input" type="number" id="reviewCo2Max" value="500">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[5], 'co2')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewCo2Chart"></canvas></div>
         </div>
 
         <div>
             <h4><span>CO2_外気_P26</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="reviewCo2OutsideMin" value="200"> ～
+                <input class="axis-input" type="number" id="reviewCo2OutsideMax" value="500">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[6], 'co2Outside')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewCo2OutsideChart"></canvas></div>
         </div>
 
         <div>
             <h4><span>CO2差_P21-P26</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewCo2DiffMin" value="-250"> ～
+                <input class="axis-input" type="number" id="reviewCo2DiffMax" value="250">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[7], 'co2Diff')">縦軸反映</button>
+            </div>
             <div class="chart-container"><canvas id="reviewCo2DiffChart"></canvas></div>
         </div>
     </div>
@@ -1653,6 +1697,16 @@ let co2OutsideMin = 200;
 let co2OutsideMax = 500;
 let co2DiffMin = -250;
 let co2DiffMax = 250;
+
+const reviewAxisDefaults = {
+    tempHum:{ humMin:0, humMax:100, tempMin:10, tempMax:40 },
+    outsideDiff:{ min:-8, max:8 },
+    vapor:{ min:0, max:20 },
+    solar:{ min:0, max:1200 },
+    co2:{ min:200, max:500 },
+    co2Outside:{ min:200, max:500 },
+    co2Diff:{ min:-250, max:250 }
+};
 
 let diffAxisMin = -5;
 let diffAxisMax = 5;
@@ -3582,6 +3636,34 @@ function getSingleAxis(key){
     };
 }
 
+function setLinearYAxis(chart, axis){
+    if(!chart || !chart.options || !chart.options.scales || !axis) return;
+
+    if(chart.options.scales.y){
+        chart.options.scales.y.min = axis.min;
+        chart.options.scales.y.max = axis.max;
+    }
+
+    if(chart.options.scales.yRight){
+        chart.options.scales.yRight.min = axis.min;
+        chart.options.scales.yRight.max = axis.max;
+    }
+}
+
+function setTempHumYAxis(chart, axis){
+    if(!chart || !chart.options || !chart.options.scales || !axis) return;
+
+    if(chart.options.scales.yHum){
+        chart.options.scales.yHum.min = axis.humMin;
+        chart.options.scales.yHum.max = axis.humMax;
+    }
+
+    if(chart.options.scales.yTemp){
+        chart.options.scales.yTemp.min = axis.tempMin;
+        chart.options.scales.yTemp.max = axis.tempMax;
+    }
+}
+
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
         "tempChartP01",
@@ -4242,8 +4324,99 @@ function configureReviewChart(chart){
         chart.options.plugins.zoom.zoom.onZoomComplete = ({chart})=>{ syncReviewZoom(chart); };
     }
 
+    applyReviewDefaultYAxis(chart);
     saveInitialScaleLimits(chart);
     return chart;
+}
+
+function getReviewTempHumAxis(pointId){
+    const defaults = reviewAxisDefaults.tempHum;
+    return {
+        humMin:getAxisValue("reviewHumMin" + pointId, defaults.humMin),
+        humMax:getAxisValue("reviewHumMax" + pointId, defaults.humMax),
+        tempMin:getAxisValue("reviewTempMin" + pointId, defaults.tempMin),
+        tempMax:getAxisValue("reviewTempMax" + pointId, defaults.tempMax)
+    };
+}
+
+function getReviewSingleAxis(key){
+    const defaults = reviewAxisDefaults[key] || {};
+
+    const inputMap = {
+        outsideDiff:["reviewOutsideDiffMin", "reviewOutsideDiffMax"],
+        vapor:["reviewVaporMin", "reviewVaporMax"],
+        solar:["reviewSolarMin", "reviewSolarMax"],
+        co2:["reviewCo2Min", "reviewCo2Max"],
+        co2Outside:["reviewCo2OutsideMin", "reviewCo2OutsideMax"],
+        co2Diff:["reviewCo2DiffMin", "reviewCo2DiffMax"]
+    };
+
+    const ids = inputMap[key] || [];
+    return {
+        min:getAxisValue(ids[0], defaults.min),
+        max:getAxisValue(ids[1], defaults.max)
+    };
+}
+
+function applyReviewDefaultYAxis(chart){
+    if(!chart || !chart.canvas) return;
+
+    const id = chart.canvas.id;
+    if(id === "reviewTempChartP01" || id === "reviewTempChartP11"){
+        setTempHumYAxis(chart, reviewAxisDefaults.tempHum);
+        return;
+    }
+
+    const axisMap = {
+        reviewOutsideDiffChart:"outsideDiff",
+        reviewVaporChart:"vapor",
+        reviewSolarChart:"solar",
+        reviewCo2Chart:"co2",
+        reviewCo2OutsideChart:"co2Outside",
+        reviewCo2DiffChart:"co2Diff"
+    };
+
+    setLinearYAxis(chart, reviewAxisDefaults[axisMap[id]]);
+}
+
+function resetReviewAxisInputs(){
+    [
+        ["reviewHumMinP01", reviewAxisDefaults.tempHum.humMin],
+        ["reviewHumMaxP01", reviewAxisDefaults.tempHum.humMax],
+        ["reviewTempMinP01", reviewAxisDefaults.tempHum.tempMin],
+        ["reviewTempMaxP01", reviewAxisDefaults.tempHum.tempMax],
+        ["reviewHumMinP11", reviewAxisDefaults.tempHum.humMin],
+        ["reviewHumMaxP11", reviewAxisDefaults.tempHum.humMax],
+        ["reviewTempMinP11", reviewAxisDefaults.tempHum.tempMin],
+        ["reviewTempMaxP11", reviewAxisDefaults.tempHum.tempMax],
+        ["reviewOutsideDiffMin", reviewAxisDefaults.outsideDiff.min],
+        ["reviewOutsideDiffMax", reviewAxisDefaults.outsideDiff.max],
+        ["reviewVaporMin", reviewAxisDefaults.vapor.min],
+        ["reviewVaporMax", reviewAxisDefaults.vapor.max],
+        ["reviewSolarMin", reviewAxisDefaults.solar.min],
+        ["reviewSolarMax", reviewAxisDefaults.solar.max],
+        ["reviewCo2Min", reviewAxisDefaults.co2.min],
+        ["reviewCo2Max", reviewAxisDefaults.co2.max],
+        ["reviewCo2OutsideMin", reviewAxisDefaults.co2Outside.min],
+        ["reviewCo2OutsideMax", reviewAxisDefaults.co2Outside.max],
+        ["reviewCo2DiffMin", reviewAxisDefaults.co2Diff.min],
+        ["reviewCo2DiffMax", reviewAxisDefaults.co2Diff.max]
+    ].forEach(([id, value])=>{
+        const input = document.getElementById(id);
+        if(input) input.value = value;
+    });
+}
+
+function applyReviewTempHumYAxis(chart, pointId){
+    if(!chart) return;
+    setTempHumYAxis(chart, getReviewTempHumAxis(pointId));
+    chart.update();
+}
+
+function applyReviewSingleYAxis(chart, key){
+    if(!chart) return;
+    setLinearYAxis(chart, getReviewSingleAxis(key));
+    chart.update();
 }
 
 function getReviewChartGroup(chart){
@@ -4316,6 +4489,7 @@ function destroyReviewCharts(){
 
 function resetReviewZoom(){
     syncingReviewZoom = true;
+    resetReviewAxisInputs();
 
     reviewCharts.forEach(chart=>{
         if(chart){
@@ -4636,11 +4810,7 @@ function applyTempHumYAxis(chart, pointId){
     if(!chart) return;
 
     const axis = getTempHumAxis(pointId);
-
-    chart.options.scales.yHum.min = axis.humMin;
-    chart.options.scales.yHum.max = axis.humMax;
-    chart.options.scales.yTemp.min = axis.tempMin;
-    chart.options.scales.yTemp.max = axis.tempMax;
+    setTempHumYAxis(chart, axis);
 
     chart.update();
 }
@@ -4657,11 +4827,7 @@ function applySingleYAxis(chart, key){
     if(!chart) return;
 
     const axis = getSingleAxis(key);
-
-    chart.options.scales.y.min = axis.min;
-    chart.options.scales.y.max = axis.max;
-    chart.options.scales.yRight.min = axis.min;
-    chart.options.scales.yRight.max = axis.max;
+    setLinearYAxis(chart, axis);
 
     chart.update();
 }
@@ -4670,11 +4836,7 @@ function applyDiffYAxis(chart){
     if(!chart) return;
 
     const axis = getDiffAxis();
-
-    chart.options.scales.y.min = axis.min;
-    chart.options.scales.y.max = axis.max;
-    chart.options.scales.yRight.min = axis.min;
-    chart.options.scales.yRight.max = axis.max;
+    setLinearYAxis(chart, axis);
 
     chart.update();
 }
@@ -4683,11 +4845,7 @@ function applyCo2DiffYAxis(chart){
     if(!chart) return;
 
     const axis = getCo2DiffAxis();
-
-    chart.options.scales.y.min = axis.min;
-    chart.options.scales.y.max = axis.max;
-    chart.options.scales.yRight.min = axis.min;
-    chart.options.scales.yRight.max = axis.max;
+    setLinearYAxis(chart, axis);
 
     chart.update();
 }
@@ -4696,11 +4854,7 @@ function applyOutsideDiffYAxis(chart){
     if(!chart) return;
 
     const axis = getOutsideDiffAxis();
-
-    chart.options.scales.y.min = axis.min;
-    chart.options.scales.y.max = axis.max;
-    chart.options.scales.yRight.min = axis.min;
-    chart.options.scales.yRight.max = axis.max;
+    setLinearYAxis(chart, axis);
 
     chart.update();
 }
