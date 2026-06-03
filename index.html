@@ -76,6 +76,13 @@
     line-height:1;
 }
 
+.logo-title-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+    align-items:baseline;
+}
+
 .logo-subtitle {
     margin-top:4px;
     font-size:13px;
@@ -84,6 +91,12 @@
 }
 
 .header-time-info {
+    font-size:12px;
+    line-height:1.5;
+    color:#42566b;
+}
+
+.header-sun-info {
     margin-top:6px;
     font-size:12px;
     line-height:1.5;
@@ -1148,12 +1161,14 @@ button { margin:5px; }
         <span class="logo-u">U</span>
     </div>
     <div>
-        <div class="logo-title">U-Tech</div>
+        <div class="logo-title-row">
+            <div class="logo-title">U-Tech</div>
+            <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
+        </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
-        <div id="headerTimeInfo" class="header-time-info">
-            <div>現在日時：-</div>
-            <div>那覇 日の出：-</div>
-            <div>那覇 日の入り：-</div>
+        <div id="headerSunInfo" class="header-sun-info">
+            <div>那覇 日の出：-　日の入り：-</div>
+            <div>昼の時間：-　夜の時間：-</div>
         </div>
     </div>
 </header>
@@ -3650,9 +3665,27 @@ function calculateNahaSunTime(year, month, day, isSunrise){
     return adjustedHour + ":" + String(adjustedMinute).padStart(2, "0");
 }
 
+function timeTextToMinutes(timeText){
+    const parts = String(timeText || "").split(":");
+    if(parts.length !== 2) return null;
+
+    const hour = Number(parts[0]);
+    const minute = Number(parts[1]);
+    if(isNaN(hour) || isNaN(minute)) return null;
+
+    return hour * 60 + minute;
+}
+
+function formatDurationMinutes(totalMinutes){
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours + "時間" + minutes + "分";
+}
+
 function updateHeaderTimeInfo(){
-    const container = document.getElementById("headerTimeInfo");
-    if(!container) return;
+    const timeContainer = document.getElementById("headerTimeInfo");
+    const sunContainer = document.getElementById("headerSunInfo");
+    if(!timeContainer && !sunContainer) return;
 
     const now = new Date();
     const parts = getJapanDateParts(now);
@@ -3665,11 +3698,26 @@ function updateHeaderTimeInfo(){
     const sunrise = calculateNahaSunTime(parts.year, parts.month, parts.day, true);
     const sunset = calculateNahaSunTime(parts.year, parts.month, parts.day, false);
 
-    container.innerHTML =
-        "<div>現在日時：" + currentText + "</div>" +
-        (sunrise && sunset
-            ? "<div>那覇 日の出：" + sunrise + "</div><div>那覇 日の入り：" + sunset + "</div>"
-            : "<div>日の出・日の入り：取得できません</div>");
+    if(timeContainer){
+        timeContainer.innerText = "現在日時：" + currentText;
+    }
+
+    if(!sunContainer) return;
+
+    const sunriseMinutes = timeTextToMinutes(sunrise);
+    const sunsetMinutes = timeTextToMinutes(sunset);
+    if(sunriseMinutes === null || sunsetMinutes === null || sunsetMinutes <= sunriseMinutes){
+        sunContainer.innerHTML = "<div>日の出・日の入り：取得できません</div>";
+        return;
+    }
+
+    const dayMinutes = sunsetMinutes - sunriseMinutes;
+    const nightMinutes = 24*60 - dayMinutes;
+
+    sunContainer.innerHTML =
+        "<div>那覇 日の出：" + sunrise + "　日の入り：" + sunset + "</div>" +
+        "<div>昼の時間：" + formatDurationMinutes(dayMinutes) +
+        "　夜の時間：" + formatDurationMinutes(nightMinutes) + "</div>";
 }
 
 function formatSqlDateTime(date){
