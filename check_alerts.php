@@ -65,30 +65,171 @@ function postWebhook($url, $payload) {
     ];
 }
 
-function sendEmailAlert($to, $message) {
-    $subject = "U-Techアラート";
-    if (function_exists("mb_encode_mimeheader")) {
-        $subject = mb_encode_mimeheader($subject, "UTF-8");
+function loadSmtpConfig() {
+    $configPath = __DIR__ . "/smtp_config.php";
+    if (!is_file($configPath)) {
+        return [null, "smtp_config.php not found"];
     }
 
-    $headers = "Content-Type: text/plain; charset=UTF-8\r\n";
-    $beforeError = error_get_last();
-    $sent = @mail($to, $subject, $message, $headers);
-    $afterError = error_get_last();
-    $mailError = "";
+    $config = require $configPath;
+    if (!is_array($config)) {
+        return [null, "smtp_config.php must return array"];
+    }
 
-    if (!$sent) {
-        if ($afterError && $afterError !== $beforeError && isset($afterError["message"])) {
-            $mailError = $afterError["message"];
-        } else {
-            $mailError = "mail returned false";
+    foreach (["host", "port", "username", "password", "from_email"] as $key) {
+        if (!isset($config[$key]) || $config[$key] === "") {
+            return [null, "smtp config missing: " . $key];
         }
     }
 
+    $config["encryption"] = $config["encryption"] ?? "tls";
+    $config["from_name"] = $config["from_name"] ?? "U-Tech";
+    $config["timeout"] = isset($config["timeout"]) ? (int)$config["timeout"] : 15;
+
+    return [$config, ""];
+}
+
+function smtpRead($socket) {
+    $response = "";
+    while (($line = fgets($socket, 515)) !== false) {
+        $response .= $line;
+        if (strlen($line) >= 4 && $line[3] === " ") {
+            break;
+        }
+    }
+
+    $code = (int)substr($response, 0, 3);
+    return [$code, trim($response)];
+}
+
+function smtpCommand($socket, $command, $expectedCodes, $stage) {
+    fwrite($socket, $command . "\r\n");
+    [$code, $response] = smtpRead($socket);
+
+    if (!in_array($code, $expectedCodes, true)) {
+        return [false, "smtp " . $stage . " failed: " . $code];
+    }
+
+    return [true, ""];
+}
+
+function encodeSmtpHeader($value) {
+    if (function_exists("mb_encode_mimeheader")) {
+        return mb_encode_mimeheader($value, "UTF-8");
+    }
+
+    return $value;
+}
+
+function sendEmailAlert($to, $message) {
+    [$config, $configError] = loadSmtpConfig();
+    if (!$config) {
+        return [
+            "success" => false,
+            "http_code" => null,
+            "error" => $configError
+        ];
+    }
+
+    $host = (string)$config["host"];
+    $port = (int)$config["port"];
+    $encryption = strtolower((string)$config["encryption"]);
+    $target = $encryption === "ssl" ? "ssl://" . $host : $host;
+    $timeout = (int)$config["timeout"];
+
+    $socket = @fsockopen($target, $port, $errno, $errstr, $timeout);
+    if (!$socket) {
+        return [
+            "success" => false,
+            "http_code" => null,
+            "error" => "smtp connect failed: " . $errno
+        ];
+    }
+
+    stream_set_timeout($socket, $timeout);
+    [$code] = smtpRead($socket);
+    if ($code !== 220) {
+        fclose($socket);
+        return ["success" => false, "http_code" => null, "error" => "smtp greeting failed: " . $code];
+    }
+
+    [$ok, $error] = smtpCommand($socket, "EHLO localhost", [250], "ehlo");
+    if (!$ok) {
+        fclose($socket);
+        return ["success" => false, "http_code" => null, "error" => $error];
+    }
+
+    if ($encryption === "tls") {
+        [$ok, $error] = smtpCommand($socket, "STARTTLS", [220], "starttls");
+        if (!$ok) {
+            fclose($socket);
+            return ["success" => false, "http_code" => null, "error" => $error];
+        }
+
+        if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            fclose($socket);
+            return ["success" => false, "http_code" => null, "error" => "smtp tls negotiation failed"];
+        }
+
+        [$ok, $error] = smtpCommand($socket, "EHLO localhost", [250], "ehlo_tls");
+        if (!$ok) {
+            fclose($socket);
+            return ["success" => false, "http_code" => null, "error" => $error];
+        }
+    }
+
+    [$ok, $error] = smtpCommand($socket, "AUTH LOGIN", [334], "auth");
+    if (!$ok) {
+        fclose($socket);
+        return ["success" => false, "http_code" => null, "error" => $error];
+    }
+
+    [$ok, $error] = smtpCommand($socket, base64_encode((string)$config["username"]), [334], "auth_user");
+    if (!$ok) {
+        fclose($socket);
+        return ["success" => false, "http_code" => null, "error" => $error];
+    }
+
+    [$ok, $error] = smtpCommand($socket, base64_encode((string)$config["password"]), [235], "auth_password");
+    if (!$ok) {
+        fclose($socket);
+        return ["success" => false, "http_code" => null, "error" => $error];
+    }
+
+    $fromEmail = (string)$config["from_email"];
+    $fromName = (string)$config["from_name"];
+    $subject = encodeSmtpHeader("U-Techアラート");
+    $headers = [
+        "From: " . encodeSmtpHeader($fromName) . " <" . $fromEmail . ">",
+        "To: <" . $to . ">",
+        "Subject: " . $subject,
+        "MIME-Version: 1.0",
+        "Content-Type: text/plain; charset=UTF-8"
+    ];
+    $body = implode("\r\n", $headers) . "\r\n\r\n" . $message;
+    $body = str_replace(["\r\n", "\r", "\n"], "\r\n", $body);
+    $body = preg_replace('/^\./m', '..', $body);
+
+    foreach ([
+        ["MAIL FROM:<" . $fromEmail . ">", [250], "mail_from"],
+        ["RCPT TO:<" . $to . ">", [250, 251], "rcpt_to"],
+        ["DATA", [354], "data"]
+    ] as $command) {
+        [$ok, $error] = smtpCommand($socket, $command[0], $command[1], $command[2]);
+        if (!$ok) {
+            fclose($socket);
+            return ["success" => false, "http_code" => null, "error" => $error];
+        }
+    }
+
+    [$ok, $error] = smtpCommand($socket, $body . "\r\n.", [250], "data_body");
+    smtpCommand($socket, "QUIT", [221], "quit");
+    fclose($socket);
+
     return [
-        "success" => $sent,
+        "success" => $ok,
         "http_code" => null,
-        "error" => $mailError
+        "error" => $ok ? "" : $error
     ];
 }
 
@@ -290,26 +431,6 @@ while ($setting = $settingsResult->fetch_assoc()) {
     } else {
         $failed++;
 
-        $historySaved = false;
-        if ($setting["notify_target"] === "email") {
-            $historyMessage = $message .
-                " email_send_result=failed email_error=" . ($postResult["error"] ?: "-") .
-                " email_to=" . maskEmail($setting["webhook_url"]);
-
-            $historyStmt->bind_param(
-                "isssdds",
-                $id,
-                $userId,
-                $pointId,
-                $alertType,
-                $temperature,
-                $threshold,
-                $historyMessage
-            );
-            $historyStmt->execute();
-            $historySaved = true;
-        }
-
         $details[] = buildAlertDetail($setting, $temperature, "matched", [
             "status" => "notify_failed",
             "temperature" => $temperature,
@@ -318,7 +439,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
             "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
             "email_send_result" => $emailSendResult,
             "email_error" => $emailError,
-            "history_saved" => $historySaved
+            "history_saved" => false
         ]);
     }
 }
