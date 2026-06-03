@@ -3765,9 +3765,9 @@ function updateFarmCalendarInfo(now){
     const moon = calculateMoonInfo(now);
     container.innerHTML =
         '<span class="farm-calendar-title">農作業こよみ</span>' +
-        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
-        '<span>月相：' + moon.phase + '</span>';
+        '<span>月相：' + moon.phase + '</span>' +
+        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>';
 }
 
 function updateHeaderTimeInfo(){
