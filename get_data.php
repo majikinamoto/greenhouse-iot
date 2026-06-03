@@ -9,18 +9,29 @@ if ($conn->connect_error) {
 // ★GETで受け取る
 $user_id = $_GET['user_id'] ?? '';
 $point_id = $_GET['point_id'] ?? '';
+$start = $_GET['start'] ?? '';
+$end = $_GET['end'] ?? '';
 
 if (!$user_id || !$point_id) {
     die("user_id または point_id が必要です");
 }
 
 // SQL
-$sql = "SELECT * FROM measurements 
-        WHERE user_id = ? AND point_id = ?
-        ORDER BY recorded_at ASC";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $user_id, $point_id);
+if ($start !== '' && $end !== '') {
+    $sql = "SELECT * FROM measurements 
+            WHERE user_id = ? AND point_id = ?
+              AND recorded_at >= ? AND recorded_at <= ?
+            ORDER BY recorded_at ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssss", $user_id, $point_id, $start, $end);
+} else {
+    $sql = "SELECT * FROM measurements 
+            WHERE user_id = ? AND point_id = ?
+              AND recorded_at >= DATE_SUB(NOW(), INTERVAL 72 HOUR)
+            ORDER BY recorded_at ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $user_id, $point_id);
+}
 $stmt->execute();
 
 $result = $stmt->get_result();

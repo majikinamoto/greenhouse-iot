@@ -332,6 +332,19 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.review-control-panel {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 12px;
+    align-items:center;
+    margin-bottom:12px;
+}
+
+.review-message {
+    min-height:20px;
+    color:#b00020;
+}
+
 .analysis-compare-grid {
     display:flex;
     flex-wrap:wrap;
@@ -1413,7 +1426,54 @@ button { margin:5px; }
 </section>
 
 <section id="tab-review" class="tab-panel tab-panel-review" role="tabpanel">
-    <div class="tab-placeholder">振返りタブは今後追加予定です。対象のハウスの環境を分析し、改善点を把握できます。そんなサービスを予定しています。</div>
+    <div class="review-control-panel">
+        日付：
+        <input type="date" id="reviewDate">
+        <button class="show-button" type="button" onclick="loadReviewData()">表示</button>
+        <span id="reviewMessage" class="review-message"></span>
+    </div>
+
+    <div class="grid">
+        <div>
+            <h4><span>温湿度_ハウス内_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewTempChartP01"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>温湿度_屋外_P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewTempChartP11"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>温度差_内外_P01-P11</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewOutsideDiffChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>飽和水蒸気量/水蒸気量/飽差_P01</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewVaporChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>日射量_P31</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewSolarChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>CO2_P21</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewCo2Chart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>CO2_外気_P26</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewCo2OutsideChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>CO2差_P21-P26</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="reviewCo2DiffChart"></canvas></div>
+        </div>
+    </div>
 </section>
 
 <section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
@@ -1576,7 +1636,9 @@ let analysisDiffCharts = {};
 let syncingAnalysisZoom = false;
 
 let allCharts = [];
+let reviewCharts = [];
 let syncingZoom = false;
+let syncingReviewZoom = false;
 let syncedCrosshairValue = null;
 
 let tempMin = 20;
@@ -1649,6 +1711,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
         userIdHistorySelect.addEventListener("change", ()=>{
             setTimeout(clearAlertFormIfUserChanged, 0);
         });
+    }
+
+    const reviewDate = document.getElementById("reviewDate");
+    if(reviewDate && !reviewDate.value){
+        reviewDate.value = formatDateInputValue(new Date());
     }
 });
 
@@ -3294,6 +3361,25 @@ function redrawChart(chart){
     chart.draw();
 }
 
+function formatDateInputValue(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+
+    return y + "-" + m + "-" + d;
+}
+
+function formatSqlDateTime(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const h = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const s = String(date.getSeconds()).padStart(2, "0");
+
+    return y + "-" + m + "-" + d + " " + h + ":" + min + ":" + s;
+}
+
 function isMobileView(){
     return window.matchMedia("(max-width: 600px)").matches ||
         window.innerWidth <= 600 ||
@@ -3333,13 +3419,16 @@ function applyMobileChartRanges(minTime, maxTime){
     });
 }
 
-async function fetchDataSafe(userId, pointId){
+async function fetchDataSafe(userId, pointId, range){
 
     const controller = new AbortController();
     const timeoutId = setTimeout(()=>controller.abort(), 10000);
 
     try{
-        const url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
+        let url = `get_data.php?user_id=${encodeURIComponent(userId)}&point_id=${encodeURIComponent(pointId)}`;
+        if(range && range.start && range.end){
+            url += `&start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`;
+        }
 
         if(pointId === "P26"){
             console.log("[CO2_外気_P26] request:", url);
@@ -4146,6 +4235,170 @@ yRight:createRightYAxis(yAxisOptions)
     });
 }
 
+function configureReviewChart(chart){
+    if(!chart) return chart;
+
+    if(chart.options && chart.options.plugins && chart.options.plugins.zoom && chart.options.plugins.zoom.zoom){
+        chart.options.plugins.zoom.zoom.onZoomComplete = ({chart})=>{ syncReviewZoom(chart); };
+    }
+
+    saveInitialScaleLimits(chart);
+    return chart;
+}
+
+function getReviewChartGroup(chart){
+    if(!chart || !chart.canvas) return "";
+    if(["reviewTempChartP01", "reviewTempChartP11"].includes(chart.canvas.id)) return "tempHum";
+    return "";
+}
+
+function syncReviewZoom(sourceChart){
+    if(syncingReviewZoom) return;
+    syncingReviewZoom = true;
+
+    const xScale = sourceChart.scales.x;
+    const isTempHumSource = getReviewChartGroup(sourceChart) === "tempHum";
+
+    reviewCharts.forEach(chart=>{
+        if(!chart || chart === sourceChart) return;
+
+        if(chart.zoomScale){
+            chart.zoomScale("x", { min:xScale.min, max:xScale.max }, "none");
+        }else{
+            chart.options.scales.x.min = xScale.min;
+            chart.options.scales.x.max = xScale.max;
+            chart.update("none");
+        }
+
+        if(isTempHumSource && getReviewChartGroup(chart) === "tempHum"){
+            if(chart.zoomScale){
+                chart.zoomScale("yHum", {
+                    min:sourceChart.scales.yHum.min,
+                    max:sourceChart.scales.yHum.max
+                }, "none");
+                chart.zoomScale("yTemp", {
+                    min:sourceChart.scales.yTemp.min,
+                    max:sourceChart.scales.yTemp.max
+                }, "none");
+            }else{
+                chart.options.scales.yHum.min = sourceChart.scales.yHum.min;
+                chart.options.scales.yHum.max = sourceChart.scales.yHum.max;
+                chart.options.scales.yTemp.min = sourceChart.scales.yTemp.min;
+                chart.options.scales.yTemp.max = sourceChart.scales.yTemp.max;
+                chart.update("none");
+            }
+        }
+    });
+
+    syncingReviewZoom = false;
+}
+
+function destroyReviewCharts(){
+    reviewCharts.forEach(chart=>{
+        if(chart) chart.destroy();
+    });
+    reviewCharts = [];
+
+    [
+        "reviewTempChartP01",
+        "reviewTempChartP11",
+        "reviewOutsideDiffChart",
+        "reviewVaporChart",
+        "reviewSolarChart",
+        "reviewCo2Chart",
+        "reviewCo2OutsideChart",
+        "reviewCo2DiffChart"
+    ].forEach(canvasId=>{
+        const chart = Chart.getChart(canvasId);
+        if(chart) chart.destroy();
+    });
+}
+
+function resetReviewZoom(){
+    syncingReviewZoom = true;
+
+    reviewCharts.forEach(chart=>{
+        if(chart){
+            if(chart.resetZoom) chart.resetZoom("none");
+            redrawChart(chart);
+        }
+    });
+
+    requestAnimationFrame(()=>{
+        reviewCharts.forEach(chart=>{
+            redrawChart(chart);
+        });
+        syncingReviewZoom = false;
+    });
+}
+
+async function loadReviewData(){
+    const userId = document.getElementById("userId").value.trim();
+    const reviewDate = document.getElementById("reviewDate");
+    const msg = document.getElementById("reviewMessage");
+    const dateValue = reviewDate ? reviewDate.value : "";
+
+    if(msg) msg.innerText = "";
+
+    if(!userId){
+        if(msg) msg.innerText = "user_id を入力してください";
+        return;
+    }
+
+    if(!dateValue){
+        if(msg) msg.innerText = "日付を選択してください";
+        return;
+    }
+
+    localStorage.setItem("usui_user_id", userId);
+    saveUserIdHistory(userId);
+
+    const minTime = new Date(dateValue + "T00:00:00");
+    const maxTime = new Date(dateValue + "T23:59:59");
+    const start = formatSqlDateTime(minTime);
+    const end = formatSqlDateTime(maxTime);
+
+    if(msg) msg.innerText = "読み込み中...";
+
+    try{
+        const range = { start:start, end:end };
+        const results = await Promise.all([
+            fetchDataSafe(userId, "P01", range),
+            fetchDataSafe(userId, "P11", range),
+            fetchDataSafe(userId, "P31", range),
+            fetchDataSafe(userId, "P21", range),
+            fetchDataSafe(userId, "P26", range)
+        ]);
+
+        const errors = results.filter(r=>r.error).map(r=>r.error);
+        const p01 = parseData(results[0].data, minTime);
+        const p11 = parseData(results[1].data, minTime);
+        const p31 = parseData(results[2].data, minTime);
+        const p21 = parseData(results[3].data, minTime);
+        const p26 = parseData(results[4].data, minTime);
+
+        destroyReviewCharts();
+
+        reviewCharts = [
+            configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
+            configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
+            configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime)),
+            configureReviewChart(createVaporChart("reviewVaporChart", p01, minTime, maxTime)),
+            configureReviewChart(createSingleChart("reviewSolarChart", p31, "solar", "日射", "日射", minTime, maxTime)),
+            configureReviewChart(createSingleChart("reviewCo2Chart", p21, "co2", "co2", "ppm", minTime, maxTime)),
+            configureReviewChart(createSingleChart("reviewCo2OutsideChart", p26, "co2Outside", "co2", "ppm", minTime, maxTime)),
+            configureReviewChart(createCo2DiffChart("reviewCo2DiffChart", p21, p26, minTime, maxTime))
+        ];
+
+        refreshVisibleCharts();
+        if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
+
+    }catch(e){
+        if(msg) msg.innerText = "振返り表示エラー：" + e.message;
+        console.error(e);
+    }
+}
+
 async function loadData(){
 
     const userId = document.getElementById("userId").value.trim();
@@ -4196,7 +4449,10 @@ async function loadData(){
     fetchDataSafe(userId,"P31"),
     fetchDataSafe(userId,"P21"),
     fetchDataSafe(userId,"P26"),
-    fetchDataSafe(userId,"P91")
+    fetchDataSafe(userId,"P91", {
+        start:formatSqlDateTime(voltMinTime),
+        end:formatSqlDateTime(now)
+    })
 ]);
 
         const resultP01 = results[0];
