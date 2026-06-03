@@ -72,13 +72,53 @@ function sendEmailAlert($to, $message) {
     }
 
     $headers = "Content-Type: text/plain; charset=UTF-8\r\n";
-    $sent = mail($to, $subject, $message, $headers);
+    $beforeError = error_get_last();
+    $sent = @mail($to, $subject, $message, $headers);
+    $afterError = error_get_last();
+    $mailError = "";
+
+    if (!$sent) {
+        if ($afterError && $afterError !== $beforeError && isset($afterError["message"])) {
+            $mailError = $afterError["message"];
+        } else {
+            $mailError = "mail returned false";
+        }
+    }
 
     return [
         "success" => $sent,
         "http_code" => null,
-        "error" => $sent ? "" : "mail failed"
+        "error" => $mailError
     ];
+}
+
+function maskEmail($email) {
+    if (!is_string($email) || strpos($email, "@") === false) {
+        return "";
+    }
+
+    [$local, $domain] = explode("@", $email, 2);
+    $localMasked = substr($local, 0, 1) . "***";
+
+    return $localMasked . "@" . $domain;
+}
+
+function buildAlertDetail($setting, $currentValue, $matchStatus, $extra = []) {
+    return array_merge([
+        "id" => (int)$setting["id"],
+        "setting_id" => (int)$setting["id"],
+        "user_id" => $setting["user_id"],
+        "point_id" => $setting["point_id"] ?: "P01",
+        "sensor_type" => $setting["sensor_type"] ?? "temperature",
+        "notify_target" => $setting["notify_target"] ?? "",
+        "condition_type" => $setting["condition_type"] ?? "",
+        "threshold_value" => isset($setting["temperature_threshold"]) ? (float)$setting["temperature_threshold"] : null,
+        "current_value" => $currentValue,
+        "matched" => $matchStatus === "matched",
+        "match_status" => $matchStatus,
+        "email_send_result" => null,
+        "email_error" => null
+    ], $extra);
 }
 
 $settingsSql = "SELECT *
@@ -156,10 +196,9 @@ while ($setting = $settingsResult->fetch_assoc()) {
     $latest = $latestResult->fetch_assoc();
 
     if (!$latest || $latest["temperature"] === null) {
-        $details[] = [
-            "id" => $id,
+        $details[] = buildAlertDetail($setting, null, "not_matched", [
             "status" => "no_temperature"
-        ];
+        ]);
         continue;
     }
 
@@ -183,11 +222,10 @@ while ($setting = $settingsResult->fetch_assoc()) {
         $normalStmt->bind_param("i", $id);
         $normalStmt->execute();
 
-        $details[] = [
-            "id" => $id,
+        $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
             "status" => "not_matched",
             "temperature" => $temperature
-        ];
+        ]);
         continue;
     }
 
@@ -200,24 +238,33 @@ while ($setting = $settingsResult->fetch_assoc()) {
         $lastNotifiedTime = strtotime($lastNotifiedAt);
 
         if ($lastNotifiedTime !== false && time() - $lastNotifiedTime < $cooldownMinutes * 60) {
-            $details[] = [
-                "id" => $id,
+            $details[] = buildAlertDetail($setting, $temperature, "matched", [
                 "status" => "cooldown",
-                "temperature" => $temperature
-            ];
+                "temperature" => $temperature,
+                "email_send_result" => $setting["notify_target"] === "email" ? "skipped_cooldown" : null,
+                "email_error" => null
+            ]);
             continue;
         }
     }
 
     if ($setting["notify_target"] === "email") {
         $postResult = sendEmailAlert($setting["webhook_url"], $message);
+        $emailSendResult = $postResult["success"] ? "success" : "failed";
+        $emailError = $postResult["error"];
     } else {
         $postResult = postWebhook($setting["webhook_url"], ["content" => $message]);
+        $emailSendResult = null;
+        $emailError = null;
     }
 
     if ($postResult["success"]) {
         $updateStmt->bind_param("i", $id);
         $updateStmt->execute();
+
+        $historyMessage = $setting["notify_target"] === "email"
+            ? $message . " email_send_result=success email_to=" . maskEmail($setting["webhook_url"])
+            : $message;
 
         $historyStmt->bind_param(
             "isssdds",
@@ -227,27 +274,52 @@ while ($setting = $settingsResult->fetch_assoc()) {
             $alertType,
             $temperature,
             $threshold,
-            $message
+            $historyMessage
         );
         $historyStmt->execute();
         $notified++;
 
-        $details[] = [
-            "id" => $id,
+        $details[] = buildAlertDetail($setting, $temperature, "matched", [
             "status" => "notified",
             "temperature" => $temperature,
+            "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
+            "email_send_result" => $emailSendResult,
+            "email_error" => $emailError,
             "history_saved" => true
-        ];
+        ]);
     } else {
         $failed++;
 
-        $details[] = [
-            "id" => $id,
+        $historySaved = false;
+        if ($setting["notify_target"] === "email") {
+            $historyMessage = $message .
+                " email_send_result=failed email_error=" . ($postResult["error"] ?: "-") .
+                " email_to=" . maskEmail($setting["webhook_url"]);
+
+            $historyStmt->bind_param(
+                "isssdds",
+                $id,
+                $userId,
+                $pointId,
+                $alertType,
+                $temperature,
+                $threshold,
+                $historyMessage
+            );
+            $historyStmt->execute();
+            $historySaved = true;
+        }
+
+        $details[] = buildAlertDetail($setting, $temperature, "matched", [
             "status" => "notify_failed",
             "temperature" => $temperature,
             "http_code" => $postResult["http_code"],
-            "error" => $postResult["error"]
-        ];
+            "error" => $postResult["error"],
+            "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
+            "email_send_result" => $emailSendResult,
+            "email_error" => $emailError,
+            "history_saved" => $historySaved
+        ]);
     }
 }
 
