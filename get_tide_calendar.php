@@ -46,7 +46,7 @@ function fetch_url($url) {
 }
 
 function format_tide_time($value) {
-    $value = trim($value);
+    $value = preg_replace('/\D/', '', (string)$value);
     if ($value === "" || $value === "9999") {
         return null;
     }

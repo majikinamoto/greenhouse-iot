@@ -3802,7 +3802,7 @@ function calculateNahaSunTime(year, month, day, isSunrise){
     const adjustedHour = minute === 60 ? hour + 1 : hour;
     const adjustedMinute = minute === 60 ? 0 : minute;
 
-    return adjustedHour + ":" + String(adjustedMinute).padStart(2, "0");
+    return String(adjustedHour).padStart(2, "0") + ":" + String(adjustedMinute).padStart(2, "0");
 }
 
 function timeTextToMinutes(timeText){
@@ -3942,7 +3942,7 @@ function updateHeaderTimeInfo(){
         parts.year + "年" +
         parts.month + "月" +
         parts.day + "日 " +
-        parts.hour + ":" +
+        String(parts.hour).padStart(2, "0") + ":" +
         String(parts.minute).padStart(2, "0");
     const sunrise = calculateNahaSunTime(parts.year, parts.month, parts.day, true);
     const sunset = calculateNahaSunTime(parts.year, parts.month, parts.day, false);
