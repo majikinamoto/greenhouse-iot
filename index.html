@@ -154,6 +154,14 @@
     margin-top:5px;
 }
 
+#headerSunInfo,
+#farmCalendarInfo,
+#farmCalendarInfo .farm-calendar-title,
+#farmCalendarInfo .moon-progress-track,
+#farmCalendarInfo .moon-progress-today {
+    color:#000;
+}
+
 .farm-calendar-title {
     font-weight:700;
     color:#25384d;
@@ -3942,7 +3950,6 @@ function updateFarmCalendarInfo(now){
         '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>潮：' + moon.tideName + '</span>' +
         '<span>' + tideCalendarText + '</span>' +
-        '<span>潮汐情報：気象庁潮位表データを基に表示</span>' +
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
