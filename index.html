@@ -1493,9 +1493,9 @@ button { margin:5px; }
         <h4><span>飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-volt">飽差の目安範囲：</span>
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="updateVpdTargetZone()">
+            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="handleVpdTargetRangeChange()">
             ～
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="updateVpdTargetZone()">
+            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
             <span class="guide-range-unit">g/m³</span>
         </div>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
@@ -1965,6 +1965,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
+        restoreVpdTargetRange(savedUserId);
         saveUserIdHistory(savedUserId);
         alertFormUserId = savedUserId;
         loadActiveAlertSetting(savedUserId);
@@ -1987,11 +1988,16 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
     if(userIdInput){
         userIdInput.addEventListener("input", clearAlertFormIfUserChanged);
-        userIdInput.addEventListener("change", clearAlertFormIfUserChanged);
+        userIdInput.addEventListener("change", ()=>{
+            clearAlertFormIfUserChanged();
+            restoreVpdTargetRange(userIdInput.value.trim());
+        });
     }
 
     if(userIdHistorySelect){
         userIdHistorySelect.addEventListener("change", ()=>{
+            const selectedUserId = document.getElementById("userId").value.trim();
+            restoreVpdTargetRange(selectedUserId);
             setTimeout(clearAlertFormIfUserChanged, 0);
         });
     }
@@ -4168,6 +4174,56 @@ function getGuideRange(minId, maxId, defaultMin, defaultMax){
     };
 }
 
+function getRangeStorageKey(userId, graphType){
+    return "utechRange_" + userId + "_" + graphType;
+}
+
+function setGuideRangeInputs(minId, maxId, range){
+    const minInput = document.getElementById(minId);
+    const maxInput = document.getElementById(maxId);
+
+    if(minInput) minInput.value = range.min;
+    if(maxInput) maxInput.value = range.max;
+}
+
+function loadStoredGuideRange(userId, graphType, defaultMin, defaultMax){
+    if(!userId){
+        return { min:defaultMin, max:defaultMax };
+    }
+
+    try{
+        const stored = JSON.parse(localStorage.getItem(getRangeStorageKey(userId, graphType)));
+        const minValue = stored ? Number(stored.min) : NaN;
+        const maxValue = stored ? Number(stored.max) : NaN;
+
+        if(!isNaN(minValue) && !isNaN(maxValue)){
+            return { min:minValue, max:maxValue };
+        }
+    }catch(e){}
+
+    return { min:defaultMin, max:defaultMax };
+}
+
+function restoreGuideRangeSetting(userId, graphType, minId, maxId, defaultMin, defaultMax){
+    setGuideRangeInputs(
+        minId,
+        maxId,
+        loadStoredGuideRange(userId, graphType, defaultMin, defaultMax)
+    );
+}
+
+function saveGuideRangeSetting(userId, graphType, minId, maxId, defaultMin, defaultMax){
+    if(!userId) return;
+
+    const range = getGuideRange(minId, maxId, defaultMin, defaultMax);
+    localStorage.setItem(getRangeStorageKey(userId, graphType), JSON.stringify(range));
+}
+
+function restoreVpdTargetRange(userId){
+    restoreGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
+    updateVpdTargetZone();
+}
+
 function getTempHumAxis(pointId){
     return {
         humMin:getAxisValue("humMin" + pointId, humMin),
@@ -5196,6 +5252,7 @@ async function loadData(){
 
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
+    restoreVpdTargetRange(userId);
     alertFormUserId = userId;
     loadActiveAlertSetting(userId);
 
@@ -5445,6 +5502,14 @@ function updateVpdTargetZone(){
     if(vaporChart){
         vaporChart.update("none");
     }
+}
+
+function handleVpdTargetRangeChange(){
+    const userIdInput = document.getElementById("userId");
+    const userId = userIdInput ? userIdInput.value.trim() : "";
+
+    saveGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
+    updateVpdTargetZone();
 }
 
 function applyDiffYAxis(chart){
