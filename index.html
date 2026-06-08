@@ -377,6 +377,12 @@ button { margin:5px; }
     color:#9a2a2a;
 }
 
+.tab-button-score {
+    background:#eef8ef;
+    border-color:#83c28d;
+    color:#246a31;
+}
+
 .tab-button-maintenance {
     background:#f0ecff;
     border-color:#a999df;
@@ -415,6 +421,11 @@ button { margin:5px; }
     border-color:#9f3636;
 }
 
+.tab-button-score.active {
+    background:#3f9650;
+    border-color:#2f783d;
+}
+
 .tab-button-maintenance.active {
     background:#7258b8;
     border-color:#5a4394;
@@ -449,6 +460,10 @@ button { margin:5px; }
 
 .tab-panel-alert {
     background:#ffecec;
+}
+
+.tab-panel-score {
+    background:#eef8ef;
 }
 
 .tab-panel-maintenance {
@@ -534,6 +549,38 @@ button { margin:5px; }
     border:none;
     border-top:2px solid #9eadbd;
     margin:8px 0;
+}
+
+.environment-score-panel {
+    max-width:520px;
+    border:2px solid #9bc7a1;
+    background:#f8fff8;
+    padding:10px;
+    box-sizing:border-box;
+    color:#1f3038;
+}
+
+.environment-score-panel h3 {
+    margin:0 0 10px;
+}
+
+.environment-score-item {
+    border-top:1px solid #b7d8bc;
+    margin-top:10px;
+    padding-top:10px;
+    line-height:1.8;
+    font-size:15px;
+}
+
+.environment-score-name {
+    font-weight:700;
+    color:#246a31;
+}
+
+.environment-score-rate {
+    font-size:22px;
+    font-weight:700;
+    color:#1f6f35;
 }
 
 @media (max-width: 760px) {
@@ -1346,6 +1393,7 @@ button { margin:5px; }
     <button class="tab-button tab-button-monitor active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">メインモニター</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
+    <button class="tab-button tab-button-score" type="button" role="tab" aria-selected="false" aria-controls="tab-score" onclick="switchTab('score')">環境スコア</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテナンス</button>
     <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-guide" onclick="switchTab('guide')">利用案内</button>
@@ -1719,6 +1767,19 @@ button { margin:5px; }
     </div>
 </section>
 
+<section id="tab-score" class="tab-panel tab-panel-score" role="tabpanel">
+    <div class="environment-score-panel">
+        <h3>環境スコア</h3>
+        <div>対象期間：過去72時間</div>
+        <div class="environment-score-item">
+            <div class="environment-score-name">飽差</div>
+            <div>目標範囲：<span id="scoreVpdRange">5～10</span> g/m³</div>
+            <div>範囲内率：<span id="scoreVpdRate" class="environment-score-rate">-</span></div>
+            <div><span id="scoreVpdHours">-</span> / 72時間</div>
+        </div>
+    </div>
+</section>
+
 <section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
     <div id="alertStatusCard" class="alert-status-card">
         <div class="alert-status-title">現在のアラート状態</div>
@@ -1947,6 +2008,7 @@ let voltAxisMin = 11;
 let voltAxisMax = 14;
 let alertFormUserId = "";
 let tideCalendarText = "満潮・干潮：読み込み中...";
+let environmentScoreP01 = [];
 
 const outsideSourceStorageKeys = {
     enabled:"usui_outside_source_enabled",
@@ -3526,6 +3588,59 @@ function calcVpdAverage(data, startHour, endHour, baseDate){
     if(!values.length) return null;
 
     return values.reduce((sum, value)=>sum + value, 0) / values.length;
+}
+
+function calcRangeScore(values, range, totalHours){
+    const validValues = values.filter(value=>value !== null && value !== undefined && !isNaN(value));
+    if(!validValues.length){
+        return {
+            rate:null,
+            inRangeHours:null,
+            totalHours:totalHours
+        };
+    }
+
+    const inRangeCount = validValues.filter(value=>value >= range.min && value <= range.max).length;
+    const rate = inRangeCount / validValues.length;
+
+    return {
+        rate:rate,
+        inRangeHours:Math.round(totalHours * rate),
+        totalHours:totalHours
+    };
+}
+
+function formatRangeValue(value){
+    return Number.isInteger(value) ? String(value) : Number(value).toFixed(1);
+}
+
+function renderVpdEnvironmentScore(data){
+    const range = getGuideRange("vpdTargetMin", "vpdTargetMax", 5, 10);
+    const rangeEl = document.getElementById("scoreVpdRange");
+    const rateEl = document.getElementById("scoreVpdRate");
+    const hoursEl = document.getElementById("scoreVpdHours");
+
+    if(rangeEl){
+        rangeEl.innerText = formatRangeValue(range.min) + "～" + formatRangeValue(range.max);
+    }
+
+    const values = (data || [])
+        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+        .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum));
+    const score = calcRangeScore(values, range, 72);
+
+    if(rateEl){
+        rateEl.innerText = score.rate === null ? "-" : Math.round(score.rate * 100) + "%";
+    }
+
+    if(hoursEl){
+        hoursEl.innerText = score.inRangeHours === null ? "-" : score.inRangeHours + "時間";
+    }
+}
+
+function renderEnvironmentScores(data){
+    environmentScoreP01 = data || [];
+    renderVpdEnvironmentScore(environmentScoreP01);
 }
 
 function evaluateVpdAverage(value, period){
@@ -5271,6 +5386,7 @@ async function loadData(){
     resetDailyTempStats();
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
+    renderEnvironmentScores([]);
 
     destroyCharts();
 
@@ -5311,6 +5427,7 @@ const resultP91 = results[6];
 const p21 = parseData(resultP21.data, minTime);
 const p26 = parseData(resultP26.data, minTime);
 const p91 = parseData(resultP91.data, voltMinTime);
+        renderEnvironmentScores(p01);
 
         const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
         const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
@@ -5503,6 +5620,7 @@ function updateVpdTargetZone(){
     if(vaporChart){
         vaporChart.update("none");
     }
+    renderVpdEnvironmentScore(environmentScoreP01);
 }
 
 function handleVpdTargetRangeChange(){
