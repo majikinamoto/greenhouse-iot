@@ -158,7 +158,7 @@
 #farmCalendarInfo,
 #farmCalendarInfo .farm-calendar-title,
 #farmCalendarInfo .moon-progress-track,
-#farmCalendarInfo .moon-progress-today {
+#farmCalendarInfo .moon-phase-label {
     color:#000;
 }
 
@@ -170,6 +170,7 @@
 .moon-progress {
     flex-basis:100%;
     margin-top:2px;
+    min-width:0;
 }
 
 .moon-progress-track {
@@ -177,35 +178,52 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-    max-width:360px;
-    padding:0 4px 16px;
+    gap:6px;
+    width:min(100%, 300px);
+    padding:1px 0 0;
     color:#42566b;
-    font-size:13px;
+    font-size:10px;
 }
 
-.moon-progress-track::before {
-    content:"";
-    position:absolute;
-    left:16px;
-    right:16px;
-    top:10px;
-    border-top:1px solid #8fa0b2;
-}
-
-.moon-progress-track span {
+.moon-phase-icon {
     position:relative;
-    z-index:1;
-    background:rgba(255,255,255,0.75);
+    display:inline-flex;
+    flex:0 0 auto;
+    width:28px;
+    height:32px;
+    align-items:flex-start;
+    justify-content:center;
 }
 
-.moon-progress-today {
+.moon-phase-icon svg {
+    display:block;
+    width:24px;
+    height:24px;
+    overflow:visible;
+    background:transparent;
+}
+
+.moon-phase-icon.is-current {
+    animation:moonCurrentFloat 1.8s ease-in-out infinite;
+}
+
+.moon-phase-icon.is-current svg {
+    filter:drop-shadow(0 1px 0 #9ea4a8);
+}
+
+.moon-phase-label {
     position:absolute;
-    top:16px;
+    left:50%;
+    top:23px;
     transform:translateX(-50%);
     white-space:nowrap;
-    color:#25384d;
-    font-size:11px;
+    font-size:9px;
     font-weight:700;
+}
+
+@keyframes moonCurrentFloat {
+    0%, 100% { transform:translateY(0); }
+    50% { transform:translateY(-2px); }
 }
 
 body {
@@ -3888,31 +3906,31 @@ function calculateMoonInfo(date){
     const lunarDay = Math.floor(age) + 1;
     const lunarMonth = ((lunation + 1) % 12) + 1;
 
-    let moonMark = "🌑";
+    let moonPhaseIndex = 0;
     let phase = "新月";
     if(age < 1){
-        moonMark = "🌑";
+        moonPhaseIndex = 0;
         phase = "新月";
     }else if(age < 6){
-        moonMark = "🌒";
+        moonPhaseIndex = 1;
         phase = "三日月";
     }else if(age < 9){
-        moonMark = "🌓";
+        moonPhaseIndex = 2;
         phase = "上弦";
     }else if(age < 14){
-        moonMark = "🌔";
+        moonPhaseIndex = 3;
         phase = "満月に向かう月";
     }else if(age < 16){
-        moonMark = "🌕";
+        moonPhaseIndex = 4;
         phase = "満月";
     }else if(age < 21){
-        moonMark = "🌖";
+        moonPhaseIndex = 5;
         phase = "満月の後／下弦に向かう月";
     }else if(age < 24){
-        moonMark = "🌗";
+        moonPhaseIndex = 6;
         phase = "下弦";
     }else{
-        moonMark = "🌘";
+        moonPhaseIndex = 7;
         phase = "新月に向かう月";
     }
 
@@ -3931,10 +3949,63 @@ function calculateMoonInfo(date){
         lunarMonth:lunarMonth,
         lunarDay:lunarDay,
         age:age,
-        moonMark:moonMark,
+        moonPhaseIndex:moonPhaseIndex,
         phase:phase,
         tideName:tideName
     };
+}
+
+function createMoonPhaseIcon(index, label, isCurrent){
+    const yellow = "#ffd91a";
+    const gray = "#9ea4a8";
+    const className = "moon-phase-icon" + (isCurrent ? " is-current" : "");
+    const labelHtml = isCurrent ? '<span class="moon-phase-label">今日</span>' : "";
+    let moonShape = "";
+
+    if(index === 0){
+        moonShape = '<circle cx="12" cy="12" r="10.5" fill="' + gray + '"/>';
+    }else if(index === 1){
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + gray + '"/>' +
+            '<ellipse cx="15.8" cy="12" rx="5.6" ry="10.5" fill="' + yellow + '"/>';
+    }else if(index === 2){
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + gray + '"/>' +
+            '<rect x="12" y="1.5" width="10.5" height="21" fill="' + yellow + '"/>';
+    }else if(index === 3){
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + yellow + '"/>' +
+            '<ellipse cx="7.3" cy="12" rx="5.2" ry="10.5" fill="' + gray + '"/>';
+    }else if(index === 4){
+        moonShape = '<circle cx="12" cy="12" r="10.5" fill="' + yellow + '"/>';
+    }else if(index === 5){
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + yellow + '"/>' +
+            '<ellipse cx="16.7" cy="12" rx="5.2" ry="10.5" fill="' + gray + '"/>';
+    }else if(index === 6){
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + gray + '"/>' +
+            '<rect x="1.5" y="1.5" width="10.5" height="21" fill="' + yellow + '"/>';
+    }else{
+        moonShape =
+            '<circle cx="12" cy="12" r="10.5" fill="' + gray + '"/>' +
+            '<ellipse cx="8.2" cy="12" rx="5.6" ry="10.5" fill="' + yellow + '"/>';
+    }
+
+    return '<span class="' + className + '" title="' + label + '" aria-label="' + label + '">' +
+        '<svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">' +
+            '<clipPath id="moonClip' + index + '"><circle cx="12" cy="12" r="10.5"/></clipPath>' +
+            '<g clip-path="url(#moonClip' + index + ')">' + moonShape + '</g>' +
+        '</svg>' +
+        labelHtml +
+    '</span>';
+}
+
+function createMoonPhaseIcons(currentIndex){
+    const labels = ["新月", "三日月", "上弦", "十三夜", "満月", "寝待月", "下弦", "有明月"];
+    return labels.map(function(label, index){
+        return createMoonPhaseIcon(index, label, index === currentIndex);
+    }).join("");
 }
 
 function updateFarmCalendarInfo(now){
@@ -3942,10 +4013,9 @@ function updateFarmCalendarInfo(now){
     if(!container) return;
 
     const moon = calculateMoonInfo(now);
-    const moonPosition = Math.max(0, Math.min(100, (moon.age / 29.5) * 100));
     container.innerHTML =
         '<span class="farm-calendar-title">農作業こよみ</span>' +
-        '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
+        '<span>月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>' +
         '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>潮：' + moon.tideName + '</span>' +
@@ -3953,8 +4023,7 @@ function updateFarmCalendarInfo(now){
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
-                '<span>🌑</span><span>🌒</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌘</span><span>🌑</span>' +
-                '<div class="moon-progress-today" style="left:' + moonPosition.toFixed(1) + '%">▲ 今日</div>' +
+                createMoonPhaseIcons(moon.moonPhaseIndex) +
             '</div>' +
         '</div>';
 }
