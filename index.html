@@ -1497,6 +1497,7 @@ button { margin:5px; }
             ～
             <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
             <span class="guide-range-unit">g/m³</span>
+            <button type="button" onclick="resetVpdTargetRange()">初期値に戻す</button>
         </div>
         <div class="chart-container"><canvas id="vaporChart"></canvas></div>
     </div>
@@ -5510,6 +5511,11 @@ function handleVpdTargetRangeChange(){
 
     saveGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
     updateVpdTargetZone();
+}
+
+function resetVpdTargetRange(){
+    setGuideRangeInputs("vpdTargetMin", "vpdTargetMax", { min:5, max:10 });
+    handleVpdTargetRangeChange();
 }
 
 function applyDiffYAxis(chart){
