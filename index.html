@@ -552,7 +552,7 @@ button { margin:5px; }
 }
 
 .environment-score-panel {
-    max-width:520px;
+    max-width:980px;
     border:2px solid #9bc7a1;
     background:#f8fff8;
     padding:10px;
@@ -581,6 +581,57 @@ button { margin:5px; }
     font-size:22px;
     font-weight:700;
     color:#1f6f35;
+}
+
+.environment-score-range-grid {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 12px;
+    margin:10px 0 14px;
+}
+
+.environment-score-range {
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.environment-score-range input {
+    width:58px;
+    box-sizing:border-box;
+}
+
+.environment-score-table-wrap {
+    width:100%;
+    overflow-x:auto;
+}
+
+.environment-score-table {
+    width:100%;
+    min-width:680px;
+    border-collapse:collapse;
+    background:#fff;
+    font-size:13px;
+}
+
+.environment-score-table th,
+.environment-score-table td {
+    border:1px solid #b7d8bc;
+    padding:6px 8px;
+    text-align:center;
+    white-space:nowrap;
+}
+
+.environment-score-table th {
+    background:#e6f5e8;
+    color:#1f6f35;
+}
+
+.environment-score-table td:first-child,
+.environment-score-table th:first-child {
+    text-align:left;
 }
 
 @media (max-width: 760px) {
@@ -1770,12 +1821,54 @@ button { margin:5px; }
 <section id="tab-score" class="tab-panel tab-panel-score" role="tabpanel">
     <div class="environment-score-panel">
         <h3>環境スコア</h3>
-        <div>対象期間：過去72時間</div>
+        <div class="environment-score-range-grid">
+            <label class="environment-score-range">飽差 <input type="number" id="scoreRangeVpdMin" value="5" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeVpdMax" value="10" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> g/m³</label>
+            <label class="environment-score-range">温度 <input type="number" id="scoreRangeTempMin" value="22" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeTempMax" value="28" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> ℃</label>
+            <label class="environment-score-range">湿度 <input type="number" id="scoreRangeHumMin" value="60" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeHumMax" value="85" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> %</label>
+            <label class="environment-score-range">CO2 <input type="number" id="scoreRangeCo2Min" value="400" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeCo2Max" value="800" step="1" oninput="handleEnvironmentScoreRangeChange()"> ppm</label>
+            <label class="environment-score-range">日射 <input type="number" id="scoreRangeSolarMin" value="300" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeSolarMax" value="1200" step="1" oninput="handleEnvironmentScoreRangeChange()"> W/㎡</label>
+        </div>
         <div class="environment-score-item">
-            <div class="environment-score-name">飽差</div>
-            <div>目標範囲：<span id="scoreVpdRange">5～10</span> g/m³</div>
-            <div>範囲内率：<span id="scoreVpdRate" class="environment-score-rate">-</span></div>
-            <div><span id="scoreVpdHours">-</span> / 72時間</div>
+            <div class="environment-score-name">今日の途中経過</div>
+            <div class="environment-score-table-wrap">
+                <table class="environment-score-table">
+                    <thead>
+                        <tr>
+                            <th>期間</th>
+                            <th>飽差</th>
+                            <th>温度</th>
+                            <th>湿度</th>
+                            <th>CO2</th>
+                            <th>日射</th>
+                            <th>総合</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoreTodayBody">
+                        <tr><td>今日</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="environment-score-item">
+            <div class="environment-score-name">過去5日分</div>
+            <div class="environment-score-table-wrap">
+                <table class="environment-score-table">
+                    <thead>
+                        <tr>
+                            <th>日付</th>
+                            <th>飽差</th>
+                            <th>温度</th>
+                            <th>湿度</th>
+                            <th>CO2</th>
+                            <th>日射</th>
+                            <th>総合</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoreHistoryBody">
+                        <tr><td colspan="7">データなし</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </section>
@@ -2010,6 +2103,8 @@ let voltAxisMax = 14;
 let alertFormUserId = "";
 let tideCalendarText = "満潮・干潮：読み込み中...";
 let environmentScoreP01 = [];
+let environmentScoreP21 = [];
+let environmentScoreP31 = [];
 
 const outsideSourceStorageKeys = {
     enabled:"usui_outside_source_enabled",
@@ -2038,6 +2133,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
     restoreAnalysisCompareSettings();
+    restoreEnvironmentScoreRanges();
     handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
@@ -3611,37 +3707,210 @@ function calcRangeScore(values, range, totalHours){
     };
 }
 
+const environmentScoreRangeDefaults = {
+    vpd:{ min:5, max:10 },
+    temp:{ min:22, max:28 },
+    hum:{ min:60, max:85 },
+    co2:{ min:400, max:800 },
+    solar:{ min:300, max:1200 }
+};
+
+const environmentScoreItems = [
+    { key:"vpd", label:"飽差" },
+    { key:"temp", label:"温度" },
+    { key:"hum", label:"湿度" },
+    { key:"co2", label:"CO2" },
+    { key:"solar", label:"日射" }
+];
+
+function getEnvironmentScoreStorageKey(key){
+    return "utechEnvironmentScoreRange_" + key;
+}
+
+function getEnvironmentScoreInputId(key, side){
+    const idMap = {
+        vpd:"Vpd",
+        temp:"Temp",
+        hum:"Hum",
+        co2:"Co2",
+        solar:"Solar"
+    };
+
+    return "scoreRange" + idMap[key] + side;
+}
+
+function restoreEnvironmentScoreRanges(){
+    environmentScoreItems.forEach(item=>{
+        const defaults = environmentScoreRangeDefaults[item.key];
+
+        try{
+            const stored = JSON.parse(localStorage.getItem(getEnvironmentScoreStorageKey(item.key)));
+            const minValue = stored ? Number(stored.min) : NaN;
+            const maxValue = stored ? Number(stored.max) : NaN;
+
+            setGuideRangeInputs(
+                getEnvironmentScoreInputId(item.key, "Min"),
+                getEnvironmentScoreInputId(item.key, "Max"),
+                {
+                    min:isNaN(minValue) ? defaults.min : minValue,
+                    max:isNaN(maxValue) ? defaults.max : maxValue
+                }
+            );
+        }catch(e){
+            setGuideRangeInputs(
+                getEnvironmentScoreInputId(item.key, "Min"),
+                getEnvironmentScoreInputId(item.key, "Max"),
+                defaults
+            );
+        }
+    });
+}
+
+function getEnvironmentScoreRanges(){
+    const ranges = {};
+
+    environmentScoreItems.forEach(item=>{
+        const defaults = environmentScoreRangeDefaults[item.key];
+        ranges[item.key] = getGuideRange(
+            getEnvironmentScoreInputId(item.key, "Min"),
+            getEnvironmentScoreInputId(item.key, "Max"),
+            defaults.min,
+            defaults.max
+        );
+    });
+
+    return ranges;
+}
+
+function saveEnvironmentScoreRanges(){
+    const ranges = getEnvironmentScoreRanges();
+
+    environmentScoreItems.forEach(item=>{
+        localStorage.setItem(
+            getEnvironmentScoreStorageKey(item.key),
+            JSON.stringify(ranges[item.key])
+        );
+    });
+}
+
+function handleEnvironmentScoreRangeChange(){
+    saveEnvironmentScoreRanges();
+    renderEnvironmentScores(environmentScoreP01, environmentScoreP21, environmentScoreP31);
+}
+
+function formatScoreDate(date){
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return m + "/" + d;
+}
+
+function getScoreRowsForPeriod(start, end, p01, p21, p31){
+    const sourceP01 = (p01 || []).filter(d=>d.x >= start && d.x < end);
+    const sourceP21 = (p21 || []).filter(d=>d.x >= start && d.x < end);
+    const sourceP31 = (p31 || []).filter(d=>d.x >= start && d.x < end);
+
+    return {
+        vpd:sourceP01
+            .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+            .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum)),
+        temp:sourceP01
+            .filter(d=>d.temp !== null && !isNaN(d.temp))
+            .map(d=>d.temp),
+        hum:sourceP01
+            .filter(d=>d.hum !== null && !isNaN(d.hum))
+            .map(d=>d.hum),
+        co2:sourceP21
+            .filter(d=>d.co2 !== null && !isNaN(d.co2))
+            .map(d=>d.co2),
+        solar:sourceP31
+            .filter(d=>d.solar !== null && !isNaN(d.solar))
+            .map(d=>d.solar)
+    };
+}
+
+function calcEnvironmentScore(values, range){
+    const validValues = values.filter(value=>value !== null && value !== undefined && !isNaN(value));
+    if(!validValues.length) return null;
+
+    const inRangeCount = validValues.filter(value=>value >= range.min && value <= range.max).length;
+    return Math.round((inRangeCount / validValues.length) * 100);
+}
+
+function calcEnvironmentScoreRow(start, end, p01, p21, p31){
+    const ranges = getEnvironmentScoreRanges();
+    const values = getScoreRowsForPeriod(start, end, p01, p21, p31);
+    const scores = {};
+
+    environmentScoreItems.forEach(item=>{
+        scores[item.key] = calcEnvironmentScore(values[item.key], ranges[item.key]);
+    });
+
+    const validScores = environmentScoreItems
+        .map(item=>scores[item.key])
+        .filter(score=>score !== null && score !== undefined && !isNaN(score));
+
+    scores.total = validScores.length === environmentScoreItems.length
+        ? Math.round(validScores.reduce((sum, score)=>sum + score, 0) / validScores.length)
+        : null;
+
+    return scores;
+}
+
+function formatEnvironmentScore(value){
+    return value === null || value === undefined || isNaN(value) ? "-" : value + "点";
+}
+
+function renderEnvironmentScoreTableRow(label, scores){
+    return "<tr>" +
+        "<td>" + escapeHtml(label) + "</td>" +
+        "<td>" + formatEnvironmentScore(scores.vpd) + "</td>" +
+        "<td>" + formatEnvironmentScore(scores.temp) + "</td>" +
+        "<td>" + formatEnvironmentScore(scores.hum) + "</td>" +
+        "<td>" + formatEnvironmentScore(scores.co2) + "</td>" +
+        "<td>" + formatEnvironmentScore(scores.solar) + "</td>" +
+        "<td><strong>" + formatEnvironmentScore(scores.total) + "</strong></td>" +
+    "</tr>";
+}
+
 function formatRangeValue(value){
     return Number.isInteger(value) ? String(value) : Number(value).toFixed(1);
 }
 
-function renderVpdEnvironmentScore(data){
-    const range = getGuideRange("vpdTargetMin", "vpdTargetMax", 5, 10);
-    const rangeEl = document.getElementById("scoreVpdRange");
-    const rateEl = document.getElementById("scoreVpdRate");
-    const hoursEl = document.getElementById("scoreVpdHours");
+function renderEnvironmentScores(p01, p21, p31){
+    environmentScoreP01 = p01 || [];
+    environmentScoreP21 = p21 || [];
+    environmentScoreP31 = p31 || [];
 
-    if(rangeEl){
-        rangeEl.innerText = formatRangeValue(range.min) + "～" + formatRangeValue(range.max);
+    const todayBody = document.getElementById("scoreTodayBody");
+    const historyBody = document.getElementById("scoreHistoryBody");
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0,0,0,0);
+
+    if(todayBody){
+        todayBody.innerHTML = renderEnvironmentScoreTableRow(
+            "今日の途中経過",
+            calcEnvironmentScoreRow(todayStart, now, environmentScoreP01, environmentScoreP21, environmentScoreP31)
+        );
     }
 
-    const values = (data || [])
-        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-        .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum));
-    const score = calcRangeScore(values, range, 72);
+    if(historyBody){
+        const rows = [];
 
-    if(rateEl){
-        rateEl.innerText = score.rate === null ? "-" : Math.round(score.rate * 100) + "%";
+        for(let i = 1; i <= 5; i++){
+            const start = new Date(todayStart);
+            start.setDate(todayStart.getDate() - i);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 1);
+
+            rows.push(renderEnvironmentScoreTableRow(
+                formatScoreDate(start),
+                calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31)
+            ));
+        }
+
+        historyBody.innerHTML = rows.join("");
     }
-
-    if(hoursEl){
-        hoursEl.innerText = score.inRangeHours === null ? "-" : score.inRangeHours + "時間";
-    }
-}
-
-function renderEnvironmentScores(data){
-    environmentScoreP01 = data || [];
-    renderVpdEnvironmentScore(environmentScoreP01);
 }
 
 function evaluateVpdAverage(value, period){
@@ -5387,7 +5656,7 @@ async function loadData(){
     resetDailyTempStats();
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
-    renderEnvironmentScores([]);
+    renderEnvironmentScores([], [], []);
 
     destroyCharts();
 
@@ -5399,6 +5668,9 @@ async function loadData(){
             ? new Date(now.getTime() - 48*60*60*1000)
             : minTime;
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
+        const scoreMinTime = new Date(now);
+        scoreMinTime.setHours(0,0,0,0);
+        scoreMinTime.setDate(scoreMinTime.getDate() - 5);
 
         const results = await Promise.all([
     fetchDataSafe(userId,"P01"),
@@ -5410,6 +5682,18 @@ async function loadData(){
     fetchDataSafe(userId,"P91", {
         start:formatSqlDateTime(voltMinTime),
         end:formatSqlDateTime(now)
+    }),
+    fetchDataSafe(userId,"P01", {
+        start:formatSqlDateTime(scoreMinTime),
+        end:formatSqlDateTime(now)
+    }),
+    fetchDataSafe(userId,"P21", {
+        start:formatSqlDateTime(scoreMinTime),
+        end:formatSqlDateTime(now)
+    }),
+    fetchDataSafe(userId,"P31", {
+        start:formatSqlDateTime(scoreMinTime),
+        end:formatSqlDateTime(now)
     })
 ]);
 
@@ -5420,6 +5704,9 @@ const resultP31 = results[3];
 const resultP21 = results[4];
 const resultP26 = results[5];
 const resultP91 = results[6];
+const resultScoreP01 = results[7];
+const resultScoreP21 = results[8];
+const resultScoreP31 = results[9];
 
         const p01 = parseData(resultP01.data, minTime);
         const p02 = parseData(resultP02.data, minTime);
@@ -5428,7 +5715,10 @@ const resultP91 = results[6];
 const p21 = parseData(resultP21.data, minTime);
 const p26 = parseData(resultP26.data, minTime);
 const p91 = parseData(resultP91.data, voltMinTime);
-        renderEnvironmentScores(p01);
+const scoreP01 = parseData(resultScoreP01.data, scoreMinTime);
+const scoreP21 = parseData(resultScoreP21.data, scoreMinTime);
+const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
+        renderEnvironmentScores(scoreP01, scoreP21, scoreP31);
 
         const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
         const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
