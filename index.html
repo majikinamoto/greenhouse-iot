@@ -594,6 +594,26 @@ button { margin:5px; }
     color:#5b6c7f;
 }
 
+.environment-score-calc-note {
+    margin:0 0 10px;
+    padding:8px 10px;
+    border:1px solid #b7d8bc;
+    background:#ffffff;
+    color:#33475b;
+    font-size:13px;
+    line-height:1.6;
+}
+
+.environment-score-calc-note-title {
+    margin-bottom:3px;
+    font-weight:800;
+    color:#246a31;
+}
+
+.environment-score-calc-note p {
+    margin:0;
+}
+
 .environment-score-item {
     border-top:1px solid #b7d8bc;
     margin-top:10px;
@@ -1915,6 +1935,12 @@ button { margin:5px; }
             <label class="environment-score-range">湿度 <input type="number" id="scoreRangeHumMin" value="60" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeHumMax" value="85" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> %</label>
             <label class="environment-score-range">CO2 <input type="number" id="scoreRangeCo2Min" value="400" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeCo2Max" value="800" step="1" oninput="handleEnvironmentScoreRangeChange()"> ppm</label>
             <label class="environment-score-range">日射 <input type="number" id="scoreRangeSolarMin" value="300" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeSolarMax" value="1200" step="1" oninput="handleEnvironmentScoreRangeChange()"> W/㎡</label>
+        </div>
+        <div class="environment-score-calc-note">
+            <div class="environment-score-calc-note-title">🌱 スコア計算について</div>
+            <p>・温度・湿度は24時間を対象に計算しています。</p>
+            <p>・飽差・CO2は植物の活動時間（6:00～18:00）を対象に計算しています。</p>
+            <p>・総合スコアは、計算可能な項目のみで算出しています。</p>
         </div>
         <div id="scoreBest30Days" class="environment-score-best">過去30日スコアランキング：-</div>
         <div id="scoreBestGap" class="environment-score-best-gap">自己ベストまであと：-</div>
