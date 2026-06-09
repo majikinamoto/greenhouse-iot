@@ -1870,7 +1870,7 @@ button { margin:5px; }
             <label class="environment-score-range">CO2 <input type="number" id="scoreRangeCo2Min" value="400" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeCo2Max" value="800" step="1" oninput="handleEnvironmentScoreRangeChange()"> ppm</label>
             <label class="environment-score-range">日射 <input type="number" id="scoreRangeSolarMin" value="300" step="1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeSolarMax" value="1200" step="1" oninput="handleEnvironmentScoreRangeChange()"> W/㎡</label>
         </div>
-        <div id="scoreBest30Days" class="environment-score-best">過去30日最高スコア：-</div>
+        <div id="scoreBest30Days" class="environment-score-best">過去30日スコアランキング：-</div>
         <div class="environment-score-item">
             <div class="environment-score-name">今日の途中経過</div>
             <div class="environment-score-table-wrap">
@@ -3848,6 +3848,44 @@ function formatScoreDate(date){
     return m + "/" + d;
 }
 
+function renderBest30DayScore(todayStart){
+    const bestEl = document.getElementById("scoreBest30Days");
+    if(!bestEl) return;
+
+    const ranking = [];
+
+    for(let i = 1; i <= 30; i++){
+        const start = new Date(todayStart);
+        start.setDate(todayStart.getDate() - i);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 1);
+        const scores = calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+
+        if(scores.total === null || scores.total === undefined || isNaN(scores.total)) continue;
+        ranking.push({
+            score:scores.total,
+            date:start
+        });
+    }
+
+    if(!ranking.length){
+        bestEl.innerText = "過去30日スコアランキング：-";
+        return;
+    }
+
+    ranking.sort((a, b)=>
+        b.score - a.score || b.date.getTime() - a.date.getTime()
+    );
+
+    const medals = ["🥇", "🥈", "🥉"];
+    bestEl.innerHTML =
+        '<div>過去30日スコアランキング</div>' +
+        ranking.slice(0, 3).map((item, index)=>
+            '<div>' + medals[index] + ' ' + (index + 1) + '位：' +
+            item.score + '点（' + formatScoreDate(item.date) + '）</div>'
+        ).join("");
+}
+
 function getScoreRowsForPeriod(start, end, p01, p21, p31){
     const sourceP01 = (p01 || []).filter(d=>d.x >= start && d.x < end);
     const sourceP21 = (p21 || []).filter(d=>d.x >= start && d.x < end);
@@ -3973,6 +4011,7 @@ function renderEnvironmentScores(p01, p21, p31){
     const now = new Date();
     const todayStart = new Date(now);
     todayStart.setHours(0,0,0,0);
+    renderBest30DayScore(todayStart);
 
     if(todayBody){
         const yesterdayStart = new Date(todayStart);
@@ -5775,7 +5814,7 @@ async function loadData(){
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
         const scoreMinTime = new Date(now);
         scoreMinTime.setHours(0,0,0,0);
-        scoreMinTime.setDate(scoreMinTime.getDate() - 5);
+        scoreMinTime.setDate(scoreMinTime.getDate() - 30);
 
         const results = await Promise.all([
     fetchDataSafe(userId,"P01"),
