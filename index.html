@@ -1894,10 +1894,11 @@ button { margin:5px; }
                             <th>CO2</th>
                             <th>日射</th>
                             <th>総合</th>
+                            <th>前日比</th>
                         </tr>
                     </thead>
                     <tbody id="scoreHistoryBody">
-                        <tr><td colspan="7">データなし</td></tr>
+                        <tr><td colspan="8">データなし</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -3914,10 +3915,26 @@ function formatEnvironmentScoreDiff(todayScore, yesterdayScore){
     return "昨日より " + (diff > 0 ? "+" : "") + diff + "点";
 }
 
-function renderEnvironmentScoreTableRow(label, scores, diffText){
+function formatEnvironmentScoreDayDiff(score, previousScore){
+    if(
+        score === null || score === undefined || isNaN(score) ||
+        previousScore === null || previousScore === undefined || isNaN(previousScore)
+    ){
+        return "-";
+    }
+
+    const diff = score - previousScore;
+    if(diff === 0) return "±0点";
+    return (diff > 0 ? "+" : "") + diff + "点";
+}
+
+function renderEnvironmentScoreTableRow(label, scores, diffText, dayDiffText){
     const totalClass = "environment-score-total" + getEnvironmentScoreTotalClass(scores.total);
     const totalHtml = formatEnvironmentScore(scores.total) +
         (diffText ? '<span class="environment-score-diff">' + escapeHtml(diffText) + '</span>' : "");
+    const dayDiffHtml = dayDiffText !== undefined
+        ? "<td>" + escapeHtml(dayDiffText) + "</td>"
+        : "";
 
     return "<tr>" +
         "<td>" + escapeHtml(label) + "</td>" +
@@ -3927,6 +3944,7 @@ function renderEnvironmentScoreTableRow(label, scores, diffText){
         "<td>" + formatEnvironmentScore(scores.co2) + "</td>" +
         "<td>" + formatEnvironmentScore(scores.solar) + "</td>" +
         '<td class="' + totalClass + '">' + totalHtml + "</td>" +
+        dayDiffHtml +
     "</tr>";
 }
 
@@ -3967,9 +3985,16 @@ function renderEnvironmentScores(p01, p21, p31){
             const end = new Date(start);
             end.setDate(start.getDate() + 1);
 
+            const previousStart = new Date(start);
+            previousStart.setDate(start.getDate() - 1);
+            const scores = calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+            const previousScores = calcEnvironmentScoreRow(previousStart, start, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+
             rows.push(renderEnvironmentScoreTableRow(
                 formatScoreDate(start),
-                calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31)
+                scores,
+                "",
+                formatEnvironmentScoreDayDiff(scores.total, previousScores.total)
             ));
         }
 
