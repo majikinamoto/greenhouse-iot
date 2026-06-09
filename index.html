@@ -564,6 +564,30 @@ button { margin:5px; }
     margin:0 0 10px;
 }
 
+.environment-score-description {
+    margin:0 0 12px;
+    padding:10px 12px;
+    border:1px solid #b7d8bc;
+    background:#ffffff;
+    color:#1f3038;
+    font-size:14px;
+    line-height:1.7;
+}
+
+.environment-score-description-title {
+    margin-bottom:4px;
+    font-weight:800;
+    color:#246a31;
+}
+
+.environment-score-description p {
+    margin:0 0 6px;
+}
+
+.environment-score-description p:last-child {
+    margin-bottom:0;
+}
+
 .environment-score-item {
     border-top:1px solid #b7d8bc;
     margin-top:10px;
@@ -1870,6 +1894,13 @@ button { margin:5px; }
 
 <section id="tab-score" class="tab-panel tab-panel-score" role="tabpanel">
     <div class="environment-score-panel">
+        <div class="environment-score-description">
+            <div class="environment-score-description-title">環境スコアとは？</div>
+            <p>環境スコアは、設定した目標範囲に対して、環境がどれだけ維持できていたかを点数化したものです。</p>
+            <p>100点に近いほど、目標範囲内にあった時間の割合が高いことを示します。</p>
+            <p>このスコアは栽培の良し悪しを判定するものではなく、日々の環境管理を振り返るための参考指標です。</p>
+            <p>💡 U-Techは他人との比較ではなく、「昨日の自分」と比較しながら環境改善を目指す仕組みです。</p>
+        </div>
         <h3>ハウス内環境_目標値設定</h3>
         <div class="environment-score-range-grid">
             <label class="environment-score-range">飽差 <input type="number" id="scoreRangeVpdMin" value="5" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeVpdMax" value="10" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> g/m³</label>
