@@ -634,6 +634,38 @@ button { margin:5px; }
     text-align:left;
 }
 
+.environment-score-total {
+    font-weight:800;
+}
+
+.environment-score-total-darkgreen {
+    color:#0b5d1e;
+}
+
+.environment-score-total-green {
+    color:#1f8f3a;
+}
+
+.environment-score-total-lightgreen {
+    color:#6f9f16;
+}
+
+.environment-score-total-orange {
+    color:#d06a00;
+}
+
+.environment-score-total-red {
+    color:#c00000;
+}
+
+.environment-score-diff {
+    display:block;
+    margin-top:2px;
+    font-size:12px;
+    font-weight:700;
+    color:#33475b;
+}
+
 @media (max-width: 760px) {
     .analysis-compare-card {
         width:100%;
@@ -3860,7 +3892,33 @@ function formatEnvironmentScore(value){
     return value === null || value === undefined || isNaN(value) ? "-" : value + "点";
 }
 
-function renderEnvironmentScoreTableRow(label, scores){
+function getEnvironmentScoreTotalClass(value){
+    if(value === null || value === undefined || isNaN(value)) return "";
+    if(value >= 90) return " environment-score-total-darkgreen";
+    if(value >= 80) return " environment-score-total-green";
+    if(value >= 70) return " environment-score-total-lightgreen";
+    if(value >= 60) return " environment-score-total-orange";
+    return " environment-score-total-red";
+}
+
+function formatEnvironmentScoreDiff(todayScore, yesterdayScore){
+    if(
+        todayScore === null || todayScore === undefined || isNaN(todayScore) ||
+        yesterdayScore === null || yesterdayScore === undefined || isNaN(yesterdayScore)
+    ){
+        return "";
+    }
+
+    const diff = todayScore - yesterdayScore;
+    if(diff === 0) return "昨日と同じ";
+    return "昨日より " + (diff > 0 ? "+" : "") + diff + "点";
+}
+
+function renderEnvironmentScoreTableRow(label, scores, diffText){
+    const totalClass = "environment-score-total" + getEnvironmentScoreTotalClass(scores.total);
+    const totalHtml = formatEnvironmentScore(scores.total) +
+        (diffText ? '<span class="environment-score-diff">' + escapeHtml(diffText) + '</span>' : "");
+
     return "<tr>" +
         "<td>" + escapeHtml(label) + "</td>" +
         "<td>" + formatEnvironmentScore(scores.vpd) + "</td>" +
@@ -3868,7 +3926,7 @@ function renderEnvironmentScoreTableRow(label, scores){
         "<td>" + formatEnvironmentScore(scores.hum) + "</td>" +
         "<td>" + formatEnvironmentScore(scores.co2) + "</td>" +
         "<td>" + formatEnvironmentScore(scores.solar) + "</td>" +
-        "<td><strong>" + formatEnvironmentScore(scores.total) + "</strong></td>" +
+        '<td class="' + totalClass + '">' + totalHtml + "</td>" +
     "</tr>";
 }
 
@@ -3888,9 +3946,15 @@ function renderEnvironmentScores(p01, p21, p31){
     todayStart.setHours(0,0,0,0);
 
     if(todayBody){
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setDate(todayStart.getDate() - 1);
+        const todayScores = calcEnvironmentScoreRow(todayStart, now, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+        const yesterdayScores = calcEnvironmentScoreRow(yesterdayStart, todayStart, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+
         todayBody.innerHTML = renderEnvironmentScoreTableRow(
             "今日の途中経過",
-            calcEnvironmentScoreRow(todayStart, now, environmentScoreP01, environmentScoreP21, environmentScoreP31)
+            todayScores,
+            formatEnvironmentScoreDiff(todayScores.total, yesterdayScores.total)
         );
     }
 
