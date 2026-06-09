@@ -1820,7 +1820,7 @@ button { margin:5px; }
 
 <section id="tab-score" class="tab-panel tab-panel-score" role="tabpanel">
     <div class="environment-score-panel">
-        <h3>環境スコア</h3>
+        <h3>環境スコア目標値設定</h3>
         <div class="environment-score-range-grid">
             <label class="environment-score-range">飽差 <input type="number" id="scoreRangeVpdMin" value="5" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeVpdMax" value="10" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> g/m³</label>
             <label class="environment-score-range">温度 <input type="number" id="scoreRangeTempMin" value="22" step="0.1" oninput="handleEnvironmentScoreRangeChange()">～<input type="number" id="scoreRangeTempMax" value="28" step="0.1" oninput="handleEnvironmentScoreRangeChange()"> ℃</label>
@@ -3849,7 +3849,7 @@ function calcEnvironmentScoreRow(start, end, p01, p21, p31){
         .map(item=>scores[item.key])
         .filter(score=>score !== null && score !== undefined && !isNaN(score));
 
-    scores.total = validScores.length === environmentScoreItems.length
+    scores.total = validScores.length
         ? Math.round(validScores.reduce((sum, score)=>sum + score, 0) / validScores.length)
         : null;
 
@@ -4527,6 +4527,11 @@ function parseData(data, minTime){
     return data.map(d=>{
         const date = new Date(d.recorded_at);
         const co2Value = d.co2 !== null && d.co2 !== undefined ? d.co2 : d.CO2;
+        const solarValue = d.solar_radiation !== null && d.solar_radiation !== undefined
+            ? d.solar_radiation
+            : d.solar !== null && d.solar !== undefined
+                ? d.solar
+                : d.SOLAR_RADIATION;
 
         return {
             x:date,
@@ -4534,7 +4539,7 @@ function parseData(data, minTime){
             temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
             hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
             co2:co2Value !== null && co2Value !== undefined ? Number(co2Value) : null,
-            solar:d.solar_radiation !== null && d.solar_radiation !== undefined ? Number(d.solar_radiation) : null,
+            solar:solarValue !== null && solarValue !== undefined ? Number(solarValue) : null,
             volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
         };
     }).filter(d=>
