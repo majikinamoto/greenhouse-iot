@@ -2709,10 +2709,6 @@ function resetAnalysisZoom(){
     });
 }
 
-function resetAnalysisCompareZoom(){
-    resetAnalysisZoom();
-}
-
 function calcAnalysisDiffData(baseData, targetData){
     const diffData = [];
     const toleranceMs = 360 * 1000;
@@ -3797,26 +3793,6 @@ function calcVpdAverage(data, startHour, endHour, baseDate){
     return values.reduce((sum, value)=>sum + value, 0) / values.length;
 }
 
-function calcRangeScore(values, range, totalHours){
-    const validValues = values.filter(value=>value !== null && value !== undefined && !isNaN(value));
-    if(!validValues.length){
-        return {
-            rate:null,
-            inRangeHours:null,
-            totalHours:totalHours
-        };
-    }
-
-    const inRangeCount = validValues.filter(value=>value >= range.min && value <= range.max).length;
-    const rate = inRangeCount / validValues.length;
-
-    return {
-        rate:rate,
-        inRangeHours:Math.round(totalHours * rate),
-        totalHours:totalHours
-    };
-}
-
 const environmentScoreRangeDefaults = {
     vpd:{ min:5, max:10 },
     temp:{ min:22, max:28 },
@@ -4092,10 +4068,6 @@ function renderEnvironmentScoreTableRow(label, scores, diffText, dayDiffText){
         '<td class="' + totalClass + '">' + totalHtml + "</td>" +
         dayDiffHtml +
     "</tr>";
-}
-
-function formatRangeValue(value){
-    return Number.isInteger(value) ? String(value) : Number(value).toFixed(1);
 }
 
 function renderEnvironmentScores(p01, p21, p31){
@@ -5074,23 +5046,6 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
 function destroyExistingChart(canvasId){
     const chart = Chart.getChart(canvasId);
     if(chart) chart.destroy();
-}
-
-function createVerticalGradient(context, topColor, midColor, bottomColor){
-    const chart = context.chart;
-    const {ctx, chartArea} = chart;
-
-    if(!chartArea){
-        return topColor;
-    }
-
-    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-    gradient.addColorStop(0, topColor);
-    gradient.addColorStop(0.15, midColor);
-    gradient.addColorStop(0.45, bottomColor);
-    gradient.addColorStop(1, bottomColor);
-
-    return gradient;
 }
 
 function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
