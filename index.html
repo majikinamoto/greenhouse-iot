@@ -127,22 +127,10 @@
 }
 
 .header-time-info {
-    display:flex;
-    align-items:baseline;
-    gap:8px;
-    flex-wrap:nowrap;
-    white-space:nowrap;
     font-size:14px;
     line-height:1.5;
     color:#42566b;
     font-weight:700;
-}
-
-.header-lunar-date {
-    font-size:11px;
-    color:#6d7f90;
-    font-weight:600;
-    opacity:.88;
 }
 
 .header-info-card {
@@ -1225,15 +1213,6 @@ button { margin:5px; }
         font-size:24px;
     }
 
-    .header-time-info {
-        gap:5px;
-        font-size:12px;
-    }
-
-    .header-lunar-date {
-        font-size:10px;
-    }
-
     .control-panel,
     .control-group {
         align-items:stretch;
@@ -1508,10 +1487,7 @@ button { margin:5px; }
                 <div>という意味を込めています。</div>
                 <div>U-Techは、生産者が環境変化に気づき、自ら考え、行動するための支援を目的として開発されたシステムです。</div>
             </div>
-            <div id="headerTimeInfo" class="header-time-info">
-                <span id="headerCurrentDateTime">現在日時：-</span>
-                <span id="headerLunarDate" class="header-lunar-date">旧暦：-</span>
-            </div>
+            <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
         <div id="headerSunInfo" class="header-info-card">
@@ -4739,19 +4715,11 @@ function updateHeaderTimeInfo(){
         parts.day + "日 " +
         String(parts.hour).padStart(2, "0") + ":" +
         String(parts.minute).padStart(2, "0");
-    const lunarText = formatLunarDateText(calculateLunarDate(now));
     const sunrise = calculateNahaSunTime(parts.year, parts.month, parts.day, true);
     const sunset = calculateNahaSunTime(parts.year, parts.month, parts.day, false);
 
     if(timeContainer){
-        const currentDateTime = document.getElementById("headerCurrentDateTime");
-        const lunarDate = document.getElementById("headerLunarDate");
-        if(currentDateTime && lunarDate){
-            currentDateTime.innerText = "現在日時：" + currentText;
-            lunarDate.innerText = lunarText;
-        }else{
-            timeContainer.innerText = "現在日時：" + currentText + "　" + lunarText;
-        }
+        timeContainer.innerText = "現在日時：" + currentText;
     }
 
     if(!sunContainer) return;
