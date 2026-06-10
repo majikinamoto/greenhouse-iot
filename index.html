@@ -127,10 +127,22 @@
 }
 
 .header-time-info {
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    flex-wrap:nowrap;
+    white-space:nowrap;
     font-size:14px;
     line-height:1.5;
     color:#42566b;
     font-weight:700;
+}
+
+.header-lunar-date {
+    font-size:11px;
+    color:#6d7f90;
+    font-weight:600;
+    opacity:.88;
 }
 
 .header-info-card {
@@ -1213,6 +1225,15 @@ button { margin:5px; }
         font-size:24px;
     }
 
+    .header-time-info {
+        gap:5px;
+        font-size:12px;
+    }
+
+    .header-lunar-date {
+        font-size:10px;
+    }
+
     .control-panel,
     .control-group {
         align-items:stretch;
@@ -1487,7 +1508,10 @@ button { margin:5px; }
                 <div>という意味を込めています。</div>
                 <div>U-Techは、生産者が環境変化に気づき、自ら考え、行動するための支援を目的として開発されたシステムです。</div>
             </div>
-            <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
+            <div id="headerTimeInfo" class="header-time-info">
+                <span id="headerCurrentDateTime">現在日時：-</span>
+                <span id="headerLunarDate" class="header-lunar-date">旧暦：-</span>
+            </div>
         </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
         <div id="headerSunInfo" class="header-info-card">
@@ -4526,7 +4550,70 @@ async function loadTideCalendarInfo(){
     updateHeaderTimeInfo();
 }
 
-function calculateMoonInfo(date){
+function parseLunarNumber(value){
+    const text = String(value || "")
+        .replace(/[年月日\s]/g, "")
+        .replace(/初/g, "")
+        .replace(/[闰閏]/g, "");
+    const numeric = Number(text);
+    if(!isNaN(numeric) && numeric > 0) return numeric;
+
+    const map = {
+        "〇":0, "零":0, "正":1,
+        "一":1, "二":2, "三":3, "四":4, "五":5,
+        "六":6, "七":7, "八":8, "九":9,
+        "冬":11, "腊":12, "臘":12
+    };
+    if(map[text] !== undefined) return map[text];
+    if(text === "十") return 10;
+    if(text === "廿") return 20;
+    if(text === "卅") return 30;
+
+    let total = 0;
+    let current = 0;
+    for(const char of text){
+        if(char === "十"){
+            total += current || 1;
+            total *= 10;
+            current = 0;
+        }else if(char === "廿"){
+            total += 20;
+        }else if(char === "卅"){
+            total += 30;
+        }else if(map[char] !== undefined){
+            current = map[char];
+        }
+    }
+    return total + current;
+}
+
+function getIntlLunarDate(date){
+    try{
+        const formatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+            timeZone:"Asia/Tokyo",
+            month:"long",
+            day:"numeric"
+        });
+        const parts = formatter.formatToParts(date);
+        const monthPart = parts.find(part=>part.type === "month");
+        const dayPart = parts.find(part=>part.type === "day");
+        if(!monthPart || !dayPart) return null;
+
+        const month = parseLunarNumber(monthPart.value);
+        const day = parseLunarNumber(dayPart.value);
+        if(!month || !day) return null;
+
+        return {
+            month:month,
+            day:day,
+            isLeap:/[闰閏]|leap/i.test(monthPart.value)
+        };
+    }catch(e){
+        return null;
+    }
+}
+
+function calculateApproximateLunarDate(date){
     const synodicMonth = 29.530588853;
     const baseNewMoon = Date.UTC(2000, 0, 6, 18, 14);
     const jstDate = getJapanDateParts(date);
@@ -4534,8 +4621,36 @@ function calculateMoonInfo(date){
     const daysSinceBase = (currentNoon - baseNewMoon) / (24*60*60*1000);
     const lunation = Math.floor(daysSinceBase / synodicMonth);
     const age = ((daysSinceBase % synodicMonth) + synodicMonth) % synodicMonth;
-    const lunarDay = Math.floor(age) + 1;
-    const lunarMonth = ((lunation + 1) % 12) + 1;
+
+    return {
+        month:((lunation + 1) % 12) + 1,
+        day:Math.floor(age) + 1,
+        isLeap:false
+    };
+}
+
+function calculateLunarDate(date){
+    // Intl中国暦が使えない環境では簡易計算に戻すため、旧暦日付が多少ずれる場合があります。
+    return getIntlLunarDate(date) || calculateApproximateLunarDate(date);
+}
+
+function formatLunarDateText(lunarDate){
+    if(!lunarDate) return "旧暦：-";
+
+    return "旧暦：" +
+        (lunarDate.isLeap ? "閏" : "") +
+        lunarDate.month + "月" +
+        lunarDate.day + "日";
+}
+
+function calculateMoonInfo(date){
+    const synodicMonth = 29.530588853;
+    const baseNewMoon = Date.UTC(2000, 0, 6, 18, 14);
+    const lunarDate = calculateLunarDate(date);
+    const jstDate = getJapanDateParts(date);
+    const currentNoon = Date.UTC(jstDate.year, jstDate.month - 1, jstDate.day, 3, 0);
+    const daysSinceBase = (currentNoon - baseNewMoon) / (24*60*60*1000);
+    const age = ((daysSinceBase % synodicMonth) + synodicMonth) % synodicMonth;
 
     let moonMark = "🌑";
     let phase = "新月";
@@ -4577,8 +4692,9 @@ function calculateMoonInfo(date){
     }
 
     return {
-        lunarMonth:lunarMonth,
-        lunarDay:lunarDay,
+        lunarMonth:lunarDate.month,
+        lunarDay:lunarDate.day,
+        lunarLeap:lunarDate.isLeap,
         age:age,
         moonMark:moonMark,
         phase:phase,
@@ -4596,7 +4712,7 @@ function updateFarmCalendarInfo(now){
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>' +
-        '<span>旧暦：' + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
+        '<span>旧暦：' + (moon.lunarLeap ? '閏' : '') + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>潮：' + moon.tideName + '</span>' +
         '<span>' + tideCalendarText + '</span>' +
         '<div class="moon-progress">' +
@@ -4623,11 +4739,19 @@ function updateHeaderTimeInfo(){
         parts.day + "日 " +
         String(parts.hour).padStart(2, "0") + ":" +
         String(parts.minute).padStart(2, "0");
+    const lunarText = formatLunarDateText(calculateLunarDate(now));
     const sunrise = calculateNahaSunTime(parts.year, parts.month, parts.day, true);
     const sunset = calculateNahaSunTime(parts.year, parts.month, parts.day, false);
 
     if(timeContainer){
-        timeContainer.innerText = "現在日時：" + currentText;
+        const currentDateTime = document.getElementById("headerCurrentDateTime");
+        const lunarDate = document.getElementById("headerLunarDate");
+        if(currentDateTime && lunarDate){
+            currentDateTime.innerText = "現在日時：" + currentText;
+            lunarDate.innerText = lunarText;
+        }else{
+            timeContainer.innerText = "現在日時：" + currentText + "　" + lunarText;
+        }
     }
 
     if(!sunContainer) return;
