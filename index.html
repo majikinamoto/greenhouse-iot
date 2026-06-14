@@ -1498,7 +1498,7 @@ button { margin:5px; }
         </div>
         <div id="farmCalendarInfo" class="header-info-card farm-calendar-card">
             <span class="farm-calendar-title">農作業こよみ</span>
-            <span>旧暦：取得予定</span>
+            <span style="font-weight:bold">旧暦：取得予定</span>
             <span>月齢：取得予定</span>
             <span>月相：取得予定</span>
         </div>
@@ -4660,7 +4660,7 @@ function updateFarmCalendarInfo(now){
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
         '<span>月相：' + moon.phase + '</span>' +
-        '<span>旧暦：' + (moon.lunarLeap ? '閏' : '') + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
+        '<span style="font-weight:bold">旧暦：' + (moon.lunarLeap ? '閏' : '') + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
         '<span>潮：' + moon.tideName + '</span>' +
         '<span>' + tideCalendarText + '</span>' +
         '<div class="moon-progress">' +
