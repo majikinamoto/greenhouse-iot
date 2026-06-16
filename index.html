@@ -327,10 +327,28 @@ button { margin:5px; }
 }
 
 .chart-container {
+    position:relative;
     width:100%;
     min-width:320px;
     height:350px;
     margin-bottom:0;
+}
+
+.chart-no-data {
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    border:1px dashed #b8c3cf;
+    background:#fff;
+    color:#5b6c7f;
+    font-size:13px;
+    line-height:1.6;
+    text-align:center;
+    white-space:pre-line;
+    box-sizing:border-box;
 }
 
 .tab-nav {
@@ -4970,6 +4988,42 @@ function formatNoDataFetchConditions(requests, startTime, endTime){
         " / 期間=" + formatSqlDateTime(startTime) + " ～ " + formatSqlDateTime(endTime);
 }
 
+function setChartNoDataState(canvasId, chart, requests, startTime, endTime){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+
+    const container = canvas.parentElement;
+    if(!container) return;
+
+    let notice = container.querySelector(".chart-no-data");
+
+    if(chart){
+        canvas.style.display = "";
+        if(notice) notice.remove();
+        return;
+    }
+
+    canvas.style.display = "none";
+
+    if(!notice){
+        notice = document.createElement("div");
+        notice.className = "chart-no-data";
+        container.appendChild(notice);
+    }
+
+    notice.innerText = "No data\n" + formatNoDataFetchConditions(requests, startTime, endTime);
+}
+
+function clearChartNoDataState(canvasId){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas || !canvas.parentElement) return;
+
+    canvas.style.display = "";
+
+    const notice = canvas.parentElement.querySelector(".chart-no-data");
+    if(notice) notice.remove();
+}
+
 function parseData(data, minTime){
 
     return data.map(d=>{
@@ -6243,20 +6297,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             .filter(r=>r.error)
             .map(r=>r.error);
 
-        if(!p01.length && !p02.length && !p11.length){
-            const noDataConditions = formatNoDataFetchConditions(
-                [
-                    { userId:userId, pointId:"P01" },
-                    { userId:userId, pointId:"P02" },
-                    { userId:outsideSource.userId, pointId:outsideSource.pointId }
-                ],
-                minTime,
-                now
-            );
-            msg.innerText = "No data（72時間内データなし）\n" + noDataConditions + (errors.length ? "\n" + errors.join(" / ") : "");
-            return;
-        }
-
         if(p01.length){
             const validP01 = p01.filter(d=>
                 d.temp !== null &&
@@ -6303,6 +6343,27 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         diffChart = createDiffChart("diffChart", p01, p02, chartMinTime, now);
 
         voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", voltMinTime, now);
+
+        setChartNoDataState("tempChartP01", tempChartP01, [{ userId:userId, pointId:"P01" }], minTime, now);
+        setChartNoDataState("tempChartP02", tempChartP02, [{ userId:userId, pointId:"P02" }], minTime, now);
+        setChartNoDataState("tempChartP11", tempChartP11, [{ userId:outsideSource.userId, pointId:outsideSource.pointId }], minTime, now);
+        setChartNoDataState("outsideDiffChart", outsideDiffChart, [
+            { userId:userId, pointId:"P01" },
+            { userId:outsideSource.userId, pointId:outsideSource.pointId }
+        ], minTime, now);
+        setChartNoDataState("vaporChart", vaporChart, [{ userId:userId, pointId:"P01" }], minTime, now);
+        setChartNoDataState("solarChart", solarChart, [{ userId:userId, pointId:"P31" }], minTime, now);
+        setChartNoDataState("co2Chart", co2Chart, [{ userId:userId, pointId:"P21" }], minTime, now);
+        setChartNoDataState("co2OutsideChart", co2OutsideChart, [{ userId:userId, pointId:"P26" }], minTime, now);
+        setChartNoDataState("co2DiffChart", co2DiffChart, [
+            { userId:userId, pointId:"P21" },
+            { userId:userId, pointId:"P26" }
+        ], minTime, now);
+        setChartNoDataState("diffChart", diffChart, [
+            { userId:userId, pointId:"P01" },
+            { userId:userId, pointId:"P02" }
+        ], minTime, now);
+        setChartNoDataState("voltChart", voltChart, [{ userId:userId, pointId:"P91" }], voltMinTime, now);
 
         allCharts = [
             tempChartP01,
@@ -6360,6 +6421,7 @@ function destroyCharts(){
         "diffChart",
         "voltChart"
     ].forEach(canvasId=>{
+        clearChartNoDataState(canvasId);
         const chart = Chart.getChart(canvasId);
         if(chart) chart.destroy();
     });
