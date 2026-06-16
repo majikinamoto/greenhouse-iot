@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>U-Tech Monitor</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0" crossorigin="anonymous"></script>
 
 <style>
 
@@ -2208,13 +2208,63 @@ button { margin:5px; }
 
 <script>
 
-window.onerror = function(msg, url, lineNo, columnNo, error) {
+function formatScriptErrorDetails(details){
+    const lines = [
+        "JavaScriptエラー：" + (details.message || "不明なエラー")
+    ];
+
+    if(details.source) lines.push("source:" + details.source);
+    if(details.lineNo !== undefined && details.lineNo !== null && details.lineNo !== "") lines.push("line:" + details.lineNo);
+    if(details.columnNo !== undefined && details.columnNo !== null && details.columnNo !== "") lines.push("col:" + details.columnNo);
+    if(details.stack) lines.push("stack:" + details.stack);
+
+    if(details.message === "Script error." && Number(details.lineNo) === 0){
+        lines.push("補足：外部スクリプト、古いブラウザ、キャッシュ、CDN読み込み失敗の可能性があります");
+    }
+
+    return lines;
+}
+
+function showScriptError(details){
     var message = document.getElementById("message");
+    var lines = formatScriptErrorDetails(details);
+
     if(message){
         message.style.color = "red";
-        message.innerHTML =
-            "JavaScriptエラー：" + msg +
-            "<br>line:" + lineNo;
+        message.innerText = lines.join("\n");
+    }
+
+    console.error("JavaScriptエラー", details);
+}
+
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    showScriptError({
+        message:String(msg || ""),
+        source:url || "",
+        lineNo:lineNo,
+        columnNo:columnNo,
+        stack:error && error.stack ? error.stack : ""
+    });
+};
+
+window.addEventListener("unhandledrejection", function(event){
+    var reason = event.reason || {};
+
+    showScriptError({
+        message:String(reason.message || reason || "Unhandled promise rejection"),
+        source:"",
+        lineNo:"",
+        columnNo:"",
+        stack:reason.stack || ""
+    });
+});
+
+function validateExternalLibraries(){
+    if(typeof Chart === "undefined"){
+        throw new Error("Chart.jsを読み込めません。CDN読み込み失敗、ネットワーク、キャッシュ、または古いブラウザの可能性があります。");
+    }
+    if(typeof Hammer === "undefined"){
+        throw new Error("Hammer.jsを読み込めません。グラフのズーム操作用ライブラリのCDN読み込み失敗、ネットワーク、キャッシュ、または古いブラウザの可能性があります。");
     }
 };
 
@@ -3721,6 +3771,8 @@ function clearSyncedTooltips(){
         }
     });
 }
+
+validateExternalLibraries();
 
 Chart.register(
     chartBackgroundPlugin,
