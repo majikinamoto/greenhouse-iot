@@ -2337,10 +2337,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
-        restoreVpdTargetRange(savedUserId);
-        saveUserIdHistory(savedUserId);
-        alertFormUserId = savedUserId;
-        loadActiveAlertSetting(savedUserId);
+        const restoredUserId = getMainUserIdInputValue();
+        restoreVpdTargetRange(restoredUserId);
+        saveUserIdHistory(restoredUserId);
+        alertFormUserId = restoredUserId;
+        loadActiveAlertSetting(restoredUserId);
     }
 
     updateUserIdHistoryList();
@@ -2488,6 +2489,11 @@ function updateOutsideSourceNote(source){
     note.innerText = source && source.useAlternate
         ? "※user_id " + source.userId + "、point_id " + source.pointId + " から入手"
         : "";
+}
+
+function getMainUserIdInputValue(){
+    const input = document.getElementById("userId");
+    return input ? input.value.trim() : "";
 }
 
 function getAnalysisCompareStorageKey(graphId, field){
@@ -4879,6 +4885,15 @@ async function fetchDataSafe(userId, pointId, range){
             url += `&start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`;
         }
 
+        console.log("[get_data.php fetch]", {
+            input_user_id:getMainUserIdInputValue(),
+            user_id:userId,
+            point_id:pointId,
+            start:range && range.start ? range.start : "",
+            end:range && range.end ? range.end : "",
+            url:url
+        });
+
         if(pointId === "P26"){
             console.log("[CO2_外気_P26] request:", url);
         }
@@ -4928,6 +4943,15 @@ async function fetchDataSafe(userId, pointId, range){
 
         return { pointId, data:[], error:`${pointId}：通信エラー` };
     }
+}
+
+function formatNoDataFetchConditions(requests, startTime, endTime){
+    const requestText = requests
+        .map(request=>"user_id=" + request.userId + " / point_id=" + request.pointId)
+        .join("、");
+
+    return "取得条件：" + requestText +
+        " / 期間=" + formatSqlDateTime(startTime) + " ～ " + formatSqlDateTime(endTime);
 }
 
 function parseData(data, minTime){
@@ -6022,7 +6046,7 @@ async function loadReviewData(){
 
 async function loadData(){
 
-    const userId = document.getElementById("userId").value.trim();
+    const userId = getMainUserIdInputValue();
     const msg = document.getElementById("message");
 
     clearAlertFormIfUserChanged();
@@ -6151,7 +6175,16 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             .map(r=>r.error);
 
         if(!p01.length && !p02.length && !p11.length){
-            msg.innerText = "No data（72時間内データなし）" + (errors.length ? " / " + errors.join(" / ") : "");
+            const noDataConditions = formatNoDataFetchConditions(
+                [
+                    { userId:userId, pointId:"P01" },
+                    { userId:userId, pointId:"P02" },
+                    { userId:outsideSource.userId, pointId:outsideSource.pointId }
+                ],
+                minTime,
+                now
+            );
+            msg.innerText = "No data（72時間内データなし）\n" + noDataConditions + (errors.length ? "\n" + errors.join(" / ") : "");
             return;
         }
 
