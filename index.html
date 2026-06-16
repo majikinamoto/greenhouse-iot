@@ -4885,12 +4885,20 @@ function calculateMoonInfo(date){
     };
 }
 
+function getMoonProgressLeftStyle(age){
+    const synodicMonth = 29.530588853;
+    const progress = Math.max(0, Math.min(1, age / synodicMonth));
+    const progressPercent = (progress * 100).toFixed(3);
+    const edgeOffset = (progress * 32).toFixed(3);
+    return "calc(16px + " + progressPercent + "% - " + edgeOffset + "px)";
+}
+
 function updateFarmCalendarInfo(now){
     const container = document.getElementById("farmCalendarInfo");
     if(!container) return;
 
     const moon = calculateMoonInfo(now);
-    const moonPosition = Math.max(0, Math.min(100, (moon.age / 29.5) * 100));
+    const moonPosition = getMoonProgressLeftStyle(moon.age);
     container.innerHTML =
         '<span class="farm-calendar-title">農作業こよみ</span>' +
         '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
@@ -4902,7 +4910,7 @@ function updateFarmCalendarInfo(now){
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
                 '<span>🌑</span><span>🌒</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌘</span><span>🌑</span>' +
-                '<div class="moon-progress-today" style="left:' + moonPosition.toFixed(1) + '%">▲ 今日</div>' +
+                '<div class="moon-progress-today" style="left:' + moonPosition + '">▲ 今日</div>' +
             '</div>' +
         '</div>';
 }
