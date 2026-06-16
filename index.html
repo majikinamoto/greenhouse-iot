@@ -2343,6 +2343,96 @@ const outsideSourceStorageKeys = {
     pointId:"usui_outside_source_point_id"
 };
 
+const mainChartConfigs = [
+    {
+        key:"insideTempHumidity",
+        canvasId:"tempChartP01",
+        title:"温湿度_内",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P01" }]
+    },
+    {
+        key:"maintenanceTempHumidity",
+        canvasId:"tempChartP02",
+        title:"温湿度_メンテナンス",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P02" }]
+    },
+    {
+        key:"outsideTempHumidity",
+        canvasId:"tempChartP11",
+        title:"温湿度_外",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }]
+    },
+    {
+        key:"outsideDiff",
+        canvasId:"outsideDiffChart",
+        title:"温度差_内外",
+        fields:["temperature"],
+        requests:context=>[
+            { userId:context.userId, pointId:"P01" },
+            { userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }
+        ]
+    },
+    {
+        key:"vapor",
+        canvasId:"vaporChart",
+        title:"飽和水蒸気量/水蒸気量/飽差",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P01" }]
+    },
+    {
+        key:"solarRadiation",
+        canvasId:"solarChart",
+        title:"日射量",
+        fields:["solar_radiation"],
+        requests:context=>[{ userId:context.userId, pointId:"P31" }]
+    },
+    {
+        key:"insideCo2",
+        canvasId:"co2Chart",
+        title:"CO2_内",
+        fields:["co2"],
+        requests:context=>[{ userId:context.userId, pointId:"P21" }]
+    },
+    {
+        key:"outsideCo2",
+        canvasId:"co2OutsideChart",
+        title:"CO2_外気",
+        fields:["co2"],
+        requests:context=>[{ userId:context.userId, pointId:"P26" }]
+    },
+    {
+        key:"co2Diff",
+        canvasId:"co2DiffChart",
+        title:"CO2差",
+        fields:["co2"],
+        requests:context=>[
+            { userId:context.userId, pointId:"P21" },
+            { userId:context.userId, pointId:"P26" }
+        ]
+    },
+    {
+        key:"maintenanceDiff",
+        canvasId:"diffChart",
+        title:"温度差_メンテナンス",
+        fields:["temperature", "humidity"],
+        requests:context=>[
+            { userId:context.userId, pointId:"P01" },
+            { userId:context.userId, pointId:"P02" }
+        ]
+    },
+    {
+        key:"voltage",
+        canvasId:"voltChart",
+        title:"電圧",
+        fields:["voltage"],
+        rangeKey:"voltage",
+        requests:context=>[{ userId:context.userId, pointId:"P91" }]
+    }
+];
+
 const analysisCompareGraphs = ["A", "B", "C"];
 const analysisDiffGraphs = ["B", "C"];
 const alertPointLabels = {
@@ -4981,11 +5071,92 @@ async function fetchDataSafe(userId, pointId, range){
 
 function formatNoDataFetchConditions(requests, startTime, endTime){
     const requestText = requests
-        .map(request=>"user_id=" + request.userId + " / point_id=" + request.pointId)
+        .map(request=>
+            "user_id=" + request.userId +
+            " / point_id=" + request.pointId +
+            (request.fields && request.fields.length ? " / 項目=" + request.fields.join(",") : "")
+        )
         .join("、");
 
-    return "取得条件：" + requestText +
-        " / 期間=" + formatSqlDateTime(startTime) + " ～ " + formatSqlDateTime(endTime);
+    return requestText + " / 期間=" + formatSqlDateTime(startTime) + " ～ " + formatSqlDateTime(endTime);
+}
+
+function getMainChartContext(userId, outsideSource, minTime, now, voltMinTime){
+    return {
+        userId:userId,
+        outsideSource:outsideSource,
+        ranges:{
+            default:{ startTime:minTime, endTime:now },
+            voltage:{ startTime:voltMinTime, endTime:now }
+        }
+    };
+}
+
+function getMainChartRange(config, context){
+    return context.ranges[config.rangeKey || "default"];
+}
+
+function getMainChartRequests(config, context){
+    const fields = config.fields || [];
+    const rangeKey = config.rangeKey || "default";
+
+    return config.requests(context).map(request=>({
+        ...request,
+        fields:fields,
+        rangeKey:rangeKey
+    }));
+}
+
+function getFetchRequestKey(request){
+    return [
+        request.userId,
+        request.pointId,
+        request.rangeKey || "default"
+    ].join("|");
+}
+
+function buildMainChartFetchRequests(context){
+    const seen = {};
+    const requests = [];
+
+    mainChartConfigs.forEach(config=>{
+        getMainChartRequests(config, context).forEach(request=>{
+            const key = getFetchRequestKey(request);
+            if(seen[key]) return;
+
+            seen[key] = true;
+            requests.push(request);
+        });
+    });
+
+    return requests;
+}
+
+function getFetchRange(request, context){
+    const range = context.ranges[request.rangeKey || "default"];
+    if(!range || request.rangeKey === "default") return null;
+
+    return {
+        start:formatSqlDateTime(range.startTime),
+        end:formatSqlDateTime(range.endTime)
+    };
+}
+
+function getFetchedResult(resultMap, userId, pointId, rangeKey){
+    return resultMap[[userId, pointId, rangeKey || "default"].join("|")] || { data:[], error:null };
+}
+
+function applyMainChartNoDataStates(chartMap, context){
+    mainChartConfigs.forEach(config=>{
+        const range = getMainChartRange(config, context);
+        setChartNoDataState(
+            config.canvasId,
+            chartMap[config.key],
+            getMainChartRequests(config, context),
+            range.startTime,
+            range.endTime
+        );
+    });
 }
 
 function setChartNoDataState(canvasId, chart, requests, startTime, endTime){
@@ -5011,7 +5182,7 @@ function setChartNoDataState(canvasId, chart, requests, startTime, endTime){
         container.appendChild(notice);
     }
 
-    notice.innerText = "No data\n" + formatNoDataFetchConditions(requests, startTime, endTime);
+    notice.innerText = "No data：" + formatNoDataFetchConditions(requests, startTime, endTime);
 }
 
 function clearChartNoDataState(canvasId){
@@ -6215,41 +6386,39 @@ async function loadData(){
         scoreMinTime.setHours(0,0,0,0);
         scoreMinTime.setDate(scoreMinTime.getDate() - 30);
 
-        const results = await Promise.all([
-    fetchDataSafe(userId,"P01"),
-    fetchDataSafe(userId,"P02"),
-    fetchDataSafe(outsideSource.userId,outsideSource.pointId),
-    fetchDataSafe(userId,"P31"),
-    fetchDataSafe(userId,"P21"),
-    fetchDataSafe(userId,"P26"),
-    fetchDataSafe(userId,"P91", {
-        start:formatSqlDateTime(voltMinTime),
-        end:formatSqlDateTime(now)
-    }),
-    fetchDataSafe(userId,"P01", {
-        start:formatSqlDateTime(scoreMinTime),
-        end:formatSqlDateTime(now)
-    }),
-    fetchDataSafe(userId,"P21", {
-        start:formatSqlDateTime(scoreMinTime),
-        end:formatSqlDateTime(now)
-    }),
-    fetchDataSafe(userId,"P31", {
-        start:formatSqlDateTime(scoreMinTime),
-        end:formatSqlDateTime(now)
-    })
-]);
+        const chartContext = getMainChartContext(userId, outsideSource, minTime, now, voltMinTime);
+        const chartFetchRequests = buildMainChartFetchRequests(chartContext);
+        const scoreFetchRequests = [
+            { userId:userId, pointId:"P01", rangeKey:"score" },
+            { userId:userId, pointId:"P21", rangeKey:"score" },
+            { userId:userId, pointId:"P31", rangeKey:"score" }
+        ];
+        const fetchRequests = chartFetchRequests.concat(scoreFetchRequests);
+        const results = await Promise.all(fetchRequests.map(request=>{
+            const range = request.rangeKey === "score"
+                ? {
+                    start:formatSqlDateTime(scoreMinTime),
+                    end:formatSqlDateTime(now)
+                }
+                : getFetchRange(request, chartContext);
 
-        const resultP01 = results[0];
-        const resultP02 = results[1];
-        const resultP11 = results[2];
-const resultP31 = results[3];
-const resultP21 = results[4];
-const resultP26 = results[5];
-const resultP91 = results[6];
-const resultScoreP01 = results[7];
-const resultScoreP21 = results[8];
-const resultScoreP31 = results[9];
+            return fetchDataSafe(request.userId, request.pointId, range);
+        }));
+        const resultMap = {};
+        fetchRequests.forEach((request, index)=>{
+            resultMap[getFetchRequestKey(request)] = results[index];
+        });
+
+        const resultP01 = getFetchedResult(resultMap, userId, "P01");
+        const resultP02 = getFetchedResult(resultMap, userId, "P02");
+        const resultP11 = getFetchedResult(resultMap, outsideSource.userId, outsideSource.pointId);
+        const resultP31 = getFetchedResult(resultMap, userId, "P31");
+        const resultP21 = getFetchedResult(resultMap, userId, "P21");
+        const resultP26 = getFetchedResult(resultMap, userId, "P26");
+        const resultP91 = getFetchedResult(resultMap, userId, "P91", "voltage");
+        const resultScoreP01 = getFetchedResult(resultMap, userId, "P01", "score");
+        const resultScoreP21 = getFetchedResult(resultMap, userId, "P21", "score");
+        const resultScoreP31 = getFetchedResult(resultMap, userId, "P31", "score");
 
         const p01 = parseData(resultP01.data, minTime);
         const p02 = parseData(resultP02.data, minTime);
@@ -6344,26 +6513,19 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
 
         voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", voltMinTime, now);
 
-        setChartNoDataState("tempChartP01", tempChartP01, [{ userId:userId, pointId:"P01" }], minTime, now);
-        setChartNoDataState("tempChartP02", tempChartP02, [{ userId:userId, pointId:"P02" }], minTime, now);
-        setChartNoDataState("tempChartP11", tempChartP11, [{ userId:outsideSource.userId, pointId:outsideSource.pointId }], minTime, now);
-        setChartNoDataState("outsideDiffChart", outsideDiffChart, [
-            { userId:userId, pointId:"P01" },
-            { userId:outsideSource.userId, pointId:outsideSource.pointId }
-        ], minTime, now);
-        setChartNoDataState("vaporChart", vaporChart, [{ userId:userId, pointId:"P01" }], minTime, now);
-        setChartNoDataState("solarChart", solarChart, [{ userId:userId, pointId:"P31" }], minTime, now);
-        setChartNoDataState("co2Chart", co2Chart, [{ userId:userId, pointId:"P21" }], minTime, now);
-        setChartNoDataState("co2OutsideChart", co2OutsideChart, [{ userId:userId, pointId:"P26" }], minTime, now);
-        setChartNoDataState("co2DiffChart", co2DiffChart, [
-            { userId:userId, pointId:"P21" },
-            { userId:userId, pointId:"P26" }
-        ], minTime, now);
-        setChartNoDataState("diffChart", diffChart, [
-            { userId:userId, pointId:"P01" },
-            { userId:userId, pointId:"P02" }
-        ], minTime, now);
-        setChartNoDataState("voltChart", voltChart, [{ userId:userId, pointId:"P91" }], voltMinTime, now);
+        applyMainChartNoDataStates({
+            insideTempHumidity:tempChartP01,
+            maintenanceTempHumidity:tempChartP02,
+            outsideTempHumidity:tempChartP11,
+            outsideDiff:outsideDiffChart,
+            vapor:vaporChart,
+            solarRadiation:solarChart,
+            insideCo2:co2Chart,
+            outsideCo2:co2OutsideChart,
+            co2Diff:co2DiffChart,
+            maintenanceDiff:diffChart,
+            voltage:voltChart
+        }, chartContext);
 
         allCharts = [
             tempChartP01,
