@@ -2599,8 +2599,13 @@ function getAnalysisCharts(){
 
 function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
     const canvasId = "analysisChart" + graphId;
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas) return null;
+
     destroyExistingChart(canvasId);
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
+    analysisCompareCharts[graphId] = null;
+    if(!hasChartSourceData(parsed)) return null;
     const axis = getAnalysisTempAxis(graphId);
     const lineColor = graphId === "A" ? "rgb(0, 160, 80)" : "rgb(70, 130, 220)";
     const fillStops = graphId === "A"
@@ -2630,14 +2635,18 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
         }
     };
 
-    const chart = new Chart(document.getElementById(canvasId),{
+    const chartData = parsed
+        .filter(d=>d.temp !== null && !isNaN(d.temp))
+        .map(d=>({x:d.xValue,y:d.temp}));
+
+    if(!chartData.length) return null;
+
+    const chart = new Chart(canvas,{
         type:"line",
         data:{
             datasets:[{
                 label:"温度 (℃)",
-                data:parsed
-                    .filter(d=>d.temp !== null && !isNaN(d.temp))
-                    .map(d=>({x:d.xValue,y:d.temp})),
+                data:chartData,
                 borderColor:lineColor,
                 backgroundColor:function(context){
                     const chart = context.chart;
@@ -2865,8 +2874,12 @@ function setAnalysisDiffTitle(targetGraphId){
 
 function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
     const canvasId = "analysisDiffChart" + targetGraphId;
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas) return null;
+
     destroyExistingChart(canvasId);
     allCharts = allCharts.filter(c=>!c || !c.canvas || c.canvas.id !== canvasId);
+    analysisDiffCharts[targetGraphId] = null;
     setAnalysisDiffTitle(targetGraphId);
 
     const axis = getAnalysisDiffAxis(targetGraphId);
@@ -2892,12 +2905,15 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
         below:"rgba(120, 120, 120, 0.18)"
     };
 
-    const chart = new Chart(document.getElementById(canvasId),{
+    const diffData = calcAnalysisDiffData(analysisCompareData.A, analysisCompareData[targetGraphId]);
+    if(!diffData.length) return null;
+
+    const chart = new Chart(canvas,{
         type:"line",
         data:{
             datasets:[{
                 label:"温度差 (℃)",
-                data:calcAnalysisDiffData(analysisCompareData.A, analysisCompareData[targetGraphId]),
+                data:diffData,
                 borderColor:"rgba(0, 0, 0, 0.6)",
                 backgroundColor:"rgba(0, 0, 0, 0.08)",
                 pointBackgroundColor:"rgba(0, 0, 0, 0.6)",
@@ -5173,11 +5189,30 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
 }
 
 function destroyExistingChart(canvasId){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+
     const chart = Chart.getChart(canvasId);
     if(chart) chart.destroy();
 }
 
+function getChartCanvas(canvasId){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas){
+        console.warn("[Chart skip] canvas not found:", canvasId);
+        return null;
+    }
+    return canvas;
+}
+
+function hasChartSourceData(data){
+    return Array.isArray(data) && data.length > 0;
+}
+
 function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
+
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
 
     destroyExistingChart(canvasId);
 
@@ -5185,16 +5220,22 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
     const humColor = "rgb(0, 100, 255)";
     const tempColor = "rgb(255, 0, 0)";
+    const humData = parsed
+        .filter(d=>d.hum !== null && !isNaN(d.hum))
+        .map(d=>({x:d.xValue,y:d.hum}));
+    const tempData = parsed
+        .filter(d=>d.temp !== null && !isNaN(d.temp))
+        .map(d=>({x:d.xValue,y:d.temp}));
 
-    return new Chart(document.getElementById(canvasId),{
+    if(!humData.length && !tempData.length) return null;
+
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[
                 {
                     label:"湿度 (%)",
-                    data:parsed
-                        .filter(d=>d.hum !== null && !isNaN(d.hum))
-                        .map(d=>({x:d.xValue,y:d.hum})),
+                    data:humData,
                     yAxisID:"yHum",
                     borderColor:humColor,
                     backgroundColor:function(context){
@@ -5218,9 +5259,7 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
                 },
                 {
                     label:"温度 (℃)",
-                    data:parsed
-                        .filter(d=>d.temp !== null && !isNaN(d.temp))
-                        .map(d=>({x:d.xValue,y:d.temp})),
+                    data:tempData,
                     yAxisID:"yTemp",
                     borderColor:tempColor,
                     backgroundColor:function(context){
@@ -5288,6 +5327,9 @@ yTemp:{
 
 function createVaporChart(canvasId, parsed, minTime, maxTime){
 
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
@@ -5301,19 +5343,28 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             color:"#000"
         }
     };
+    const vaporSaturatedData = parsed
+        .filter(d=>d.temp !== null && !isNaN(d.temp))
+        .map(d=>({
+            x:d.xValue,
+            y:calcVapor(d.temp,100)
+    }));
+    const vaporData = parsed
+        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+        .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)}));
+    const vaporDeficitData = parsed
+        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
+        .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)}));
 
-    return new Chart(document.getElementById(canvasId),{
+    if(!vaporSaturatedData.length && !vaporData.length && !vaporDeficitData.length) return null;
+
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[
 {
     label:"飽和水蒸気量 (g/㎥)",
-    data:parsed
-        .filter(d=>d.temp !== null && !isNaN(d.temp))
-        .map(d=>({
-            x:d.xValue,
-            y:calcVapor(d.temp,100)
-    })),
+    data:vaporSaturatedData,
     borderColor:"rgb(255, 0, 0)",
     backgroundColor:"rgba(255, 0, 0, 0.14)",
     pointBackgroundColor:"rgb(255, 0, 0)",
@@ -5325,9 +5376,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
 
                 {
                     label:"水蒸気量 (g/㎥)",
-                    data:parsed
-                        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-                        .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)})),
+                    data:vaporData,
                     borderColor:"rgb(75, 192, 192)",
                     backgroundColor:"rgba(75, 192, 192, 0.14)",
                     pointBackgroundColor:"rgb(75, 192, 192)",
@@ -5338,9 +5387,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
                 },
                 {
                     label:"飽差 (g/㎥)",
-                    data:parsed
-                        .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-                        .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)})),
+                    data:vaporDeficitData,
                     borderColor:"rgb(255, 159, 64)",
                     backgroundColor:"rgba(255, 159, 64, 0.20)",
                     pointBackgroundColor:"rgb(255, 159, 64)",
@@ -5363,6 +5410,9 @@ yRight:createRightYAxis(yAxisOptions)
 }
 
 function createDiffChart(canvasId, p01, p02, minTime, maxTime){
+
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(p01) || !hasChartSourceData(p02)) return null;
 
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
@@ -5423,7 +5473,9 @@ p01.forEach(d=>{
         }
     });
 
-    return new Chart(document.getElementById(canvasId),{
+    if(!tempDiffData.length && !humDiffData.length) return null;
+
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[
@@ -5486,6 +5538,9 @@ yRight:createRightYAxis(yAxisOptions)
 
 function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
 
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(p01) || !hasChartSourceData(p11)) return null;
+
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
@@ -5534,7 +5589,9 @@ function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
 
     });
 
-    return new Chart(document.getElementById(canvasId),{
+    if(!tempDiffData.length) return null;
+
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[{
@@ -5584,6 +5641,9 @@ yRight:createRightYAxis(yAxisOptions)
 
 function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
 
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(p21) || !hasChartSourceData(p26)) return null;
+
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
 
@@ -5628,7 +5688,9 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
         }
     });
 
-    return new Chart(document.getElementById(canvasId),{
+    if(!co2DiffData.length) return null;
+
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[{
@@ -5678,6 +5740,9 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
 
 function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime){
 
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+
     destroyExistingChart(canvasId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
     const dataKey = key === "co2Outside" ? "co2" : key;
@@ -5715,6 +5780,12 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
     }
 
     const axis = getSingleAxis(key);
+    const chartData = parsed
+        .filter(d=>d[dataKey] !== null && !isNaN(d[dataKey]))
+        .map(d=>({x:d.xValue,y:d[dataKey]}));
+
+    if(!chartData.length) return null;
+
     const backgroundColor = fillStops
         ? function(context){
             const {chart} = context;
@@ -5756,14 +5827,12 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
         }
     };
 
-    return new Chart(document.getElementById(canvasId),{
+    return new Chart(canvas,{
         type:"line",
         data:{
             datasets:[{
                 label:label,
-                data:parsed
-                    .filter(d=>d[dataKey] !== null && !isNaN(d[dataKey]))
-                    .map(d=>({x:d.xValue,y:d[dataKey]})),
+                data:chartData,
                 borderColor:color,
                 backgroundColor:backgroundColor,
                 pointBackgroundColor:color,
@@ -6247,7 +6316,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             co2DiffChart,
             diffChart,
             voltChart
-        ];
+        ].filter(Boolean);
 
         allCharts.forEach(saveInitialScaleLimits);
         applyMobileChartRanges(chartMinTime, now);
@@ -6266,6 +6335,17 @@ function destroyCharts(){
         if(c) c.destroy();
     });
     allCharts = [];
+    tempChartP01 = null;
+    tempChartP02 = null;
+    tempChartP11 = null;
+    diffChart = null;
+    outsideDiffChart = null;
+    solarChart = null;
+    voltChart = null;
+    vaporChart = null;
+    co2Chart = null;
+    co2OutsideChart = null;
+    co2DiffChart = null;
 
     [
         "tempChartP01",
