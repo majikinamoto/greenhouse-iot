@@ -107,8 +107,8 @@ try {
     $tideStations = [
         "NH" => ["file" => "NH", "code" => "NH", "name" => "那覇"],
         "NAHA" => ["file" => "NH", "code" => "NH", "name" => "那覇"],
-        "HIRARA" => ["file" => "HR", "code" => "HR", "name" => "平良"],
-        "HR" => ["file" => "HR", "code" => "HR", "name" => "平良"],
+        "HIRARA" => ["file" => "R1", "code" => "R1", "name" => "平良"],
+        "R1" => ["file" => "R1", "code" => "R1", "name" => "平良"],
         "ISHIGAKI" => ["file" => "IS", "code" => "IS", "name" => "石垣"],
         "IS" => ["file" => "IS", "code" => "IS", "name" => "石垣"]
     ];
