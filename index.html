@@ -156,6 +156,7 @@
 
 #headerSunInfo,
 #farmCalendarInfo,
+#tomorrowForecastInfo,
 #farmCalendarInfo .farm-calendar-title,
 #farmCalendarInfo .moon-progress-track,
 #farmCalendarInfo .moon-progress-today {
@@ -165,6 +166,14 @@
 .farm-calendar-title {
     font-weight:700;
     color:#25384d;
+}
+
+.tomorrow-forecast-card {
+    margin-top:5px;
+}
+
+.tomorrow-forecast-title {
+    font-weight:700;
 }
 
 .moon-progress {
@@ -1520,6 +1529,9 @@ button { margin:5px; }
             <span>月齢：取得予定</span>
             <span>月相：取得予定</span>
         </div>
+        <div id="tomorrowForecastInfo" class="header-info-card tomorrow-forecast-card">
+            <span>予報取得中</span>
+        </div>
     </div>
 </header>
 
@@ -2441,6 +2453,14 @@ const alertPointLabels = {
     P02:"P02 メンテ用ハウス内",
     P11:"P11 外気"
 };
+const JMA_AREAS = {
+    naha:{
+        label:"那覇",
+        officeCode:"471000",
+        areaName:"本島中南部"
+    }
+};
+const selectedJmaAreaKey = "naha";
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -2494,6 +2514,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
     updateHeaderTimeInfo();
     loadTideCalendarInfo();
+    loadTomorrowForecast();
     setInterval(updateHeaderTimeInfo, 60*1000);
 });
 
@@ -4955,6 +4976,164 @@ function updateHeaderTimeInfo(){
         "<span>日の入り：" + sunset + "</span>" +
         "<span>昼：" + formatDurationMinutes(dayMinutes) + "</span>" +
         "<span>夜：" + formatDurationMinutes(nightMinutes) + "</span>";
+}
+
+function getJapanDateKey(date){
+    const parts = getJapanDateParts(date);
+    return parts.year + "-" +
+        String(parts.month).padStart(2, "0") + "-" +
+        String(parts.day).padStart(2, "0");
+}
+
+function findJmaArea(areas, names){
+    if(!Array.isArray(areas)) return null;
+    return areas.find(item=>{
+        const name = item && item.area && item.area.name;
+        return names.includes(name);
+    }) || null;
+}
+
+function getJmaValuesForDate(timeSeries, area, field, dateKey){
+    if(!timeSeries || !area || !Array.isArray(timeSeries.timeDefines) || !Array.isArray(area[field])){
+        return [];
+    }
+    return timeSeries.timeDefines.reduce((values, timeText, index)=>{
+        if(typeof timeText === "string" && timeText.slice(0, 10) === dateKey && area[field][index] !== undefined){
+            values.push(area[field][index]);
+        }
+        return values;
+    }, []);
+}
+
+function toNumberList(values){
+    if(!Array.isArray(values)) return [];
+    return values.map(value=>{
+        const normalized = String(value == null ? "" : value).replace(/[０-９．]/g, char=>{
+            return "０１２３４５６７８９．".indexOf(char) === 10 ? "." : String("０１２３４５６７８９．".indexOf(char));
+        });
+        const match = normalized.match(/-?\d+(?:\.\d+)?/);
+        return match ? Number(match[0]) : NaN;
+    }).filter(value=>Number.isFinite(value));
+}
+
+function getAllJmaTimeSeries(payload){
+    if(!Array.isArray(payload)) return [];
+    return payload.reduce((series, item)=>{
+        if(item && Array.isArray(item.timeSeries)){
+            return series.concat(item.timeSeries);
+        }
+        return series;
+    }, []);
+}
+
+function extractRepresentativeWindDirection(windText){
+    if(!windText) return "";
+    const directions = ["北北東","東北東","東南東","南南東","南南西","西南西","西北西","北北西","北東","南東","南西","北西","北","東","南","西"];
+    const text = String(windText);
+    return directions.find(direction=>text.includes(direction + "の風") || text.includes(direction)) || text;
+}
+
+function parseTomorrowForecast(payload, areaConfig){
+    const tomorrow = new Date(Date.now() + 24*60*60*1000);
+    const dateKey = getJapanDateKey(tomorrow);
+    const seriesList = getAllJmaTimeSeries(payload);
+    const areaNames = [areaConfig.areaName, areaConfig.label];
+    const pointNames = [areaConfig.label, areaConfig.areaName];
+    const result = {
+        maxTemp:null,
+        minTemp:null,
+        pop:null,
+        windDirection:"",
+        windSpeedMin:null,
+        windSpeedMax:null
+    };
+
+    seriesList.forEach(series=>{
+        const forecastArea = findJmaArea(series.areas, areaNames);
+        if(forecastArea){
+            const pops = toNumberList(getJmaValuesForDate(series, forecastArea, "pops", dateKey));
+            if(pops.length){
+                result.pop = result.pop === null ? Math.max(...pops) : Math.max(result.pop, ...pops);
+            }
+
+            const winds = getJmaValuesForDate(series, forecastArea, "winds", dateKey).filter(Boolean);
+            if(!result.windDirection && winds.length){
+                result.windDirection = extractRepresentativeWindDirection(winds[0]);
+            }
+
+            const speedFields = ["windSpeeds","windSpeed","wind_speed","windVelocities","windVelocity","speeds"];
+            speedFields.forEach(field=>{
+                const speeds = toNumberList(getJmaValuesForDate(series, forecastArea, field, dateKey));
+                if(speeds.length){
+                    const min = Math.min(...speeds);
+                    const max = Math.max(...speeds);
+                    result.windSpeedMin = result.windSpeedMin === null ? min : Math.min(result.windSpeedMin, min);
+                    result.windSpeedMax = result.windSpeedMax === null ? max : Math.max(result.windSpeedMax, max);
+                }
+            });
+        }
+
+        const tempArea = findJmaArea(series.areas, pointNames);
+        if(tempArea){
+            const maxTemps = toNumberList(getJmaValuesForDate(series, tempArea, "tempsMax", dateKey));
+            const minTemps = toNumberList(getJmaValuesForDate(series, tempArea, "tempsMin", dateKey));
+            const temps = toNumberList(getJmaValuesForDate(series, tempArea, "temps", dateKey));
+
+            if(maxTemps.length){
+                result.maxTemp = Math.max(...maxTemps);
+            }
+            if(minTemps.length){
+                result.minTemp = Math.min(...minTemps);
+            }
+            if(temps.length){
+                if(result.maxTemp === null) result.maxTemp = Math.max(...temps);
+                if(result.minTemp === null) result.minTemp = Math.min(...temps);
+            }
+        }
+    });
+
+    return result;
+}
+
+function formatForecastValue(value, unit){
+    return value === null || value === undefined || value === "" ? "-" : Math.round(value) + unit;
+}
+
+function renderTomorrowForecast(forecast, areaConfig){
+    const container = document.getElementById("tomorrowForecastInfo");
+    if(!container) return;
+
+    const windSpeedText = forecast.windSpeedMin !== null && forecast.windSpeedMax !== null
+        ? " " + Math.round(forecast.windSpeedMin) + "〜" + Math.round(forecast.windSpeedMax) + "m/s"
+        : "";
+    const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
+
+    container.innerHTML =
+        '<span class="tomorrow-forecast-title">🌤 明日の予報</span>' +
+        '<span>最高 ' + formatForecastValue(forecast.maxTemp, "℃") + '</span>' +
+        '<span>最低 ' + formatForecastValue(forecast.minTemp, "℃") + '</span>' +
+        '<span>降水確率 ' + formatForecastValue(forecast.pop, "%") + '</span>' +
+        '<span>風：' + escapeHtml(windText) + '</span>';
+}
+
+async function loadTomorrowForecast(){
+    const container = document.getElementById("tomorrowForecastInfo");
+    if(!container) return;
+
+    const areaConfig = JMA_AREAS[selectedJmaAreaKey] || JMA_AREAS.naha;
+    container.innerHTML = "<span>予報取得中</span>";
+
+    try{
+        const res = await fetch("https://www.jma.go.jp/bosai/forecast/data/forecast/" + areaConfig.officeCode + ".json", { cache:"no-store" });
+        if(!res.ok) throw new Error("JMA forecast fetch failed: " + res.status);
+
+        const payload = await res.json();
+        const forecast = parseTomorrowForecast(payload, areaConfig);
+        renderTomorrowForecast(forecast, areaConfig);
+    }catch(error){
+        console.warn(error);
+        container.innerHTML = "<span>予報を取得できませんでした</span>";
+    }
 }
 
 function formatSqlDateTime(date){
