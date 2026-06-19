@@ -104,19 +104,29 @@ try {
     $month = (int)$date->format("n");
     $day = (int)$date->format("j");
     $year2 = (int)$date->format("y");
+    $tideStations = [
+        "NH" => ["file" => "NH", "code" => "NH", "name" => "那覇"],
+        "NAHA" => ["file" => "NH", "code" => "NH", "name" => "那覇"],
+        "HIRARA" => ["file" => "HR", "code" => "HR", "name" => "平良"],
+        "HR" => ["file" => "HR", "code" => "HR", "name" => "平良"],
+        "ISHIGAKI" => ["file" => "IS", "code" => "IS", "name" => "石垣"],
+        "IS" => ["file" => "IS", "code" => "IS", "name" => "石垣"]
+    ];
+    $stationKey = strtoupper(trim((string)($_GET["station"] ?? "NH")));
+    $stationInfo = $tideStations[$stationKey] ?? $tideStations["NH"];
 
     $cacheDir = __DIR__ . "/cache";
     if (!is_dir($cacheDir)) {
         @mkdir($cacheDir, 0775, true);
     }
 
-    $cacheFile = $cacheDir . "/jma_tide_NH_" . $year . ".txt";
+    $cacheFile = $cacheDir . "/jma_tide_" . $stationInfo["file"] . "_" . $year . ".txt";
     $body = null;
 
     if (is_file($cacheFile) && time() - filemtime($cacheFile) < 30 * 24 * 60 * 60) {
         $body = file_get_contents($cacheFile);
     } else {
-        $url = "https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/" . $year . "/NH.txt";
+        $url = "https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/" . $year . "/" . $stationInfo["file"] . ".txt";
         [$body, $error] = fetch_url($url);
 
         if ($body === null) {
@@ -144,7 +154,7 @@ try {
         $rowDay = (int)trim(substr($row, 76, 2));
         $station = trim(substr($row, 78, 2));
 
-        if ($rowYear === $year2 && $rowMonth === $month && $rowDay === $day && $station === "NH") {
+        if ($rowYear === $year2 && $rowMonth === $month && $rowDay === $day && $station === $stationInfo["code"]) {
             $line = $row;
             break;
         }
@@ -153,14 +163,14 @@ try {
     if ($line === null) {
         send_json([
             "success" => false,
-            "error" => "指定日の那覇潮位表データが見つかりません"
+            "error" => "指定日の" . $stationInfo["name"] . "潮位表データが見つかりません"
         ], 404);
     }
 
     send_json([
         "success" => true,
-        "station" => "NH",
-        "station_name" => "那覇",
+        "station" => $stationInfo["code"],
+        "station_name" => $stationInfo["name"],
         "date" => $date->format("Y-m-d"),
         "high_tides" => parse_tide_items(substr($line, 80, 28)),
         "low_tides" => parse_tide_items(substr($line, 108, 28)),

@@ -1517,6 +1517,10 @@ button { margin:5px; }
             <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         </div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
+        <div class="header-info-card">
+            <label for="utechAreaSelect">地域：</label>
+            <select id="utechAreaSelect" onchange="handleUtechAreaChange()"></select>
+        </div>
         <div id="headerSunInfo" class="header-info-card">
             <span>那覇 日の出：-</span>
             <span>日の入り：-</span>
@@ -2475,14 +2479,46 @@ const alertPointLabels = {
     P02:"P02 メンテ用ハウス内",
     P11:"P11 外気"
 };
-const JMA_AREAS = {
+const UTECH_AREAS = {
     naha:{
         label:"那覇",
-        officeCode:"471000",
-        areaName:"本島中南部"
+        lat:26.2124,
+        lon:127.6792,
+        tideStation:"NH",
+        jmaOfficeCode:"471000",
+        jmaAreaName:"本島中南部",
+        jmaTempAreaName:"那覇"
+    },
+    nago:{
+        label:"名護",
+        lat:26.5915,
+        lon:127.9773,
+        tideStation:"NH",
+        jmaOfficeCode:"471000",
+        jmaAreaName:"本島北部",
+        jmaTempAreaName:"名護"
+    },
+    miyako:{
+        label:"宮古",
+        lat:24.8056,
+        lon:125.2811,
+        tideStation:"HIRARA",
+        jmaOfficeCode:"473000",
+        jmaAreaName:"宮古島地方",
+        jmaTempAreaName:"宮古島"
+    },
+    ishigaki:{
+        label:"石垣",
+        lat:24.3407,
+        lon:124.1556,
+        tideStation:"ISHIGAKI",
+        jmaOfficeCode:"474000",
+        jmaAreaName:"石垣島地方",
+        jmaTempAreaName:"石垣島"
     }
 };
-const selectedJmaAreaKey = "naha";
+const UTECH_AREA_STORAGE_KEY = "utechSelectedArea";
+let selectedUtechAreaKey = "naha";
 
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
@@ -2499,6 +2535,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     restoreOutsideSourceSetting();
     restoreAnalysisCompareSettings();
     restoreEnvironmentScoreRanges();
+    restoreUtechAreaSelection();
     handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
@@ -4692,9 +4729,38 @@ function normalizeHours(value){
     return ((value % 24) + 24) % 24;
 }
 
-function calculateNahaSunTime(year, month, day, isSunrise){
-    const latitude = 26.2124;
-    const longitude = 127.6792;
+function getSelectedUtechArea(){
+    return UTECH_AREAS[selectedUtechAreaKey] || UTECH_AREAS.naha;
+}
+
+function restoreUtechAreaSelection(){
+    const select = document.getElementById("utechAreaSelect");
+    const savedKey = localStorage.getItem(UTECH_AREA_STORAGE_KEY);
+    selectedUtechAreaKey = UTECH_AREAS[savedKey] ? savedKey : "naha";
+
+    if(!select) return;
+
+    select.innerHTML = Object.keys(UTECH_AREAS).map(key=>{
+        const area = UTECH_AREAS[key];
+        return '<option value="' + key + '">' + escapeHtml(area.label) + '</option>';
+    }).join("");
+    select.value = selectedUtechAreaKey;
+}
+
+function handleUtechAreaChange(){
+    const select = document.getElementById("utechAreaSelect");
+    const key = select && UTECH_AREAS[select.value] ? select.value : "naha";
+    selectedUtechAreaKey = key;
+    localStorage.setItem(UTECH_AREA_STORAGE_KEY, key);
+    tideCalendarText = "満潮・干潮：読み込み中...";
+    updateHeaderTimeInfo();
+    loadTideCalendarInfo();
+    loadTomorrowForecast();
+}
+
+function calculateSunTime(year, month, day, isSunrise, area){
+    const latitude = area && Number.isFinite(area.lat) ? area.lat : 26.2124;
+    const longitude = area && Number.isFinite(area.lon) ? area.lon : 127.6792;
     const zenith = 90.833;
     const dayOfYear = getDayOfYear(year, month, day);
     const lngHour = longitude / 15;
@@ -4759,19 +4825,21 @@ function formatTideTimes(items){
 }
 
 async function loadTideCalendarInfo(){
+    const area = getSelectedUtechArea();
     try{
-        const res = await fetch("get_tide_calendar.php", { cache:"no-store" });
+        const url = "get_tide_calendar.php?station=" + encodeURIComponent(area.tideStation || "NH");
+        const res = await fetch(url, { cache:"no-store" });
         const result = await res.json();
 
         if(!res.ok || !result.success){
             throw new Error(result.error || "潮汐情報を取得できません");
         }
 
-        tideCalendarText = "那覇 満潮：" + formatTideTimes(result.high_tides) +
+        tideCalendarText = area.label + " 満潮：" + formatTideTimes(result.high_tides) +
             "　干潮：" + formatTideTimes(result.low_tides);
 
     }catch(e){
-        tideCalendarText = "満潮・干潮：取得できません";
+        tideCalendarText = area.label + " 満潮：-　干潮：-";
     }
 
     updateHeaderTimeInfo();
@@ -4966,6 +5034,7 @@ function updateHeaderTimeInfo(){
     if(!timeContainer && !sunContainer && !farmContainer) return;
 
     const now = new Date();
+    const area = getSelectedUtechArea();
     updateFarmCalendarInfo(now);
     const parts = getJapanDateParts(now);
     const currentText =
@@ -4974,8 +5043,8 @@ function updateHeaderTimeInfo(){
         parts.day + "日 " +
         String(parts.hour).padStart(2, "0") + ":" +
         String(parts.minute).padStart(2, "0");
-    const sunrise = calculateNahaSunTime(parts.year, parts.month, parts.day, true);
-    const sunset = calculateNahaSunTime(parts.year, parts.month, parts.day, false);
+    const sunrise = calculateSunTime(parts.year, parts.month, parts.day, true, area);
+    const sunset = calculateSunTime(parts.year, parts.month, parts.day, false, area);
 
     if(timeContainer){
         timeContainer.innerText = "現在日時：" + currentText;
@@ -4994,7 +5063,7 @@ function updateHeaderTimeInfo(){
     const nightMinutes = 24*60 - dayMinutes;
 
     sunContainer.innerHTML =
-        "<span>那覇 日の出：" + sunrise + "</span>" +
+        "<span>" + escapeHtml(area.label) + " 日の出：" + sunrise + "</span>" +
         "<span>日の入り：" + sunset + "</span>" +
         "<span>昼：" + formatDurationMinutes(dayMinutes) + "</span>" +
         "<span>夜：" + formatDurationMinutes(nightMinutes) + "</span>";
@@ -5059,8 +5128,8 @@ function parseTomorrowForecast(payload, areaConfig){
     const tomorrow = new Date(Date.now() + 24*60*60*1000);
     const dateKey = getJapanDateKey(tomorrow);
     const seriesList = getAllJmaTimeSeries(payload);
-    const areaNames = [areaConfig.areaName, areaConfig.label];
-    const pointNames = [areaConfig.label, areaConfig.areaName];
+    const areaNames = [areaConfig.jmaAreaName, areaConfig.label].filter(Boolean);
+    const pointNames = [areaConfig.jmaTempAreaName, areaConfig.label, areaConfig.jmaAreaName].filter(Boolean);
     const result = {
         maxTemp:null,
         minTemp:null,
@@ -5142,11 +5211,11 @@ async function loadTomorrowForecast(){
     const container = document.getElementById("tomorrowForecastInfo");
     if(!container) return;
 
-    const areaConfig = JMA_AREAS[selectedJmaAreaKey] || JMA_AREAS.naha;
+    const areaConfig = getSelectedUtechArea();
     container.innerHTML = "<span>予報取得中</span>";
 
     try{
-        const res = await fetch("https://www.jma.go.jp/bosai/forecast/data/forecast/" + areaConfig.officeCode + ".json", { cache:"no-store" });
+        const res = await fetch("https://www.jma.go.jp/bosai/forecast/data/forecast/" + areaConfig.jmaOfficeCode + ".json", { cache:"no-store" });
         if(!res.ok) throw new Error("JMA forecast fetch failed: " + res.status);
 
         const payload = await res.json();
