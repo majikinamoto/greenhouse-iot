@@ -5167,16 +5167,20 @@ function parseTomorrowForecast(payload, areaConfig){
                 result.windDirection = extractRepresentativeWindDirection(winds[0]);
             }
 
-            const speedFields = ["windSpeeds","windSpeed","wind_speed","windVelocities","windVelocity","speeds"];
-            speedFields.forEach(field=>{
-                const speeds = toNumberList(getJmaValuesForDate(series, forecastArea, field, dateKey));
-                if(speeds.length){
-                    const min = Math.min(...speeds);
-                    const max = Math.max(...speeds);
-                    result.windSpeedMin = result.windSpeedMin === null ? min : Math.min(result.windSpeedMin, min);
-                    result.windSpeedMax = result.windSpeedMax === null ? max : Math.max(result.windSpeedMax, max);
-                }
-            });
+            try{
+                const speedFields = ["windSpeeds","windSpeed","wind_speed","windSpeedsMps","windSpeedMps","wind_speed_mps","windVelocities","windVelocity"];
+                speedFields.forEach(field=>{
+                    const speeds = toNumberList(getJmaValuesForDate(series, forecastArea, field, dateKey));
+                    if(speeds.length){
+                        const min = Math.min(...speeds);
+                        const max = Math.max(...speeds);
+                        result.windSpeedMin = result.windSpeedMin === null ? min : Math.min(result.windSpeedMin, min);
+                        result.windSpeedMax = result.windSpeedMax === null ? max : Math.max(result.windSpeedMax, max);
+                    }
+                });
+            }catch(e){
+                console.warn(e);
+            }
         }
 
         const tempArea = findJmaArea(series.areas, pointNames);
@@ -5205,13 +5209,19 @@ function formatForecastValue(value, unit){
     return value === null || value === undefined || value === "" ? "-" : Math.round(value) + unit;
 }
 
+function formatWindSpeedRange(minSpeed, maxSpeed){
+    if(minSpeed === null || maxSpeed === null) return "";
+    const min = Math.round(minSpeed);
+    const max = Math.round(maxSpeed);
+    return min === max ? min + "m/s" : min + "～" + max + "m/s";
+}
+
 function renderTomorrowForecast(forecast, areaConfig){
     const container = document.getElementById("tomorrowForecastInfo");
     if(!container) return;
 
-    const windSpeedText = forecast.windSpeedMin !== null && forecast.windSpeedMax !== null
-        ? " " + Math.round(forecast.windSpeedMin) + "〜" + Math.round(forecast.windSpeedMax) + "m/s"
-        : "";
+    const formattedWindSpeed = formatWindSpeedRange(forecast.windSpeedMin, forecast.windSpeedMax);
+    const windSpeedText = formattedWindSpeed ? " " + formattedWindSpeed : "";
     const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
     const weatherIcon = getWeatherIcon(forecast.weather);
     const weatherLine = forecast.weather
