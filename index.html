@@ -5124,6 +5124,15 @@ function extractRepresentativeWindDirection(windText){
     return directions.find(direction=>text.includes(direction + "の風") || text.includes(direction)) || text;
 }
 
+function getWeatherIcon(weatherText){
+    const text = String(weatherText || "");
+    if(text.includes("雷")) return "⛈";
+    if(text.includes("雨")) return "☔";
+    if(text.includes("くもり") || text.includes("曇")) return "☁";
+    if(text.includes("晴")) return "☀";
+    return "";
+}
+
 function parseTomorrowForecast(payload, areaConfig){
     const tomorrow = new Date(Date.now() + 24*60*60*1000);
     const dateKey = getJapanDateKey(tomorrow);
@@ -5134,6 +5143,7 @@ function parseTomorrowForecast(payload, areaConfig){
         maxTemp:null,
         minTemp:null,
         pop:null,
+        weather:"",
         windDirection:"",
         windSpeedMin:null,
         windSpeedMax:null
@@ -5145,6 +5155,11 @@ function parseTomorrowForecast(payload, areaConfig){
             const pops = toNumberList(getJmaValuesForDate(series, forecastArea, "pops", dateKey));
             if(pops.length){
                 result.pop = result.pop === null ? Math.max(...pops) : Math.max(result.pop, ...pops);
+            }
+
+            const weathers = getJmaValuesForDate(series, forecastArea, "weathers", dateKey).filter(Boolean);
+            if(!result.weather && weathers.length){
+                result.weather = String(weathers[0]).split(/\s|　/).filter(Boolean).slice(0, 3).join(" ");
             }
 
             const winds = getJmaValuesForDate(series, forecastArea, "winds", dateKey).filter(Boolean);
@@ -5198,9 +5213,14 @@ function renderTomorrowForecast(forecast, areaConfig){
         ? " " + Math.round(forecast.windSpeedMin) + "〜" + Math.round(forecast.windSpeedMax) + "m/s"
         : "";
     const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
+    const weatherIcon = getWeatherIcon(forecast.weather);
+    const weatherLine = forecast.weather
+        ? '<span>' + escapeHtml((weatherIcon ? weatherIcon + " " : "") + forecast.weather) + '</span>'
+        : "";
 
     container.innerHTML =
-        '<span class="tomorrow-forecast-title">🌤 明日の予報</span>' +
+        '<span class="tomorrow-forecast-title">明日の予報</span>' +
+        weatherLine +
         '<span>最高 ' + formatForecastValue(forecast.maxTemp, "℃") + '</span>' +
         '<span>最低 ' + formatForecastValue(forecast.minTemp, "℃") + '</span>' +
         '<span>降水確率 ' + formatForecastValue(forecast.pop, "%") + '</span>' +
