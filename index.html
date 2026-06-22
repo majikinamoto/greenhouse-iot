@@ -2227,7 +2227,7 @@ button { margin:5px; }
 
         <p>【オープンメテオ（Open-Meteo）】</p>
         <ul>
-            <li>予想日射量（今後対応予定）</li>
+            <li>予想積算日射量</li>
             <li>過去の気象データ（今後対応予定）</li>
             <li>積算日射量（今後対応予定）</li>
             <li>光合成推定に活用する気象データ（今後対応予定）</li>
@@ -5260,6 +5260,36 @@ function formatWindSpeedRange(minSpeed, maxSpeed){
     return min === max ? min + "m/s" : min + "～" + max + "m/s";
 }
 
+async function fetchOpenMeteoForecast(areaConfig){
+    if(!areaConfig || !Number.isFinite(areaConfig.lat) || !Number.isFinite(areaConfig.lon)) return null;
+
+    const params = new URLSearchParams({
+        latitude:areaConfig.lat,
+        longitude:areaConfig.lon,
+        daily:"shortwave_radiation_sum",
+        timezone:"Asia/Tokyo"
+    });
+    const res = await fetch("https://api.open-meteo.com/v1/forecast?" + params.toString(), { cache:"no-store" });
+    if(!res.ok) throw new Error("Open-Meteo forecast fetch failed: " + res.status);
+
+    const payload = await res.json();
+    const daily = payload && payload.daily;
+    const tomorrow = new Date(Date.now() + 24*60*60*1000);
+    const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(getJapanDateKey(tomorrow)) : -1;
+    const value = dateIndex >= 0 && Array.isArray(daily.shortwave_radiation_sum)
+        ? Number(daily.shortwave_radiation_sum[dateIndex])
+        : NaN;
+    if(!Number.isFinite(value)) return null;
+
+    const unit = payload.daily_units && payload.daily_units.shortwave_radiation_sum;
+    if(unit === "MJ/m²" || unit === "MJ/m2" || unit === "MJ/m^2") return value;
+    if(unit === "kWh/m²") return value * 3.6;
+    if(unit === "Wh/m²") return value * 0.0036;
+    if(unit === "J/m²") return value / 1000000;
+    if(unit === "J/cm²") return value * 0.01;
+    return null;
+}
+
 function renderTomorrowForecast(forecast, areaConfig){
     const container = document.getElementById("tomorrowForecastInfo");
     if(!container) return;
@@ -5271,6 +5301,9 @@ function renderTomorrowForecast(forecast, areaConfig){
     const weatherLine = forecast.weather
         ? '<span>' + escapeHtml((weatherIcon ? weatherIcon + " " : "") + forecast.weather) + '</span>'
         : "";
+    const solarRadiationText = Number.isFinite(forecast.solarRadiationSum)
+        ? forecast.solarRadiationSum.toFixed(1)
+        : "--";
 
     container.innerHTML =
         '<span class="tomorrow-forecast-title">明日の予報</span>' +
@@ -5278,7 +5311,8 @@ function renderTomorrowForecast(forecast, areaConfig){
         '<span>最高 ' + formatForecastValue(forecast.maxTemp, "℃") + '</span>' +
         '<span>最低 ' + formatForecastValue(forecast.minTemp, "℃") + '</span>' +
         '<span>降水確率 ' + formatForecastValue(forecast.pop, "%") + '</span>' +
-        '<span>風：' + escapeHtml(windText) + '</span>';
+        '<span>風：' + escapeHtml(windText) + '</span>' +
+        '<span>予想積算日射：' + solarRadiationText + ' MJ/m²</span>';
 }
 
 async function loadTomorrowForecast(){
@@ -5294,6 +5328,17 @@ async function loadTomorrowForecast(){
 
         const payload = await res.json();
         const forecast = parseTomorrowForecast(payload, areaConfig);
+        if(areaConfig !== getSelectedUtechArea()) return;
+        renderTomorrowForecast(forecast, areaConfig);
+
+        try{
+            forecast.solarRadiationSum = await fetchOpenMeteoForecast(areaConfig);
+        }catch(error){
+            console.warn(error);
+            forecast.solarRadiationSum = null;
+        }
+
+        if(areaConfig !== getSelectedUtechArea()) return;
         renderTomorrowForecast(forecast, areaConfig);
     }catch(error){
         console.warn(error);
