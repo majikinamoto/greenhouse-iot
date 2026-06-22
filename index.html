@@ -1731,6 +1731,16 @@ button { margin:5px; }
     </div>
 
     <div>
+        <h4><span>露点温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMin"> ～
+            <input class="axis-input" type="number" id="dewMax">
+            <button onclick="applySingleYAxis(dewChart,'dew')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="dewChart"></canvas></div>
+    </div>
+
+    <div>
         <h4><span>日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-solar">日射軸：</span><input class="axis-input" type="number" id="solarMin"> ～
@@ -2332,7 +2342,7 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11;
-let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, co2Chart, co2OutsideChart, co2DiffChart;
+let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, dewChart, co2Chart, co2OutsideChart, co2DiffChart;
 let analysisCompareCharts = {};
 let analysisCompareData = {};
 let analysisCompareMeta = {};
@@ -2372,6 +2382,8 @@ let diffAxisMin = -5;
 let diffAxisMax = 5;
 let outsideDiffAxisMin = -1;
 let outsideDiffAxisMax = 5;
+let dewAxisMin = undefined;
+let dewAxisMax = undefined;
 let solarAxisMin = undefined;
 let solarAxisMax = undefined;
 let voltAxisMin = 11;
@@ -2424,6 +2436,13 @@ const mainChartConfigs = [
         key:"vapor",
         canvasId:"vaporChart",
         title:"飽和水蒸気量/水蒸気量/飽差",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P01" }]
+    },
+    {
+        key:"dewPoint",
+        canvasId:"dewChart",
+        title:"露点温度",
         fields:["temperature", "humidity"],
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
@@ -5303,6 +5322,7 @@ function applyMobileChartRanges(minTime, maxTime){
         tempChartP11,
         outsideDiffChart,
         vaporChart,
+        dewChart,
         solarChart,
         co2Chart,
         co2OutsideChart,
@@ -5521,11 +5541,17 @@ function parseData(data, minTime){
                 ? d.solar
                 : d.SOLAR_RADIATION;
 
+        const temp = d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null;
+        const hum = d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null;
+
         return {
             x:date,
             xValue:date.getTime(),
-            temp:d.temperature !== null && d.temperature !== undefined ? Number(d.temperature) : null,
-            hum:d.humidity !== null && d.humidity !== undefined ? Number(d.humidity) : null,
+            temp:temp,
+            hum:hum,
+            dew:temp !== null && hum !== null && !isNaN(temp) && !isNaN(hum) && hum > 0
+                ? calcDewPoint(temp, hum)
+                : null,
             co2:co2Value !== null && co2Value !== undefined ? Number(co2Value) : null,
             solar:solarValue !== null && solarValue !== undefined ? Number(solarValue) : null,
             volt:d.voltage !== null && d.voltage !== undefined ? Number(d.voltage) : null
@@ -5663,6 +5689,13 @@ function getSingleAxis(key){
         };
     }
 
+    if(key === "dew"){
+        return {
+            min:getAxisValue("dewMin", dewAxisMin),
+            max:getAxisValue("dewMax", dewAxisMax)
+        };
+    }
+
     if(key === "volt"){
         return {
             min:getAxisValue("voltMin", voltAxisMin),
@@ -5711,6 +5744,7 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "tempChartP11",
         "outsideDiffChart",
         "vaporChart",
+        "dewChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
@@ -6818,6 +6852,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
         vaporChart = createVaporChart("vaporChart", p01, chartMinTime, now);
+        dewChart = createSingleChart("dewChart", p01, "dew", "露点温度", "℃", chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
@@ -6834,6 +6869,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             outsideTempHumidity:tempChartP11,
             outsideDiff:outsideDiffChart,
             vapor:vaporChart,
+            dewPoint:dewChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
@@ -6848,6 +6884,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP11,
             outsideDiffChart,
             vaporChart,
+            dewChart,
             solarChart,
             co2Chart,
             co2OutsideChart,
@@ -6881,6 +6918,7 @@ function destroyCharts(){
     solarChart = null;
     voltChart = null;
     vaporChart = null;
+    dewChart = null;
     co2Chart = null;
     co2OutsideChart = null;
     co2DiffChart = null;
@@ -6891,6 +6929,7 @@ function destroyCharts(){
         "tempChartP11",
         "outsideDiffChart",
         "vaporChart",
+        "dewChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
