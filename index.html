@@ -22,9 +22,11 @@
 }
 
 .logo-header {
-    display:flex;
+    display:grid;
+    grid-template-columns:52px minmax(0, 1fr);
     align-items:center;
-    gap:28px;
+    column-gap:28px;
+    row-gap:10px;
 
     margin-bottom:10px;
     padding:0;
@@ -33,6 +35,11 @@
     border:none;
     border-radius:0;
     box-shadow:none;
+}
+
+.header-detail-area {
+    grid-column:1 / -1;
+    min-width:0;
 }
 
 .logo-mark {
@@ -1501,7 +1508,7 @@ button { margin:5px; }
     <div class="logo-mark">
         <span class="logo-u">U</span>
     </div>
-    <div>
+    <div class="logo-title-area">
         <div class="logo-title-row">
             <div class="logo-title">U-Tech</div>
             <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
@@ -1513,9 +1520,11 @@ button { margin:5px; }
                 <div>という意味を込めています。</div>
                 <div>U-Techは、生産者が環境変化に気づき、自ら考え、行動するための支援を目的として開発されたシステムです。</div>
             </div>
-            <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         </div>
+        <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
         <div class="logo-subtitle">Greenhouse Monitor</div>
+    </div>
+    <div class="header-detail-area">
         <div class="header-info-card">
             <label for="utechAreaSelect">地域：</label>
             <select id="utechAreaSelect" onchange="handleUtechAreaChange()"></select>
