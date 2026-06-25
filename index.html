@@ -219,6 +219,8 @@
     top:16px;
     transform:translateX(-50%);
     white-space:nowrap;
+    text-align:center;
+    line-height:1.2;
     color:#25384d;
     font-size:11px;
     font-weight:700;
@@ -1760,7 +1762,7 @@ button { margin:5px; }
     </div>
 
     <div>
-        <h4><span>CO2_ハウス内_P21</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>CO2_ハウス内（P21）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-co2">CO2軸：</span><input class="axis-input" type="number" id="co2Min" value="200"> ～
             <input class="axis-input" type="number" id="co2Max" value="500">
@@ -5066,8 +5068,8 @@ function updateFarmCalendarInfo(now){
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
-                '<span>🌑</span><span>🌒</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌘</span><span>🌑</span>' +
-                '<div class="moon-progress-today" style="left:' + moonPosition + '">▲ 今日</div>' +
+                '<span>🌑</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌑</span>' +
+                '<div class="moon-progress-today" style="left:' + moonPosition + '">▲<br>今日</div>' +
             '</div>' +
         '</div>';
 }
