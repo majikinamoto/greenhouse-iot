@@ -250,7 +250,7 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-    width:430px;
+    width:286px;
     padding:0 4px 24px;
     color:#42566b;
     font-size:13px;
@@ -1287,6 +1287,44 @@ button { margin:5px; }
 }
 
 @media (max-width: 600px) {
+    #farmCalendarInfo,
+    #tomorrowForecastInfo {
+        width:auto;
+        max-width:calc(100vw - 20px);
+        font-size:11px;
+        box-sizing:border-box;
+    }
+
+    .farm-calendar-summary,
+    .moon-progress,
+    .forecast-day {
+        max-width:100%;
+    }
+
+    .farm-calendar-summary {
+        flex-wrap:wrap;
+        gap:3px 8px;
+    }
+
+    .moon-progress {
+        gap:6px;
+    }
+
+    .moon-progress-track {
+        width:min(286px, calc(100vw - 130px));
+    }
+
+    .forecast-day {
+        width:100%;
+        grid-template-columns:1fr;
+        row-gap:2px;
+    }
+
+    .forecast-item {
+        display:inline-flex;
+        margin-right:8px;
+    }
+
     body {
         margin:0;
         overflow-x:hidden;
