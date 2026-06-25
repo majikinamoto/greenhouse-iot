@@ -4756,14 +4756,32 @@ function syncZoom(sourceChart){
     const isTempHumSource = ["tempChartP01", "tempChartP02", "tempChartP11"].includes(sourceChart.canvas.id);
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
+    const isCo2DiffSource = sourceChart.canvas.id === "co2DiffChart";
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
+            const preserveCo2Y = isCo2DiffSource && co2ChartIds.includes(chart.canvas.id) && chart.scales.y
+                ? {
+                    y:{ min:chart.scales.y.min, max:chart.scales.y.max },
+                    yRight:chart.scales.yRight ? { min:chart.scales.yRight.min, max:chart.scales.yRight.max } : null
+                }
+                : null;
+
             if(chart.zoomScale){
                 chart.zoomScale("x", { min:xScale.min, max:xScale.max }, "none");
             }else{
                 chart.options.scales.x.min = xScale.min;
                 chart.options.scales.x.max = xScale.max;
+                chart.update("none");
+            }
+
+            if(preserveCo2Y){
+                chart.options.scales.y.min = preserveCo2Y.y.min;
+                chart.options.scales.y.max = preserveCo2Y.y.max;
+                if(preserveCo2Y.yRight && chart.options.scales.yRight){
+                    chart.options.scales.yRight.min = preserveCo2Y.yRight.min;
+                    chart.options.scales.yRight.max = preserveCo2Y.yRight.max;
+                }
                 chart.update("none");
             }
 
@@ -6742,15 +6760,33 @@ function syncReviewZoom(sourceChart){
     const isTempHumSource = getReviewChartGroup(sourceChart) === "tempHum";
     const reviewCo2ChartIds = ["reviewCo2Chart", "reviewCo2OutsideChart"];
     const isReviewCo2Source = reviewCo2ChartIds.includes(sourceChart.canvas.id);
+    const isReviewCo2DiffSource = sourceChart.canvas.id === "reviewCo2DiffChart";
 
     reviewCharts.forEach(chart=>{
         if(!chart || chart === sourceChart) return;
+
+        const preserveCo2Y = isReviewCo2DiffSource && reviewCo2ChartIds.includes(chart.canvas.id) && chart.scales.y
+            ? {
+                y:{ min:chart.scales.y.min, max:chart.scales.y.max },
+                yRight:chart.scales.yRight ? { min:chart.scales.yRight.min, max:chart.scales.yRight.max } : null
+            }
+            : null;
 
         if(chart.zoomScale){
             chart.zoomScale("x", { min:xScale.min, max:xScale.max }, "none");
         }else{
             chart.options.scales.x.min = xScale.min;
             chart.options.scales.x.max = xScale.max;
+            chart.update("none");
+        }
+
+        if(preserveCo2Y){
+            chart.options.scales.y.min = preserveCo2Y.y.min;
+            chart.options.scales.y.max = preserveCo2Y.y.max;
+            if(preserveCo2Y.yRight && chart.options.scales.yRight){
+                chart.options.scales.yRight.min = preserveCo2Y.yRight.min;
+                chart.options.scales.yRight.max = preserveCo2Y.yRight.max;
+            }
             chart.update("none");
         }
 
