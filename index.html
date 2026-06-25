@@ -183,6 +183,19 @@
     font-weight:700;
 }
 
+.forecast-day {
+    flex-basis:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 14px;
+}
+
+.forecast-day + .forecast-day {
+    margin-top:4px;
+    padding-top:4px;
+    border-top:1px solid rgba(143,160,178,0.45);
+}
+
 .moon-progress {
     flex-basis:100%;
     margin-top:2px;
@@ -5180,9 +5193,7 @@ function getWeatherIcon(weatherText){
     return "";
 }
 
-function parseTomorrowForecast(payload, areaConfig){
-    const tomorrow = new Date(Date.now() + 24*60*60*1000);
-    const dateKey = getJapanDateKey(tomorrow);
+function parseForecastForDate(payload, areaConfig, dateKey){
     const seriesList = getAllJmaTimeSeries(payload);
     const areaNames = [areaConfig.jmaAreaName, areaConfig.label].filter(Boolean);
     const pointNames = [areaConfig.jmaTempAreaName, areaConfig.label, areaConfig.jmaAreaName].filter(Boolean);
@@ -5252,6 +5263,11 @@ function parseTomorrowForecast(payload, areaConfig){
     return result;
 }
 
+function parseTomorrowForecast(payload, areaConfig){
+    const tomorrow = new Date(Date.now() + 24*60*60*1000);
+    return parseForecastForDate(payload, areaConfig, getJapanDateKey(tomorrow));
+}
+
 function formatForecastValue(value, unit){
     return value === null || value === undefined || value === "" ? "-" : Math.round(value) + unit;
 }
@@ -5263,7 +5279,7 @@ function formatWindSpeedRange(minSpeed, maxSpeed){
     return min === max ? min + "m/s" : min + "～" + max + "m/s";
 }
 
-async function fetchOpenMeteoForecast(areaConfig){
+async function fetchOpenMeteoForecast(areaConfig, dateKey){
     if(!areaConfig || !Number.isFinite(areaConfig.lat) || !Number.isFinite(areaConfig.lon)) return null;
 
     const params = new URLSearchParams({
@@ -5277,8 +5293,8 @@ async function fetchOpenMeteoForecast(areaConfig){
 
     const payload = await res.json();
     const daily = payload && payload.daily;
-    const tomorrow = new Date(Date.now() + 24*60*60*1000);
-    const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(getJapanDateKey(tomorrow)) : -1;
+    const targetDateKey = dateKey || getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
+    const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(targetDateKey) : -1;
     const value = dateIndex >= 0 && Array.isArray(daily.shortwave_radiation_sum)
         ? Number(daily.shortwave_radiation_sum[dateIndex])
         : NaN;
@@ -5293,10 +5309,7 @@ async function fetchOpenMeteoForecast(areaConfig){
     return null;
 }
 
-function renderTomorrowForecast(forecast, areaConfig){
-    const container = document.getElementById("tomorrowForecastInfo");
-    if(!container) return;
-
+function renderForecastBlock(title, forecast){
     const formattedWindSpeed = formatWindSpeedRange(forecast.windSpeedMin, forecast.windSpeedMax);
     const windSpeedText = formattedWindSpeed ? " " + formattedWindSpeed : "";
     const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
@@ -5308,16 +5321,25 @@ function renderTomorrowForecast(forecast, areaConfig){
         ? forecast.solarRadiationSum.toFixed(1)
         : "--";
 
-    container.innerHTML =
-        '<span class="tomorrow-forecast-title">明日の予報</span>' +
+    return '<div class="forecast-day">' +
+        '<span class="tomorrow-forecast-title">' + escapeHtml(title) + '</span>' +
         weatherLine +
         '<span>最高 ' + formatForecastValue(forecast.maxTemp, "℃") + '</span>' +
         '<span>最低 ' + formatForecastValue(forecast.minTemp, "℃") + '</span>' +
         '<span>降水確率 ' + formatForecastValue(forecast.pop, "%") + '</span>' +
         '<span>風：' + escapeHtml(windText) + '</span>' +
-        '<span>予想積算日射：' + solarRadiationText + ' MJ/m²</span>';
+        '<span>予想積算日射：' + solarRadiationText + ' MJ/m²</span>' +
+        '</div>';
 }
 
+function renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig){
+    const container = document.getElementById("tomorrowForecastInfo");
+    if(!container) return;
+
+    container.innerHTML =
+        renderForecastBlock("今日の予報", todayForecast) +
+        renderForecastBlock("明日の予報", tomorrowForecast);
+}
 async function loadTomorrowForecast(){
     const container = document.getElementById("tomorrowForecastInfo");
     if(!container) return;
@@ -5330,19 +5352,28 @@ async function loadTomorrowForecast(){
         if(!res.ok) throw new Error("JMA forecast fetch failed: " + res.status);
 
         const payload = await res.json();
-        const forecast = parseTomorrowForecast(payload, areaConfig);
+        const todayDateKey = getJapanDateKey(new Date());
+        const tomorrowDateKey = getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
+        const todayForecast = parseForecastForDate(payload, areaConfig, todayDateKey);
+        const tomorrowForecast = parseForecastForDate(payload, areaConfig, tomorrowDateKey);
         if(areaConfig !== getSelectedUtechArea()) return;
-        renderTomorrowForecast(forecast, areaConfig);
+        renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
 
         try{
-            forecast.solarRadiationSum = await fetchOpenMeteoForecast(areaConfig);
+            const solarForecasts = await Promise.all([
+                fetchOpenMeteoForecast(areaConfig, todayDateKey),
+                fetchOpenMeteoForecast(areaConfig, tomorrowDateKey)
+            ]);
+            todayForecast.solarRadiationSum = solarForecasts[0];
+            tomorrowForecast.solarRadiationSum = solarForecasts[1];
         }catch(error){
             console.warn(error);
-            forecast.solarRadiationSum = null;
+            todayForecast.solarRadiationSum = null;
+            tomorrowForecast.solarRadiationSum = null;
         }
 
         if(areaConfig !== getSelectedUtechArea()) return;
-        renderTomorrowForecast(forecast, areaConfig);
+        renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
     }catch(error){
         console.warn(error);
         container.innerHTML = "<span>予報を取得できませんでした</span>";
