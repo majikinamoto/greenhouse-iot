@@ -4754,6 +4754,8 @@ function syncZoom(sourceChart){
 
     const xScale = sourceChart.scales.x;
     const isTempHumSource = ["tempChartP01", "tempChartP02", "tempChartP11"].includes(sourceChart.canvas.id);
+    const co2ChartIds = ["co2Chart", "co2OutsideChart"];
+    const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
@@ -4780,6 +4782,27 @@ function syncZoom(sourceChart){
                     chart.options.scales.yHum.max = sourceChart.scales.yHum.max;
                     chart.options.scales.yTemp.min = sourceChart.scales.yTemp.min;
                     chart.options.scales.yTemp.max = sourceChart.scales.yTemp.max;
+                    chart.update("none");
+                }
+            }
+
+            if(isCo2Source && co2ChartIds.includes(chart.canvas.id) && sourceChart.scales.y){
+                const co2YRange = {
+                    min:sourceChart.scales.y.min,
+                    max:sourceChart.scales.y.max
+                };
+                if(chart.zoomScale){
+                    chart.zoomScale("y", co2YRange, "none");
+                    if(chart.scales.yRight){
+                        chart.zoomScale("yRight", co2YRange, "none");
+                    }
+                }else{
+                    chart.options.scales.y.min = co2YRange.min;
+                    chart.options.scales.y.max = co2YRange.max;
+                    if(chart.options.scales.yRight){
+                        chart.options.scales.yRight.min = co2YRange.min;
+                        chart.options.scales.yRight.max = co2YRange.max;
+                    }
                     chart.update("none");
                 }
             }
