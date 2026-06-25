@@ -197,8 +197,7 @@
 .forecast-day {
     flex-basis:100%;
     display:grid;
-    grid-template-columns:max-content max-content;
-    column-gap:12px;
+    grid-template-columns:max-content;
     row-gap:2px;
 }
 
@@ -206,9 +205,23 @@
     margin-top:6px;
 }
 
-.forecast-day-title,
-.forecast-weather {
-    grid-column:1 / -1;
+.forecast-heading {
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.forecast-detail-row {
+    display:grid;
+    grid-template-columns:70px 70px 110px 90px 180px;
+    column-gap:12px;
+    align-items:center;
+}
+
+.forecast-item {
+    display:flex;
+    gap:4px;
+    white-space:nowrap;
 }
 
 .forecast-label {
@@ -5333,21 +5346,20 @@ function renderForecastBlock(title, forecast){
     const windSpeedText = formattedWindSpeed ? " " + formattedWindSpeed : "";
     const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
     const weatherIcon = getWeatherIcon(forecast.weather);
-    const weatherLine = forecast.weather
-        ? '<span class="forecast-weather">' + escapeHtml((weatherIcon ? weatherIcon + " " : "") + forecast.weather) + '</span>'
-        : "";
+    const weatherText = forecast.weather ? escapeHtml((weatherIcon ? weatherIcon + " " : "") + forecast.weather) : "";
     const solarRadiationText = Number.isFinite(forecast.solarRadiationSum)
         ? forecast.solarRadiationSum.toFixed(1)
         : "--";
 
     return '<div class="forecast-day">' +
-        '<span class="tomorrow-forecast-title forecast-day-title">' + escapeHtml(title) + '</span>' +
-        weatherLine +
-        '<span class="forecast-label">最高</span><span class="forecast-value">' + formatForecastValue(forecast.maxTemp, "℃") + '</span>' +
-        '<span class="forecast-label">最低</span><span class="forecast-value">' + formatForecastValue(forecast.minTemp, "℃") + '</span>' +
-        '<span class="forecast-label">降水確率</span><span class="forecast-value">' + formatForecastValue(forecast.pop, "%") + '</span>' +
-        '<span class="forecast-label">風</span><span class="forecast-value">' + escapeHtml(windText) + '</span>' +
-        '<span class="forecast-label">予想積算日射</span><span class="forecast-value">' + solarRadiationText + ' MJ/m²</span>' +
+        '<div class="forecast-heading"><span class="tomorrow-forecast-title">' + escapeHtml(title) + '</span><span class="forecast-weather">' + weatherText + '</span></div>' +
+        '<div class="forecast-detail-row">' +
+            '<span class="forecast-item"><span class="forecast-label">最高</span><span class="forecast-value">' + formatForecastValue(forecast.maxTemp, "℃") + '</span></span>' +
+            '<span class="forecast-item"><span class="forecast-label">最低</span><span class="forecast-value">' + formatForecastValue(forecast.minTemp, "℃") + '</span></span>' +
+            '<span class="forecast-item"><span class="forecast-label">降水確率</span><span class="forecast-value">' + formatForecastValue(forecast.pop, "%") + '</span></span>' +
+            '<span class="forecast-item"><span class="forecast-label">風</span><span class="forecast-value">' + escapeHtml(windText) + '</span></span>' +
+            '<span class="forecast-item"><span class="forecast-label">予想積算日射</span><span class="forecast-value">' + solarRadiationText + ' MJ/m²</span></span>' +
+        '</div>' +
         '</div>';
 }
 
