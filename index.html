@@ -167,6 +167,9 @@
 }
 
 #farmCalendarInfo {
+    display:inline-flex;
+    flex-direction:column;
+    align-items:flex-start;
     max-width:none;
 }
 
@@ -194,6 +197,13 @@
 .farm-calendar-title {
     font-weight:700;
     color:#25384d;
+}
+
+.farm-calendar-summary {
+    display:flex;
+    flex-wrap:nowrap;
+    gap:4px 14px;
+    align-items:center;
 }
 
 .tomorrow-forecast-card {
@@ -228,6 +238,9 @@
 
 .moon-progress {
     flex-basis:auto;
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
     width:max-content;
     margin-top:2px;
 }
@@ -5103,11 +5116,13 @@ function updateFarmCalendarInfo(now){
     const moon = calculateMoonInfo(now);
     const moonPosition = getMoonProgressLeftStyle(moon.age);
     container.innerHTML =
-        '<span class="farm-calendar-title">農作業こよみ</span>' +
-        '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
-        '<span>月相：' + moon.phase + '</span>' +
-        '<span style="font-weight:bold">旧暦：' + (moon.lunarLeap ? '閏' : '') + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
-        '<span>潮：' + moon.tideName + '　' + tideCalendarText + '</span>' +
+        '<div class="farm-calendar-summary">' +
+            '<span class="farm-calendar-title">農作業こよみ</span>' +
+            '<span>' + moon.moonMark + ' 月齢：' + moon.age.toFixed(1) + '</span>' +
+            '<span>月相：' + moon.phase + '</span>' +
+            '<span style="font-weight:bold">旧暦：' + (moon.lunarLeap ? '閏' : '') + moon.lunarMonth + '月' + moon.lunarDay + '日</span>' +
+            '<span>潮：' + moon.tideName + '　' + tideCalendarText + '</span>' +
+        '</div>' +
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
