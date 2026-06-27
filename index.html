@@ -2312,13 +2312,13 @@ button { margin:5px; }
 
         <p>【気象庁】</p>
         <ul>
-            <li>最高気温、最低気温</li>
             <li>降水確率</li>
             <li>満潮、干潮</li>
         </ul>
 
         <p>【オープンメテオ（Open-Meteo）】</p>
         <ul>
+            <li>最高気温、最低気温</li>
             <li>風向、風速</li>
             <li>予想積算日射量</li>
             <li>過去の気象データ（今後対応予定）</li>
@@ -5432,14 +5432,14 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
     const targetDateKey = dateKey || getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
     const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(targetDateKey) : -1;
     console.log("daily forecast", daily);
-    console.log("today max", daily.temperature_2m_max?.[0]);
-    console.log("today min", daily.temperature_2m_min?.[0]);
-    console.log("tomorrow max", daily.temperature_2m_max?.[1]);
-    console.log("tomorrow min", daily.temperature_2m_min?.[1]);
-    const maxTemp = dateIndex >= 0 && Array.isArray(daily.temperature_2m_max)
+    console.log("today max", daily?.temperature_2m_max?.[0]);
+    console.log("today min", daily?.temperature_2m_min?.[0]);
+    console.log("tomorrow max", daily?.temperature_2m_max?.[1]);
+    console.log("tomorrow min", daily?.temperature_2m_min?.[1]);
+    const maxTemp = dateIndex >= 0 && daily && Array.isArray(daily.temperature_2m_max)
         ? Number(daily.temperature_2m_max[dateIndex])
         : NaN;
-    const minTemp = dateIndex >= 0 && Array.isArray(daily.temperature_2m_min)
+    const minTemp = dateIndex >= 0 && daily && Array.isArray(daily.temperature_2m_min)
         ? Number(daily.temperature_2m_min[dateIndex])
         : NaN;
     const value = dateIndex >= 0 && Array.isArray(daily.shortwave_radiation_sum)
