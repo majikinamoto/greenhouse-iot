@@ -2373,7 +2373,35 @@ button { margin:5px; }
         <p>※詳細は作成中</p>
 
         <h3>データベース構成</h3>
-        <p>現在整備中です。</p>
+        <p>U-Techでは、MariaDBを使用して、測定データ、アラート設定、アラート履歴などを管理しています。</p>
+
+        <ul>
+            <li><strong>measurements</strong>：温度、湿度、CO2、日射量、電圧などの測定データを保存</li>
+            <li><strong>alert_settings</strong>：ユーザーごとのアラート条件、通知先、通知間隔などを保存</li>
+            <li><strong>alert_history</strong>：アラートが発生した日時、内容、通知結果などを保存</li>
+            <li><strong>smtp_config</strong>：メール通知に使用するSMTP設定を保存</li>
+        </ul>
+
+        <p>測定データは、主に <code>user_id</code>、<code>point_id</code>、<code>recorded_at</code> を基準に管理しています。</p>
+
+        <ul>
+            <li><strong>user_id</strong>：測定対象や利用者を識別するID（例：T0001、NS001 など）</li>
+            <li><strong>point_id</strong>：測定地点やセンサー種別を識別するID（例：P01、P11、P21、P31 など）</li>
+            <li><strong>recorded_at</strong>：測定日時</li>
+        </ul>
+
+        <p>代表的な point_id は以下のとおりです。</p>
+
+        <ul>
+            <li><strong>P01</strong>：ハウス内 温湿度</li>
+            <li><strong>P11</strong>：外気 温湿度</li>
+            <li><strong>P21</strong>：ハウス内 CO2</li>
+            <li><strong>P26</strong>：外気 CO2</li>
+            <li><strong>P31〜P34</strong>：日射量</li>
+            <li><strong>P91</strong>：電圧</li>
+        </ul>
+
+        <p>なお、データベース内の測定データは、現在、直近1年分を保存対象としています。</p>
 
         <h3>更新履歴</h3>
         <p>現在整備中です。</p>
