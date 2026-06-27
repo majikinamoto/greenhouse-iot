@@ -4613,6 +4613,10 @@ function createRightYAxis(leftAxisOptions){
     };
 }
 
+function formatIntegerAxisTick(value){
+    return Number(value).toFixed(0);
+}
+
 function baseOptions(minTime,maxTime){
     const zoomEnabled = !window.matchMedia("(max-width: 600px)").matches;
 
@@ -6473,7 +6477,8 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
         min:axis.min,
         max:axis.max,
         ticks:{
-            color:"#000"
+            color:"#000",
+            callback:formatIntegerAxisTick
         },
         title:{
             display:true,
@@ -6632,6 +6637,9 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime)
             color:"#000",
 
             callback:function(value){
+                if(key === "dew" || dataKey === "co2"){
+                    return formatIntegerAxisTick(value);
+                }
                 if(key === "volt"){
                     return Math.round(value);
                 }
