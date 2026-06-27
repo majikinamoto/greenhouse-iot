@@ -5394,21 +5394,28 @@ function parseForecastForDate(payload, areaConfig, dateKey){
             }
         }
 
-        const tempArea = findJmaArea(series.areas, pointNames);
-        if(tempArea){
-            const maxTemps = toNumberList(getJmaValuesForDate(series, tempArea, "tempsMax", dateKey));
-            const minTemps = toNumberList(getJmaValuesForDate(series, tempArea, "tempsMin", dateKey));
-            const temps = toNumberList(getJmaValuesForDate(series, tempArea, "temps", dateKey));
+        const selectedTempArea = findJmaArea(series.areas, pointNames);
+        const tempTimeSeries = selectedTempArea && (
+            Array.isArray(selectedTempArea.temps) ||
+            Array.isArray(selectedTempArea.tempsMax) ||
+            Array.isArray(selectedTempArea.tempsMin)
+        ) ? series : null;
+
+        if(selectedTempArea && tempTimeSeries){
+            console.log("JMA temp timeSeries", tempTimeSeries);
+            console.log("JMA temp timeDefines", tempTimeSeries?.timeDefines);
+            console.log("JMA temp areas", tempTimeSeries?.areas);
+            console.log("JMA temps area", selectedTempArea);
+            console.log("JMA temps", selectedTempArea?.temps);
+
+            const maxTemps = toNumberList(getJmaValuesForDate(series, selectedTempArea, "tempsMax", dateKey));
+            const minTemps = toNumberList(getJmaValuesForDate(series, selectedTempArea, "tempsMin", dateKey));
 
             if(maxTemps.length){
                 result.maxTemp = Math.max(...maxTemps);
             }
             if(minTemps.length){
                 result.minTemp = Math.min(...minTemps);
-            }
-            if(temps.length){
-                if(result.maxTemp === null) result.maxTemp = Math.max(...temps);
-                if(result.minTemp === null) result.minTemp = Math.min(...temps);
             }
         }
     });
@@ -5536,11 +5543,12 @@ async function loadTomorrowForecast(){
         const res = await fetch("https://www.jma.go.jp/bosai/forecast/data/forecast/" + areaConfig.jmaOfficeCode + ".json", { cache:"no-store" });
         if(!res.ok) throw new Error("JMA forecast fetch failed: " + res.status);
 
-        const payload = await res.json();
+        const jmaForecast = await res.json();
+        console.log("JMA forecast raw", jmaForecast);
         const todayDateKey = getJapanDateKey(new Date());
         const tomorrowDateKey = getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
-        const todayForecast = parseForecastForDate(payload, areaConfig, todayDateKey);
-        const tomorrowForecast = parseForecastForDate(payload, areaConfig, tomorrowDateKey);
+        const todayForecast = parseForecastForDate(jmaForecast, areaConfig, todayDateKey);
+        const tomorrowForecast = parseForecastForDate(jmaForecast, areaConfig, tomorrowDateKey);
         if(areaConfig !== getSelectedUtechArea()) return;
         renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
 
