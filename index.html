@@ -5400,13 +5400,25 @@ function formatWindSpeedRange(minSpeed, maxSpeed){
     return min === max ? min + "m/s" : min + "～" + max + "m/s";
 }
 
+function formatOpenMeteoWindSpeed(speed){
+    return Number.isFinite(speed) ? speed.toFixed(1) + " m/s" : "";
+}
+
+function getWindDirectionName(degrees){
+    if(!Number.isFinite(degrees)) return "";
+    const directions = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
+    const index = Math.round((((degrees % 360) + 360) % 360) / 22.5) % directions.length;
+    return directions[index];
+}
+
 async function fetchOpenMeteoForecast(areaConfig, dateKey){
     if(!areaConfig || !Number.isFinite(areaConfig.lat) || !Number.isFinite(areaConfig.lon)) return null;
 
     const params = new URLSearchParams({
         latitude:areaConfig.lat,
         longitude:areaConfig.lon,
-        daily:"shortwave_radiation_sum",
+        daily:"shortwave_radiation_sum,wind_speed_10m_max,wind_direction_10m_dominant",
+        wind_speed_unit:"ms",
         timezone:"Asia/Tokyo"
     });
     const res = await fetch("https://api.open-meteo.com/v1/forecast?" + params.toString(), { cache:"no-store" });
@@ -5419,35 +5431,45 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
     const value = dateIndex >= 0 && Array.isArray(daily.shortwave_radiation_sum)
         ? Number(daily.shortwave_radiation_sum[dateIndex])
         : NaN;
-    if(!Number.isFinite(value)) return null;
+    const windSpeed = dateIndex >= 0 && Array.isArray(daily.wind_speed_10m_max)
+        ? Number(daily.wind_speed_10m_max[dateIndex])
+        : NaN;
+    const windDirectionDegrees = dateIndex >= 0 && Array.isArray(daily.wind_direction_10m_dominant)
+        ? Number(daily.wind_direction_10m_dominant[dateIndex])
+        : NaN;
+
+    const result = {
+        solarRadiationSum:null,
+        windDirection:getWindDirectionName(windDirectionDegrees),
+        windSpeed:Number.isFinite(windSpeed) ? windSpeed : null
+    };
+    if(!Number.isFinite(value)) return result;
 
     const unit = payload.daily_units && payload.daily_units.shortwave_radiation_sum;
-    if(unit === "MJ/m²" || unit === "MJ/m2" || unit === "MJ/m^2") return value;
-    if(unit === "kWh/m²") return value * 3.6;
-    if(unit === "Wh/m²") return value * 0.0036;
-    if(unit === "J/m²") return value / 1000000;
-    if(unit === "J/cm²") return value * 0.01;
-    return null;
+    if(unit === "MJ/m²" || unit === "MJ/m2" || unit === "MJ/m^2") result.solarRadiationSum = value;
+    else if(unit === "kWh/m²") result.solarRadiationSum = value * 3.6;
+    else if(unit === "Wh/m²") result.solarRadiationSum = value * 0.0036;
+    else if(unit === "J/m²") result.solarRadiationSum = value / 1000000;
+    else if(unit === "J/cm²") result.solarRadiationSum = value * 0.01;
+    return result;
 }
 
 function renderForecastBlock(title, forecast){
-    const formattedWindSpeed = formatWindSpeedRange(forecast.windSpeedMin, forecast.windSpeedMax);
-    const windSpeedText = formattedWindSpeed ? " " + formattedWindSpeed : "";
-    const windText = forecast.windDirection || windSpeedText ? (forecast.windDirection || "-") + windSpeedText : "-";
-    const weatherIcon = getWeatherIcon(forecast.weather);
-    const weatherText = forecast.weather ? escapeHtml((weatherIcon ? weatherIcon + " " : "") + forecast.weather) : "";
+    const openMeteoWindSpeed = formatOpenMeteoWindSpeed(forecast.openMeteoWindSpeed);
+    const windText = forecast.openMeteoWindDirection || openMeteoWindSpeed
+        ? (forecast.openMeteoWindDirection || "-") + (openMeteoWindSpeed ? " " + openMeteoWindSpeed : "")
+        : "-";
     const solarRadiationText = Number.isFinite(forecast.solarRadiationSum)
         ? forecast.solarRadiationSum.toFixed(1)
         : "--";
 
     return '<div class="forecast-day">' +
         '<span class="tomorrow-forecast-title">' + escapeHtml(title) + '</span>' +
-        '<span class="forecast-weather">' + weatherText + '</span>' +
         '<span class="forecast-item"><span class="forecast-label">最高</span><span class="forecast-value">' + formatForecastValue(forecast.maxTemp, "℃") + '</span></span>' +
         '<span class="forecast-item"><span class="forecast-label">最低</span><span class="forecast-value">' + formatForecastValue(forecast.minTemp, "℃") + '</span></span>' +
         '<span class="forecast-item"><span class="forecast-label">降水確率</span><span class="forecast-value">' + formatForecastValue(forecast.pop, "%") + '</span></span>' +
-        '<span class="forecast-item"><span class="forecast-label">風</span><span class="forecast-value">' + escapeHtml(windText) + '</span></span>' +
         '<span class="forecast-item"><span class="forecast-label">予想積算日射</span><span class="forecast-value">' + solarRadiationText + ' MJ/m²</span></span>' +
+        '<span class="forecast-item"><span class="forecast-label">風</span><span class="forecast-value">' + escapeHtml(windText) + '</span></span>' +
         '</div>';
 }
 
@@ -5479,18 +5501,25 @@ async function loadTomorrowForecast(){
         renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
 
         try{
-            const solarForecasts = await Promise.all([
+            const openMeteoForecasts = await Promise.all([
                 fetchOpenMeteoForecast(areaConfig, todayDateKey),
                 fetchOpenMeteoForecast(areaConfig, tomorrowDateKey)
             ]);
-            todayForecast.solarRadiationSum = solarForecasts[0];
-            tomorrowForecast.solarRadiationSum = solarForecasts[1];
+            todayForecast.solarRadiationSum = openMeteoForecasts[0] ? openMeteoForecasts[0].solarRadiationSum : null;
+            todayForecast.openMeteoWindDirection = openMeteoForecasts[0] ? openMeteoForecasts[0].windDirection : "";
+            todayForecast.openMeteoWindSpeed = openMeteoForecasts[0] ? openMeteoForecasts[0].windSpeed : null;
+            tomorrowForecast.solarRadiationSum = openMeteoForecasts[1] ? openMeteoForecasts[1].solarRadiationSum : null;
+            tomorrowForecast.openMeteoWindDirection = openMeteoForecasts[1] ? openMeteoForecasts[1].windDirection : "";
+            tomorrowForecast.openMeteoWindSpeed = openMeteoForecasts[1] ? openMeteoForecasts[1].windSpeed : null;
         }catch(error){
             console.warn(error);
             todayForecast.solarRadiationSum = null;
+            todayForecast.openMeteoWindDirection = "";
+            todayForecast.openMeteoWindSpeed = null;
             tomorrowForecast.solarRadiationSum = null;
+            tomorrowForecast.openMeteoWindDirection = "";
+            tomorrowForecast.openMeteoWindSpeed = null;
         }
-
         if(areaConfig !== getSelectedUtechArea()) return;
         renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
     }catch(error){
