@@ -2312,15 +2312,16 @@ button { margin:5px; }
 
         <p>【気象庁】</p>
         <ul>
+            <li>最高気温、最低気温</li>
             <li>降水確率</li>
             <li>満潮、干潮</li>
         </ul>
 
         <p>【オープンメテオ（Open-Meteo）】</p>
         <ul>
-            <li>最高気温、最低気温</li>
             <li>風向、風速</li>
             <li>予想積算日射量</li>
+            <li>最高気温、最低気温の補完</li>
             <li>過去の気象データ（今後対応予定）</li>
             <li>積算日射量（今後対応予定）</li>
             <li>光合成推定に活用する気象データ（今後対応予定）</li>
@@ -5420,8 +5421,12 @@ function parseTomorrowForecast(payload, areaConfig){
     return parseForecastForDate(payload, areaConfig, getJapanDateKey(tomorrow));
 }
 
+function isForecastValueMissing(value){
+    return value === null || value === undefined || value === "" || (typeof value === "number" && !Number.isFinite(value));
+}
+
 function formatForecastValue(value, unit){
-    return value === null || value === undefined || value === "" ? "-" : Math.round(value) + unit;
+    return isForecastValueMissing(value) ? "-" : Math.round(value) + unit;
 }
 
 function formatWindSpeedRange(minSpeed, maxSpeed){
@@ -5459,11 +5464,6 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
     const daily = payload && payload.daily;
     const targetDateKey = dateKey || getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
     const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(targetDateKey) : -1;
-    console.log("daily forecast", daily);
-    console.log("today max", daily?.temperature_2m_max?.[0]);
-    console.log("today min", daily?.temperature_2m_min?.[0]);
-    console.log("tomorrow max", daily?.temperature_2m_max?.[1]);
-    console.log("tomorrow min", daily?.temperature_2m_min?.[1]);
     const maxTemp = dateIndex >= 0 && daily && Array.isArray(daily.temperature_2m_max)
         ? Number(daily.temperature_2m_max[dateIndex])
         : NaN;
@@ -5549,13 +5549,13 @@ async function loadTomorrowForecast(){
                 fetchOpenMeteoForecast(areaConfig, todayDateKey),
                 fetchOpenMeteoForecast(areaConfig, tomorrowDateKey)
             ]);
-            if(openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].maxTemp)) todayForecast.maxTemp = openMeteoForecasts[0].maxTemp;
-            if(openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].minTemp)) todayForecast.minTemp = openMeteoForecasts[0].minTemp;
+            if(isForecastValueMissing(todayForecast.maxTemp) && openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].maxTemp)) todayForecast.maxTemp = openMeteoForecasts[0].maxTemp;
+            if(isForecastValueMissing(todayForecast.minTemp) && openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].minTemp)) todayForecast.minTemp = openMeteoForecasts[0].minTemp;
             todayForecast.solarRadiationSum = openMeteoForecasts[0] ? openMeteoForecasts[0].solarRadiationSum : null;
             todayForecast.openMeteoWindDirection = openMeteoForecasts[0] ? openMeteoForecasts[0].windDirection : "";
             todayForecast.openMeteoWindSpeed = openMeteoForecasts[0] ? openMeteoForecasts[0].windSpeed : null;
-            if(openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].maxTemp)) tomorrowForecast.maxTemp = openMeteoForecasts[1].maxTemp;
-            if(openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].minTemp)) tomorrowForecast.minTemp = openMeteoForecasts[1].minTemp;
+            if(isForecastValueMissing(tomorrowForecast.maxTemp) && openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].maxTemp)) tomorrowForecast.maxTemp = openMeteoForecasts[1].maxTemp;
+            if(isForecastValueMissing(tomorrowForecast.minTemp) && openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].minTemp)) tomorrowForecast.minTemp = openMeteoForecasts[1].minTemp;
             tomorrowForecast.solarRadiationSum = openMeteoForecasts[1] ? openMeteoForecasts[1].solarRadiationSum : null;
             tomorrowForecast.openMeteoWindDirection = openMeteoForecasts[1] ? openMeteoForecasts[1].windDirection : "";
             tomorrowForecast.openMeteoWindSpeed = openMeteoForecasts[1] ? openMeteoForecasts[1].windSpeed : null;
