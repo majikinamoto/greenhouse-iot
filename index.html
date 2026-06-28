@@ -2321,7 +2321,6 @@ button { margin:5px; }
         <ul>
             <li>風向、風速</li>
             <li>予想積算日射量</li>
-            <li>最高気温、最低気温の補完</li>
             <li>過去の気象データ（今後対応予定）</li>
             <li>積算日射量（今後対応予定）</li>
             <li>光合成推定に活用する気象データ（今後対応予定）</li>
@@ -5330,6 +5329,60 @@ function getAllJmaTimeSeries(payload){
     }, []);
 }
 
+function getJmaTempSource(payload, areaConfig){
+    const pointNames = [areaConfig.jmaTempAreaName, areaConfig.label, areaConfig.jmaAreaName].filter(Boolean);
+    const primarySeries = Array.isArray(payload) && payload[0] && Array.isArray(payload[0].timeSeries)
+        ? payload[0].timeSeries
+        : getAllJmaTimeSeries(payload);
+
+    for(const tempTimeSeries of primarySeries){
+        const selectedTempArea = findJmaArea(tempTimeSeries.areas, pointNames);
+        if(selectedTempArea && Array.isArray(selectedTempArea.temps)){
+            return { tempTimeSeries, selectedTempArea };
+        }
+    }
+
+    return { tempTimeSeries:null, selectedTempArea:null };
+}
+
+function getJmaForecastHour(timeText){
+    const match = String(timeText || "").match(/T(\d{2}):/);
+    return match ? Number(match[1]) : null;
+}
+
+function buildJmaTempItems(tempTimeSeries, selectedTempArea){
+    if(!tempTimeSeries || !selectedTempArea || !Array.isArray(tempTimeSeries.timeDefines) || !Array.isArray(selectedTempArea.temps)){
+        return [];
+    }
+
+    return tempTimeSeries.timeDefines.map((time, index)=>{
+        const values = toNumberList([selectedTempArea.temps[index]]);
+        return {
+            time,
+            date:typeof time === "string" ? time.slice(0, 10) : "",
+            hour:getJmaForecastHour(time),
+            temp:values.length ? values[0] : null,
+            index
+        };
+    });
+}
+
+function getJmaTempsForDate(tempItems, dateKey){
+    const dayItems = tempItems.filter(item=>item.date === dateKey && Number.isFinite(item.temp));
+    const maxItem = dayItems.find(item=>item.hour === 9);
+    const minItem = dayItems.find(item=>item.hour === 0 && (!maxItem || item.index < maxItem.index));
+
+    return {
+        maxTemp:maxItem ? maxItem.temp : null,
+        minTemp:minItem ? minItem.temp : null
+    };
+}
+
+function applyJmaTemperatureForecast(forecast, temps){
+    forecast.maxTemp = temps && Number.isFinite(temps.maxTemp) ? temps.maxTemp : null;
+    forecast.minTemp = temps && Number.isFinite(temps.minTemp) ? temps.minTemp : null;
+}
+
 function extractRepresentativeWindDirection(windText){
     if(!windText) return "";
     const directions = ["北北東","東北東","東南東","南南東","南南西","西南西","西北西","北北西","北東","南東","南西","北西","北","東","南","西"];
@@ -5394,30 +5447,6 @@ function parseForecastForDate(payload, areaConfig, dateKey){
             }
         }
 
-        const selectedTempArea = findJmaArea(series.areas, pointNames);
-        const tempTimeSeries = selectedTempArea && (
-            Array.isArray(selectedTempArea.temps) ||
-            Array.isArray(selectedTempArea.tempsMax) ||
-            Array.isArray(selectedTempArea.tempsMin)
-        ) ? series : null;
-
-        if(selectedTempArea && tempTimeSeries){
-            console.log("JMA temp timeSeries", tempTimeSeries);
-            console.log("JMA temp timeDefines", tempTimeSeries?.timeDefines);
-            console.log("JMA temp areas", tempTimeSeries?.areas);
-            console.log("JMA temps area", selectedTempArea);
-            console.log("JMA temps", selectedTempArea?.temps);
-
-            const maxTemps = toNumberList(getJmaValuesForDate(series, selectedTempArea, "tempsMax", dateKey));
-            const minTemps = toNumberList(getJmaValuesForDate(series, selectedTempArea, "tempsMin", dateKey));
-
-            if(maxTemps.length){
-                result.maxTemp = Math.max(...maxTemps);
-            }
-            if(minTemps.length){
-                result.minTemp = Math.min(...minTemps);
-            }
-        }
     });
 
     return result;
@@ -5460,7 +5489,7 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
     const params = new URLSearchParams({
         latitude:areaConfig.lat,
         longitude:areaConfig.lon,
-        daily:"temperature_2m_max,temperature_2m_min,shortwave_radiation_sum,wind_speed_10m_max,wind_direction_10m_dominant",
+        daily:"shortwave_radiation_sum,wind_speed_10m_max,wind_direction_10m_dominant",
         wind_speed_unit:"ms",
         timezone:"Asia/Tokyo"
     });
@@ -5471,12 +5500,6 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
     const daily = payload && payload.daily;
     const targetDateKey = dateKey || getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
     const dateIndex = daily && Array.isArray(daily.time) ? daily.time.indexOf(targetDateKey) : -1;
-    const maxTemp = dateIndex >= 0 && daily && Array.isArray(daily.temperature_2m_max)
-        ? Number(daily.temperature_2m_max[dateIndex])
-        : NaN;
-    const minTemp = dateIndex >= 0 && daily && Array.isArray(daily.temperature_2m_min)
-        ? Number(daily.temperature_2m_min[dateIndex])
-        : NaN;
     const value = dateIndex >= 0 && Array.isArray(daily.shortwave_radiation_sum)
         ? Number(daily.shortwave_radiation_sum[dateIndex])
         : NaN;
@@ -5488,8 +5511,6 @@ async function fetchOpenMeteoForecast(areaConfig, dateKey){
         : NaN;
 
     const result = {
-        maxTemp:Number.isFinite(maxTemp) ? maxTemp : null,
-        minTemp:Number.isFinite(minTemp) ? minTemp : null,
         solarRadiationSum:null,
         windDirection:getWindDirectionName(windDirectionDegrees),
         windSpeed:Number.isFinite(windSpeed) ? windSpeed : null
@@ -5549,6 +5570,26 @@ async function loadTomorrowForecast(){
         const tomorrowDateKey = getJapanDateKey(new Date(Date.now() + 24*60*60*1000));
         const todayForecast = parseForecastForDate(jmaForecast, areaConfig, todayDateKey);
         const tomorrowForecast = parseForecastForDate(jmaForecast, areaConfig, tomorrowDateKey);
+        const { tempTimeSeries, selectedTempArea } = getJmaTempSource(jmaForecast, areaConfig);
+        const tempItems = buildJmaTempItems(tempTimeSeries, selectedTempArea);
+        const todayTempsJma = getJmaTempsForDate(tempItems, todayDateKey);
+        const tomorrowTempsJma = getJmaTempsForDate(tempItems, tomorrowDateKey);
+        const todayMaxJma = todayTempsJma.maxTemp;
+        const todayMinJma = todayTempsJma.minTemp;
+        const tomorrowMaxJma = tomorrowTempsJma.maxTemp;
+        const tomorrowMinJma = tomorrowTempsJma.minTemp;
+
+        console.log("JMA temp timeSeries", tempTimeSeries);
+        console.log("JMA temp timeDefines", tempTimeSeries?.timeDefines);
+        console.log("JMA temp areas", tempTimeSeries?.areas);
+        console.log("selected temp area", selectedTempArea);
+        console.log("selected temps", selectedTempArea?.temps);
+        console.log("parsed temp items", tempItems);
+        console.log("today forecast temps from JMA", todayMaxJma, todayMinJma);
+        console.log("tomorrow forecast temps from JMA", tomorrowMaxJma, tomorrowMinJma);
+
+        applyJmaTemperatureForecast(todayForecast, todayTempsJma);
+        applyJmaTemperatureForecast(tomorrowForecast, tomorrowTempsJma);
         if(areaConfig !== getSelectedUtechArea()) return;
         renderTomorrowForecast(todayForecast, tomorrowForecast, areaConfig);
 
@@ -5557,13 +5598,9 @@ async function loadTomorrowForecast(){
                 fetchOpenMeteoForecast(areaConfig, todayDateKey),
                 fetchOpenMeteoForecast(areaConfig, tomorrowDateKey)
             ]);
-            if(isForecastValueMissing(todayForecast.maxTemp) && openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].maxTemp)) todayForecast.maxTemp = openMeteoForecasts[0].maxTemp;
-            if(isForecastValueMissing(todayForecast.minTemp) && openMeteoForecasts[0] && Number.isFinite(openMeteoForecasts[0].minTemp)) todayForecast.minTemp = openMeteoForecasts[0].minTemp;
             todayForecast.solarRadiationSum = openMeteoForecasts[0] ? openMeteoForecasts[0].solarRadiationSum : null;
             todayForecast.openMeteoWindDirection = openMeteoForecasts[0] ? openMeteoForecasts[0].windDirection : "";
             todayForecast.openMeteoWindSpeed = openMeteoForecasts[0] ? openMeteoForecasts[0].windSpeed : null;
-            if(isForecastValueMissing(tomorrowForecast.maxTemp) && openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].maxTemp)) tomorrowForecast.maxTemp = openMeteoForecasts[1].maxTemp;
-            if(isForecastValueMissing(tomorrowForecast.minTemp) && openMeteoForecasts[1] && Number.isFinite(openMeteoForecasts[1].minTemp)) tomorrowForecast.minTemp = openMeteoForecasts[1].minTemp;
             tomorrowForecast.solarRadiationSum = openMeteoForecasts[1] ? openMeteoForecasts[1].solarRadiationSum : null;
             tomorrowForecast.openMeteoWindDirection = openMeteoForecasts[1] ? openMeteoForecasts[1].windDirection : "";
             tomorrowForecast.openMeteoWindSpeed = openMeteoForecasts[1] ? openMeteoForecasts[1].windSpeed : null;
