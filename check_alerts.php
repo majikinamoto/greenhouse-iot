@@ -392,71 +392,27 @@ while ($setting = $settingsResult->fetch_assoc()) {
     $shouldNotify = false;
     $alertType = "";
 
-    if ($conditionType === "above" && $temperature >= $threshold) {
+    if ($conditionType === "above" && $temperature > $threshold) {
         $shouldNotify = true;
         $alertType = "temperature_high";
-    } elseif ($conditionType === "below" && $temperature <= $threshold) {
+    } elseif ($conditionType === "below" && $temperature < $threshold) {
         $shouldNotify = true;
         $alertType = "temperature_low";
     }
 
     if (!$shouldNotify) {
         if ($lastStatus === "alert") {
-            $alertType = $conditionType === "above"
-                ? "temperature_high_recovery"
-                : "temperature_low_recovery";
-            $message = buildTemperatureMessage($pointId, $temperature, $threshold, $conditionType, true);
-            $postResult = sendAlertNotification($setting, $message);
+            $normalStmt->bind_param("i", $id);
+            $normalStmt->execute();
 
-            if ($postResult["success"]) {
-                $normalStmt->bind_param("i", $id);
-                $normalStmt->execute();
-
-                $historyStmt->bind_param(
-                    "isssdds",
-                    $id,
-                    $userId,
-                    $pointId,
-                    $alertType,
-                    $temperature,
-                    $threshold,
-                    $message
-                );
-                $historyStmt->execute();
-                $notified++;
-
-                $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
-                    "status" => "recovered",
-                    "temperature" => $temperature,
-                    "last_status" => $lastStatus,
-                    "alert_type" => $alertType,
-                    "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
-                    "email_send_result" => $postResult["email_send_result"],
-                    "email_error" => $postResult["email_error"],
-                    "history_saved" => true
-                ]);
-            } else {
-                $failed++;
-
-                $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
-                    "status" => "recovery_notify_failed",
-                    "temperature" => $temperature,
-                    "last_status" => $lastStatus,
-                    "alert_type" => $alertType,
-                    "http_code" => $postResult["http_code"],
-                    "error" => $postResult["error"],
-                    "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
-                    "email_send_result" => $postResult["email_send_result"],
-                    "email_error" => $postResult["email_error"],
-                    "history_saved" => false
-                ]);
-            }
-
+            $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
+                "status" => "back_to_normal",
+                "temperature" => $temperature,
+                "last_status" => $lastStatus,
+                "new_status" => "normal"
+            ]);
             continue;
         }
-
-        $normalStmt->bind_param("i", $id);
-        $normalStmt->execute();
 
         $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
             "status" => "not_matched",
