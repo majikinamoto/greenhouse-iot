@@ -868,8 +868,8 @@ button { margin:5px; }
 }
 
 .alert-notification-note {
-    width:100%;
     max-width:860px;
+    margin:0 10px 18px;
     padding:10px 12px;
     border:1px solid #d08a8a;
     background:#fffafa;
@@ -2223,22 +2223,6 @@ button { margin:5px; }
             <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
         </label>
 
-        <div class="alert-notification-note">
-            <div class="alert-notification-note-title">通知方法について</div>
-            <p>U-Techのアラート通知では、DiscordのWebhook通知を推奨しています。</p>
-            <p>Webhookとは、U-Techで設定した条件を満たしたときに、Discordなどの外部サービスへ自動で通知を送るための仕組みです。Discordで専用チャンネルを作成し、Webhook URLを取得してU-Techに登録すると、温度や湿度などの異常をDiscordへ通知できます。</p>
-            <p>電子メールやLINE通知も考えられますが、DiscordのWebhookは次の理由からU-Techで扱いやすい方法です。</p>
-            <ul>
-                <li>通知が早く、複数人で同じ情報を確認しやすい</li>
-                <li>専用チャンネルを作れば、アラート履歴を見返しやすい</li>
-                <li>メールのように迷惑メール判定を受けにくい</li>
-                <li>Webhook URLを貼るだけで設定でき、運用が比較的簡単</li>
-            </ul>
-            <p>Webhook URLの取得方法は、Discord公式の説明を参考にしてください。<br>
-                Discord公式：<a href="https://support.discord.com/hc/ja/articles/228383668-%E3%82%A6%E3%82%A7%E3%83%96%E3%83%95%E3%83%83%E3%82%AF%E3%81%AE%E3%81%94%E7%B4%B9%E4%BB%8B" target="_blank" rel="noopener noreferrer">ウェブフックのご紹介</a>
-            </p>
-            <p><span class="alert-notification-warning">注意：</span>Webhook URLは、知っている人がそのDiscordチャンネルへ投稿できる重要なURLです。他人に見られないように管理し、GitHubや公開ページなどに載せないでください。</p>
-        </div>
         <label>
             再通知間隔：
             <select id="alertCooldownMinutes">
@@ -2266,6 +2250,23 @@ button { margin:5px; }
     <div id="alertHistory" class="alert-history">
         <div class="alert-history-title">直近3日間のアラート履歴</div>
         <div class="alert-history-empty">直近3日間のアラート履歴はありません。</div>
+    </div>
+
+    <div class="alert-notification-note">
+        <div class="alert-notification-note-title">通知方法について</div>
+        <p>U-Techのアラート通知では、DiscordのWebhook通知を推奨しています。</p>
+        <p>Webhookとは、U-Techで設定した条件を満たしたときに、Discordなどの外部サービスへ自動で通知を送るための仕組みです。Discordで専用チャンネルを作成し、Webhook URLを取得してU-Techに登録すると、温度や湿度などの異常をDiscordへ通知できます。</p>
+        <p>電子メールやLINE通知も考えられますが、DiscordのWebhookは次の理由からU-Techで扱いやすい方法です。</p>
+        <ul>
+            <li>通知が早く、複数人で同じ情報を確認しやすい</li>
+            <li>専用チャンネルを作れば、アラート履歴を見返しやすい</li>
+            <li>メールのように迷惑メール判定を受けにくい</li>
+            <li>Webhook URLを貼るだけで設定でき、運用が比較的簡単</li>
+        </ul>
+        <p>Webhook URLの取得方法は、Discord公式の説明を参考にしてください。<br>
+            Discord公式：<a href="https://support.discord.com/hc/ja/articles/228383668-%E3%82%A6%E3%82%A7%E3%83%96%E3%83%95%E3%83%83%E3%82%AF%E3%81%AE%E3%81%94%E7%B4%B9%E4%BB%8B" target="_blank" rel="noopener noreferrer">ウェブフックのご紹介</a>
+        </p>
+        <p><span class="alert-notification-warning">注意：</span>Webhook URLは、知っている人がそのDiscordチャンネルへ投稿できる重要なURLです。他人に見られないように管理し、GitHubや公開ページなどに載せないでください。</p>
     </div>
 </section>
 
