@@ -290,6 +290,24 @@ function buildTemperatureMessage($pointId, $temperature, $threshold, $conditionT
         "設定値：" . $settingText;
 }
 
+function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType) {
+    $userId = $setting["user_id"];
+    $pointId = $setting["point_id"] ?: "P01";
+    $temperatureText = number_format($temperature, 1, ".", "") . "℃";
+    $thresholdText = number_format($threshold, 1, ".", "") . "℃";
+    $basisText = $conditionType === "above"
+        ? $thresholdText . "以下"
+        : $thresholdText . "以上";
+
+    return "【U-Tech復帰通知】\n" .
+        "ハウス環境が通常範囲に戻りました。\n\n" .
+        "対象：" . $userId . " / " . $pointId . "\n" .
+        "項目：温度\n" .
+        "現在値：" . $temperatureText . "\n" .
+        "基準：" . $basisText . "\n\n" .
+        "引き続き、状況を確認してください。";
+}
+
 function sendAlertNotification($setting, $message) {
     if ($setting["notify_target"] === "email") {
         $result = sendEmailAlert($setting["webhook_url"], $message);
@@ -365,6 +383,7 @@ $checked = 0;
 $notified = 0;
 $failed = 0;
 $details = [];
+$logs = [];
 
 while ($setting = $settingsResult->fetch_assoc()) {
     $checked++;
@@ -402,15 +421,70 @@ while ($setting = $settingsResult->fetch_assoc()) {
 
     if (!$shouldNotify) {
         if ($lastStatus === "alert") {
+            $alertType = $conditionType === "above"
+                ? "temperature_high_recovery"
+                : "temperature_low_recovery";
+            $message = buildRecoveryMessage($setting, $temperature, $threshold, $conditionType);
+
             $normalStmt->bind_param("i", $id);
             $normalStmt->execute();
 
-            $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
-                "status" => "back_to_normal",
-                "temperature" => $temperature,
-                "last_status" => $lastStatus,
-                "new_status" => "normal"
-            ]);
+            $postResult = sendAlertNotification($setting, $message);
+            $logLine = "recovered: id=" . $id .
+                " user_id=" . $userId .
+                " point_id=" . $pointId .
+                " current=" . number_format($temperature, 1, ".", "") .
+                " threshold=" . number_format($threshold, 1, ".", "");
+
+            if ($postResult["success"]) {
+                $historyMessage = $setting["notify_target"] === "email"
+                    ? $message . " email_send_result=success email_to=" . maskEmail($setting["webhook_url"])
+                    : $message;
+
+                $historyStmt->bind_param(
+                    "isssdds",
+                    $id,
+                    $userId,
+                    $pointId,
+                    $alertType,
+                    $temperature,
+                    $threshold,
+                    $historyMessage
+                );
+                $historyStmt->execute();
+                $notified++;
+                $logs[] = $logLine;
+                $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
+                    "status" => "recovered",
+                    "temperature" => $temperature,
+                    "last_status" => $lastStatus,
+                    "new_status" => "normal",
+                    "alert_type" => $alertType,
+                    "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
+                    "email_send_result" => $postResult["email_send_result"],
+                    "email_error" => $postResult["email_error"],
+                    "history_saved" => true,
+                    "log" => $logLine
+                ]);
+            } else {
+                $failed++;
+
+                $details[] = buildAlertDetail($setting, $temperature, "not_matched", [
+                    "status" => "recovery_notify_failed",
+                    "temperature" => $temperature,
+                    "last_status" => $lastStatus,
+                    "new_status" => "normal",
+                    "alert_type" => $alertType,
+                    "http_code" => $postResult["http_code"],
+                    "error" => $postResult["error"],
+                    "email_to" => $setting["notify_target"] === "email" ? maskEmail($setting["webhook_url"]) : null,
+                    "email_send_result" => $postResult["email_send_result"],
+                    "email_error" => $postResult["email_error"],
+                    "history_saved" => false,
+                    "log" => $logLine . " notify_failed"
+                ]);
+            }
+
             continue;
         }
 
@@ -499,6 +573,7 @@ echo json_encode([
     "checked" => $checked,
     "notified" => $notified,
     "failed" => $failed,
+    "logs" => $logs,
     "details" => $details
 ], JSON_UNESCAPED_UNICODE);
 
