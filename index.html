@@ -867,6 +867,51 @@ button { margin:5px; }
     max-width:100%;
 }
 
+.alert-notification-note {
+    width:100%;
+    max-width:860px;
+    padding:10px 12px;
+    border:1px solid #d08a8a;
+    background:#fffafa;
+    color:#1f3038;
+    font-size:13px;
+    line-height:1.55;
+    box-sizing:border-box;
+}
+
+.alert-notification-note-title {
+    margin-bottom:4px;
+    font-weight:800;
+    color:#8a2424;
+}
+
+.alert-notification-note p {
+    margin:0 0 6px;
+}
+
+.alert-notification-note p:last-child {
+    margin-bottom:0;
+}
+
+.alert-notification-note ul {
+    margin:4px 0 6px 1.2em;
+    padding:0;
+}
+
+.alert-notification-note li {
+    margin:0 0 2px;
+}
+
+.alert-notification-note a {
+    color:#1f5f9f;
+    font-weight:700;
+    overflow-wrap:anywhere;
+}
+
+.alert-notification-warning {
+    font-weight:700;
+    color:#8a2424;
+}
 .alert-enabled-label {
     white-space:nowrap;
 }
@@ -2178,6 +2223,22 @@ button { margin:5px; }
             <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
         </label>
 
+        <div class="alert-notification-note">
+            <div class="alert-notification-note-title">通知方法について</div>
+            <p>U-Techのアラート通知では、DiscordのWebhook通知を推奨しています。</p>
+            <p>Webhookとは、U-Techで設定した条件を満たしたときに、Discordなどの外部サービスへ自動で通知を送るための仕組みです。Discordで専用チャンネルを作成し、Webhook URLを取得してU-Techに登録すると、温度や湿度などの異常をDiscordへ通知できます。</p>
+            <p>電子メールやLINE通知も考えられますが、DiscordのWebhookは次の理由からU-Techで扱いやすい方法です。</p>
+            <ul>
+                <li>通知が早く、複数人で同じ情報を確認しやすい</li>
+                <li>専用チャンネルを作れば、アラート履歴を見返しやすい</li>
+                <li>メールのように迷惑メール判定を受けにくい</li>
+                <li>Webhook URLを貼るだけで設定でき、運用が比較的簡単</li>
+            </ul>
+            <p>Webhook URLの取得方法は、Discord公式の説明を参考にしてください。<br>
+                Discord公式：<a href="https://support.discord.com/hc/ja/articles/228383668-%E3%82%A6%E3%82%A7%E3%83%96%E3%83%95%E3%83%83%E3%82%AF%E3%81%AE%E3%81%94%E7%B4%B9%E4%BB%8B" target="_blank" rel="noopener noreferrer">ウェブフックのご紹介</a>
+            </p>
+            <p><span class="alert-notification-warning">注意：</span>Webhook URLは、知っている人がそのDiscordチャンネルへ投稿できる重要なURLです。他人に見られないように管理し、GitHubや公開ページなどに載せないでください。</p>
+        </div>
         <label>
             再通知間隔：
             <select id="alertCooldownMinutes">
