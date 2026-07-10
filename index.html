@@ -3960,8 +3960,11 @@ const pointLabelPlugin = {
 
             const labelMatch = dataset.label.match(/^(.+?)\s*\((.+)\)$/);
             const labelName = labelMatch ? labelMatch[1] : dataset.label;
-            const unit = labelMatch ? labelMatch[2] : "";
-            const displayValue = chart.canvas.id === "co2Chart" || chart.canvas.id === "co2OutsideChart"
+            const axis = chart.scales[dataset.yAxisID || "y"];
+            const axisUnit = axis && axis.options && axis.options.title ? axis.options.title.text : "";
+            const unit = labelMatch ? labelMatch[2] : axisUnit;
+            const isIntegerValue = unit === "ppm";
+            const displayValue = isIntegerValue
                 ? Number(value).toFixed(0)
                 : Number(value).toFixed(1);
             const labelText = labelName + "_";
@@ -4101,11 +4104,16 @@ const syncedCrosshairPlugin = {
             event.y < chartArea.top ||
             event.y > chartArea.bottom
         ){
+            syncedCrosshairValue = null;
+            clearSyncedTooltips();
             return;
         }
 
-        syncedCrosshairValue = xScale.getValueForPixel(event.x);
-        syncAllChartTooltips(syncedCrosshairValue);
+        const xValue = getNearestChartXValue(chart, xScale.getValueForPixel(event.x));
+        if(xValue === null) return;
+
+        syncedCrosshairValue = xValue;
+        syncAllChartTooltips(syncedCrosshairValue, chart);
     },
     afterDraw(chart){
         if(syncedCrosshairValue === null) return;
@@ -4130,24 +4138,62 @@ const syncedCrosshairPlugin = {
     }
 };
 
-function getNearestPointIndex(data, xValue){
-    if(!data || !data.length) return -1;
+function getSyncedTooltipCharts(sourceChart){
+    if(sourceChart && sourceChart.canvas && sourceChart.canvas.id.indexOf("review") === 0){
+        return reviewCharts;
+    }
 
-    let nearestIndex = -1;
-    let nearestDiff = Infinity;
+    return allCharts;
+}
 
-    data.forEach((point, index)=>{
-        if(!point || point.x === null || point.x === undefined) return;
+function getAllSyncedTooltipCharts(){
+    const charts = [];
 
-        const diff = Math.abs(point.x - xValue);
-
-        if(diff < nearestDiff){
-            nearestDiff = diff;
-            nearestIndex = index;
-        }
+    allCharts.concat(reviewCharts).forEach(chart=>{
+        if(!chart || charts.includes(chart)) return;
+        charts.push(chart);
     });
 
-    return nearestIndex;
+    return charts;
+}
+
+function getNearestChartXValue(chart, xValue){
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return null;
+
+    let nearestValue = null;
+    let nearestDiff = Infinity;
+
+    chart.data.datasets.forEach((dataset, datasetIndex)=>{
+        if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
+        if(!dataset || !Array.isArray(dataset.data)) return;
+
+        dataset.data.forEach(point=>{
+            if(!point || point.x === null || point.x === undefined) return;
+
+            const diff = Math.abs(point.x - xValue);
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearestValue = point.x;
+            }
+        });
+    });
+
+    return nearestValue;
+}
+
+function getPointIndexAtXValue(data, xValue){
+    if(!data || !data.length) return -1;
+
+    for(let index = 0; index < data.length; index++){
+        const point = data[index];
+        if(!point || point.x === null || point.x === undefined) continue;
+
+        if(Number(point.x) === Number(xValue)){
+            return index;
+        }
+    }
+
+    return -1;
 }
 
 function syncChartTooltip(chart, xValue){
@@ -4171,7 +4217,7 @@ function syncChartTooltip(chart, xValue){
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
 
-        const index = getNearestPointIndex(dataset.data, xValue);
+        const index = getPointIndexAtXValue(dataset.data, xValue);
         if(index < 0) return;
 
         active.push({
@@ -4192,14 +4238,14 @@ function syncChartTooltip(chart, xValue){
     chart.draw();
 }
 
-function syncAllChartTooltips(xValue){
-    allCharts.forEach(chart=>{
+function syncAllChartTooltips(xValue, sourceChart){
+    getSyncedTooltipCharts(sourceChart).forEach(chart=>{
         syncChartTooltip(chart, xValue);
     });
 }
 
 function clearSyncedTooltips(){
-    allCharts.forEach(chart=>{
+    getAllSyncedTooltipCharts().forEach(chart=>{
         if(chart){
             chart.setActiveElements([]);
 
