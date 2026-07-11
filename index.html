@@ -4109,8 +4109,16 @@ const syncedCrosshairPlugin = {
             return;
         }
 
-        const xValue = getNearestChartXValue(chart, xScale.getValueForPixel(event.x));
+        let xValue = getNearestChartXValue(chart, xScale.getValueForPixel(event.x));
         if(xValue === null) return;
+
+        if(chart.canvas.id === "reviewTempChartP11"){
+            const reviewP01Chart = reviewCharts.find(reviewChart=>
+                reviewChart && reviewChart.canvas.id === "reviewTempChartP01"
+            );
+            const reviewP01XValue = getNearestChartXValue(reviewP01Chart, xValue);
+            if(reviewP01XValue !== null) xValue = reviewP01XValue;
+        }
 
         syncedCrosshairValue = xValue;
         syncAllChartTooltips(syncedCrosshairValue, chart);
