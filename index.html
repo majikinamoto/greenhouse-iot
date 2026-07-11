@@ -4196,6 +4196,25 @@ function getPointIndexAtXValue(data, xValue){
     return -1;
 }
 
+function getNearestPointIndexAtXValue(data, xValue){
+    if(!data || !data.length) return -1;
+
+    let nearestIndex = -1;
+    let nearestDiff = Infinity;
+
+    data.forEach((point, index)=>{
+        if(!point || point.x === null || point.x === undefined) return;
+
+        const diff = Math.abs(Number(point.x) - Number(xValue));
+        if(diff < nearestDiff){
+            nearestDiff = diff;
+            nearestIndex = index;
+        }
+    });
+
+    return nearestIndex;
+}
+
 function syncChartTooltip(chart, xValue){
     if(!chart || !chart.scales || !chart.scales.x || !chart.chartArea) return;
 
@@ -4217,7 +4236,9 @@ function syncChartTooltip(chart, xValue){
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
 
-        const index = getPointIndexAtXValue(dataset.data, xValue);
+        const index = chart.canvas.id === "reviewTempChartP11"
+            ? getNearestPointIndexAtXValue(dataset.data, xValue)
+            : getPointIndexAtXValue(dataset.data, xValue);
         if(index < 0) return;
 
         active.push({
