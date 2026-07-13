@@ -4243,10 +4243,9 @@ function syncChartTooltip(chart, xValue){
 
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
+        if(dataset.label === "ゼロライン") return;
 
-        const index = chart.canvas.id === "reviewTempChartP11"
-            ? getNearestPointIndexAtXValue(dataset.data, xValue)
-            : getPointIndexAtXValue(dataset.data, xValue);
+        const index = getNearestPointIndexAtXValue(dataset.data, xValue);
         if(index < 0) return;
 
         active.push({
@@ -5971,6 +5970,29 @@ function applyMainChartNoDataStates(chartMap, context){
     });
 }
 
+function applyReviewChartNoDataStates(charts, userId, startTime, endTime){
+    const configs = [
+        ["reviewTempChartP01", ["P01"]],
+        ["reviewTempChartP11", ["P11"]],
+        ["reviewOutsideDiffChart", ["P01", "P11"]],
+        ["reviewVaporChart", ["P01"]],
+        ["reviewSolarChart", ["P31"]],
+        ["reviewCo2Chart", ["P21"]],
+        ["reviewCo2OutsideChart", ["P26"]],
+        ["reviewCo2DiffChart", ["P21", "P26"]]
+    ];
+
+    configs.forEach((config, index)=>{
+        setChartNoDataState(
+            config[0],
+            charts[index],
+            config[1].map(pointId=>({ userId:userId, pointId:pointId })),
+            startTime,
+            endTime
+        );
+    });
+}
+
 function setChartNoDataState(canvasId, chart, requests, startTime, endTime){
     const canvas = document.getElementById(canvasId);
     if(!canvas) return;
@@ -7114,6 +7136,7 @@ function destroyReviewCharts(){
         "reviewCo2OutsideChart",
         "reviewCo2DiffChart"
     ].forEach(canvasId=>{
+        clearChartNoDataState(canvasId);
         const chart = Chart.getChart(canvasId);
         if(chart) chart.destroy();
     });
@@ -7199,6 +7222,8 @@ async function loadReviewData(){
             configureReviewChart(createSingleChart("reviewCo2OutsideChart", p26, "co2Outside", "co2", "ppm", minTime, maxTime)),
             configureReviewChart(createCo2DiffChart("reviewCo2DiffChart", p21, p26, minTime, maxTime))
         ];
+
+        applyReviewChartNoDataStates(reviewCharts, userId, minTime, maxTime);
 
         refreshVisibleCharts();
         if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
