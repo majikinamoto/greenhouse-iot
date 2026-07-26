@@ -13,10 +13,6 @@ if ($conn->connect_error) {
 // ===== JSON受信 =====
 $json = file_get_contents('php://input');
 
-// ログ出力（デバッグ用）
-file_put_contents("/tmp/debug.log", $json . "\n", FILE_APPEND);
-file_put_contents(__DIR__ . "/debug.log", $json . "\n", FILE_APPEND);
-
 $data = json_decode($json, true);
 
 if (!$data) {
