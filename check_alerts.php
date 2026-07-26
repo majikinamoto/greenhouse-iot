@@ -1,5 +1,15 @@
 <?php
 
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode([
+        "success" => false,
+        "error" => "Forbidden"
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 header('Content-Type: application/json; charset=UTF-8');
 
 $conn = new mysqli("localhost", "iot", "password123", "greenhouse");
