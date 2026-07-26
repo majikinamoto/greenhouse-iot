@@ -2593,6 +2593,7 @@ let solarAxisMax = undefined;
 let voltAxisMin = 11;
 let voltAxisMax = 14;
 let alertFormUserId = "";
+let activeAlertSettingExists = false;
 let tideCalendarText = "満潮・干潮：読み込み中...";
 let environmentScoreP01 = [];
 let environmentScoreP21 = [];
@@ -3452,6 +3453,7 @@ function clearAlertForm(){
     if(cooldownMinutes) cooldownMinutes.value = "180";
     if(enabled) enabled.checked = true;
     if(message) message.innerText = "";
+    activeAlertSettingExists = false;
     handleAlertNotifyTargetChange();
 }
 
@@ -3503,6 +3505,7 @@ function applyAlertSettingToForm(setting){
         return;
     }
 
+    activeAlertSettingExists = true;
     const temperature = document.getElementById("alertTemperatureThreshold");
     const condition = document.getElementById("alertConditionType");
     const notifyTarget = document.getElementById("alertNotifyTarget");
@@ -3517,7 +3520,7 @@ function applyAlertSettingToForm(setting){
     }
     if(condition) condition.value = setting.condition_type || "above";
     if(notifyTarget) notifyTarget.value = setting.notify_target || "discord";
-    if(webhookUrl) webhookUrl.value = setting.webhook_url || "";
+    if(webhookUrl) webhookUrl.value = "";
     if(cooldownMinutes){
         const cooldownValue = String(setting.cooldown_minutes || 180);
         cooldownMinutes.value = [...cooldownMinutes.options].some(option=>option.value === cooldownValue)
@@ -3690,7 +3693,7 @@ function renderActiveAlertSetting(setting){
 
     const threshold = Number(setting.temperature_threshold);
     const cooldownMinutes = Number(setting.cooldown_minutes);
-    const webhook = maskWebhookUrl(setting.webhook_url || "");
+    const webhook = setting.webhook_masked || (setting.webhook_configured ? "設定済み" : "");
     const pointLabel = getAlertPointLabel(setting.point_id || getSelectedAlertPointId());
     const condition = setting.condition_type === "above"
         ? "以上"
@@ -7641,7 +7644,7 @@ async function saveAlertSetting(){
 
     document.getElementById("alertTemperatureThreshold").value = roundedTemperatureThreshold.toFixed(1);
 
-    if(!webhookUrl){
+    if(!webhookUrl && !activeAlertSettingExists){
         alertMessage.innerText = notifyTarget === "email"
             ? "メールアドレスを入力してください"
             : "Webhook URLを入力してください";

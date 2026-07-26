@@ -55,6 +55,13 @@ try {
     $stmt->close();
     $conn->close();
 
+    if ($setting) {
+        $webhook_configured = trim((string)($setting["webhook_url"] ?? "")) !== "";
+        unset($setting["webhook_url"]);
+        $setting["webhook_configured"] = $webhook_configured;
+        $setting["webhook_masked"] = $webhook_configured ? "設定済み" : "";
+    }
+
     send_json([
         "success" => true,
         "setting" => $setting ?: null
