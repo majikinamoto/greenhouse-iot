@@ -1,10 +1,12 @@
 <?php
 
+require_once __DIR__ . '/db_config.php';
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // ===== DB接続 =====
-$conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
 
 if ($conn->connect_error) {
     die("DB接続失敗: " . $conn->connect_error);

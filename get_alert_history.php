@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_config.php';
+
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
@@ -25,7 +27,7 @@ try {
         ], 400);
     }
 
-    $conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
     $conn->set_charset("utf8mb4");
 
     $sql = "SELECT point_id, alert_type, value, threshold_value, message, notified_at

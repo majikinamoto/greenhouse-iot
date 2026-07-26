@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_config.php';
+
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
@@ -17,9 +19,9 @@ function send_json(array $payload, int $statusCode = 200): void
 
 try {
     $pdo = new PDO(
-        'mysql:host=localhost;dbname=utech_quiz;charset=utf8mb4',
-        'iot',
-        'password123',
+        'mysql:host=' . DB_HOST . ';dbname=' . DB_QUIZ . ';charset=utf8mb4',
+        DB_USER,
+        DB_PASS,
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

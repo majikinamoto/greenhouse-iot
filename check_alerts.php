@@ -12,7 +12,9 @@ if (PHP_SAPI !== 'cli') {
 
 header('Content-Type: application/json; charset=UTF-8');
 
-$conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+require_once __DIR__ . '/db_config.php';
+
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
 
 if ($conn->connect_error) {
     http_response_code(500);
