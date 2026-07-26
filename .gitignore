@@ -1,3 +1,4 @@
 smtp_config.php
 cache/
 db_config.php
+api_config.php

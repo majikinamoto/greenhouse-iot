@@ -1,6 +1,21 @@
 <?php
 
 require_once __DIR__ . '/db_config.php';
+require_once __DIR__ . '/api_config.php';
+
+$received_api_key = $_SERVER['HTTP_X_API_KEY'] ?? '';
+
+if ($received_api_key !== '') {
+    if (!hash_equals(IOT_API_KEY, $received_api_key)) {
+        http_response_code(403);
+        echo "Forbidden";
+        exit;
+    }
+} elseif (IOT_API_KEY_REQUIRED) {
+    http_response_code(403);
+    echo "Forbidden";
+    exit;
+}
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
