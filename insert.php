@@ -1,10 +1,27 @@
 <?php
 
+require_once __DIR__ . '/db_config.php';
+require_once __DIR__ . '/api_config.php';
+
+$received_api_key = $_SERVER['HTTP_X_API_KEY'] ?? '';
+
+if ($received_api_key !== '') {
+    if (!hash_equals(IOT_API_KEY, $received_api_key)) {
+        http_response_code(403);
+        echo "Forbidden";
+        exit;
+    }
+} elseif (IOT_API_KEY_REQUIRED) {
+    http_response_code(403);
+    echo "Forbidden";
+    exit;
+}
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 // ===== DB接続 =====
-$conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
 
 if ($conn->connect_error) {
     die("DB接続失敗: " . $conn->connect_error);
@@ -12,10 +29,6 @@ if ($conn->connect_error) {
 
 // ===== JSON受信 =====
 $json = file_get_contents('php://input');
-
-// ログ出力（デバッグ用）
-file_put_contents("/tmp/debug.log", $json . "\n", FILE_APPEND);
-file_put_contents(__DIR__ . "/debug.log", $json . "\n", FILE_APPEND);
 
 $data = json_decode($json, true);
 

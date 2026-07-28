@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/db_config.php';
+
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
@@ -72,14 +74,6 @@ try {
         send_error("notify_targetはdiscord、emailまたはlineで指定してください");
     }
 
-    if ($webhook_url === "") {
-        send_error("webhook_urlを入力してください");
-    }
-
-    if ($notify_target === "email" && !filter_var($webhook_url, FILTER_VALIDATE_EMAIL)) {
-        send_error("メールアドレスを正しく入力してください");
-    }
-
     if (!is_numeric($cooldown_minutes)) {
         send_error("cooldown_minutesは数値で指定してください");
     }
@@ -91,10 +85,10 @@ try {
         send_error("cooldown_minutesは0以上で指定してください");
     }
 
-    $conn = new mysqli("localhost", "iot", "password123", "greenhouse");
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
     $conn->set_charset("utf8mb4");
 
-    $select_sql = "SELECT id
+    $select_sql = "SELECT id, webhook_url, notify_target
                    FROM alert_settings
                    WHERE user_id = ?
                      AND point_id = ?
@@ -106,6 +100,21 @@ try {
     $result = $select_stmt->get_result();
     $existing = $result->fetch_assoc();
     $select_stmt->close();
+
+    if ($existing && $webhook_url === "") {
+        if ((string)$existing["notify_target"] !== $notify_target) {
+            send_error("通知先を変更する場合は、新しいWebhook URLまたはメールアドレスを入力してください");
+        }
+        $webhook_url = (string)$existing["webhook_url"];
+    }
+
+    if ($webhook_url === "") {
+        send_error("webhook_urlを入力してください");
+    }
+
+    if ($notify_target === "email" && !filter_var($webhook_url, FILTER_VALIDATE_EMAIL)) {
+        send_error("メールアドレスを正しく入力してください");
+    }
 
     if ($existing) {
         $id = (int)$existing["id"];
