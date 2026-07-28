@@ -590,6 +590,86 @@ button { margin:5px; }
     color:#b00020;
 }
 
+.review-dif-panel {
+    margin:0 0 16px;
+    padding:12px;
+    border:1px solid #b8d8c0;
+    border-radius:8px;
+    background:#f4fbf5;
+    box-sizing:border-box;
+}
+
+.review-dif-panel h3 {
+    margin:0 0 10px;
+    color:#245c31;
+    font-size:18px;
+}
+
+.review-dif-basic,
+.review-dif-periods,
+.review-dif-footer {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 18px;
+}
+
+.review-dif-basic span,
+.review-dif-periods span,
+.review-dif-footer span {
+    white-space:nowrap;
+}
+
+.review-dif-periods {
+    margin-top:6px;
+}
+
+.review-dif-values {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:8px;
+    margin:12px 0 10px;
+}
+
+.review-dif-value {
+    min-width:0;
+    padding:10px;
+    border:1px solid #c9ddcd;
+    border-radius:7px;
+    background:#fff;
+    text-align:center;
+}
+
+.review-dif-value-label,
+.review-dif-value-number {
+    display:block;
+    white-space:nowrap;
+}
+
+.review-dif-value-number {
+    margin-top:4px;
+    color:#173e20;
+    font-size:20px;
+    font-weight:700;
+}
+
+@media (max-width: 600px) {
+    .review-dif-values {
+        grid-template-columns:1fr;
+    }
+
+    .review-dif-value {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        text-align:left;
+    }
+
+    .review-dif-value-number {
+        margin-top:0;
+    }
+}
+
 .analysis-compare-grid {
     display:flex;
     flex-wrap:wrap;
@@ -2019,6 +2099,37 @@ button { margin:5px; }
         <span id="reviewMessage" class="review-message"></span>
     </div>
 
+    <section id="reviewDifPanel" class="review-dif-panel" aria-labelledby="reviewDifTitle" hidden>
+        <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
+        <div class="review-dif-basic">
+            <span>対象日：<strong id="reviewDifDate">－</strong></span>
+            <span>基準地域：<strong id="reviewDifArea">－</strong></span>
+        </div>
+        <div class="review-dif-periods">
+            <span>昼：<strong id="reviewDifDayPeriod">－</strong></span>
+            <span>夜：<strong id="reviewDifNightPeriod">－</strong></span>
+        </div>
+        <div class="review-dif-values">
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">昼平均温度</span>
+                <strong id="reviewDifDayAverage" class="review-dif-value-number">－</strong>
+            </div>
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">夜平均温度</span>
+                <strong id="reviewDifNightAverage" class="review-dif-value-number">－</strong>
+            </div>
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">DIF</span>
+                <strong id="reviewDifValue" class="review-dif-value-number">－</strong>
+            </div>
+        </div>
+        <div class="review-dif-footer">
+            <span>昼 <strong id="reviewDifDayCount">0件</strong></span>
+            <span>夜 <strong id="reviewDifNightCount">0件</strong></span>
+            <span>状態：<strong id="reviewDifStatus">－</strong></span>
+        </div>
+    </section>
+
     <div class="grid">
         <div>
             <h4><span>温湿度_ハウス内（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
@@ -2555,6 +2666,11 @@ let syncingAnalysisZoom = false;
 
 let allCharts = [];
 let reviewCharts = [];
+let reviewDifP01 = [];
+let reviewDifDateValue = "";
+let reviewDifDisplayState = "idle";
+let reviewDataRequestSequence = 0;
+let reviewDataLoadingKey = "";
 let syncingZoom = false;
 let syncingReviewZoom = false;
 let syncedCrosshairValue = null;
@@ -2796,6 +2912,9 @@ window.addEventListener("DOMContentLoaded", ()=>{
     const reviewDate = document.getElementById("reviewDate");
     if(reviewDate && !reviewDate.value){
         reviewDate.value = formatDateInputValue(new Date());
+    }
+    if(reviewDate){
+        reviewDate.addEventListener("change", loadReviewData);
     }
 
     document.addEventListener("click", closeLogoInfoOnOutsideClick);
@@ -5104,6 +5223,7 @@ function handleUtechAreaChange(){
     updateHeaderTimeInfo();
     loadTideCalendarInfo();
     loadTomorrowForecast();
+    renderReviewDif();
 }
 
 function calculateSunTime(year, month, day, isSunrise, area){
@@ -7161,6 +7281,238 @@ function resetReviewZoom(){
     });
 }
 
+function createReviewDifBoundaries(dateValue, area){
+    const dateParts = String(dateValue || "").split("-").map(Number);
+    if(dateParts.length !== 3 || dateParts.some(part=>!Number.isInteger(part))) return null;
+
+    const year = dateParts[0];
+    const month = dateParts[1];
+    const day = dateParts[2];
+    const selectedDate = new Date(year, month - 1, day);
+    if(
+        selectedDate.getFullYear() !== year ||
+        selectedDate.getMonth() !== month - 1 ||
+        selectedDate.getDate() !== day
+    ){
+        return null;
+    }
+
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const sunriseText = calculateSunTime(year, month, day, true, area);
+    const sunsetText = calculateSunTime(year, month, day, false, area);
+    const nextSunriseText = calculateSunTime(
+        nextDate.getFullYear(),
+        nextDate.getMonth() + 1,
+        nextDate.getDate(),
+        true,
+        area
+    );
+    const sunriseMinutes = timeTextToMinutes(sunriseText);
+    const sunsetMinutes = timeTextToMinutes(sunsetText);
+    const nextSunriseMinutes = timeTextToMinutes(nextSunriseText);
+
+    if(
+        sunriseMinutes === null ||
+        sunsetMinutes === null ||
+        nextSunriseMinutes === null
+    ){
+        return null;
+    }
+
+    const sunrise = new Date(selectedDate);
+    sunrise.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
+    const sunset = new Date(selectedDate);
+    sunset.setHours(Math.floor(sunsetMinutes / 60), sunsetMinutes % 60, 0, 0);
+    const nextSunrise = new Date(nextDate);
+    nextSunrise.setHours(
+        Math.floor(nextSunriseMinutes / 60),
+        nextSunriseMinutes % 60,
+        0,
+        0
+    );
+
+    return {
+        date:selectedDate,
+        sunrise:sunrise.getTime(),
+        sunset:sunset.getTime(),
+        nextSunrise:nextSunrise.getTime(),
+        sunriseText,
+        sunsetText,
+        nextSunriseText
+    };
+}
+
+function calculateReviewDif(p01, boundaries, nowTime){
+    const result = {
+        dayAverage:null,
+        nightAverage:null,
+        dif:null,
+        dayCount:0,
+        nightCount:0,
+        status:"計算前"
+    };
+    if(!boundaries) return result;
+
+    let dayTotal = 0;
+    let nightTotal = 0;
+    (Array.isArray(p01) ? p01 : []).forEach(item=>{
+        if(!item) return;
+        const temperature = item.temp;
+        if(
+            temperature === null ||
+            temperature === undefined ||
+            temperature === "" ||
+            !Number.isFinite(Number(temperature))
+        ){
+            return;
+        }
+
+        const xValue = Number.isFinite(item.xValue)
+            ? item.xValue
+            : item.x instanceof Date
+                ? item.x.getTime()
+                : NaN;
+        if(!Number.isFinite(xValue)) return;
+
+        const value = Number(temperature);
+        if(xValue >= boundaries.sunrise && xValue < boundaries.sunset){
+            dayTotal += value;
+            result.dayCount++;
+        }else if(xValue >= boundaries.sunset && xValue < boundaries.nextSunrise){
+            nightTotal += value;
+            result.nightCount++;
+        }
+    });
+
+    result.dayAverage = result.dayCount ? dayTotal / result.dayCount : null;
+    result.nightAverage = result.nightCount ? nightTotal / result.nightCount : null;
+
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    if(currentTime < boundaries.sunrise){
+        result.status = "計算前";
+    }else if(currentTime < boundaries.sunset){
+        result.status = "昼集計中";
+    }else if(currentTime < boundaries.nextSunrise){
+        result.status = "夜集計中";
+    }else{
+        result.status = "確定";
+        if(result.dayAverage !== null && result.nightAverage !== null){
+            result.dif = result.dayAverage - result.nightAverage;
+        }
+    }
+
+    return result;
+}
+
+function formatReviewDifTemperature(value){
+    return value === null ? "－（データなし）" : value.toFixed(1) + "℃";
+}
+
+function formatReviewDifValue(value){
+    if(value === null) return "－（算出不可）";
+    const rounded = Number(value.toFixed(1));
+    return (rounded > 0 ? "+" : "") + rounded.toFixed(1) + "℃";
+}
+
+function setReviewDifText(id, text){
+    const element = document.getElementById(id);
+    if(element) element.textContent = text;
+}
+
+function renderReviewDifRequestState(dateValue, status){
+    const panel = document.getElementById("reviewDifPanel");
+    const area = getSelectedUtechArea();
+    const boundaries = createReviewDifBoundaries(dateValue, area);
+    if(!panel || !boundaries) return;
+
+    const date = boundaries.date;
+    const isLoading = status === "データ取得中";
+    const valueText = isLoading ? "読み込み中" : "－";
+
+    setReviewDifText(
+        "reviewDifDate",
+        date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日"
+    );
+    setReviewDifText("reviewDifArea", area.label);
+    setReviewDifText(
+        "reviewDifDayPeriod",
+        boundaries.sunriseText + "～" + boundaries.sunsetText
+    );
+    setReviewDifText(
+        "reviewDifNightPeriod",
+        boundaries.sunsetText + "～翌" + boundaries.nextSunriseText
+    );
+    setReviewDifText("reviewDifDayAverage", valueText);
+    setReviewDifText("reviewDifNightAverage", valueText);
+    setReviewDifText("reviewDifValue", valueText);
+    setReviewDifText("reviewDifDayCount", "－");
+    setReviewDifText("reviewDifNightCount", "－");
+    setReviewDifText("reviewDifStatus", status);
+    panel.hidden = false;
+}
+
+function renderReviewDif(){
+    const panel = document.getElementById("reviewDifPanel");
+    if(!panel || !reviewDifDateValue) return;
+
+    if(reviewDifDisplayState === "loading"){
+        renderReviewDifRequestState(reviewDifDateValue, "データ取得中");
+        return;
+    }
+    if(reviewDifDisplayState === "error"){
+        renderReviewDifRequestState(reviewDifDateValue, "取得エラー");
+        return;
+    }
+
+    const area = getSelectedUtechArea();
+    const boundaries = createReviewDifBoundaries(reviewDifDateValue, area);
+    if(!boundaries){
+        panel.hidden = true;
+        return;
+    }
+
+    const result = calculateReviewDif(reviewDifP01, boundaries, Date.now());
+    const beforeSunrise = result.status === "計算前";
+    const duringDay = result.status === "昼集計中";
+    const duringNight = result.status === "夜集計中";
+    const date = boundaries.date;
+
+    setReviewDifText(
+        "reviewDifDate",
+        date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日"
+    );
+    setReviewDifText("reviewDifArea", area.label);
+    setReviewDifText(
+        "reviewDifDayPeriod",
+        boundaries.sunriseText + "～" + boundaries.sunsetText
+    );
+    setReviewDifText(
+        "reviewDifNightPeriod",
+        boundaries.sunsetText + "～翌" + boundaries.nextSunriseText
+    );
+    setReviewDifText(
+        "reviewDifDayAverage",
+        beforeSunrise
+            ? "計算前"
+            : formatReviewDifTemperature(result.dayAverage) + (duringDay && result.dayAverage !== null ? "（途中経過）" : "")
+    );
+    setReviewDifText(
+        "reviewDifNightAverage",
+        beforeSunrise || duringDay
+            ? "計算前"
+            : formatReviewDifTemperature(result.nightAverage) + (duringNight && result.nightAverage !== null ? "（途中経過）" : "")
+    );
+    setReviewDifText(
+        "reviewDifValue",
+        beforeSunrise || duringDay || duringNight ? "未確定" : formatReviewDifValue(result.dif)
+    );
+    setReviewDifText("reviewDifDayCount", result.dayCount + "件");
+    setReviewDifText("reviewDifNightCount", result.nightCount + "件");
+    setReviewDifText("reviewDifStatus", result.status);
+    panel.hidden = false;
+}
+
 async function loadReviewData(){
     const userId = document.getElementById("userId").value.trim();
     const reviewDate = document.getElementById("reviewDate");
@@ -7178,6 +7530,19 @@ async function loadReviewData(){
         if(msg) msg.innerText = "日付を選択してください";
         return;
     }
+
+    const requestKey = userId + "\n" + dateValue;
+    if(reviewDataLoadingKey === requestKey){
+        if(msg) msg.innerText = "読み込み中...";
+        return;
+    }
+
+    const requestId = ++reviewDataRequestSequence;
+    reviewDataLoadingKey = requestKey;
+    reviewDifP01 = [];
+    reviewDifDateValue = dateValue;
+    reviewDifDisplayState = "loading";
+    renderReviewDif();
 
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
@@ -7203,12 +7568,26 @@ async function loadReviewData(){
             fetchDataSafe(userId, "P26", range)
         ]);
 
+        if(
+            requestId !== reviewDataRequestSequence ||
+            !reviewDate ||
+            reviewDate.value !== dateValue
+        ){
+            if(reviewDataLoadingKey === requestKey) reviewDataLoadingKey = "";
+            return;
+        }
+
         const errors = results.filter(r=>r.error).map(r=>r.error);
         const p01 = parseData(results[0].data, minTime);
         const p11 = parseData(results[1].data, minTime);
         const p31 = parseData(results[2].data, minTime);
         const p21 = parseData(results[3].data, minTime);
         const p26 = parseData(results[4].data, minTime);
+
+        reviewDifP01 = p01;
+        reviewDifDateValue = dateValue;
+        reviewDifDisplayState = results[0].error ? "error" : "ready";
+        renderReviewDif();
 
         destroyReviewCharts();
 
@@ -7227,8 +7606,23 @@ async function loadReviewData(){
 
         refreshVisibleCharts();
         if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
+        reviewDataLoadingKey = "";
 
     }catch(e){
+        if(
+            requestId !== reviewDataRequestSequence ||
+            !reviewDate ||
+            reviewDate.value !== dateValue
+        ){
+            if(reviewDataLoadingKey === requestKey) reviewDataLoadingKey = "";
+            return;
+        }
+
+        reviewDataLoadingKey = "";
+        reviewDifP01 = [];
+        reviewDifDateValue = dateValue;
+        reviewDifDisplayState = "error";
+        renderReviewDif();
         if(msg) msg.innerText = "過去データ表示エラー：" + e.message;
         console.error(e);
     }
