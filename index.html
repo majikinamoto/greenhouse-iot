@@ -591,18 +591,28 @@ button { margin:5px; }
 }
 
 .review-dif-panel {
-    margin:0 0 16px;
-    padding:12px;
+    margin:0 0 12px;
+    padding:8px 10px;
     border:1px solid #b8d8c0;
-    border-radius:8px;
+    border-radius:6px;
     background:#f4fbf5;
     box-sizing:border-box;
+    color:#273b2c;
+    font-size:13px;
+    line-height:1.4;
+}
+
+.review-dif-heading {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:3px 18px;
 }
 
 .review-dif-panel h3 {
-    margin:0 0 10px;
+    margin:0;
     color:#245c31;
-    font-size:18px;
+    font-size:15px;
 }
 
 .review-dif-basic,
@@ -610,7 +620,7 @@ button { margin:5px; }
 .review-dif-footer {
     display:flex;
     flex-wrap:wrap;
-    gap:6px 18px;
+    gap:2px 16px;
 }
 
 .review-dif-basic span,
@@ -620,53 +630,74 @@ button { margin:5px; }
 }
 
 .review-dif-periods {
-    margin-top:6px;
+    margin-top:2px;
 }
 
 .review-dif-values {
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:8px;
-    margin:12px 0 10px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    margin:5px 0 4px;
+    padding:4px 0;
+    border-top:1px solid #d5e6d8;
+    border-bottom:1px solid #d5e6d8;
 }
 
 .review-dif-value {
     min-width:0;
-    padding:10px;
-    border:1px solid #c9ddcd;
-    border-radius:7px;
-    background:#fff;
-    text-align:center;
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    padding:0 14px;
+    border-left:1px solid #c9ddcd;
+    text-align:left;
+}
+
+.review-dif-value:first-child {
+    padding-left:0;
+    border-left:none;
 }
 
 .review-dif-value-label,
 .review-dif-value-number {
-    display:block;
     white-space:nowrap;
 }
 
 .review-dif-value-number {
-    margin-top:4px;
     color:#173e20;
-    font-size:20px;
+    font-size:16px;
     font-weight:700;
 }
 
 @media (max-width: 600px) {
+    .review-dif-panel {
+        padding:7px 8px;
+    }
+
+    .review-dif-heading {
+        display:block;
+    }
+
+    .review-dif-panel h3 {
+        margin-bottom:2px;
+    }
+
     .review-dif-values {
+        display:grid;
         grid-template-columns:1fr;
+        padding:2px 0;
     }
 
     .review-dif-value {
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        text-align:left;
+        gap:6px;
+        padding:3px 0;
+        border-top:1px solid #dbe9dd;
+        border-left:none;
     }
 
-    .review-dif-value-number {
-        margin-top:0;
+    .review-dif-value:first-child {
+        padding-top:2px;
+        border-top:none;
     }
 }
 
@@ -2100,10 +2131,12 @@ button { margin:5px; }
     </div>
 
     <section id="reviewDifPanel" class="review-dif-panel" aria-labelledby="reviewDifTitle" hidden>
-        <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
-        <div class="review-dif-basic">
-            <span>対象日：<strong id="reviewDifDate">－</strong></span>
-            <span>基準地域：<strong id="reviewDifArea">－</strong></span>
+        <div class="review-dif-heading">
+            <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
+            <div class="review-dif-basic">
+                <span>対象日：<strong id="reviewDifDate">－</strong></span>
+                <span>基準地域：<strong id="reviewDifArea">－</strong></span>
+            </div>
         </div>
         <div class="review-dif-periods">
             <span>昼：<strong id="reviewDifDayPeriod">－</strong></span>
