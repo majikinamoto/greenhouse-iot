@@ -669,6 +669,72 @@ button { margin:5px; }
     font-weight:700;
 }
 
+.review-dif-period-panel {
+    margin:0 0 10px;
+    padding:8px 10px;
+    border:1px solid #b8d8c0;
+    border-radius:6px;
+    background:#f7fbf7;
+    box-sizing:border-box;
+    color:#273b2c;
+    font-size:13px;
+}
+
+.review-dif-period-heading {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:3px 18px;
+    margin-bottom:5px;
+}
+
+.review-dif-period-heading h3 {
+    margin:0;
+    color:#245c31;
+    font-size:15px;
+}
+
+.review-dif-period-meta {
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px 16px;
+}
+
+.review-dif-period-meta span {
+    white-space:nowrap;
+}
+
+.review-dif-period-table {
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    background:#fff;
+}
+
+.review-dif-period-table th,
+.review-dif-period-table td {
+    padding:6px 5px;
+    border-bottom:1px solid #d9e5db;
+    text-align:center;
+    white-space:nowrap;
+}
+
+.review-dif-period-table th {
+    background:#e9f3eb;
+    color:#2d5035;
+    font-weight:700;
+}
+
+.review-dif-period-table tbody tr:last-child td {
+    border-bottom:none;
+}
+
+.review-dif-period-note {
+    margin:5px 0 0;
+    color:#5d6d61;
+    font-size:11px;
+}
+
 @media (max-width: 600px) {
     .review-dif-panel {
         padding:7px 8px;
@@ -698,6 +764,29 @@ button { margin:5px; }
     .review-dif-value:first-child {
         padding-top:2px;
         border-top:none;
+    }
+
+    .review-dif-period-panel {
+        padding:7px 6px;
+    }
+
+    .review-dif-period-heading {
+        display:block;
+    }
+
+    .review-dif-period-heading h3 {
+        margin-bottom:2px;
+    }
+
+    .review-dif-period-table th,
+    .review-dif-period-table td {
+        padding:6px 2px;
+        font-size:12px;
+    }
+
+    .review-dif-period-table th.review-dif-period-secondary,
+    .review-dif-period-table td.review-dif-period-secondary {
+        display:none !important;
     }
 }
 
@@ -2130,6 +2219,30 @@ button { margin:5px; }
         <span id="reviewMessage" class="review-message"></span>
     </div>
 
+    <section id="reviewDifPeriodPanel" class="review-dif-period-panel" aria-labelledby="reviewDifPeriodTitle" hidden>
+        <div class="review-dif-period-heading">
+            <h3 id="reviewDifPeriodTitle">昼夜温度・DIF（直近7日）</h3>
+            <div class="review-dif-period-meta">
+                <span>対象期間：<strong id="reviewDifPeriodRange">－</strong></span>
+                <span>基準地域：<strong id="reviewDifPeriodArea">－</strong></span>
+            </div>
+        </div>
+        <table class="review-dif-period-table">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>昼平均</th>
+                    <th>夜平均</th>
+                    <th>DIF</th>
+                    <th class="review-dif-period-secondary">日平均</th>
+                    <th class="review-dif-period-secondary">状態</th>
+                </tr>
+            </thead>
+            <tbody id="reviewDifPeriodBody"></tbody>
+        </table>
+        <p class="review-dif-period-note">DIFの符号は昼温と夜温の差を示し、良否を示すものではありません。</p>
+    </section>
+
     <section id="reviewDifPanel" class="review-dif-panel" aria-labelledby="reviewDifTitle" hidden>
         <div class="review-dif-heading">
             <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
@@ -2704,6 +2817,12 @@ let reviewDifDateValue = "";
 let reviewDifDisplayState = "idle";
 let reviewDataRequestSequence = 0;
 let reviewDataLoadingKey = "";
+let reviewDifPeriodP01 = [];
+let reviewDifRows = [];
+let reviewDifPeriodDisplayState = "idle";
+let reviewDifPeriodRequestSequence = 0;
+let reviewDifPeriodLoadingKey = "";
+let reviewDifPeriodEndDateValue = "";
 let syncingZoom = false;
 let syncingReviewZoom = false;
 let syncedCrosshairValue = null;
@@ -5260,6 +5379,7 @@ function handleUtechAreaChange(){
     loadTideCalendarInfo();
     loadTomorrowForecast();
     renderReviewDif();
+    recalculateReviewDifPeriodRows();
 }
 
 function calculateSunTime(year, month, day, isSunrise, area){
@@ -7549,6 +7669,266 @@ function renderReviewDif(){
     panel.hidden = false;
 }
 
+function createReviewDifPeriodDateValues(endDateValue, dayCount){
+    const parts = String(endDateValue || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(part=>!Number.isInteger(part))) return [];
+
+    const endDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    if(
+        endDate.getFullYear() !== parts[0] ||
+        endDate.getMonth() !== parts[1] - 1 ||
+        endDate.getDate() !== parts[2]
+    ){
+        return [];
+    }
+
+    const count = Number.isInteger(dayCount) && dayCount > 0 ? dayCount : 7;
+    const dateValues = [];
+    for(let offset = count - 1; offset >= 0; offset--){
+        const date = new Date(endDate);
+        date.setDate(endDate.getDate() - offset);
+        dateValues.push(formatDateInputValue(date));
+    }
+    return dateValues;
+}
+
+function calculateReviewDailyAverage(p01, targetDate){
+    const result = { average:null, count:0 };
+    if(!(targetDate instanceof Date) || isNaN(targetDate.getTime())) return result;
+
+    const start = new Date(targetDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    let total = 0;
+
+    (Array.isArray(p01) ? p01 : []).forEach(item=>{
+        if(!item) return;
+        const temperature = item.temp;
+        if(
+            temperature === null ||
+            temperature === undefined ||
+            temperature === "" ||
+            !Number.isFinite(Number(temperature))
+        ){
+            return;
+        }
+
+        const xValue = Number.isFinite(item.xValue)
+            ? item.xValue
+            : item.x instanceof Date
+                ? item.x.getTime()
+                : NaN;
+        if(!Number.isFinite(xValue) || xValue < start.getTime() || xValue >= end.getTime()) return;
+
+        total += Number(temperature);
+        result.count++;
+    });
+
+    if(result.count) result.average = total / result.count;
+    return result;
+}
+
+function getReviewDifPeriodStatus(boundaries, difResult, nowTime){
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    if(!boundaries || !difResult) return "データなし";
+    if(boundaries.date.getTime() > currentTime) return "未到来";
+
+    if(difResult.status === "計算前") return "日の出前";
+    if(difResult.status === "昼集計中") return "昼間集計中";
+    if(difResult.status === "夜集計中") return "夜間集計中";
+    if(difResult.dayCount === 0 && difResult.nightCount === 0) return "データなし";
+    if(difResult.dayCount === 0 || difResult.nightCount === 0) return "データ不足";
+    return "確定";
+}
+
+function calculateReviewDifPeriodRows(p01, endDateValue, area, nowTime){
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    return createReviewDifPeriodDateValues(endDateValue, 7).map(dateValue=>{
+        const boundaries = createReviewDifBoundaries(dateValue, area);
+        const difResult = calculateReviewDif(p01, boundaries, currentTime);
+        const dailyResult = calculateReviewDailyAverage(p01, boundaries ? boundaries.date : null);
+        const date = boundaries ? boundaries.date : null;
+
+        return {
+            dateValue,
+            dateText:date ? (date.getMonth() + 1) + "/" + date.getDate() : dateValue,
+            dayAverage:difResult.dayAverage,
+            nightAverage:difResult.nightAverage,
+            dif:difResult.dif,
+            dailyAverage:dailyResult.average,
+            status:getReviewDifPeriodStatus(boundaries, difResult, currentTime)
+        };
+    }).reverse();
+}
+
+function formatReviewDifPeriodTemperature(value, showSign){
+    if(value === null || value === undefined || !Number.isFinite(value)) return "—";
+    const rounded = Number(value.toFixed(1));
+    return (showSign && rounded > 0 ? "+" : "") + rounded.toFixed(1) + "℃";
+}
+
+function updateReviewDifPeriodMeta(){
+    const dateValues = createReviewDifPeriodDateValues(reviewDifPeriodEndDateValue, 7);
+    const area = getSelectedUtechArea();
+    const rangeElement = document.getElementById("reviewDifPeriodRange");
+    const areaElement = document.getElementById("reviewDifPeriodArea");
+
+    if(rangeElement){
+        if(dateValues.length){
+            const first = dateValues[0].split("-").map(Number);
+            const last = dateValues[dateValues.length - 1].split("-").map(Number);
+            rangeElement.textContent =
+                first[0] + "年" + first[1] + "月" + first[2] + "日～" +
+                last[0] + "年" + last[1] + "月" + last[2] + "日";
+        }else{
+            rangeElement.textContent = "－";
+        }
+    }
+    if(areaElement) areaElement.textContent = area.label;
+}
+
+function renderReviewDifPeriodMessage(message){
+    const body = document.getElementById("reviewDifPeriodBody");
+    if(!body) return;
+
+    body.textContent = "";
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 6;
+    cell.textContent = message;
+    row.appendChild(cell);
+    body.appendChild(row);
+}
+
+function renderReviewDifPeriod(){
+    const panel = document.getElementById("reviewDifPeriodPanel");
+    const body = document.getElementById("reviewDifPeriodBody");
+    if(!panel || !body || !reviewDifPeriodEndDateValue) return;
+
+    updateReviewDifPeriodMeta();
+    panel.hidden = false;
+
+    if(reviewDifPeriodDisplayState === "loading"){
+        renderReviewDifPeriodMessage("データ取得中");
+        return;
+    }
+    if(reviewDifPeriodDisplayState === "error"){
+        renderReviewDifPeriodMessage("取得エラー");
+        return;
+    }
+
+    body.textContent = "";
+    reviewDifRows.forEach(item=>{
+        const row = document.createElement("tr");
+        [
+            { text:item.dateText, secondary:false },
+            { text:formatReviewDifPeriodTemperature(item.dayAverage, false), secondary:false },
+            { text:formatReviewDifPeriodTemperature(item.nightAverage, false), secondary:false },
+            { text:formatReviewDifPeriodTemperature(item.dif, true), secondary:false },
+            { text:formatReviewDifPeriodTemperature(item.dailyAverage, false), secondary:true },
+            { text:item.status, secondary:true }
+        ].forEach(column=>{
+            const cell = document.createElement("td");
+            cell.textContent = column.text;
+            if(column.secondary) cell.className = "review-dif-period-secondary";
+            row.appendChild(cell);
+        });
+        body.appendChild(row);
+    });
+}
+
+function recalculateReviewDifPeriodRows(){
+    if(!reviewDifPeriodEndDateValue) return;
+    if(reviewDifPeriodDisplayState !== "ready"){
+        renderReviewDifPeriod();
+        return;
+    }
+
+    reviewDifRows = calculateReviewDifPeriodRows(
+        reviewDifPeriodP01,
+        reviewDifPeriodEndDateValue,
+        getSelectedUtechArea(),
+        Date.now()
+    );
+    renderReviewDifPeriod();
+}
+
+async function loadReviewDifPeriodData(userId, endDateValue){
+    const requestKey = userId + "\n" + endDateValue + "\n7";
+    if(reviewDifPeriodLoadingKey === requestKey) return;
+
+    const dateValues = createReviewDifPeriodDateValues(endDateValue, 7);
+    if(dateValues.length !== 7) return;
+
+    const requestId = ++reviewDifPeriodRequestSequence;
+    reviewDifPeriodLoadingKey = requestKey;
+    reviewDifPeriodP01 = [];
+    reviewDifRows = [];
+    reviewDifPeriodEndDateValue = endDateValue;
+    reviewDifPeriodDisplayState = "loading";
+    renderReviewDifPeriod();
+
+    const startParts = dateValues[0].split("-").map(Number);
+    const startTime = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+    startTime.setHours(0, 0, 0, 0);
+    const endTime = new Date(startTime);
+    endTime.setDate(endTime.getDate() + 7);
+    endTime.setHours(23, 59, 59, 999);
+
+    try{
+        const result = await fetchDataSafe(userId, "P01", {
+            start:formatSqlDateTime(startTime),
+            end:formatSqlDateTime(endTime)
+        });
+        const currentUserId = document.getElementById("userId").value.trim();
+        const reviewDate = document.getElementById("reviewDate");
+
+        if(
+            requestId !== reviewDifPeriodRequestSequence ||
+            currentUserId !== userId ||
+            !reviewDate ||
+            reviewDate.value !== endDateValue
+        ){
+            if(reviewDifPeriodLoadingKey === requestKey) reviewDifPeriodLoadingKey = "";
+            return;
+        }
+
+        reviewDifPeriodLoadingKey = "";
+        if(result.error){
+            reviewDifPeriodP01 = [];
+            reviewDifRows = [];
+            reviewDifPeriodDisplayState = "error";
+            renderReviewDifPeriod();
+            return;
+        }
+
+        reviewDifPeriodP01 = parseData(result.data, startTime);
+        reviewDifPeriodDisplayState = "ready";
+        recalculateReviewDifPeriodRows();
+
+    }catch(e){
+        const currentUserId = document.getElementById("userId").value.trim();
+        const reviewDate = document.getElementById("reviewDate");
+        if(
+            requestId !== reviewDifPeriodRequestSequence ||
+            currentUserId !== userId ||
+            !reviewDate ||
+            reviewDate.value !== endDateValue
+        ){
+            if(reviewDifPeriodLoadingKey === requestKey) reviewDifPeriodLoadingKey = "";
+            return;
+        }
+
+        reviewDifPeriodLoadingKey = "";
+        reviewDifPeriodP01 = [];
+        reviewDifRows = [];
+        reviewDifPeriodDisplayState = "error";
+        renderReviewDifPeriod();
+        console.error(e);
+    }
+}
+
 async function loadReviewData(){
     const userId = document.getElementById("userId").value.trim();
     const reviewDate = document.getElementById("reviewDate");
@@ -7566,6 +7946,8 @@ async function loadReviewData(){
         if(msg) msg.innerText = "日付を選択してください";
         return;
     }
+
+    loadReviewDifPeriodData(userId, dateValue);
 
     const requestKey = userId + "\n" + dateValue;
     if(reviewDataLoadingKey === requestKey){
