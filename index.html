@@ -2616,6 +2616,26 @@ button { margin:5px; }
     </div>
 
     <div>
+        <h4><span>メンテ用ハウス内日射量（P32）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-solar">日射量軸：</span><input class="axis-input" type="number" id="solarMinP32" value=""> ～
+            <input class="axis-input" type="number" id="solarMaxP32" value="">
+            <button onclick="applySingleYAxis(solarChartP32,'solar',getSolarComparisonAxis('P32'))">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="solarChartP32"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>センサー診断用日射量差（P31−P32）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="solarDiffMinP31P32" value="-200"> ～
+            <input class="axis-input" type="number" id="solarDiffMaxP31P32" value="200">
+            <button onclick="applySolarDiagnosticDiffYAxis(solarDiffChartP31P32,'P31','P32')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="solarDiffChartP31P32"></canvas></div>
+    </div>
+
+    <div>
         <h4><span>メンテ用（電圧_P91）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-volt">電圧軸：</span><input class="axis-input" type="number" id="voltMin" value="11"> ～
@@ -2865,7 +2885,7 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
-let diffChart, diffChartP11P12, outsideDiffChart, solarChart, voltChart, vaporChart, dewChart;
+let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, dewChart;
 let co2Chart, co2OutsideChart, co2DiffChart, co2ChartP22, co2DiffChartP21P22, co2ChartP27, co2DiffChartP26P27;
 let analysisCompareCharts = {};
 let analysisCompareData = {};
@@ -2995,6 +3015,23 @@ const mainChartConfigs = [
         title:"日射量",
         fields:["solar_radiation"],
         requests:context=>[{ userId:context.userId, pointId:"P31" }]
+    },
+    {
+        key:"maintenanceSolarRadiation",
+        canvasId:"solarChartP32",
+        title:"日射量_ハウス内メンテナンス",
+        fields:["solar_radiation"],
+        requests:context=>[{ userId:context.userId, pointId:"P32" }]
+    },
+    {
+        key:"maintenanceSolarDiff",
+        canvasId:"solarDiffChartP31P32",
+        title:"日射量差_ハウス内センサー診断",
+        fields:["solar_radiation"],
+        requests:context=>[
+            { userId:context.userId, pointId:"P31" },
+            { userId:context.userId, pointId:"P32" }
+        ]
     },
     {
         key:"insideCo2",
@@ -5315,6 +5352,8 @@ function syncZoom(sourceChart){
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
     const co2DiffChartIds = ["co2DiffChart", "co2DiffChartP21P22", "co2DiffChartP26P27"];
     const isCo2DiffSource = co2DiffChartIds.includes(sourceChart.canvas.id);
+    const solarChartIds = ["solarChart", "solarChartP32"];
+    const isSolarSource = solarChartIds.includes(sourceChart.canvas.id);
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
@@ -5378,6 +5417,27 @@ function syncZoom(sourceChart){
                     if(chart.options.scales.yRight){
                         chart.options.scales.yRight.min = co2YRange.min;
                         chart.options.scales.yRight.max = co2YRange.max;
+                    }
+                    chart.update("none");
+                }
+            }
+
+            if(isSolarSource && solarChartIds.includes(chart.canvas.id) && sourceChart.scales.y){
+                const solarYRange = {
+                    min:sourceChart.scales.y.min,
+                    max:sourceChart.scales.y.max
+                };
+                if(chart.zoomScale){
+                    chart.zoomScale("y", solarYRange, "none");
+                    if(chart.scales.yRight){
+                        chart.zoomScale("yRight", solarYRange, "none");
+                    }
+                }else{
+                    chart.options.scales.y.min = solarYRange.min;
+                    chart.options.scales.y.max = solarYRange.max;
+                    if(chart.options.scales.yRight){
+                        chart.options.scales.yRight.min = solarYRange.min;
+                        chart.options.scales.yRight.max = solarYRange.max;
                     }
                     chart.update("none");
                 }
@@ -6202,6 +6262,8 @@ function applyMobileChartRanges(minTime, maxTime){
         vaporChart,
         dewChart,
         solarChart,
+        solarChartP32,
+        solarDiffChartP31P32,
         co2Chart,
         co2OutsideChart,
         co2DiffChart,
@@ -6584,6 +6646,22 @@ function getCo2DiagnosticDiffAxis(firstPointId, secondPointId){
     };
 }
 
+function getSolarComparisonAxis(pointId){
+    return {
+        min:getAxisValue("solarMin" + pointId, solarAxisMin),
+        max:getAxisValue("solarMax" + pointId, solarAxisMax)
+    };
+}
+
+function getSolarDiagnosticDiffAxis(firstPointId, secondPointId){
+    const suffix = firstPointId + secondPointId;
+
+    return {
+        min:getAxisValue("solarDiffMin" + suffix, -200),
+        max:getAxisValue("solarDiffMax" + suffix, 200)
+    };
+}
+
 function getDiffAxis(){
     return {
         min:getAxisValue("diffMin", diffAxisMin),
@@ -6679,6 +6757,8 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "vaporChart",
         "dewChart",
         "solarChart",
+        "solarChartP32",
+        "solarDiffChartP31P32",
         "co2Chart",
         "co2OutsideChart",
         "co2DiffChart",
@@ -8504,6 +8584,7 @@ async function loadData(){
         const resultDiagnosticP11 = getFetchedResult(resultMap, userId, "P11");
         const resultP12 = getFetchedResult(resultMap, userId, "P12");
         const resultP31 = getFetchedResult(resultMap, userId, "P31");
+        const resultP32 = getFetchedResult(resultMap, userId, "P32");
         const resultP21 = getFetchedResult(resultMap, userId, "P21");
         const resultP22 = getFetchedResult(resultMap, userId, "P22");
         const resultP26 = getFetchedResult(resultMap, userId, "P26");
@@ -8519,6 +8600,7 @@ async function loadData(){
         const diagnosticP11 = parseData(resultDiagnosticP11.data, minTime);
         const p12 = parseData(resultP12.data, minTime);
         const p31 = parseData(resultP31.data, minTime);
+        const p32 = parseData(resultP32.data, minTime);
 const p21 = parseData(resultP21.data, minTime);
 const p22 = parseData(resultP22.data, minTime);
 const p26 = parseData(resultP26.data, minTime);
@@ -8604,6 +8686,29 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         dewChart = createSingleChart("dewChart", p01, "dew", "露点温度", "℃", chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
+        solarChartP32 = createSingleChart(
+            "solarChartP32",
+            p32,
+            "solar",
+            "日射",
+            "日射",
+            chartMinTime,
+            now,
+            getSolarComparisonAxis("P32")
+        );
+        solarDiffChartP31P32 = createSingleSensorDiagnosticDiffChart(
+            "solarDiffChartP31P32",
+            p31,
+            p32,
+            "solar",
+            "P31",
+            "P32",
+            "日射量差",
+            "日射",
+            getSolarDiagnosticDiffAxis("P31", "P32"),
+            chartMinTime,
+            now
+        );
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
         co2OutsideChart = createSingleChart("co2OutsideChart", p26, "co2Outside", "co2", "ppm", chartMinTime, now);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
@@ -8677,6 +8782,8 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             vapor:vaporChart,
             dewPoint:dewChart,
             solarRadiation:solarChart,
+            maintenanceSolarRadiation:solarChartP32,
+            maintenanceSolarDiff:solarDiffChartP31P32,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
             co2Diff:co2DiffChart,
@@ -8698,6 +8805,8 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             vaporChart,
             dewChart,
             solarChart,
+            solarChartP32,
+            solarDiffChartP31P32,
             co2Chart,
             co2OutsideChart,
             co2DiffChart,
@@ -8735,6 +8844,8 @@ function destroyCharts(){
     diffChartP11P12 = null;
     outsideDiffChart = null;
     solarChart = null;
+    solarChartP32 = null;
+    solarDiffChartP31P32 = null;
     voltChart = null;
     vaporChart = null;
     dewChart = null;
@@ -8755,6 +8866,8 @@ function destroyCharts(){
         "vaporChart",
         "dewChart",
         "solarChart",
+        "solarChartP32",
+        "solarDiffChartP31P32",
         "co2Chart",
         "co2OutsideChart",
         "co2DiffChart",
@@ -8871,6 +8984,13 @@ function applyCo2DiagnosticDiffYAxis(chart, firstPointId, secondPointId){
     if(!chart) return;
 
     setLinearYAxis(chart, getCo2DiagnosticDiffAxis(firstPointId, secondPointId));
+    chart.update();
+}
+
+function applySolarDiagnosticDiffYAxis(chart, firstPointId, secondPointId){
+    if(!chart) return;
+
+    setLinearYAxis(chart, getSolarDiagnosticDiffAxis(firstPointId, secondPointId));
     chart.update();
 }
 
