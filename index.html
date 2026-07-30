@@ -251,10 +251,8 @@
 
 .moon-progress-track {
     position:relative;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
     width:286px;
+    height:16px;
     padding:0 4px 24px;
     color:#42566b;
     font-size:13px;
@@ -270,7 +268,9 @@
 }
 
 .moon-progress-track span {
-    position:relative;
+    position:absolute;
+    top:0;
+    transform:translateX(-50%);
     z-index:1;
     background:transparent;
 }
@@ -5621,12 +5621,17 @@ function calculateMoonInfo(date){
     };
 }
 
+function getMoonProgressPositionStyle(progress){
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const progressPercent = (clampedProgress * 100).toFixed(3);
+    const edgeOffset = (clampedProgress * 32).toFixed(3);
+    return "calc(16px + " + progressPercent + "% - " + edgeOffset + "px)";
+}
+
 function getMoonProgressLeftStyle(age){
     const synodicMonth = 29.530588853;
-    const progress = Math.max(0, Math.min(1, age / synodicMonth));
-    const progressPercent = (progress * 100).toFixed(3);
-    const edgeOffset = (progress * 32).toFixed(3);
-    return "calc(16px + " + progressPercent + "% - " + edgeOffset + "px)";
+    const progress = age / synodicMonth;
+    return getMoonProgressPositionStyle(progress);
 }
 
 function updateFarmCalendarInfo(now){
@@ -5646,7 +5651,11 @@ function updateFarmCalendarInfo(now){
         '<div class="moon-progress">' +
             '<div>月の満ち欠け：</div>' +
             '<div class="moon-progress-track">' +
-                '<span>🌑</span><span>🌓</span><span>🌕</span><span>🌗</span><span>🌑</span>' +
+                '<span style="left:' + getMoonProgressPositionStyle(0) + '">🌑</span>' +
+                '<span style="left:' + getMoonProgressPositionStyle(0.25) + '">🌓</span>' +
+                '<span style="left:' + getMoonProgressPositionStyle(0.5) + '">🌕</span>' +
+                '<span style="left:' + getMoonProgressPositionStyle(0.75) + '">🌗</span>' +
+                '<span style="left:' + getMoonProgressPositionStyle(1) + '">🌑</span>' +
                 '<div class="moon-progress-today" style="left:' + moonPosition + '">▲<br>今日</div>' +
             '</div>' +
         '</div>';
