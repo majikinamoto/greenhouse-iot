@@ -2554,6 +2554,28 @@ button { margin:5px; }
     </div>
 
     <div>
+        <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-hum">湿度軸：</span><input class="axis-input" type="number" id="humMinP12" value="40"> ～
+            <input class="axis-input" type="number" id="humMaxP12" value="100">
+            <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP12" value="20"> ～
+            <input class="axis-input" type="number" id="tempMaxP12" value="40">
+            <button onclick="applyTempHumYAxis(tempChartP12,'P12')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="tempChartP12"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>センサー診断用（P11−P12_差）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMinP11P12" value="-5"> ～
+            <input class="axis-input" type="number" id="diffMaxP11P12" value="5">
+            <button onclick="applyP11P12DiffYAxis(diffChartP11P12)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="diffChartP11P12"></canvas></div>
+    </div>
+
+    <div>
         <h4><span>メンテ用（電圧_P91）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-volt">電圧軸：</span><input class="axis-input" type="number" id="voltMin" value="11"> ～
@@ -2802,8 +2824,8 @@ function validateExternalLibraries(){
     }
 };
 
-let tempChartP01, tempChartP02, tempChartP11;
-let diffChart, outsideDiffChart, solarChart, voltChart, vaporChart, dewChart, co2Chart, co2OutsideChart, co2DiffChart;
+let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
+let diffChart, diffChartP11P12, outsideDiffChart, solarChart, voltChart, vaporChart, dewChart, co2Chart, co2OutsideChart, co2DiffChart;
 let analysisCompareCharts = {};
 let analysisCompareData = {};
 let analysisCompareMeta = {};
@@ -2889,6 +2911,13 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P02" }]
     },
     {
+        key:"maintenanceOutsideTempHumidity",
+        canvasId:"tempChartP12",
+        title:"温湿度_外気メンテナンス",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P12" }]
+    },
+    {
         key:"outsideTempHumidity",
         canvasId:"tempChartP11",
         title:"温湿度_外",
@@ -2958,6 +2987,16 @@ const mainChartConfigs = [
         requests:context=>[
             { userId:context.userId, pointId:"P01" },
             { userId:context.userId, pointId:"P02" }
+        ]
+    },
+    {
+        key:"maintenanceOutsideDiff",
+        canvasId:"diffChartP11P12",
+        title:"温湿度差_外気センサー診断",
+        fields:["temperature", "humidity"],
+        requests:context=>[
+            { userId:context.userId, pointId:"P11" },
+            { userId:context.userId, pointId:"P12" }
         ]
     },
     {
@@ -5195,7 +5234,8 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const isTempHumSource = ["tempChartP01", "tempChartP02", "tempChartP11"].includes(sourceChart.canvas.id);
+    const tempHumChartIds = ["tempChartP01", "tempChartP02", "tempChartP11", "tempChartP12"];
+    const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
     const isCo2DiffSource = sourceChart.canvas.id === "co2DiffChart";
@@ -5227,7 +5267,7 @@ function syncZoom(sourceChart){
                 chart.update("none");
             }
 
-            if(isTempHumSource && ["tempChartP01", "tempChartP02", "tempChartP11"].includes(chart.canvas.id)){
+            if(isTempHumSource && tempHumChartIds.includes(chart.canvas.id)){
                 if(chart.zoomScale){
                     chart.zoomScale("yHum", {
                         min:sourceChart.scales.yHum.min,
@@ -6081,6 +6121,7 @@ function applyMobileChartRanges(minTime, maxTime){
         tempChartP01,
         tempChartP02,
         tempChartP11,
+        tempChartP12,
         outsideDiffChart,
         vaporChart,
         dewChart,
@@ -6088,7 +6129,8 @@ function applyMobileChartRanges(minTime, maxTime){
         co2Chart,
         co2OutsideChart,
         co2DiffChart,
-        diffChart
+        diffChart,
+        diffChartP11P12
     ].forEach(chart=>{
         applyChartXRange(chart, minTime, maxTime);
     });
@@ -6450,6 +6492,13 @@ function getDiffAxis(){
     };
 }
 
+function getP11P12DiffAxis(){
+    return {
+        min:getAxisValue("diffMinP11P12", -5),
+        max:getAxisValue("diffMaxP11P12", 5)
+    };
+}
+
 function getOutsideDiffAxis(){
     return {
         min:getAxisValue("outsideDiffMin", outsideDiffAxisMin),
@@ -6526,6 +6575,7 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "tempChartP01",
         "tempChartP02",
         "tempChartP11",
+        "tempChartP12",
         "outsideDiffChart",
         "vaporChart",
         "dewChart",
@@ -6533,7 +6583,8 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "co2Chart",
         "co2OutsideChart",
         "co2DiffChart",
-        "diffChart"
+        "diffChart",
+        "diffChartP11P12"
     ];
 
     if(
@@ -6889,6 +6940,122 @@ p01.forEach(d=>{
                 ...baseOptions(displayMinTime,maxTime).scales,
 y:yAxisOptions,
 yRight:createRightYAxis(yAxisOptions)
+            }
+        }
+    });
+}
+
+function createTempHumDiagnosticDiffChart(canvasId, firstData, secondData, firstPointId, secondPointId, axis, minTime, maxTime){
+
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(firstData) || !hasChartSourceData(secondData)) return null;
+
+    destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+    const tempDiffData = [];
+    const humDiffData = [];
+    const toleranceMs = 360 * 1000;
+    const yAxisOptions = {
+        min:axis.min,
+        max:axis.max,
+        ticks:{
+            stepSize:1,
+            color:"#000"
+        },
+        title:{
+            display:true,
+            text:"差",
+            color:"#000"
+        }
+    };
+    const zeroOriginFill = {
+        target:"origin",
+        above:"rgba(120, 120, 120, 0.18)",
+        below:"rgba(120, 120, 120, 0.18)"
+    };
+
+    firstData.forEach(first=>{
+        let nearestSecond = null;
+        let nearestDiff = Infinity;
+
+        secondData.forEach(second=>{
+            const diff = Math.abs(first.xValue - second.xValue);
+
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearestSecond = second;
+            }
+        });
+
+        if(!nearestSecond || nearestDiff > toleranceMs) return;
+
+        if(first.temp !== null && nearestSecond.temp !== null && !isNaN(first.temp) && !isNaN(nearestSecond.temp)){
+            tempDiffData.push({ x:first.xValue, y:first.temp - nearestSecond.temp });
+        }
+
+        if(first.hum !== null && nearestSecond.hum !== null && !isNaN(first.hum) && !isNaN(nearestSecond.hum)){
+            humDiffData.push({ x:first.xValue, y:first.hum - nearestSecond.hum });
+        }
+    });
+
+    if(!tempDiffData.length && !humDiffData.length) return null;
+
+    return new Chart(canvas,{
+        type:"line",
+        data:{
+            datasets:[
+                {
+                    label:"温度差 " + firstPointId + "−" + secondPointId + " (℃)",
+                    data:tempDiffData,
+                    borderColor:"rgb(255, 0, 0)",
+                    backgroundColor:"rgba(255, 0, 0, 0.15)",
+                    pointBackgroundColor:"rgb(255, 0, 0)",
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:zeroOriginFill
+                },
+                {
+                    label:"湿度差 " + firstPointId + "−" + secondPointId + " (%RH)",
+                    data:humDiffData,
+                    borderColor:"rgb(120, 170, 255)",
+                    backgroundColor:"rgba(120, 170, 255, 0.12)",
+                    pointBackgroundColor:"rgb(120, 170, 255)",
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:zeroOriginFill
+                },
+                {
+                    label:"ゼロライン",
+                    data:[
+                        {x:minTime, y:0},
+                        {x:maxTime, y:0}
+                    ],
+                    borderColor:"rgba(0, 120, 255, 0.8)",
+                    borderWidth:1.5,
+                    pointRadius:0,
+                    tension:0,
+                    fill:false
+                }
+            ]
+        },
+        options:{
+            ...baseOptions(displayMinTime,maxTime),
+            plugins:{
+                ...baseOptions(displayMinTime,maxTime).plugins,
+                legend:{
+                    labels:{
+                        filter(item){
+                            return item.text !== "ゼロライン";
+                        }
+                    }
+                }
+            },
+            scales:{
+                ...baseOptions(displayMinTime,maxTime).scales,
+                y:yAxisOptions,
+                yRight:createRightYAxis(yAxisOptions)
             }
         }
     });
@@ -8129,6 +8296,8 @@ async function loadData(){
         const resultP01 = getFetchedResult(resultMap, userId, "P01");
         const resultP02 = getFetchedResult(resultMap, userId, "P02");
         const resultP11 = getFetchedResult(resultMap, outsideSource.userId, outsideSource.pointId);
+        const resultDiagnosticP11 = getFetchedResult(resultMap, userId, "P11");
+        const resultP12 = getFetchedResult(resultMap, userId, "P12");
         const resultP31 = getFetchedResult(resultMap, userId, "P31");
         const resultP21 = getFetchedResult(resultMap, userId, "P21");
         const resultP26 = getFetchedResult(resultMap, userId, "P26");
@@ -8140,6 +8309,8 @@ async function loadData(){
         const p01 = parseData(resultP01.data, minTime);
         const p02 = parseData(resultP02.data, minTime);
         const p11 = parseData(resultP11.data, minTime);
+        const diagnosticP11 = parseData(resultDiagnosticP11.data, minTime);
+        const p12 = parseData(resultP12.data, minTime);
         const p31 = parseData(resultP31.data, minTime);
 const p21 = parseData(resultP21.data, minTime);
 const p26 = parseData(resultP26.data, minTime);
@@ -8217,6 +8388,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
         tempChartP02 = createTempHumChart("tempChartP02", p02, chartMinTime, now, "P02");
         tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
+        tempChartP12 = createTempHumChart("tempChartP12", p12, chartMinTime, now, "P12");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
         vaporChart = createVaporChart("vaporChart", p01, chartMinTime, now);
@@ -8228,12 +8400,23 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
 
         diffChart = createDiffChart("diffChart", p01, p02, chartMinTime, now);
+        diffChartP11P12 = createTempHumDiagnosticDiffChart(
+            "diffChartP11P12",
+            diagnosticP11,
+            p12,
+            "P11",
+            "P12",
+            getP11P12DiffAxis(),
+            chartMinTime,
+            now
+        );
 
         voltChart = createSingleChart("voltChart", p91, "volt", "電圧", "V", voltMinTime, now);
 
         applyMainChartNoDataStates({
             insideTempHumidity:tempChartP01,
             maintenanceTempHumidity:tempChartP02,
+            maintenanceOutsideTempHumidity:tempChartP12,
             outsideTempHumidity:tempChartP11,
             outsideDiff:outsideDiffChart,
             vapor:vaporChart,
@@ -8243,6 +8426,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             outsideCo2:co2OutsideChart,
             co2Diff:co2DiffChart,
             maintenanceDiff:diffChart,
+            maintenanceOutsideDiff:diffChartP11P12,
             voltage:voltChart
         }, chartContext);
 
@@ -8250,6 +8434,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP01,
             tempChartP02,
             tempChartP11,
+            tempChartP12,
             outsideDiffChart,
             vaporChart,
             dewChart,
@@ -8258,6 +8443,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             co2OutsideChart,
             co2DiffChart,
             diffChart,
+            diffChartP11P12,
             voltChart
         ].filter(Boolean);
 
@@ -8281,7 +8467,9 @@ function destroyCharts(){
     tempChartP01 = null;
     tempChartP02 = null;
     tempChartP11 = null;
+    tempChartP12 = null;
     diffChart = null;
+    diffChartP11P12 = null;
     outsideDiffChart = null;
     solarChart = null;
     voltChart = null;
@@ -8295,6 +8483,7 @@ function destroyCharts(){
         "tempChartP01",
         "tempChartP02",
         "tempChartP11",
+        "tempChartP12",
         "outsideDiffChart",
         "vaporChart",
         "dewChart",
@@ -8303,6 +8492,7 @@ function destroyCharts(){
         "co2OutsideChart",
         "co2DiffChart",
         "diffChart",
+        "diffChartP11P12",
         "voltChart"
     ].forEach(canvasId=>{
         clearChartNoDataState(canvasId);
@@ -8387,6 +8577,13 @@ function applyDiffYAxis(chart){
     const axis = getDiffAxis();
     setLinearYAxis(chart, axis);
 
+    chart.update();
+}
+
+function applyP11P12DiffYAxis(chart){
+    if(!chart) return;
+
+    setLinearYAxis(chart, getP11P12DiffAxis());
     chart.update();
 }
 
