@@ -339,6 +339,18 @@ button { margin:5px; }
     width:152px;
 }
 
+.csv-period-group {
+    display:flex;
+    align-items:center;
+    gap:5px;
+    white-space:nowrap;
+}
+
+.csv-period-group input[type="date"] {
+    width:135px;
+    box-sizing:border-box;
+}
+
 .chart-axis-control {
     margin:0 0 6px 0;
     font-size:13px;
@@ -672,8 +684,8 @@ button { margin:5px; }
     white-space:nowrap;
 }
 
-.maintenance-period-group input[type="datetime-local"] {
-    width:170px;
+.maintenance-period-group input[type="date"] {
+    width:145px;
     box-sizing:border-box;
 }
 
@@ -685,6 +697,12 @@ button { margin:5px; }
     flex:1 1 180px;
     min-height:20px;
     color:#b00020;
+}
+
+.maintenance-period-preview {
+    flex:1 1 240px;
+    color:#2f2450;
+    white-space:nowrap;
 }
 
 .review-message {
@@ -847,8 +865,8 @@ button { margin:5px; }
         max-width:100%;
     }
 
-    .maintenance-period-group input[type="datetime-local"] {
-        width:min(170px, calc(100vw - 92px));
+    .maintenance-period-group input[type="date"] {
+        width:min(145px, calc(100vw - 76px));
         min-width:0;
     }
 
@@ -863,6 +881,11 @@ button { margin:5px; }
 
     .maintenance-period-message {
         flex-basis:100%;
+    }
+
+    .maintenance-period-preview {
+        flex-basis:100%;
+        white-space:normal;
     }
 
     .review-dif-panel {
@@ -2040,10 +2063,13 @@ button { margin:5px; }
     </div>
 
     <div class="control-group csv-control-group">
-        CSV期間：
-        <input type="datetime-local" id="csvStart">
-        ～
-        <input type="datetime-local" id="csvEnd">
+        <span class="csv-period-group">CSV期間：</span>
+        <label class="csv-period-group">開始日
+            <input type="date" id="csvStart">
+        </label>
+        <label class="csv-period-group">終了日
+            <input type="date" id="csvEnd">
+        </label>
         <button onclick="downloadCSV()">CSVダウンロード</button>
         <small style="width:100%; color:#666;">※CSVでダウンロードできるデータは、データベースに保存されている直近1年分です。</small>
     </div>
@@ -2663,18 +2689,18 @@ button { margin:5px; }
     <div class="maintenance-period-group">
         <strong>表示期間（日本時間）</strong>
         <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeLatest" value="latest" checked onchange="setMaintenanceMode('latest')">最新72時間</label>
-        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeCustom" value="custom" onchange="setMaintenanceMode('custom')">日付指定</label>
+        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeCustom" value="custom" onchange="setMaintenanceMode('custom')">7日間表示</label>
     </div>
-    <label class="maintenance-period-group">開始日時
-        <input type="datetime-local" id="maintenanceStart" step="60">
-    </label>
-    <label class="maintenance-period-group">終了日時
-        <input type="datetime-local" id="maintenanceEnd" step="60">
+    <label class="maintenance-period-group">開始日
+        <input type="date" id="maintenanceStartDate" onchange="updateMaintenancePeriodPreview()">
     </label>
     <div class="maintenance-period-group maintenance-period-actions">
         <button class="show-button" type="button" onclick="showMaintenanceCustomRange()">表示する</button>
         <button type="button" onclick="showMaintenanceLatest72Hours()">最新72時間へ戻す</button>
+        <button id="maintenancePreviousPeriod" type="button" onclick="shiftMaintenanceSevenDayRange(-7)">← 前の7日間</button>
+        <button id="maintenanceNextPeriod" type="button" onclick="shiftMaintenanceSevenDayRange(7)">次の7日間 →</button>
     </div>
+    <span id="maintenancePeriodPreview" class="maintenance-period-preview" hidden></span>
     <span id="maintenanceMessage" class="maintenance-period-message" role="status"></span>
 </div>
 <div class="grid">
@@ -6681,31 +6707,73 @@ function formatJapanDateTimeLocal(timestamp){
     return y + "-" + m + "-" + d + "T" + h + ":" + min;
 }
 
-function parseMaintenanceDateTimeInput(value, endOfMinute){
-    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+function formatMaintenanceDateInput(wallClockMs){
+    const date = new Date(wallClockMs);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    return year + "-" + month + "-" + day;
+}
+
+function parseMaintenanceStartDate(value){
+    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if(!match) return null;
 
     const parts = match.slice(1).map(Number);
-    const [year, month, day, hour, minute] = parts;
-    const wallClockMs = Date.UTC(year, month - 1, day, hour, minute, endOfMinute ? 59 : 0);
+    const [year, month, day] = parts;
+    const wallClockMs = Date.UTC(year, month - 1, day);
     const check = new Date(wallClockMs);
     if(
         check.getUTCFullYear() !== year ||
         check.getUTCMonth() !== month - 1 ||
-        check.getUTCDate() !== day ||
-        check.getUTCHours() !== hour ||
-        check.getUTCMinutes() !== minute
+        check.getUTCDate() !== day
     ){
         return null;
     }
 
-    const second = endOfMinute ? 59 : 0;
-    const sql = value.replace("T", " ") + ":" + String(second).padStart(2, "0");
     return {
-        date:new Date(year, month - 1, day, hour, minute, second),
-        wallClockMs:wallClockMs,
-        sql:sql
+        value:value,
+        wallClockMs:wallClockMs
     };
+}
+
+function getJapanWallClockMs(timestamp){
+    const jstDate = new Date(timestamp + 9*60*60*1000);
+    return Date.UTC(
+        jstDate.getUTCFullYear(),
+        jstDate.getUTCMonth(),
+        jstDate.getUTCDate(),
+        jstDate.getUTCHours(),
+        jstDate.getUTCMinutes(),
+        jstDate.getUTCSeconds(),
+        jstDate.getUTCMilliseconds()
+    );
+}
+
+function createMaintenanceLocalDate(wallClockMs){
+    const date = new Date(wallClockMs);
+    return new Date(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds(),
+        date.getUTCMilliseconds()
+    );
+}
+
+function formatMaintenanceSqlDateTime(wallClockMs){
+    const date = new Date(wallClockMs);
+    return formatMaintenanceDateInput(wallClockMs) + " " +
+        String(date.getUTCHours()).padStart(2, "0") + ":" +
+        String(date.getUTCMinutes()).padStart(2, "0") + ":" +
+        String(date.getUTCSeconds()).padStart(2, "0");
+}
+
+function formatMaintenancePeriodDate(wallClockMs){
+    const date = new Date(wallClockMs);
+    return date.getUTCFullYear() + "年" + (date.getUTCMonth() + 1) + "月" + date.getUTCDate() + "日";
 }
 
 function setMaintenanceMode(mode){
@@ -6717,68 +6785,89 @@ function setMaintenanceMode(mode){
     maintenanceMode = nextMode;
     const latest = document.getElementById("maintenanceRangeLatest");
     const custom = document.getElementById("maintenanceRangeCustom");
-    const start = document.getElementById("maintenanceStart");
-    const end = document.getElementById("maintenanceEnd");
+    const start = document.getElementById("maintenanceStartDate");
+    const previous = document.getElementById("maintenancePreviousPeriod");
+    const preview = document.getElementById("maintenancePeriodPreview");
     const message = document.getElementById("maintenanceMessage");
 
     if(latest) latest.checked = maintenanceMode === "latest";
     if(custom) custom.checked = maintenanceMode === "custom";
     if(start) start.disabled = maintenanceMode !== "custom";
-    if(end) end.disabled = maintenanceMode !== "custom";
+    if(previous) previous.disabled = maintenanceMode !== "custom";
+    if(preview) preview.hidden = maintenanceMode !== "custom";
+    updateMaintenancePeriodPreview();
     if(message) message.innerText = "";
 }
 
 function initializeMaintenanceRangeInputs(){
-    const now = Date.now();
-    const start = document.getElementById("maintenanceStart");
-    const end = document.getElementById("maintenanceEnd");
-    if(start) start.value = formatJapanDateTimeLocal(now - 72*60*60*1000);
-    if(end) end.value = formatJapanDateTimeLocal(now);
+    const todayWallClockMs = getJapanWallClockMs(Date.now());
+    const todayStartWallClockMs = Math.floor(todayWallClockMs / (24*60*60*1000)) * (24*60*60*1000);
+    const start = document.getElementById("maintenanceStartDate");
+    if(start){
+        start.value = formatMaintenanceDateInput(todayStartWallClockMs - 6*24*60*60*1000);
+        start.max = formatMaintenanceDateInput(todayStartWallClockMs);
+    }
     setMaintenanceMode("latest");
 }
 
-function validateMaintenanceRange(startValue, endValue){
-    if(!startValue) return { error:"開始日時を入力してください。" };
-    if(!endValue) return { error:"終了日時を入力してください。" };
+function getMaintenanceSevenDayRange(startValue, nowTimestamp){
+    if(!startValue) return { error:"開始日を入力してください。" };
 
-    const start = parseMaintenanceDateTimeInput(startValue, false);
-    const endInput = parseMaintenanceDateTimeInput(endValue, false);
-    if(!start || !endInput) return { error:"有効な開始日時と終了日時を入力してください。" };
-    if(startValue === endValue){
-        return { error:"開始日時と終了日時は同じにできません。" };
-    }
-    if(start.wallClockMs >= endInput.wallClockMs){
-        return { error:"開始日時は終了日時より前にしてください。" };
-    }
+    const start = parseMaintenanceStartDate(startValue);
+    if(!start) return { error:"有効な開始日を入力してください。" };
 
-    const maxRangeMs = 7*24*60*60*1000;
-    if(endInput.wallClockMs - start.wallClockMs > maxRangeMs){
-        return { error:"表示期間は最大7日までです。" };
+    const currentTimestamp = nowTimestamp === undefined ? Date.now() : nowTimestamp;
+    const japanNowWallClockMs = Math.floor(getJapanWallClockMs(currentTimestamp) / 1000) * 1000;
+    const japanTodayWallClockMs = Math.floor(japanNowWallClockMs / (24*60*60*1000)) * (24*60*60*1000);
+    if(start.wallClockMs > japanTodayWallClockMs){
+        return { error:"開始日は今日以前の日付を選択してください。" };
     }
 
-    const japanNow = parseMaintenanceDateTimeInput(formatJapanDateTimeLocal(Date.now()), false);
-    if(japanNow && start.wallClockMs > japanNow.wallClockMs){
-        return { error:"未来だけの期間は表示できません。" };
-    }
-
-    const end = parseMaintenanceDateTimeInput(endValue, true);
+    const fullEndWallClockMs = start.wallClockMs + 7*24*60*60*1000 - 1000;
+    const effectiveEndWallClockMs = Math.min(fullEndWallClockMs, japanNowWallClockMs);
 
     return {
         error:"",
         range:{
             mode:"custom",
-            startTime:start.date,
-            endTime:end.date,
-            apiRange:{ start:start.sql, end:end.sql }
+            startTime:createMaintenanceLocalDate(start.wallClockMs),
+            endTime:createMaintenanceLocalDate(effectiveEndWallClockMs),
+            apiRange:{
+                start:formatMaintenanceSqlDateTime(start.wallClockMs),
+                end:formatMaintenanceSqlDateTime(effectiveEndWallClockMs)
+            },
+            rangeKey:start.value
         }
     };
 }
 
+function updateMaintenancePeriodPreview(){
+    const input = document.getElementById("maintenanceStartDate");
+    const preview = document.getElementById("maintenancePeriodPreview");
+    const previous = document.getElementById("maintenancePreviousPeriod");
+    const next = document.getElementById("maintenanceNextPeriod");
+    const start = parseMaintenanceStartDate(input ? input.value : "");
+    const isCustom = maintenanceMode === "custom";
+
+    if(preview){
+        preview.hidden = !isCustom;
+        preview.innerText = start
+            ? "表示期間：" + formatMaintenancePeriodDate(start.wallClockMs) + " ～ " +
+                formatMaintenancePeriodDate(start.wallClockMs + 6*24*60*60*1000)
+            : "表示期間：開始日を選択してください。";
+    }
+
+    if(previous) previous.disabled = !isCustom || !start;
+    if(next){
+        const todayWallClockMs = Math.floor(getJapanWallClockMs(Date.now()) / (24*60*60*1000)) * (24*60*60*1000);
+        next.disabled = !isCustom || !start || start.wallClockMs + 7*24*60*60*1000 > todayWallClockMs;
+    }
+}
+
 function getMaintenanceRange(){
     if(maintenanceMode === "custom"){
-        const start = document.getElementById("maintenanceStart");
-        const end = document.getElementById("maintenanceEnd");
-        return validateMaintenanceRange(start ? start.value : "", end ? end.value : "");
+        const start = document.getElementById("maintenanceStartDate");
+        return getMaintenanceSevenDayRange(start ? start.value : "");
     }
 
     const jstNow = new Date(Date.now() + 9*60*60*1000);
@@ -6805,7 +6894,7 @@ function getMaintenanceRange(){
 
 function getMaintenanceRequestKey(userId, range){
     return userId + "\n" + range.mode + "\n" +
-        (range.apiRange ? range.apiRange.start + "\n" + range.apiRange.end : "latest");
+        (range.rangeKey || (range.apiRange ? range.apiRange.start + "\n" + range.apiRange.end : "latest"));
 }
 
 function shouldReloadMaintenanceData(userId, range){
@@ -6849,8 +6938,6 @@ function showMaintenanceCustomRange(){
     const result = getMaintenanceRange();
     const message = document.getElementById("maintenanceMessage");
     if(result.error){
-        maintenanceDataRequestSequence++;
-        maintenanceDataLoadingKey = "";
         if(message) message.innerText = result.error;
         return;
     }
@@ -6858,8 +6945,35 @@ function showMaintenanceCustomRange(){
 }
 
 function showMaintenanceLatest72Hours(){
-    initializeMaintenanceRangeInputs();
+    setMaintenanceMode("latest");
     loadMaintenanceData();
+}
+
+function shiftMaintenanceSevenDayRange(dayOffset){
+    const input = document.getElementById("maintenanceStartDate");
+    const message = document.getElementById("maintenanceMessage");
+    const start = parseMaintenanceStartDate(input ? input.value : "");
+    if(!start){
+        if(message) message.innerText = "有効な開始日を入力してください。";
+        return;
+    }
+
+    const nextStartWallClockMs = start.wallClockMs + dayOffset*24*60*60*1000;
+    const todayWallClockMs = Math.floor(getJapanWallClockMs(Date.now()) / (24*60*60*1000)) * (24*60*60*1000);
+    if(nextStartWallClockMs > todayWallClockMs){
+        if(message) message.innerText = "開始日は今日以前の日付を選択してください。";
+        updateMaintenancePeriodPreview();
+        return;
+    }
+
+    input.value = formatMaintenanceDateInput(nextStartWallClockMs);
+    updateMaintenancePeriodPreview();
+    const result = getMaintenanceRange();
+    if(result.error){
+        if(message) message.innerText = result.error;
+        return;
+    }
+    loadMaintenanceData(result.range);
 }
 
 function configureMaintenanceChart(chart){
@@ -9577,19 +9691,56 @@ function applyOutsideDiffYAxis(chart){
 }
 
 //
+function parseCsvDateInput(value){
+    const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!match) return null;
+
+    const [year, month, day] = match.slice(1).map(Number);
+    const wallClockMs = Date.UTC(year, month - 1, day);
+    const check = new Date(wallClockMs);
+    if(
+        check.getUTCFullYear() !== year ||
+        check.getUTCMonth() !== month - 1 ||
+        check.getUTCDate() !== day
+    ){
+        return null;
+    }
+
+    return { value:value, wallClockMs:wallClockMs };
+}
+
+function getCsvDownloadRange(startValue, endValue){
+    if(!startValue) return { error:"CSVの開始日を入力してください。" };
+    if(!endValue) return { error:"CSVの終了日を入力してください。" };
+
+    const start = parseCsvDateInput(startValue);
+    const end = parseCsvDateInput(endValue);
+    if(!start || !end) return { error:"CSV期間には有効な開始日と終了日を入力してください。" };
+    if(start.wallClockMs > end.wallClockMs){
+        return { error:"CSVの開始日は終了日以前にしてください。" };
+    }
+
+    return {
+        error:"",
+        start:start.value + " 00:00:00",
+        end:end.value + " 23:59:59"
+    };
+}
+
 function downloadCSV(){
 
     const userId = document.getElementById("userId").value.trim();
-    const start = document.getElementById("csvStart").value;
-    const end = document.getElementById("csvEnd").value;
+    const startValue = document.getElementById("csvStart").value;
+    const endValue = document.getElementById("csvEnd").value;
 
     if(!userId){
         alert("user_id を入力してください");
         return;
     }
 
-    if(!start || !end){
-        alert("開始日時と終了日時を入力してください");
+    const range = getCsvDownloadRange(startValue, endValue);
+    if(range.error){
+        alert(range.error);
         return;
     }
 
@@ -9599,8 +9750,8 @@ function downloadCSV(){
     const url =
         "download_csv.php"
         + "?user_id=" + encodeURIComponent(userId)
-        + "&start=" + encodeURIComponent(start)
-        + "&end=" + encodeURIComponent(end);
+        + "&start=" + encodeURIComponent(range.start)
+        + "&end=" + encodeURIComponent(range.end);
 
     window.open(url, "_blank");
 }

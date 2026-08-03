@@ -18,11 +18,17 @@ if (!$user_id || !$start || !$end) {
     exit("パラメータ不足");
 }
 
-$start_dt = str_replace("T", " ", $start) . ":00";
-$end_dt   = str_replace("T", " ", $end) . ":59";
+$start_normalized = str_replace("T", " ", $start);
+$end_normalized   = str_replace("T", " ", $end);
+$start_dt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $start_normalized)
+    ? $start_normalized
+    : $start_normalized . ":00";
+$end_dt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $end_normalized)
+    ? $end_normalized
+    : $end_normalized . ":59";
 
-$start_safe = preg_replace('/[^0-9]/', '', $start);
-$end_safe   = preg_replace('/[^0-9]/', '', $end);
+$start_safe = substr(preg_replace('/[^0-9]/', '', $start), 0, 12);
+$end_safe   = substr(preg_replace('/[^0-9]/', '', $end), 0, 12);
 
 $filename = "data_{$user_id}_{$start_safe}_to_{$end_safe}.csv";
 
