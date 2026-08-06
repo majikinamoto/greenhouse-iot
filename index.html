@@ -5372,6 +5372,11 @@ function getNearestPointIndexAtXValue(data, xValue){
     return nearestIndex;
 }
 
+function getSyncedTooltipDatasetKey(dataset, datasetIndex){
+    if(!dataset) return String(datasetIndex);
+    return dataset.tooltipGroup || dataset.label || String(datasetIndex);
+}
+
 function syncChartTooltip(chart, xValue){
     if(!chart || !chart.scales || !chart.scales.x || !chart.chartArea) return;
 
@@ -5388,20 +5393,30 @@ function syncChartTooltip(chart, xValue){
         return;
     }
 
-    const active = [];
+    const activeByDatasetKey = new Map();
 
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
-        if(isAuxiliaryChartDataset(dataset)) return;
+        if(isAuxiliaryChartDataset(dataset) || !Array.isArray(dataset.data)) return;
 
         const index = getNearestPointIndexAtXValue(dataset.data, xValue);
         if(index < 0) return;
+        const point = dataset.data[index];
+        const diff = Math.abs(Number(point.x) - Number(xValue));
+        const datasetKey = getSyncedTooltipDatasetKey(dataset, datasetIndex);
+        const current = activeByDatasetKey.get(datasetKey);
+        if(current && current.diff <= diff) return;
 
-        active.push({
+        activeByDatasetKey.set(datasetKey, {
             datasetIndex:datasetIndex,
-            index:index
+            index:index,
+            diff:diff
         });
     });
+    const active = Array.from(activeByDatasetKey.values()).map(item=>({
+        datasetIndex:item.datasetIndex,
+        index:item.index
+    }));
 
     const x = xScale.getPixelForValue(xValue);
     const y = chart.chartArea.bottom;
@@ -7864,6 +7879,7 @@ function showRainfallCardMessage(message){
 
 function destroyRainChart(){
     hideRainfallTooltip();
+    allCharts = allCharts.filter(chart=>!chart || !chart.canvas || chart.canvas.id !== "rainChart");
 
     if(rainChart){
         rainChart.destroy();
@@ -7985,14 +8001,21 @@ function createRainfallChart(response){
     const zoomEnabled = !isMobileView();
 
     options.interaction = {
-        mode:"nearest",
+        mode:"index",
         axis:"x",
         intersect:false
     };
-    options.plugins.tooltip = { enabled:false };
-    options.plugins.pointLabelPlugin = false;
-    options.plugins.syncedCrosshairPlugin = false;
-    options.plugins.rainfallTooltipPlugin = {};
+    options.plugins.tooltip.callbacks = {
+        ...options.plugins.tooltip.callbacks,
+        label(context){
+            const value = context.parsed && context.parsed.y !== null && context.parsed.y !== undefined
+                ? Number(context.parsed.y)
+                : NaN;
+            if(!Number.isFinite(value)) return null;
+            return context.dataset.label + " " + value.toFixed(2) + " mm";
+        }
+    };
+    options.plugins.rainfallTooltipPlugin = false;
     options.plugins.legend = {
         labels:{
             filter(item, data){
@@ -8000,12 +8023,6 @@ function createRainfallChart(response){
                 return dataset && dataset.showInLegend !== false;
             }
         }
-    };
-    options.plugins.crosshair = {
-        line:{ color:"#000", width:1 },
-        sync:{ enabled:false },
-        zoom:{ enabled:false },
-        snap:{ enabled:false }
     };
     options.plugins.zoom.zoom.wheel.enabled = false;
     options.plugins.zoom.zoom.pinch.enabled = zoomEnabled;
@@ -8085,6 +8102,7 @@ async function loadRainfallData(userId, displayHours, requestId){
         }
 
         rainChart = createRainfallChart(result);
+        if(rainChart && !allCharts.includes(rainChart)) allCharts.push(rainChart);
 
         if(!rainChart){
             showRainfallCardMessage("雨量データなし");
@@ -10411,6 +10429,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             co2Chart,
             co2OutsideChart,
             co2DiffChart,
+            rainChart,
         ].filter(Boolean);
 
         allCharts.forEach(saveInitialScaleLimits);
