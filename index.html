@@ -489,6 +489,43 @@ button { margin:5px; }
     box-sizing:border-box;
 }
 
+.rainfall-daily-summary {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:25px;
+    margin:0 0 6px;
+    padding:4px 6px;
+    border:1px solid #b8cfe0;
+    border-radius:5px;
+    background:#eef7fc;
+    color:#183d5b;
+    font-size:13px;
+    font-weight:700;
+    box-sizing:border-box;
+}
+
+.rainfall-tooltip {
+    position:absolute;
+    z-index:5;
+    max-width:220px;
+    padding:7px 9px;
+    border-radius:5px;
+    background:rgba(22, 45, 66, 0.92);
+    color:#fff;
+    font-size:12px;
+    line-height:1.5;
+    white-space:nowrap;
+    pointer-events:none;
+    transform:translate(-50%, -100%);
+    box-shadow:0 2px 7px rgba(0,0,0,0.22);
+}
+
+.rainfall-tooltip-title {
+    font-weight:700;
+}
+
 .tab-nav {
     display:flex;
     flex-wrap:wrap;
@@ -2041,6 +2078,16 @@ body.data-export-active .control-panel {
         margin-right:auto;
     }
 
+    .rainfall-day-before-yesterday,
+    .rainfall-separator-before-yesterday {
+        display:none;
+    }
+
+    .rainfall-daily-summary {
+        gap:6px;
+        font-size:12px;
+    }
+
     .tab-nav {
         gap:5px;
         padding:0 10px 8px;
@@ -2410,6 +2457,21 @@ body.data-export-active .control-panel {
             <button onclick="applySingleYAxis(solarChart,'solar')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="solarChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
+        <div class="rainfall-daily-summary" aria-label="日別雨量">
+            <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
+            <span class="rainfall-separator-before-yesterday" aria-hidden="true">｜</span>
+            <span>前日 <span id="rainYesterday">-</span></span>
+            <span aria-hidden="true">｜</span>
+            <span>本日 <span id="rainToday">-</span></span>
+        </div>
+        <div class="chart-container">
+            <canvas id="rainChart" aria-label="1時間雨量と日積算雨量"></canvas>
+            <div id="rainfallTooltip" class="rainfall-tooltip" hidden></div>
+        </div>
     </div>
 
     <div>
@@ -3323,6 +3385,8 @@ function validateExternalLibraries(){
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
 let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, dewChart;
+let rainChart = null;
+let rainfallRequestSequence = 0;
 let co2Chart, co2OutsideChart, co2DiffChart, co2ChartP22, co2DiffChartP21P22, co2ChartP27, co2DiffChartP26P27;
 let analysisCompareCharts = {};
 let analysisCompareData = {};
@@ -4864,6 +4928,57 @@ const midnightLinePlugin = {
     }
 };
 
+const rainfallTooltipPlugin = {
+    id:"rainfallTooltipPlugin",
+    afterEvent(chart, args){
+        if(!chart || !chart.canvas || chart.canvas.id !== "rainChart") return;
+
+        const event = args.event;
+        const xScale = chart.scales.x;
+        const chartArea = chart.chartArea;
+
+        if(!event || !xScale || !chartArea) return;
+
+        if(event.type === "mouseout"){
+            hideRainfallTooltip();
+            return;
+        }
+
+        if(
+            event.type !== "mousemove" &&
+            event.type !== "touchstart" &&
+            event.type !== "touchmove"
+        ){
+            return;
+        }
+
+        const inChartArea =
+            event.x >= chartArea.left &&
+            event.x <= chartArea.right &&
+            event.y >= chartArea.top &&
+            event.y <= chartArea.bottom;
+
+        if(!inChartArea){
+            hideRainfallTooltip();
+            return;
+        }
+
+        const xValue = xScale.getValueForPixel(event.x);
+        const buckets = Array.isArray(chart.$rainfallBuckets) ? chart.$rainfallBuckets : [];
+        const bucket = buckets.find(item=>
+            xValue >= Number(item.x) &&
+            xValue < Number(item.x) + 60*60*1000
+        );
+
+        if(!bucket){
+            hideRainfallTooltip();
+            return;
+        }
+
+        showRainfallTooltip(chart, bucket, event);
+    }
+};
+
 const pointLabelPlugin = {
     id:"pointLabelPlugin",
     afterDatasetsDraw(chart){
@@ -5338,6 +5453,7 @@ function clearAllSyncedTooltips(){
     Object.keys(syncedCrosshairValues).forEach(clearSyncedTooltipGroup);
     lastTouchChart = null;
     lastTouchChartEventAt = 0;
+    hideRainfallTooltip();
 }
 
 function handleOutsideChartTouch(event){
@@ -5350,6 +5466,7 @@ validateExternalLibraries();
 Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
+    rainfallTooltipPlugin,
     vpdTargetZonePlugin,
     voltTargetZonePlugin,
     syncedCrosshairPlugin,
@@ -7627,6 +7744,365 @@ function parseData(data, minTime){
     );
 }
 
+function resetRainfallDailyTotals(){
+    ["rainDayBeforeYesterday", "rainYesterday", "rainToday"].forEach(id=>{
+        const element = document.getElementById(id);
+        if(element) element.innerText = "-";
+    });
+}
+
+function formatRainfallValue(value){
+    if(value === null || value === undefined || value === "") return "-";
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(2) + "mm" : "-";
+}
+
+function isFiniteRainfallValue(value){
+    return value !== null &&
+        value !== undefined &&
+        value !== "" &&
+        Number.isFinite(Number(value));
+}
+
+function renderRainfallDailyTotals(totals){
+    const values = {
+        rainDayBeforeYesterday:totals ? totals.day_before_yesterday : null,
+        rainYesterday:totals ? totals.yesterday : null,
+        rainToday:totals ? totals.today : null
+    };
+
+    Object.keys(values).forEach(id=>{
+        const element = document.getElementById(id);
+        if(element) element.innerText = formatRainfallValue(values[id]);
+    });
+}
+
+function hideRainfallTooltip(){
+    const tooltip = document.getElementById("rainfallTooltip");
+    if(tooltip) tooltip.hidden = true;
+}
+
+function getRainfallJapanParts(timestamp){
+    const parts = new Intl.DateTimeFormat("ja-JP", {
+        timeZone:"Asia/Tokyo",
+        month:"numeric",
+        day:"numeric",
+        hour:"2-digit",
+        minute:"2-digit",
+        hour12:false,
+        hourCycle:"h23"
+    }).formatToParts(new Date(Number(timestamp)));
+    const values = {};
+
+    parts.forEach(part=>{
+        if(part.type !== "literal") values[part.type] = part.value;
+    });
+
+    return values;
+}
+
+function showRainfallTooltip(chart, bucket, event){
+    const tooltip = document.getElementById("rainfallTooltip");
+    if(!tooltip) return;
+
+    const start = getRainfallJapanParts(bucket.x);
+    const endTimestamp = bucket.is_current_hour
+        ? chart.$rainfallEnd
+        : Number(bucket.x) + 59*60*1000;
+    const end = getRainfallJapanParts(endTimestamp);
+    const title = document.createElement("div");
+    title.className = "rainfall-tooltip-title";
+    title.textContent =
+        Number(start.month) + "月" + Number(start.day) + "日 " +
+        start.hour + ":" + start.minute + "～" + end.hour + ":" + end.minute;
+
+    tooltip.replaceChildren(title);
+
+    if(bucket.missing){
+        const missing = document.createElement("div");
+        missing.textContent = "雨量データ欠測";
+        tooltip.appendChild(missing);
+    }else{
+        const hourly = document.createElement("div");
+        hourly.textContent = "1時間雨量 " + Number(bucket.hourly_rainfall).toFixed(2) + " mm";
+        tooltip.appendChild(hourly);
+
+        const daily = document.createElement("div");
+        daily.textContent = "日積算雨量 " + Number(bucket.daily_cumulative).toFixed(2) + " mm";
+        tooltip.appendChild(daily);
+    }
+
+    tooltip.hidden = false;
+    tooltip.style.left = Math.max(10, Math.min(Number(event.x), chart.width - 10)) + "px";
+    tooltip.style.top = Math.max(chart.chartArea.top + 45, chart.chartArea.bottom - 4) + "px";
+}
+
+function clearRainfallNoDataState(){
+    const canvas = document.getElementById("rainChart");
+    if(!canvas || !canvas.parentElement) return;
+
+    canvas.style.display = "";
+    const notice = canvas.parentElement.querySelector(".chart-no-data");
+    if(notice) notice.remove();
+}
+
+function showRainfallCardMessage(message){
+    const canvas = document.getElementById("rainChart");
+    if(!canvas || !canvas.parentElement) return;
+
+    hideRainfallTooltip();
+    canvas.style.display = "none";
+
+    let notice = canvas.parentElement.querySelector(".chart-no-data");
+    if(!notice){
+        notice = document.createElement("div");
+        notice.className = "chart-no-data";
+        canvas.parentElement.appendChild(notice);
+    }
+    notice.innerText = message;
+}
+
+function destroyRainChart(){
+    hideRainfallTooltip();
+
+    if(rainChart){
+        rainChart.destroy();
+        rainChart = null;
+    }
+
+    const existing = typeof Chart !== "undefined" ? Chart.getChart("rainChart") : null;
+    if(existing) existing.destroy();
+
+    clearRainfallNoDataState();
+}
+
+function calculateRainfallAxisMax(dataMax, minimumMax){
+    const padded = Math.max(Number(dataMax) || 0, 0) * 1.15;
+    const target = Math.max(padded, minimumMax);
+    let step = 1;
+
+    if(target > 100){
+        step = 20;
+    }else if(target > 50){
+        step = 10;
+    }else if(target > 10){
+        step = 5;
+    }
+
+    return Math.max(minimumMax, Math.ceil(target / step) * step);
+}
+
+function createRainfallChart(response){
+    const canvas = getChartCanvas("rainChart");
+    const hourly = Array.isArray(response.hourly) ? response.hourly : [];
+
+    if(!canvas || !hourly.length) return null;
+
+    destroyRainChart();
+    clearRainfallNoDataState();
+
+    const displayStart = Number(response.display_start);
+    const endTime = Number(response.end);
+    const visibleBuckets = hourly.filter(bucket=>
+        Number(bucket.x) + 60*60*1000 > displayStart &&
+        Number(bucket.x) <= endTime
+    );
+    const hourlyValues = visibleBuckets
+        .filter(bucket=>!bucket.missing && Number.isFinite(Number(bucket.hourly_rainfall)))
+        .map(bucket=>Number(bucket.hourly_rainfall));
+    const dailyValues = visibleBuckets
+        .filter(bucket=>!bucket.missing && Number.isFinite(Number(bucket.daily_cumulative)))
+        .map(bucket=>Number(bucket.daily_cumulative));
+
+    if(isFiniteRainfallValue(response.display_start_daily_cumulative)){
+        dailyValues.push(Number(response.display_start_daily_cumulative));
+    }
+
+    const hourlyMax = calculateRainfallAxisMax(
+        hourlyValues.length ? Math.max(...hourlyValues) : 0,
+        5
+    );
+    const dailyMax = calculateRainfallAxisMax(
+        dailyValues.length ? Math.max(...dailyValues) : 0,
+        10
+    );
+    const dailyGroups = {};
+
+    hourly.forEach(bucket=>{
+        if(!dailyGroups[bucket.date_key]) dailyGroups[bucket.date_key] = [];
+        dailyGroups[bucket.date_key].push({
+            x:Number(bucket.x),
+            y:bucket.missing ? null : Number(bucket.daily_cumulative)
+        });
+    });
+
+    if(
+        response.display_start_date_key &&
+        isFiniteRainfallValue(response.display_start_daily_cumulative)
+    ){
+        const dateKey = response.display_start_date_key;
+        if(!dailyGroups[dateKey]) dailyGroups[dateKey] = [];
+        dailyGroups[dateKey].push({
+            x:displayStart,
+            y:Number(response.display_start_daily_cumulative)
+        });
+    }
+
+    const dailyDatasets = Object.keys(dailyGroups).sort().map((dateKey, index)=>({
+        type:"line",
+        label:"日積算雨量",
+        data:dailyGroups[dateKey].sort((a,b)=>a.x-b.x),
+        yAxisID:"yDaily",
+        borderColor:"rgb(0, 75, 145)",
+        backgroundColor:"rgb(0, 75, 145)",
+        pointBackgroundColor:"rgb(0, 75, 145)",
+        borderWidth:2,
+        pointRadius:0,
+        pointHoverRadius:4,
+        tension:0,
+        spanGaps:false,
+        fill:false,
+        order:1,
+        showInLegend:index === 0
+    }));
+    const barDataset = {
+        type:"bar",
+        label:"1時間雨量",
+        data:hourly.map(bucket=>({
+            x:Number(bucket.x),
+            y:bucket.missing ? null : Number(bucket.hourly_rainfall)
+        })),
+        yAxisID:"yHourly",
+        backgroundColor:"rgba(54, 162, 235, 0.65)",
+        borderColor:"rgb(54, 162, 235)",
+        borderWidth:1,
+        barPercentage:0.88,
+        categoryPercentage:1,
+        order:2,
+        showInLegend:true
+    };
+    const options = baseOptions(new Date(displayStart), new Date(endTime));
+    const zoomEnabled = !isMobileView();
+
+    options.interaction = {
+        mode:"nearest",
+        axis:"x",
+        intersect:false
+    };
+    options.plugins.tooltip = { enabled:false };
+    options.plugins.pointLabelPlugin = false;
+    options.plugins.syncedCrosshairPlugin = false;
+    options.plugins.rainfallTooltipPlugin = {};
+    options.plugins.legend = {
+        labels:{
+            filter(item, data){
+                const dataset = data.datasets[item.datasetIndex];
+                return dataset && dataset.showInLegend !== false;
+            }
+        }
+    };
+    options.plugins.crosshair = {
+        line:{ color:"#000", width:1 },
+        sync:{ enabled:false },
+        zoom:{ enabled:false },
+        snap:{ enabled:false }
+    };
+    options.plugins.zoom.zoom.wheel.enabled = false;
+    options.plugins.zoom.zoom.pinch.enabled = zoomEnabled;
+    options.plugins.zoom.zoom.drag.enabled = zoomEnabled;
+    options.plugins.zoom.zoom.mode = "x";
+    options.plugins.zoom.zoom.onZoomComplete = ()=>hideRainfallTooltip();
+    options.scales = {
+        ...options.scales,
+        yHourly:{
+            position:"left",
+            min:0,
+            max:hourlyMax,
+            ticks:{ color:"#000" },
+            title:{ display:true, text:"1時間雨量 (mm)", color:"#000" }
+        },
+        yDaily:{
+            position:"right",
+            min:0,
+            max:dailyMax,
+            grid:{ drawOnChartArea:false },
+            ticks:{ color:"#000" },
+            title:{ display:true, text:"日積算雨量 (mm)", color:"#000" }
+        }
+    };
+
+    const chart = new Chart(canvas,{
+        type:"bar",
+        data:{ datasets:[barDataset, ...dailyDatasets] },
+        options:options
+    });
+
+    chart.$rainfallBuckets = hourly;
+    chart.$rainfallEnd = endTime;
+    saveInitialScaleLimits(chart);
+    return chart;
+}
+
+function resetRainZoom(){
+    hideRainfallTooltip();
+    if(!rainChart) return;
+
+    if(rainChart.resetZoom) rainChart.resetZoom("none");
+    restoreInitialScaleLimits(rainChart);
+    rainChart.update("none");
+    rainChart.resize();
+}
+
+async function loadRainfallData(userId, displayHours, requestId){
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=>controller.abort(), 10000);
+
+    try{
+        const url =
+            "get_rainfall_data.php?user_id=" + encodeURIComponent(userId) +
+            "&point_id=P41&display_hours=" + encodeURIComponent(displayHours);
+        const response = await fetch(url, {
+            signal:controller.signal,
+            cache:"no-store"
+        });
+        const text = await response.text();
+
+        if(requestId !== rainfallRequestSequence) return;
+
+        if(!text.trim()) throw new Error("空のレスポンス");
+
+        const result = JSON.parse(text);
+
+        if(!response.ok || !result.success){
+            throw new Error(result.error || "雨量データ取得エラー");
+        }
+
+        renderRainfallDailyTotals(result.daily_totals);
+
+        if(!result.has_data){
+            showRainfallCardMessage("雨量データなし");
+            return;
+        }
+
+        rainChart = createRainfallChart(result);
+
+        if(!rainChart){
+            showRainfallCardMessage("雨量データなし");
+        }
+    }catch(error){
+        if(requestId !== rainfallRequestSequence) return;
+        resetRainfallDailyTotals();
+        showRainfallCardMessage(
+            error && error.name === "AbortError"
+                ? "雨量データ取得タイムアウト"
+                : "雨量データ取得エラー"
+        );
+        console.warn("[Rainfall]", error);
+    }finally{
+        clearTimeout(timeoutId);
+    }
+}
+
 function getAxisValue(id, fallback){
     const el = document.getElementById(id);
     if(!el || el.value === "") return fallback;
@@ -9739,6 +10215,9 @@ async function loadReviewData(){
 
 async function loadData(){
     clearAllSyncedTooltips();
+    const rainfallRequestId = ++rainfallRequestSequence;
+    destroyRainChart();
+    resetRainfallDailyTotals();
 
     const userId = getMainUserIdInputValue();
     const msg = document.getElementById("message");
@@ -9781,6 +10260,11 @@ async function loadData(){
         const chartMinTime = isMobileView()
             ? new Date(now.getTime() - 48*60*60*1000)
             : minTime;
+        void loadRainfallData(
+            userId,
+            isMobileView() ? 48 : 72,
+            rainfallRequestId
+        );
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
         const scoreMinTime = new Date(now);
         scoreMinTime.setHours(0,0,0,0);
@@ -9943,6 +10427,8 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
 
 function destroyCharts(){
     clearSyncedTooltipGroup("main");
+    destroyRainChart();
+    resetRainfallDailyTotals();
     allCharts.forEach(c=>{
         if(c) c.destroy();
     });
