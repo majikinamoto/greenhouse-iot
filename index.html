@@ -2460,21 +2460,6 @@ body.data-export-active .control-panel {
     </div>
 
     <div>
-        <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
-        <div class="rainfall-daily-summary" aria-label="日別雨量">
-            <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
-            <span class="rainfall-separator-before-yesterday" aria-hidden="true">｜</span>
-            <span>前日 <span id="rainYesterday">-</span></span>
-            <span aria-hidden="true">｜</span>
-            <span>本日 <span id="rainToday">-</span></span>
-        </div>
-        <div class="chart-container">
-            <canvas id="rainChart" aria-label="1時間雨量と日積算雨量"></canvas>
-            <div id="rainfallTooltip" class="rainfall-tooltip" hidden></div>
-        </div>
-    </div>
-
-    <div>
         <h4><span>CO2_ハウス内（P21）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2Min" value="200"> ～
@@ -2502,6 +2487,21 @@ body.data-export-active .control-panel {
             <button onclick="applyCo2DiffYAxis(co2DiffChart)">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2DiffChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
+        <div class="rainfall-daily-summary" aria-label="日別雨量">
+            <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
+            <span class="rainfall-separator-before-yesterday" aria-hidden="true">｜</span>
+            <span>前日 <span id="rainYesterday">-</span></span>
+            <span aria-hidden="true">｜</span>
+            <span>本日 <span id="rainToday">-</span></span>
+        </div>
+        <div class="chart-container">
+            <canvas id="rainChart" aria-label="1時間雨量と日積算雨量"></canvas>
+            <div id="rainfallTooltip" class="rainfall-tooltip" hidden></div>
+        </div>
     </div>
 
 </div>
