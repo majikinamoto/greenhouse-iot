@@ -2498,6 +2498,11 @@ body.data-export-active .control-panel {
             <span aria-hidden="true">｜</span>
             <span>本日 <span id="rainToday">-</span></span>
         </div>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-range"><span class="axis-label-solar">1時間雨量軸：</span><label><input type="checkbox" id="rainHourlyAxisAuto" checked onchange="updateRainAxisInputState()">自動</label><input class="axis-input axis-input-wide" type="number" id="rainHourlyMin" value="0" step="any"><span>～</span><input class="axis-input axis-input-wide" type="number" id="rainHourlyMax" value="20" step="any"><span class="guide-range-unit">mm</span></span>
+            <span class="axis-range"><span class="axis-label-solar">日積算雨量軸：</span><label><input type="checkbox" id="rainDailyAxisAuto" checked onchange="updateRainAxisInputState()">自動</label><input class="axis-input axis-input-wide" type="number" id="rainDailyMin" value="0" step="any"><span>～</span><input class="axis-input axis-input-wide" type="number" id="rainDailyMax" value="100" step="any"><span class="guide-range-unit">mm</span></span>
+            <button onclick="applyRainYAxis(rainChart)">縦軸反映</button>
+        </div>
         <div class="chart-container">
             <canvas id="rainChart" aria-label="1時間雨量と日積算雨量"></canvas>
             <div id="rainfallTooltip" class="rainfall-tooltip" hidden></div>
@@ -8052,6 +8057,12 @@ function createRainfallChart(response){
 
     chart.$rainfallBuckets = hourly;
     chart.$rainfallEnd = endTime;
+    chart.$rainfallAxisDefaults = {
+        yHourly:{ min:0, max:hourlyMax },
+        yDaily:{ min:0, max:dailyMax }
+    };
+    updateRainAxisInputState();
+    applyRainYAxisSettingsToChart(chart, getRainYAxisSettings());
     saveInitialScaleLimits(chart);
     return chart;
 }
@@ -8122,6 +8133,93 @@ function getAxisValue(id, fallback){
     if(!el || el.value === "") return fallback;
     const value = el ? Number(el.value) : NaN;
     return isNaN(value) ? fallback : value;
+}
+
+function getFiniteInputValue(id){
+    const el = document.getElementById(id);
+    if(!el || String(el.value).trim() === "") return null;
+    const value = Number(el.value);
+    return Number.isFinite(value) ? value : null;
+}
+
+function updateRainAxisInputState(){
+    [
+        ["rainHourlyAxisAuto", "rainHourlyMin", "rainHourlyMax"],
+        ["rainDailyAxisAuto", "rainDailyMin", "rainDailyMax"]
+    ].forEach(([autoId, minId, maxId])=>{
+        const auto = document.getElementById(autoId);
+        const disabled = auto ? auto.checked : true;
+        [minId, maxId].forEach(id=>{
+            const input = document.getElementById(id);
+            if(input) input.disabled = disabled;
+        });
+    });
+}
+
+function getRainAxisSetting(autoId, minId, maxId, label){
+    const auto = document.getElementById(autoId);
+    if(!auto || auto.checked) return { auto:true };
+
+    const min = getFiniteInputValue(minId);
+    const max = getFiniteInputValue(maxId);
+    if(min === null || max === null || max <= min){
+        return { error:label + "軸には有効な最小値と最大値を入力してください。" };
+    }
+
+    return { auto:false, min:min, max:max };
+}
+
+function getRainYAxisSettings(){
+    const hourly = getRainAxisSetting("rainHourlyAxisAuto", "rainHourlyMin", "rainHourlyMax", "1時間雨量");
+    if(hourly.error) return { error:hourly.error };
+
+    const daily = getRainAxisSetting("rainDailyAxisAuto", "rainDailyMin", "rainDailyMax", "日積算雨量");
+    if(daily.error) return { error:daily.error };
+
+    return { hourly:hourly, daily:daily };
+}
+
+function applyRainScaleSetting(scale, setting, fallback){
+    if(!scale || !setting) return;
+
+    if(setting.auto){
+        scale.min = fallback ? fallback.min : undefined;
+        scale.max = fallback ? fallback.max : undefined;
+        return;
+    }
+
+    scale.min = setting.min;
+    scale.max = setting.max;
+}
+
+function applyRainYAxisSettingsToChart(chart, settings){
+    if(!chart || !chart.options || !chart.options.scales || !settings) return false;
+    if(settings.error){
+        alert(settings.error);
+        return false;
+    }
+
+    const fallback = chart.$rainfallAxisDefaults || {};
+    applyRainScaleSetting(chart.options.scales.yHourly, settings.hourly, fallback.yHourly);
+    applyRainScaleSetting(chart.options.scales.yDaily, settings.daily, fallback.yDaily);
+
+    if(chart.initialScaleLimits){
+        ["yHourly", "yDaily"].forEach(scaleId=>{
+            const scale = chart.options.scales[scaleId];
+            if(scale && chart.initialScaleLimits[scaleId]){
+                chart.initialScaleLimits[scaleId].min = scale.min;
+                chart.initialScaleLimits[scaleId].max = scale.max;
+            }
+        });
+    }
+
+    return true;
+}
+
+function applyRainYAxis(chart){
+    updateRainAxisInputState();
+    if(!applyRainYAxisSettingsToChart(chart, getRainYAxisSettings())) return;
+    chart.update();
 }
 
 function getGuideRange(minId, maxId, defaultMin, defaultMax){
