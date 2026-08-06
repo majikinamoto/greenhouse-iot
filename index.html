@@ -339,18 +339,6 @@ button { margin:5px; }
     width:152px;
 }
 
-.csv-period-group {
-    display:flex;
-    align-items:center;
-    gap:5px;
-    white-space:nowrap;
-}
-
-.csv-period-group input[type="date"] {
-    width:135px;
-    box-sizing:border-box;
-}
-
 .chart-axis-control {
     margin:0 0 6px 0;
     font-size:13px;
@@ -603,6 +591,11 @@ button { margin:5px; }
     border-color:#5a4394;
 }
 
+.tab-button-export.active {
+    background:#3f759f;
+    border-color:#315d7e;
+}
+
 .tab-button-guide.active {
     background:#3d8c98;
     border-color:#2f6e78;
@@ -643,6 +636,148 @@ button { margin:5px; }
 
 .tab-panel-maintenance {
     background:#f0ecff;
+}
+
+.tab-panel-export {
+    background:#edf5fb;
+}
+
+body.data-export-active .control-panel {
+    display:none;
+}
+
+.csv-export-panel {
+    max-width:1120px;
+    margin:0 auto;
+    padding:14px;
+    border:2px solid #b7cddd;
+    background:#fff;
+    box-sizing:border-box;
+}
+
+.csv-export-panel h2 {
+    margin:0 0 14px;
+    color:#263b4d;
+}
+
+.csv-export-form {
+    min-width:0;
+}
+
+.csv-export-fields {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 16px;
+    align-items:flex-end;
+    margin-bottom:16px;
+}
+
+.csv-export-field {
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:180px;
+    font-weight:700;
+    color:#263b4d;
+}
+
+.csv-export-field input {
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+}
+
+.csv-point-heading-row {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px 16px;
+    margin-bottom:8px;
+}
+
+.csv-point-heading-row h3 {
+    margin:0;
+    color:#263b4d;
+}
+
+.csv-point-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.csv-point-actions button {
+    margin:0;
+    white-space:nowrap;
+}
+
+.csv-point-groups {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:10px;
+    min-width:0;
+}
+
+.csv-point-group {
+    min-width:0;
+    border:1px solid #b7cddd;
+    border-radius:5px;
+    background:#f8fbfd;
+    box-sizing:border-box;
+}
+
+.csv-point-group summary {
+    padding:10px 12px;
+    cursor:pointer;
+    font-weight:700;
+    color:#263b4d;
+    list-style-position:inside;
+}
+
+.csv-point-group summary span {
+    float:right;
+    margin-left:10px;
+    color:#587086;
+    white-space:nowrap;
+}
+
+.csv-point-options {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 12px;
+    padding:4px 12px 12px;
+}
+
+.csv-point-options label {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    flex:0 0 auto;
+    white-space:nowrap;
+    break-inside:avoid;
+}
+
+.csv-point-options input {
+    margin:0;
+    flex:none;
+}
+
+.csv-storage-note {
+    margin:14px 0 8px;
+    color:#666;
+    line-height:1.6;
+}
+
+.csv-download-message {
+    min-height:1.4em;
+    color:#b00020;
+    font-weight:700;
+}
+
+.csv-download-button {
+    margin:8px 0 0;
+    padding:10px 18px;
 }
 
 .tab-panel-guide {
@@ -1813,10 +1948,6 @@ button { margin:5px; }
         padding:8px 10px;
     }
 
-    .csv-control-group {
-        display:none;
-    }
-
     .status-box {
         width:calc(50% - 5px);
         box-sizing:border-box;
@@ -1996,6 +2127,40 @@ button { margin:5px; }
         padding:4px 7px;
         font-size:12px;
     }
+
+    .csv-export-panel {
+        max-width:100%;
+        padding:10px;
+        border-left:none;
+        border-right:none;
+    }
+
+    .csv-export-fields,
+    .csv-export-field {
+        width:100%;
+        min-width:0;
+    }
+
+    .csv-point-groups {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .csv-point-group summary {
+        overflow-wrap:break-word;
+    }
+
+    .csv-point-options {
+        gap:10px 14px;
+    }
+
+    .csv-point-options label {
+        min-height:32px;
+    }
+
+    .csv-download-button {
+        width:100%;
+        box-sizing:border-box;
+    }
 }
 </style>
 </head>
@@ -2062,18 +2227,6 @@ button { margin:5px; }
         <button class="show-button" onclick="loadData()">表示</button>
     </div>
 
-    <div class="control-group csv-control-group">
-        <span class="csv-period-group">CSV期間：</span>
-        <label class="csv-period-group">開始日
-            <input type="date" id="csvStart">
-        </label>
-        <label class="csv-period-group">終了日
-            <input type="date" id="csvEnd">
-        </label>
-        <button onclick="downloadCSV()">CSVダウンロード</button>
-        <small style="width:100%; color:#666;">※CSVでダウンロードできるデータは、データベースに保存されている直近1年分です。</small>
-    </div>
-
 </div>
 
 </div>
@@ -2085,6 +2238,7 @@ button { margin:5px; }
     <button class="tab-button tab-button-score" type="button" role="tab" aria-selected="false" aria-controls="tab-score" onclick="switchTab('score')">環境スコア</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
+    <button class="tab-button tab-button-export" type="button" role="tab" aria-selected="false" aria-controls="tab-export" onclick="switchTab('export')">データ出力</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button>
     <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-guide" onclick="switchTab('guide')">利用案内</button>
@@ -2367,6 +2521,119 @@ button { margin:5px; }
             <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
         </div>
 
+    </div>
+</section>
+
+<section id="tab-export" class="tab-panel tab-panel-export" role="tabpanel">
+    <div class="csv-export-panel">
+        <h2>CSVダウンロード</h2>
+        <form id="csvDownloadForm" class="csv-export-form" onsubmit="downloadCSV(event)">
+            <div class="csv-export-fields">
+                <label class="csv-export-field" for="csvUserId">
+                    <span>user_id</span>
+                    <input type="text" id="csvUserId" name="user_id" placeholder="例: T0001" autocomplete="off">
+                </label>
+                <label class="csv-export-field" for="csvStart">
+                    <span>開始日</span>
+                    <input type="date" id="csvStart" name="start">
+                </label>
+                <label class="csv-export-field" for="csvEnd">
+                    <span>終了日</span>
+                    <input type="date" id="csvEnd" name="end">
+                </label>
+            </div>
+
+            <div class="csv-point-heading-row">
+                <h3>Point ID</h3>
+                <div class="csv-point-actions">
+                    <button type="button" onclick="setAllCsvPointIds(true)">すべて選択</button>
+                    <button type="button" onclick="setAllCsvPointIds(false)">すべて解除</button>
+                </div>
+            </div>
+
+            <div class="csv-point-groups">
+                <details class="csv-point-group">
+                    <summary>温湿度（ハウス内）<span>P01～P10</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P01">P01</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P02">P02</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P03">P03</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P04">P04</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P05">P05</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P06">P06</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P07">P07</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P08">P08</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P09">P09</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P10">P10</label>
+                    </div>
+                </details>
+
+                <details class="csv-point-group">
+                    <summary>温湿度（外気）<span>P11～P20</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P11">P11</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P12">P12</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P13">P13</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P14">P14</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P15">P15</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P16">P16</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P17">P17</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P18">P18</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P19">P19</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P20">P20</label>
+                    </div>
+                </details>
+
+                <details class="csv-point-group">
+                    <summary>CO2（ハウス内）<span>P21～P25</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P21">P21</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P22">P22</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P23">P23</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P24">P24</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P25">P25</label>
+                    </div>
+                </details>
+
+                <details class="csv-point-group">
+                    <summary>CO2（外気）<span>P26～P30</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P26">P26</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P27">P27</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P28">P28</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P29">P29</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P30">P30</label>
+                    </div>
+                </details>
+
+                <details class="csv-point-group">
+                    <summary>日射<span>P31～P40</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P31">P31</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P32">P32</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P33">P33</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P34">P34</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P35">P35</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P36">P36</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P37">P37</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P38">P38</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P39">P39</label>
+                        <label><input type="checkbox" name="point_ids[]" value="P40">P40</label>
+                    </div>
+                </details>
+
+                <details class="csv-point-group">
+                    <summary>電圧<span>P91</span></summary>
+                    <div class="csv-point-options">
+                        <label><input type="checkbox" name="point_ids[]" value="P91">P91</label>
+                    </div>
+                </details>
+            </div>
+
+            <p class="csv-storage-note">※CSVでダウンロードできるデータは、データベースに保存されている直近1年分です。</p>
+            <div id="csvDownloadMessage" class="csv-download-message" role="alert" aria-live="polite"></div>
+            <button class="show-button csv-download-button" type="submit">CSVダウンロード</button>
+        </form>
     </div>
 </section>
 
@@ -4516,6 +4783,12 @@ function switchTab(tabName){
         button.classList.toggle("active", isActive);
         button.setAttribute("aria-selected", isActive ? "true" : "false");
     });
+
+    document.body.classList.toggle("data-export-active", tabName === "export");
+    if(tabName === "export"){
+        const csvUserId = document.getElementById("csvUserId");
+        if(csvUserId && !csvUserId.value.trim()) csvUserId.value = getMainUserIdInputValue();
+    }
 
     refreshVisibleCharts();
 
@@ -9857,33 +10130,72 @@ function getCsvDownloadRange(startValue, endValue){
     };
 }
 
-function downloadCSV(){
+function setAllCsvPointIds(checked){
+    document.querySelectorAll('#csvDownloadForm input[name="point_ids[]"]').forEach(input=>{
+        input.checked = checked;
+    });
 
-    const userId = document.getElementById("userId").value.trim();
-    const startValue = document.getElementById("csvStart").value;
-    const endValue = document.getElementById("csvEnd").value;
+    const message = document.getElementById("csvDownloadMessage");
+    if(message) message.innerText = "";
+}
+
+function getSelectedCsvPointIds(){
+    return Array.from(
+        document.querySelectorAll('#csvDownloadForm input[name="point_ids[]"]:checked')
+    ).map(input=>input.value);
+}
+
+function showCsvDownloadError(message, focusTarget){
+    const messageElement = document.getElementById("csvDownloadMessage");
+    if(messageElement) messageElement.innerText = message;
+    alert(message);
+    if(focusTarget && focusTarget.focus) focusTarget.focus();
+}
+
+function downloadCSV(event){
+    if(event) event.preventDefault();
+
+    const userIdInput = document.getElementById("csvUserId");
+    const startInput = document.getElementById("csvStart");
+    const endInput = document.getElementById("csvEnd");
+    const userId = userIdInput ? userIdInput.value.trim() : "";
+    const startValue = startInput ? startInput.value : "";
+    const endValue = endInput ? endInput.value : "";
+    const pointIds = getSelectedCsvPointIds();
+    const messageElement = document.getElementById("csvDownloadMessage");
+
+    if(userIdInput) userIdInput.value = userId;
+    if(messageElement) messageElement.innerText = "";
 
     if(!userId){
-        alert("user_id を入力してください");
+        showCsvDownloadError("user_id を入力してください。", userIdInput);
+        return;
+    }
+
+    if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(userId)){
+        showCsvDownloadError("user_idは半角英数字、ハイフン、アンダースコアで入力してください。", userIdInput);
+        return;
+    }
+
+    if(!pointIds.length){
+        showCsvDownloadError("Point IDを1件以上選択してください。", document.querySelector(".csv-point-group summary"));
         return;
     }
 
     const range = getCsvDownloadRange(startValue, endValue);
     if(range.error){
-        alert(range.error);
+        showCsvDownloadError(range.error, !startValue ? startInput : endInput);
         return;
     }
 
-    localStorage.setItem("usui_user_id", userId);
-    saveUserIdHistory(userId);
+    const params = new URLSearchParams({
+        user_id:userId,
+        start:range.start,
+        end:range.end
+    });
+    pointIds.forEach(pointId=>params.append("point_ids[]", pointId));
 
-    const url =
-        "download_csv.php"
-        + "?user_id=" + encodeURIComponent(userId)
-        + "&start=" + encodeURIComponent(range.start)
-        + "&end=" + encodeURIComponent(range.end);
-
-    window.open(url, "_blank");
+    window.open("download_csv.php?" + params.toString(), "_blank", "noopener");
 }
 
 async function saveAlertSetting(){

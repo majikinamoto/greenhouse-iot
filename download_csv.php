@@ -2,49 +2,169 @@
 
 require_once __DIR__ . '/db_config.php';
 
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
-
-if ($conn->connect_error) {
-    die("DB接続失敗: " . $conn->connect_error);
+function failCsvDownload(string $message, int $status = 400): void {
+    http_response_code($status);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit($message);
 }
 
-$conn->set_charset("utf8mb4");
+function normalizeCsvDateTime(string $value, string $defaultSeconds): ?array {
+    $normalized = str_replace('T', ' ', trim($value));
 
-$start = $_GET['start'] ?? '';
-$end   = $_GET['end'] ?? '';
-$user_id = $_GET['user_id'] ?? '';
+    if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $normalized)) {
+        $normalized .= ':' . $defaultSeconds;
+    }
 
-if (!$user_id || !$start || !$end) {
-    exit("パラメータ不足");
+    if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $normalized)) {
+        return null;
+    }
+
+    $date = DateTimeImmutable::createFromFormat(
+        '!Y-m-d H:i:s',
+        $normalized,
+        new DateTimeZone('Asia/Tokyo')
+    );
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if (
+        !$date ||
+        ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+        $date->format('Y-m-d H:i:s') !== $normalized
+    ) {
+        return null;
+    }
+
+    return ['sql' => $normalized, 'date' => $date];
 }
 
-$start_normalized = str_replace("T", " ", $start);
-$end_normalized   = str_replace("T", " ", $end);
-$start_dt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $start_normalized)
-    ? $start_normalized
-    : $start_normalized . ":00";
-$end_dt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $end_normalized)
-    ? $end_normalized
-    : $end_normalized . ":59";
-
-$start_safe = substr(preg_replace('/[^0-9]/', '', $start), 0, 12);
-$end_safe   = substr(preg_replace('/[^0-9]/', '', $end), 0, 12);
-
-$filename = "data_{$user_id}_{$start_safe}_to_{$end_safe}.csv";
-
-header('Content-Type: text/csv; charset=UTF-8');
-header("Content-Disposition: attachment; filename=\"$filename\"");
-
-echo "\xEF\xBB\xBF";
-
-$output = fopen('php://output', 'w');
-
-function calcVapor($temp, $hum) {
+function calcVapor(float $temp, float $hum): float {
     $es = 6.1078 * pow(10, (7.5 * $temp) / (237.3 + $temp));
     $ea = $es * $hum / 100;
     return 216.7 * ($ea / ($temp + 273.15));
 }
 
+function getPointNumber(string $pointId): int {
+    return (int)substr($pointId, 1);
+}
+
+function isTemperatureHumidityPoint(string $pointId): bool {
+    $number = getPointNumber($pointId);
+    return $number >= 1 && $number <= 20;
+}
+
+function isCo2Point(string $pointId): bool {
+    $number = getPointNumber($pointId);
+    return $number >= 21 && $number <= 30;
+}
+
+function isSolarPoint(string $pointId): bool {
+    $number = getPointNumber($pointId);
+    return $number >= 31 && $number <= 40;
+}
+
+function appendPointHeader(array &$header, string $pointId): void {
+    $header[] = '';
+    $header[] = $pointId . '_日時';
+
+    if ($pointId === 'P01') {
+        $header[] = 'P01_温度';
+        $header[] = 'P01_湿度';
+        $header[] = 'P01_飽和水蒸気量';
+        $header[] = 'P01_水蒸気量';
+        $header[] = 'P01_飽差';
+    } elseif (isTemperatureHumidityPoint($pointId)) {
+        $header[] = $pointId . '_温度';
+        $header[] = $pointId . '_湿度';
+    } elseif (isCo2Point($pointId)) {
+        $header[] = $pointId . '_CO2';
+    } elseif (isSolarPoint($pointId)) {
+        $header[] = $pointId . '_日射';
+    } elseif ($pointId === 'P91') {
+        $header[] = 'P91_電圧';
+    }
+}
+
+function appendPointValues(array &$line, string $pointId, ?array $item): void {
+    $line[] = '';
+    $line[] = $item['日時'] ?? '';
+
+    if ($pointId === 'P01') {
+        $line[] = $item['温度'] ?? '';
+        $line[] = $item['湿度'] ?? '';
+        $line[] = $item['飽和水蒸気量'] ?? '';
+        $line[] = $item['水蒸気量'] ?? '';
+        $line[] = $item['飽差'] ?? '';
+    } elseif (isTemperatureHumidityPoint($pointId)) {
+        $line[] = $item['温度'] ?? '';
+        $line[] = $item['湿度'] ?? '';
+    } elseif (isCo2Point($pointId)) {
+        $line[] = $item['CO2'] ?? '';
+    } elseif (isSolarPoint($pointId)) {
+        $line[] = $item['日射'] ?? '';
+    } elseif ($pointId === 'P91') {
+        $line[] = $item['電圧'] ?? '';
+    }
+}
+
+$allowedPointIds = array_merge(
+    array_map(static fn(int $number): string => sprintf('P%02d', $number), range(1, 40)),
+    ['P91']
+);
+
+$userId = trim((string)($_GET['user_id'] ?? ''));
+$startInput = (string)($_GET['start'] ?? '');
+$endInput = (string)($_GET['end'] ?? '');
+$requestedPointIds = $_GET['point_ids'] ?? [];
+
+if ($userId === '') {
+    failCsvDownload('user_idを入力してください。');
+}
+
+if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/D', $userId)) {
+    failCsvDownload('user_idの形式が正しくありません。');
+}
+
+if (!is_array($requestedPointIds) || count($requestedPointIds) === 0) {
+    failCsvDownload('Point IDを1件以上選択してください。');
+}
+
+$requestedPointIdSet = [];
+foreach ($requestedPointIds as $pointId) {
+    if (!is_string($pointId) || !in_array($pointId, $allowedPointIds, true)) {
+        failCsvDownload('許可されていないPoint IDが指定されています。');
+    }
+    $requestedPointIdSet[$pointId] = true;
+}
+
+$selectedPointIds = array_values(array_filter(
+    $allowedPointIds,
+    static fn(string $pointId): bool => isset($requestedPointIdSet[$pointId])
+));
+
+if (count($selectedPointIds) === 0) {
+    failCsvDownload('Point IDを1件以上選択してください。');
+}
+
+$start = normalizeCsvDateTime($startInput, '00');
+$end = normalizeCsvDateTime($endInput, '59');
+
+if ($start === null || $end === null) {
+    failCsvDownload('開始日または終了日の形式が正しくありません。');
+}
+
+if ($start['date'] > $end['date']) {
+    failCsvDownload('開始日は終了日以前にしてください。');
+}
+
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
+
+if ($conn->connect_error) {
+    failCsvDownload('DB接続に失敗しました。', 500);
+}
+
+$conn->set_charset('utf8mb4');
+
+$pointPlaceholders = implode(',', array_fill(0, count($selectedPointIds), '?'));
 $sql = "SELECT
             DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at,
             point_id,
@@ -56,131 +176,112 @@ $sql = "SELECT
         FROM measurements
         WHERE user_id = ?
           AND recorded_at BETWEEN ? AND ?
+          AND point_id IN ($pointPlaceholders)
         ORDER BY recorded_at ASC, point_id ASC";
 
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
-    exit("SQL準備エラー: " . $conn->error);
+    $conn->close();
+    failCsvDownload('CSV出力の準備に失敗しました。', 500);
 }
 
-$stmt->bind_param("sss", $user_id, $start_dt, $end_dt);
-$stmt->execute();
+$bindValues = array_merge(
+    [$userId, $start['sql'], $end['sql']],
+    $selectedPointIds
+);
+$bindTypes = str_repeat('s', count($bindValues));
+$stmt->bind_param($bindTypes, ...$bindValues);
+
+if (!$stmt->execute()) {
+    $stmt->close();
+    $conn->close();
+    failCsvDownload('CSVデータの取得に失敗しました。', 500);
+}
+
 $result = $stmt->get_result();
-
-$rows = [];
-
-$data = [
-    "P01" => [],
-    "P02" => [],
-    "P11" => [],
-    "P21" => [],
-    "P31" => [],
-    "P91" => []
-];
+$data = array_fill_keys($selectedPointIds, []);
 
 while ($row = $result->fetch_assoc()) {
+    $pointId = (string)$row['point_id'];
 
-    $point = $row["point_id"];
-
-    if (!isset($data[$point])) {
+    if (!isset($data[$pointId])) {
         continue;
     }
 
     $item = [
-        "日時" => $row["recorded_at"],
-        "温度" => "",
-        "湿度" => "",
-        "飽和水蒸気量" => "",
-        "水蒸気量" => "",
-        "飽差" => "",
-        "CO2" => "",
-        "日射" => "",
-        "電圧" => ""
+        '日時' => $row['recorded_at'],
+        '温度' => '',
+        '湿度' => '',
+        '飽和水蒸気量' => '',
+        '水蒸気量' => '',
+        '飽差' => '',
+        'CO2' => '',
+        '日射' => '',
+        '電圧' => ''
     ];
 
-    if ($point === "P01") {
-        $item["温度"] = $row["temperature"];
-        $item["湿度"] = $row["humidity"];
+    if (isTemperatureHumidityPoint($pointId)) {
+        $item['温度'] = $row['temperature'];
+        $item['湿度'] = $row['humidity'];
 
-        if ($row["temperature"] !== null && $row["humidity"] !== null) {
-            $temp = floatval($row["temperature"]);
-            $hum  = floatval($row["humidity"]);
+        if ($pointId === 'P01' && $row['temperature'] !== null && $row['humidity'] !== null) {
+            $temperature = (float)$row['temperature'];
+            $humidity = (float)$row['humidity'];
+            $saturatedVapor = calcVapor($temperature, 100);
+            $vapor = calcVapor($temperature, $humidity);
 
-            $sat = calcVapor($temp, 100);
-            $vapor = calcVapor($temp, $hum);
-            $vpd = $sat - $vapor;
-
-            $item["飽和水蒸気量"] = round($sat, 3);
-            $item["水蒸気量"] = round($vapor, 3);
-            $item["飽差"] = round($vpd, 3);
+            $item['飽和水蒸気量'] = round($saturatedVapor, 3);
+            $item['水蒸気量'] = round($vapor, 3);
+            $item['飽差'] = round($saturatedVapor - $vapor, 3);
         }
+    } elseif (isCo2Point($pointId)) {
+        $item['CO2'] = $row['CO2'];
+    } elseif (isSolarPoint($pointId)) {
+        $item['日射'] = $row['solar_radiation'];
+    } elseif ($pointId === 'P91') {
+        $item['電圧'] = $row['voltage'];
     }
 
-    if ($point === "P02" || $point === "P11") {
-        $item["温度"] = $row["temperature"];
-        $item["湿度"] = $row["humidity"];
-    }
-
-    if ($point === "P21") {
-        $item["CO2"] = $row["CO2"];
-    }
-
-    if ($point === "P31") {
-        $item["日射"] = $row["solar_radiation"];
-    }
-
-    if ($point === "P91") {
-        $item["電圧"] = $row["voltage"];
-    }
-
-    $data[$point][] = $item;
+    $data[$pointId][] = $item;
 }
 
-$header = [
-    "", "P01_日時", "P01_温度", "P01_湿度", "P01_飽和水蒸気量", "P01_水蒸気量", "P01_飽差",
-    "", "P02_日時", "P02_温度", "P02_湿度",
-    "", "P11_日時", "P11_温度", "P11_湿度",
-    "", "P21_日時", "P21_CO2",
-    "", "P31_日時", "P31_日射",
-    "", "P91_日時", "P91_電圧"
-];
+$stmt->close();
+$conn->close();
+
+$startDateForFile = str_replace('-', '', substr($start['sql'], 0, 10));
+$endDateForFile = str_replace('-', '', substr($end['sql'], 0, 10));
+$filename = "U-Tech_{$userId}_{$startDateForFile}-{$endDateForFile}.csv";
+
+header('Content-Type: text/csv; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+echo "\xEF\xBB\xBF";
+
+$output = fopen('php://output', 'w');
+$header = [];
+
+foreach ($selectedPointIds as $pointId) {
+    appendPointHeader($header, $pointId);
+}
 
 fputcsv($output, $header);
 
-$max = max(
-    count($data["P01"]),
-    count($data["P02"]),
-    count($data["P11"]),
-    count($data["P21"]),
-    count($data["P31"]),
-    count($data["P91"])
-);
+$maxRows = 0;
+foreach ($selectedPointIds as $pointId) {
+    $maxRows = max($maxRows, count($data[$pointId]));
+}
 
-for ($i = 0; $i < $max; $i++) {
+for ($index = 0; $index < $maxRows; $index++) {
+    $line = [];
 
-    $p01 = $data["P01"][$i] ?? null;
-    $p02 = $data["P02"][$i] ?? null;
-    $p11 = $data["P11"][$i] ?? null;
-    $p21 = $data["P21"][$i] ?? null;
-    $p31 = $data["P31"][$i] ?? null;
-    $p91 = $data["P91"][$i] ?? null;
-
-    $line = [
-        "", $p01["日時"] ?? "", $p01["温度"] ?? "", $p01["湿度"] ?? "", $p01["飽和水蒸気量"] ?? "", $p01["水蒸気量"] ?? "", $p01["飽差"] ?? "",
-        "", $p02["日時"] ?? "", $p02["温度"] ?? "", $p02["湿度"] ?? "",
-        "", $p11["日時"] ?? "", $p11["温度"] ?? "", $p11["湿度"] ?? "",
-        "", $p21["日時"] ?? "", $p21["CO2"] ?? "",
-        "", $p31["日時"] ?? "", $p31["日射"] ?? "",
-        "", $p91["日時"] ?? "", $p91["電圧"] ?? ""
-    ];
+    foreach ($selectedPointIds as $pointId) {
+        appendPointValues($line, $pointId, $data[$pointId][$index] ?? null);
+    }
 
     fputcsv($output, $line);
 }
 
 fclose($output);
-$stmt->close();
-$conn->close();
-
 exit;
-?>
