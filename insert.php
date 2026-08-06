@@ -45,42 +45,245 @@ $humidity    = isset($data["humidity"]) ? floatval($data["humidity"]) : null;
 $co2         = isset($data["co2"]) ? floatval($data["co2"]) : null;
 $solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : null;
 $voltage     = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
+$has_rainfall = array_key_exists("rainfall_cumulative", $data);
 
 if (!$user_id) {
     die("user_idが必要です");
 }
 
-// ===== SQL =====
-$sql = "INSERT INTO measurements 
-(user_id, point_id, temperature, humidity, co2, solar_radiation, voltage) 
-VALUES (?, ?, ?, ?, ?, ?, ?)";
+// 雨量を含まない既存データは、従来どおりDB側のrecorded_at既定値で保存する。
+if (!$has_rainfall) {
+    $sql = "INSERT INTO measurements
+    (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage)
+    VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-$stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-if (!$stmt) {
-    die("SQLエラー: " . $conn->error);
+    if (!$stmt) {
+        die("SQLエラー: " . $conn->error);
+    }
+
+    // s=文字列, d=数値
+    $stmt->bind_param(
+        "ssddddd",
+        $user_id,
+        $point_id,
+        $temperature,
+        $humidity,
+        $co2,
+        $solar_radiation,
+        $voltage
+    );
+
+    if ($stmt->execute()) {
+        echo "OK";
+    } else {
+        echo "NG: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $conn->close();
+    exit;
 }
 
-// s=文字列, d=数値
-$stmt->bind_param(
-    "ssddddd",
-    $user_id,
-    $point_id,
-    $temperature,
-    $humidity,
-    $co2,
-    $solar_radiation,
-    $voltage
-);
+if (!is_numeric($data["rainfall_cumulative"])) {
+    http_response_code(400);
+    $conn->close();
+    die("rainfall_cumulativeは数値で指定してください");
+}
 
-// ===== 実行 =====
-if ($stmt->execute()) {
+$rainfall_cumulative = round((float)$data["rainfall_cumulative"], 2);
+
+if (!is_finite($rainfall_cumulative)) {
+    http_response_code(400);
+    $conn->close();
+    die("rainfall_cumulativeは有限の数値で指定してください");
+}
+
+$recorded_at = null;
+
+if (array_key_exists("recorded_at", $data)) {
+    if (!is_string($data["recorded_at"])) {
+        http_response_code(400);
+        $conn->close();
+        die("recorded_atはYYYY-MM-DD HH:MM:SS形式で指定してください");
+    }
+
+    $recorded_at = trim($data["recorded_at"]);
+    $recorded_date = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $recorded_at);
+    $recorded_errors = DateTimeImmutable::getLastErrors();
+
+    if (
+        !$recorded_date ||
+        ($recorded_errors !== false &&
+            ($recorded_errors['warning_count'] > 0 || $recorded_errors['error_count'] > 0)) ||
+        $recorded_date->format('Y-m-d H:i:s') !== $recorded_at
+    ) {
+        http_response_code(400);
+        $conn->close();
+        die("recorded_atはYYYY-MM-DD HH:MM:SS形式で指定してください");
+    }
+}
+
+$transaction_started = false;
+
+try {
+    if (!$conn->begin_transaction()) {
+        throw new RuntimeException("トランザクションを開始できませんでした");
+    }
+    $transaction_started = true;
+
+    // recorded_at省略時も、同一トランザクション内で確定したDB時刻を使用する。
+    if ($recorded_at === null) {
+        $time_result = $conn->query(
+            "SELECT DATE_FORMAT(CURRENT_TIMESTAMP, '%Y-%m-%d %H:%i:%s') AS recorded_at"
+        );
+
+        if (!$time_result) {
+            throw new RuntimeException("DB時刻を取得できませんでした: " . $conn->error);
+        }
+
+        $time_row = $time_result->fetch_assoc();
+        $recorded_at = $time_row['recorded_at'];
+        $time_result->free();
+    }
+
+    // 同一キーの行をロックして確認し、重複なら既存行を変更せず正常終了する。
+    $duplicate_stmt = $conn->prepare(
+        "SELECT 1
+         FROM measurements
+         WHERE user_id = ? AND point_id = ? AND recorded_at = ?
+         LIMIT 1
+         FOR UPDATE"
+    );
+
+    if (!$duplicate_stmt) {
+        throw new RuntimeException("重複確認SQLエラー: " . $conn->error);
+    }
+
+    $duplicate_stmt->bind_param("sss", $user_id, $point_id, $recorded_at);
+
+    if (!$duplicate_stmt->execute()) {
+        throw new RuntimeException("重複確認エラー: " . $duplicate_stmt->error);
+    }
+
+    $duplicate_stmt->store_result();
+    $is_duplicate = $duplicate_stmt->num_rows > 0;
+    $duplicate_stmt->close();
+
+    if ($is_duplicate) {
+        $conn->commit();
+        $conn->close();
+        echo "OK";
+        exit;
+    }
+
+    // 今回より新しい行があれば、過去時刻データとして差分を算出しない。
+    $newer_stmt = $conn->prepare(
+        "SELECT 1
+         FROM measurements
+         WHERE user_id = ? AND point_id = ? AND recorded_at > ?
+         ORDER BY recorded_at ASC
+         LIMIT 1
+         FOR UPDATE"
+    );
+
+    if (!$newer_stmt) {
+        throw new RuntimeException("新しい時刻の確認SQLエラー: " . $conn->error);
+    }
+
+    $newer_stmt->bind_param("sss", $user_id, $point_id, $recorded_at);
+
+    if (!$newer_stmt->execute()) {
+        throw new RuntimeException("新しい時刻の確認エラー: " . $newer_stmt->error);
+    }
+
+    $newer_stmt->store_result();
+    $has_newer_measurement = $newer_stmt->num_rows > 0;
+    $newer_stmt->close();
+
+    $rainfall_interval = null;
+
+    if (!$has_newer_measurement) {
+        $previous_stmt = $conn->prepare(
+            "SELECT rainfall_cumulative
+             FROM measurements
+             WHERE user_id = ?
+               AND point_id = ?
+               AND rainfall_cumulative IS NOT NULL
+               AND recorded_at < ?
+             ORDER BY recorded_at DESC
+             LIMIT 1
+             FOR UPDATE"
+        );
+
+        if (!$previous_stmt) {
+            throw new RuntimeException("前回雨量取得SQLエラー: " . $conn->error);
+        }
+
+        $previous_stmt->bind_param("sss", $user_id, $point_id, $recorded_at);
+
+        if (!$previous_stmt->execute()) {
+            throw new RuntimeException("前回雨量取得エラー: " . $previous_stmt->error);
+        }
+
+        $previous_stmt->bind_result($previous_rainfall_cumulative);
+
+        if ($previous_stmt->fetch()) {
+            $previous_rainfall_cumulative = (float)$previous_rainfall_cumulative;
+            $rainfall_interval = $rainfall_cumulative >= $previous_rainfall_cumulative
+                ? round($rainfall_cumulative - $previous_rainfall_cumulative, 2)
+                : $rainfall_cumulative;
+        } else {
+            $rainfall_interval = 0.00;
+        }
+
+        $previous_stmt->close();
+    }
+
+    $insert_stmt = $conn->prepare(
+        "INSERT INTO measurements
+         (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage,
+          rainfall_cumulative, rainfall_interval, recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    if (!$insert_stmt) {
+        throw new RuntimeException("SQLエラー: " . $conn->error);
+    }
+
+    $insert_stmt->bind_param(
+        "ssddddddds",
+        $user_id,
+        $point_id,
+        $temperature,
+        $humidity,
+        $co2,
+        $solar_radiation,
+        $voltage,
+        $rainfall_cumulative,
+        $rainfall_interval,
+        $recorded_at
+    );
+
+    if (!$insert_stmt->execute()) {
+        throw new RuntimeException("INSERTエラー: " . $insert_stmt->error);
+    }
+
+    $insert_stmt->close();
+    $conn->commit();
+    $conn->close();
     echo "OK";
-} else {
-    echo "NG: " . $stmt->error;
+} catch (Throwable $error) {
+    if ($transaction_started) {
+        $conn->rollback();
+    }
+
+    $conn->close();
+    http_response_code(500);
+    echo "NG: " . $error->getMessage();
 }
 
-$stmt->close();
-$conn->close();
+exit;
 
 ?>
