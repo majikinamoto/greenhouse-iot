@@ -8025,6 +8025,12 @@ function createRainfallChart(response){
             filter(item, data){
                 const dataset = data.datasets[item.datasetIndex];
                 return dataset && dataset.showInLegend !== false;
+            },
+            sort(itemA, itemB){
+                const order = { "1時間雨量":0, "日積算雨量":1 };
+                const orderA = Object.prototype.hasOwnProperty.call(order, itemA.text) ? order[itemA.text] : 99;
+                const orderB = Object.prototype.hasOwnProperty.call(order, itemB.text) ? order[itemB.text] : 99;
+                return orderA - orderB;
             }
         }
     };
