@@ -3080,7 +3080,10 @@ let reviewDifPeriodEndDateValue = "";
 let syncingZoom = false;
 let syncingMaintenanceZoom = false;
 let syncingReviewZoom = false;
-let syncedCrosshairValues = { main:null, maintenance:null, review:null };
+let syncedCrosshairValues = { main:null, analysis:null, maintenance:null, review:null };
+let syncedCrosshairLatest = { main:false, analysis:false, maintenance:false, review:false };
+let lastTouchChart = null;
+let lastTouchChartEventAt = 0;
 let maintenanceMode = "latest";
 let maintenanceStartTime = null;
 let maintenanceEndTime = null;
@@ -3426,6 +3429,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     initializeMaintenanceRangeInputs();
 
     document.addEventListener("click", closeLogoInfoOnOutsideClick);
+    document.addEventListener("touchstart", handleOutsideChartTouch, { capture:true, passive:true });
 
     updateHeaderTimeInfo();
     loadTideCalendarInfo();
@@ -3618,7 +3622,6 @@ function registerAnalysisChart(chart){
     if(!chart) return;
 
     allCharts = allCharts.filter(c=>c && c.canvas && c.canvas.id !== chart.canvas.id);
-    allCharts.push(chart);
 }
 
 function getAnalysisChartGroup(chart){
@@ -3668,6 +3671,13 @@ function createAnalysisTempChart(graphId, parsed, minTime, maxTime){
 
     options.plugins = {
         ...options.plugins,
+        crosshair:{
+            ...options.plugins.crosshair,
+            sync:{
+                ...options.plugins.crosshair.sync,
+                group:4
+            }
+        },
         legend:{
             display:false
         },
@@ -3803,6 +3813,7 @@ function applyAnalysisDiffYAxis(graphId){
 }
 
 function resetAnalysisZoom(){
+    clearSyncedTooltipGroup("analysis");
     syncingAnalysisZoom = true;
 
     const referenceChart = getAnalysisCharts()
@@ -3932,6 +3943,13 @@ function createAnalysisDiffChart(targetGraphId, minTime, maxTime){
 
     options.plugins = {
         ...options.plugins,
+        crosshair:{
+            ...options.plugins.crosshair,
+            sync:{
+                ...options.plugins.crosshair.sync,
+                group:4
+            }
+        },
         legend:{
             display:false
         },
@@ -4019,6 +4037,7 @@ function refreshAnalysisDiffCharts(minTime, maxTime){
 }
 
 async function loadAnalysisCompareChart(graphId){
+    clearSyncedTooltipGroup("analysis");
     const userIdInput = document.getElementById("analysisUserId" + graphId);
     const pointIdInput = document.getElementById("analysisPointId" + graphId);
     const userId = userIdInput ? userIdInput.value.trim() : "";
@@ -4485,9 +4504,7 @@ function switchTab(tabName){
     const targetId = "tab-" + tabName;
     const previousPanel = document.querySelector(".tab-panel.active");
     if(previousPanel && previousPanel.id !== targetId){
-        if(previousPanel.id === "tab-monitor") clearSyncedTooltipGroup("main");
-        if(previousPanel.id === "tab-maintenance") clearSyncedTooltipGroup("maintenance");
-        if(previousPanel.id === "tab-review") clearSyncedTooltipGroup("review");
+        clearAllSyncedTooltips();
     }
 
     document.querySelectorAll(".tab-panel").forEach(panel=>{
@@ -4584,6 +4601,7 @@ const pointLabelPlugin = {
         if(!active.length) return;
 
         const ctx = chart.ctx;
+        const isLatestValue = syncedCrosshairLatest[getChartSyncGroup(chart)] === true;
         ctx.save();
 
         active.forEach(activePoint=>{
@@ -4593,7 +4611,7 @@ const pointLabelPlugin = {
             const meta = chart.getDatasetMeta(datasetIndex);
             const point = meta.data[index];
 
-            if(!dataset || !dataset.data[index]) return;
+            if(!dataset || !dataset.data[index] || isAuxiliaryChartDataset(dataset)) return;
 
             const rawData = dataset.data[index];
             const value = rawData.y !== null && rawData.y !== undefined
@@ -4626,8 +4644,22 @@ const height = 20;
 
 const xScale = chart.scales.x;
 const yScale = chart.scales[dataset.yAxisID || "y"];
-const pointX = xScale ? xScale.getPixelForValue(rawData.x) : point.x;
-const pointY = yScale ? yScale.getPixelForValue(value) : point.y;
+            const pointX = xScale ? xScale.getPixelForValue(rawData.x) : point.x;
+            const pointY = yScale ? yScale.getPixelForValue(value) : point.y;
+
+            if(isLatestValue && Number.isFinite(pointX) && Number.isFinite(pointY)){
+                ctx.beginPath();
+                ctx.arc(pointX, pointY, 4.5, 0, Math.PI * 2);
+                ctx.fillStyle = typeof dataset.pointBackgroundColor === "string"
+                    ? dataset.pointBackgroundColor
+                    : typeof dataset.borderColor === "string"
+                        ? dataset.borderColor
+                        : "#000";
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "rgba(255,255,255,0.9)";
+                ctx.stroke();
+            }
 
 let x = pointX + 8;
 let y = pointY - 8;
@@ -4738,28 +4770,51 @@ const syncedCrosshairPlugin = {
         if(!event || !xScale || !chartArea) return;
 
         if(event.type === "mouseout"){
-            syncedCrosshairValues[syncGroup] = null;
+            if(lastTouchChart === chart && Date.now() - lastTouchChartEventAt < 1500){
+                const heldXValue = syncedCrosshairValues[syncGroup];
+                if(heldXValue !== null) syncAllChartTooltips(heldXValue, chart);
+                args.changed = true;
+                return;
+            }
             clearSyncedTooltips(chart);
             return;
         }
 
-        if(event.type !== "mousemove") return;
+        const isTouchEvent = event.type === "touchstart" || event.type === "touchmove";
+        if(event.type !== "mousemove" && !isTouchEvent) return;
 
-        if(
-            event.x < chartArea.left ||
-            event.x > chartArea.right ||
-            event.y < chartArea.top ||
-            event.y > chartArea.bottom
-        ){
-            syncedCrosshairValues[syncGroup] = null;
+        if(isTouchEvent){
+            lastTouchChart = chart;
+            lastTouchChartEventAt = Date.now();
+        }
+
+        clearOtherSyncedTooltipGroups(syncGroup);
+
+        const inLatestZone =
+            event.x > chartArea.right &&
+            event.x <= chart.width &&
+            event.y >= 0 &&
+            event.y <= chart.height;
+        const inChartArea =
+            event.x >= chartArea.left &&
+            event.x <= chartArea.right &&
+            event.y >= chartArea.top &&
+            event.y <= chartArea.bottom;
+
+        if(!inChartArea && !inLatestZone){
             clearSyncedTooltips(chart);
             return;
         }
 
-        let xValue = getNearestChartXValue(chart, xScale.getValueForPixel(event.x));
-        if(xValue === null) return;
+        let xValue = inLatestZone
+            ? getLatestChartXValue(chart)
+            : getNearestChartXValue(chart, xScale.getValueForPixel(event.x));
+        if(xValue === null){
+            clearSyncedTooltips(chart);
+            return;
+        }
 
-        if(chart.canvas.id === "reviewTempChartP11"){
+        if(!inLatestZone && chart.canvas.id === "reviewTempChartP11"){
             const reviewP01Chart = reviewCharts.find(reviewChart=>
                 reviewChart && reviewChart.canvas.id === "reviewTempChartP01"
             );
@@ -4768,10 +4823,13 @@ const syncedCrosshairPlugin = {
         }
 
         syncedCrosshairValues[syncGroup] = xValue;
+        syncedCrosshairLatest[syncGroup] = inLatestZone;
         syncAllChartTooltips(xValue, chart);
+        args.changed = true;
     },
     afterDraw(chart){
-        const syncedCrosshairValue = syncedCrosshairValues[getChartSyncGroup(chart)];
+        const syncGroup = getChartSyncGroup(chart);
+        const syncedCrosshairValue = syncedCrosshairValues[syncGroup];
         if(syncedCrosshairValue === null || syncedCrosshairValue === undefined) return;
 
         const xScale = chart.scales.x;
@@ -4785,7 +4843,7 @@ const syncedCrosshairPlugin = {
 
         ctx.save();
         ctx.strokeStyle = "rgba(0,0,0,0.75)";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = syncedCrosshairLatest[syncGroup] ? 2 : 1;
         ctx.beginPath();
         ctx.moveTo(x, chartArea.top);
         ctx.lineTo(x, chartArea.bottom);
@@ -4797,7 +4855,14 @@ const syncedCrosshairPlugin = {
 function getChartSyncGroup(chart){
     if(chart && chart.canvas && chart.canvas.id.indexOf("review") === 0) return "review";
     if(chart && chart.canvas && maintenanceCanvasIdSet.has(chart.canvas.id)) return "maintenance";
+    if(chart && chart.canvas && chart.canvas.id.indexOf("analysis") === 0) return "analysis";
     return "main";
+}
+
+function getMainSyncedTooltipCharts(){
+    return allCharts.filter(chart=>
+        chart && chart.canvas && chart.canvas.id.indexOf("analysis") !== 0
+    );
 }
 
 function getSyncedTooltipCharts(sourceChart){
@@ -4810,24 +4875,55 @@ function getSyncedTooltipCharts(sourceChart){
         return maintenanceCharts;
     }
 
-    return allCharts;
+    if(syncGroup === "analysis") return getAnalysisCharts();
+    return getMainSyncedTooltipCharts();
 }
 
 function getSyncedTooltipChartsByGroup(syncGroup){
     if(syncGroup === "review") return reviewCharts;
     if(syncGroup === "maintenance") return maintenanceCharts;
-    return allCharts;
+    if(syncGroup === "analysis") return getAnalysisCharts();
+    return getMainSyncedTooltipCharts();
 }
 
 function getAllSyncedTooltipCharts(){
     const charts = [];
 
-    allCharts.concat(maintenanceCharts, reviewCharts).forEach(chart=>{
+    allCharts.concat(getAnalysisCharts(), maintenanceCharts, reviewCharts).forEach(chart=>{
         if(!chart || charts.includes(chart)) return;
         charts.push(chart);
     });
 
     return charts;
+}
+
+function isAuxiliaryChartDataset(dataset){
+    return !dataset || dataset.label === "ゼロライン" || dataset.excludeFromLatestValue === true;
+}
+
+function isValidChartPoint(point){
+    if(!point || point.x === null || point.x === undefined) return false;
+    if(point.y === null || point.y === undefined) return false;
+    return Number.isFinite(Number(point.x)) && Number.isFinite(Number(point.y));
+}
+
+function getLatestChartXValue(chart){
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return null;
+
+    let latestValue = null;
+
+    chart.data.datasets.forEach((dataset, datasetIndex)=>{
+        if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
+        if(isAuxiliaryChartDataset(dataset) || !Array.isArray(dataset.data)) return;
+
+        dataset.data.forEach(point=>{
+            if(!isValidChartPoint(point)) return;
+            const xValue = Number(point.x);
+            if(latestValue === null || xValue > latestValue) latestValue = xValue;
+        });
+    });
+
+    return latestValue;
 }
 
 function getNearestChartXValue(chart, xValue){
@@ -4838,15 +4934,15 @@ function getNearestChartXValue(chart, xValue){
 
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
-        if(!dataset || !Array.isArray(dataset.data)) return;
+        if(isAuxiliaryChartDataset(dataset) || !Array.isArray(dataset.data)) return;
 
         dataset.data.forEach(point=>{
-            if(!point || point.x === null || point.x === undefined) return;
+            if(!isValidChartPoint(point)) return;
 
-            const diff = Math.abs(point.x - xValue);
+            const diff = Math.abs(Number(point.x) - Number(xValue));
             if(diff < nearestDiff){
                 nearestDiff = diff;
-                nearestValue = point.x;
+                nearestValue = Number(point.x);
             }
         });
     });
@@ -4876,7 +4972,7 @@ function getNearestPointIndexAtXValue(data, xValue){
     let nearestDiff = Infinity;
 
     data.forEach((point, index)=>{
-        if(!point || point.x === null || point.x === undefined) return;
+        if(!isValidChartPoint(point)) return;
 
         const diff = Math.abs(Number(point.x) - Number(xValue));
         if(diff < nearestDiff){
@@ -4908,7 +5004,7 @@ function syncChartTooltip(chart, xValue){
 
     chart.data.datasets.forEach((dataset, datasetIndex)=>{
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
-        if(dataset.label === "ゼロライン") return;
+        if(isAuxiliaryChartDataset(dataset)) return;
 
         const index = getNearestPointIndexAtXValue(dataset.data, xValue);
         if(index < 0) return;
@@ -4943,6 +5039,7 @@ function clearSyncedTooltips(sourceChart){
 
 function clearSyncedTooltipGroup(syncGroup){
     syncedCrosshairValues[syncGroup] = null;
+    syncedCrosshairLatest[syncGroup] = false;
     getSyncedTooltipChartsByGroup(syncGroup).forEach(chart=>{
         if(chart){
             chart.setActiveElements([]);
@@ -4954,6 +5051,25 @@ function clearSyncedTooltipGroup(syncGroup){
             chart.update("none");
         }
     });
+}
+
+function clearOtherSyncedTooltipGroups(activeGroup){
+    Object.keys(syncedCrosshairValues).forEach(syncGroup=>{
+        if(syncGroup !== activeGroup && syncedCrosshairValues[syncGroup] !== null){
+            clearSyncedTooltipGroup(syncGroup);
+        }
+    });
+}
+
+function clearAllSyncedTooltips(){
+    Object.keys(syncedCrosshairValues).forEach(clearSyncedTooltipGroup);
+    lastTouchChart = null;
+    lastTouchChartEventAt = 0;
+}
+
+function handleOutsideChartTouch(event){
+    if(event.target && event.target.closest && event.target.closest("canvas")) return;
+    clearAllSyncedTooltips();
 }
 
 validateExternalLibraries();
@@ -5506,6 +5622,11 @@ pan:{
     callbacks:{
         title(items){
             if(!items.length) return "";
+            const chart = items[0].chart;
+            const syncGroup = getChartSyncGroup(chart);
+            if(syncedCrosshairLatest[syncGroup] && syncedCrosshairValues[syncGroup] !== null){
+                return "最新　" + formatTime(syncedCrosshairValues[syncGroup]);
+            }
             return formatTime(items[0].parsed.x);
         },
         label(){
@@ -7021,6 +7142,7 @@ function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime)
 }
 
 async function loadMaintenanceData(rangeOverride){
+    clearSyncedTooltipGroup("maintenance");
     const userId = getMainUserIdInputValue();
     const message = document.getElementById("maintenanceMessage");
     if(!userId){
@@ -7491,7 +7613,10 @@ function destroyExistingChart(canvasId){
     if(!canvas) return;
 
     const chart = Chart.getChart(canvasId);
-    if(chart) chart.destroy();
+    if(chart){
+        clearSyncedTooltipGroup(getChartSyncGroup(chart));
+        chart.destroy();
+    }
 }
 
 function getChartCanvas(canvasId){
@@ -8642,7 +8767,7 @@ function syncMaintenanceZoom(sourceChart){
 }
 
 function destroyMaintenanceCharts(){
-    syncedCrosshairValues.maintenance = null;
+    clearSyncedTooltipGroup("maintenance");
     maintenanceCharts.forEach(chart=>{
         if(chart) chart.destroy();
     });
@@ -8669,6 +8794,7 @@ function destroyMaintenanceCharts(){
 
 function resetMaintenanceZoom(){
     if(syncingMaintenanceZoom) return;
+    clearSyncedTooltipGroup("maintenance");
     syncingMaintenanceZoom = true;
     try{
         maintenanceCharts.forEach(chart=>{
@@ -8686,7 +8812,7 @@ function resetMaintenanceZoom(){
 }
 
 function destroyReviewCharts(){
-    syncedCrosshairValues.review = null;
+    clearSyncedTooltipGroup("review");
     reviewCharts.forEach(chart=>{
         if(chart) chart.destroy();
     });
@@ -8709,6 +8835,7 @@ function destroyReviewCharts(){
 }
 
 function resetReviewZoom(){
+    clearSyncedTooltipGroup("review");
     syncingReviewZoom = true;
     resetReviewAxisInputs();
 
@@ -9220,6 +9347,7 @@ async function loadReviewDifPeriodData(userId, endDateValue){
 }
 
 async function loadReviewData(){
+    clearSyncedTooltipGroup("review");
     const userId = document.getElementById("userId").value.trim();
     const reviewDate = document.getElementById("reviewDate");
     const msg = document.getElementById("reviewMessage");
@@ -9337,6 +9465,7 @@ async function loadReviewData(){
 }
 
 async function loadData(){
+    clearAllSyncedTooltips();
 
     const userId = getMainUserIdInputValue();
     const msg = document.getElementById("message");
@@ -9540,7 +9669,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
 }
 
 function destroyCharts(){
-    syncedCrosshairValues.main = null;
+    clearSyncedTooltipGroup("main");
     allCharts.forEach(c=>{
         if(c) c.destroy();
     });
@@ -9573,6 +9702,7 @@ function destroyCharts(){
 }
 
 function resetZoom(){
+    clearAllSyncedTooltips();
     syncingZoom = true;
 
     allCharts.forEach(c=>{
