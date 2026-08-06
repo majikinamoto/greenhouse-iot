@@ -8007,12 +8007,8 @@ function createRainfallChart(response){
     };
     options.plugins.tooltip.callbacks = {
         ...options.plugins.tooltip.callbacks,
-        label(context){
-            const value = context.parsed && context.parsed.y !== null && context.parsed.y !== undefined
-                ? Number(context.parsed.y)
-                : NaN;
-            if(!Number.isFinite(value)) return null;
-            return context.dataset.label + " " + value.toFixed(2) + " mm";
+        label(){
+            return null;
         }
     };
     options.plugins.rainfallTooltipPlugin = false;
