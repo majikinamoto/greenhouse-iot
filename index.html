@@ -5019,7 +5019,10 @@ const pointLabelPlugin = {
             const labelName = labelMatch ? labelMatch[1] : dataset.label;
             const axis = chart.scales[dataset.yAxisID || "y"];
             const axisUnit = axis && axis.options && axis.options.title ? axis.options.title.text : "";
-            const unit = labelMatch ? labelMatch[2] : axisUnit;
+            const axisUnitMatch = chart.canvas && chart.canvas.id === "rainChart" && typeof axisUnit === "string"
+                ? axisUnit.match(/(\s*\(.+\))$/)
+                : null;
+            const unit = labelMatch ? labelMatch[2] : axisUnitMatch ? axisUnitMatch[1] : axisUnit;
             const isIntegerValue = unit === "ppm";
             const displayValue = isIntegerValue
                 ? Number(value).toFixed(0)
