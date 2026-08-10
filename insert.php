@@ -46,6 +46,7 @@ $co2         = isset($data["co2"]) ? floatval($data["co2"]) : null;
 $solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : null;
 $voltage     = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
 $has_rainfall = array_key_exists("rainfall_cumulative", $data);
+$has_rainfall_tip_count = array_key_exists("rainfall_tip_count", $data);
 
 if (!$user_id) {
     die("user_idが必要です");
@@ -98,6 +99,27 @@ if (!is_finite($rainfall_cumulative)) {
     http_response_code(400);
     $conn->close();
     die("rainfall_cumulativeは有限の数値で指定してください");
+}
+
+$rainfall_tip_count = null;
+
+if ($has_rainfall_tip_count) {
+    $validated_tip_count = filter_var(
+        $data["rainfall_tip_count"],
+        FILTER_VALIDATE_INT,
+        ["options" => ["min_range" => 0, "max_range" => 4294967295]]
+    );
+
+    if (
+        $validated_tip_count === false ||
+        (!is_int($data["rainfall_tip_count"]) && !is_string($data["rainfall_tip_count"]))
+    ) {
+        http_response_code(400);
+        $conn->close();
+        die("rainfall_tip_countは0以上4294967295以下の整数で指定してください");
+    }
+
+    $rainfall_tip_count = $validated_tip_count;
 }
 
 $recorded_at = null;
@@ -203,6 +225,7 @@ try {
     $newer_stmt->close();
 
     $rainfall_interval = null;
+    $rainfall_tip_interval = null;
 
     if (!$has_newer_measurement) {
         $previous_stmt = $conn->prepare(
@@ -239,13 +262,51 @@ try {
         }
 
         $previous_stmt->close();
+
+        if ($has_rainfall_tip_count) {
+            $previous_tip_stmt = $conn->prepare(
+                "SELECT rainfall_tip_count
+                 FROM measurements
+                 WHERE user_id = ?
+                   AND point_id = ?
+                   AND rainfall_tip_count IS NOT NULL
+                   AND recorded_at < ?
+                 ORDER BY recorded_at DESC
+                 LIMIT 1
+                 FOR UPDATE"
+            );
+
+            if (!$previous_tip_stmt) {
+                throw new RuntimeException("前回転倒ますカウント取得SQLエラー: " . $conn->error);
+            }
+
+            $previous_tip_stmt->bind_param("sss", $user_id, $point_id, $recorded_at);
+
+            if (!$previous_tip_stmt->execute()) {
+                throw new RuntimeException(
+                    "前回転倒ますカウント取得エラー: " . $previous_tip_stmt->error
+                );
+            }
+
+            $previous_tip_stmt->bind_result($previous_rainfall_tip_count);
+
+            if ($previous_tip_stmt->fetch()) {
+                $previous_rainfall_tip_count = (int)$previous_rainfall_tip_count;
+                $rainfall_tip_interval = $rainfall_tip_count >= $previous_rainfall_tip_count
+                    ? $rainfall_tip_count - $previous_rainfall_tip_count
+                    : 0;
+            }
+
+            $previous_tip_stmt->close();
+        }
     }
 
     $insert_stmt = $conn->prepare(
         "INSERT INTO measurements
          (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage,
-          rainfall_cumulative, rainfall_interval, recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          rainfall_cumulative, rainfall_interval, rainfall_tip_count, rainfall_tip_interval,
+          recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$insert_stmt) {
@@ -253,7 +314,7 @@ try {
     }
 
     $insert_stmt->bind_param(
-        "ssddddddds",
+        "ssdddddddiis",
         $user_id,
         $point_id,
         $temperature,
@@ -263,6 +324,8 @@ try {
         $voltage,
         $rainfall_cumulative,
         $rainfall_interval,
+        $rainfall_tip_count,
+        $rainfall_tip_interval,
         $recorded_at
     );
 
