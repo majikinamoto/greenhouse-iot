@@ -2518,7 +2518,8 @@ body.data-export-active .control-panel {
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
-            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.4721" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm</label>
+            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.4721" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm(例0.4721)
+            </label>
         </div>
         <div class="rainfall-daily-summary" aria-label="日別雨量">
             <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
