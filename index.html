@@ -2516,10 +2516,9 @@ body.data-export-active .control-panel {
     <div>
         <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
-            <span>雨量算出方法：</span>
-            <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量を使用</label>
+            <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
-            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.20" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm</label>
+            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.4721" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm</label>
         </div>
         <div class="rainfall-daily-summary" aria-label="日別雨量">
             <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
@@ -3737,7 +3736,7 @@ const UTECH_AREAS = {
 const UTECH_AREA_STORAGE_KEY = "utechSelectedArea";
 const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
 const RAINFALL_COEFFICIENT_STORAGE_KEY = "utechRainfallTipCoefficient";
-const DEFAULT_RAINFALL_COEFFICIENT = 0.20;
+const DEFAULT_RAINFALL_COEFFICIENT = 0.4721;
 let selectedUtechAreaKey = "naha";
 
 window.addEventListener("DOMContentLoaded", ()=>{
@@ -7836,7 +7835,7 @@ function restoreRainfallCalculationSetting(){
     const savedCoefficient = Number(savedCoefficientText);
     const coefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0
         ? savedCoefficientText
-        : DEFAULT_RAINFALL_COEFFICIENT.toFixed(2);
+        : String(DEFAULT_RAINFALL_COEFFICIENT);
     const input = document.getElementById("rainfallTipCoefficient");
     if(input) input.value = coefficient;
     updateRainfallCoefficientInputState();
