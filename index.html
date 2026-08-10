@@ -506,6 +506,30 @@ button { margin:5px; }
     box-sizing:border-box;
 }
 
+.rainfall-calculation-setting {
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:5px 10px;
+    margin:0 0 6px;
+    padding:5px 7px;
+    border:1px solid #c9d5df;
+    border-radius:5px;
+    background:#fff;
+    font-size:12px;
+    box-sizing:border-box;
+}
+
+.rainfall-calculation-setting > span,
+.rainfall-calculation-setting label {
+    white-space:nowrap;
+}
+
+.rainfall-coefficient-input {
+    width:60px;
+    box-sizing:border-box;
+}
+
 .rainfall-tooltip {
     position:absolute;
     z-index:5;
@@ -2491,6 +2515,12 @@ body.data-export-active .control-panel {
 
     <div>
         <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
+        <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
+            <span>雨量算出方法：</span>
+            <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量を使用</label>
+            <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
+            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.20" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm</label>
+        </div>
         <div class="rainfall-daily-summary" aria-label="日別雨量">
             <span class="rainfall-day-before-yesterday">前々日 <span id="rainDayBeforeYesterday">-</span></span>
             <span class="rainfall-separator-before-yesterday" aria-hidden="true">｜</span>
@@ -3705,6 +3735,9 @@ const UTECH_AREAS = {
     }
 };
 const UTECH_AREA_STORAGE_KEY = "utechSelectedArea";
+const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
+const RAINFALL_COEFFICIENT_STORAGE_KEY = "utechRainfallTipCoefficient";
+const DEFAULT_RAINFALL_COEFFICIENT = 0.20;
 let selectedUtechAreaKey = "naha";
 
 window.addEventListener("DOMContentLoaded", ()=>{
@@ -3723,6 +3756,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     restoreAnalysisCompareSettings();
     restoreEnvironmentScoreRanges();
     restoreUtechAreaSelection();
+    restoreRainfallCalculationSetting();
     handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
@@ -7774,6 +7808,94 @@ function resetRainfallDailyTotals(){
     });
 }
 
+function getRainfallCalculationMode(){
+    const selected = document.querySelector('input[name="rainfallCalculationMode"]:checked');
+    return selected && selected.value === "tip" ? "tip" : "rainfall";
+}
+
+function getRainfallTipCoefficient(){
+    const input = document.getElementById("rainfallTipCoefficient");
+    const coefficient = input ? Number(input.value) : NaN;
+    return Number.isFinite(coefficient) && coefficient > 0 ? coefficient : null;
+}
+
+function updateRainfallCoefficientInputState(){
+    const input = document.getElementById("rainfallTipCoefficient");
+    if(input) input.disabled = getRainfallCalculationMode() !== "tip";
+}
+
+function restoreRainfallCalculationSetting(){
+    const savedMode = localStorage.getItem(RAINFALL_MODE_STORAGE_KEY);
+    const mode = savedMode === "tip" ? "tip" : "rainfall";
+    const selected = document.querySelector(
+        'input[name="rainfallCalculationMode"][value="' + mode + '"]'
+    );
+    if(selected) selected.checked = true;
+
+    const savedCoefficientText = localStorage.getItem(RAINFALL_COEFFICIENT_STORAGE_KEY);
+    const savedCoefficient = Number(savedCoefficientText);
+    const coefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0
+        ? savedCoefficientText
+        : DEFAULT_RAINFALL_COEFFICIENT.toFixed(2);
+    const input = document.getElementById("rainfallTipCoefficient");
+    if(input) input.value = coefficient;
+    updateRainfallCoefficientInputState();
+}
+
+function saveRainfallCalculationSetting(){
+    const coefficient = getRainfallTipCoefficient();
+    localStorage.setItem(RAINFALL_MODE_STORAGE_KEY, getRainfallCalculationMode());
+    if(coefficient !== null){
+        localStorage.setItem(RAINFALL_COEFFICIENT_STORAGE_KEY, String(coefficient));
+    }
+}
+
+function reloadRainfallData(){
+    const requestId = ++rainfallRequestSequence;
+    destroyRainChart();
+    resetRainfallDailyTotals();
+
+    const userId = getMainUserIdInputValue();
+    if(!userId) return;
+
+    void loadRainfallData(userId, isMobileView() ? 48 : 72, requestId);
+}
+
+function handleRainfallCalculationModeChange(){
+    updateRainfallCoefficientInputState();
+
+    const input = document.getElementById("rainfallTipCoefficient");
+    const coefficient = getRainfallTipCoefficient();
+    if(getRainfallCalculationMode() === "tip" && coefficient === null){
+        if(input){
+            input.setCustomValidity("1転倒あたりの係数は0より大きい数値を入力してください。");
+            input.reportValidity();
+        }
+        return;
+    }
+
+    if(input) input.setCustomValidity("");
+    saveRainfallCalculationSetting();
+    reloadRainfallData();
+}
+
+function handleRainfallCoefficientChange(){
+    const input = document.getElementById("rainfallTipCoefficient");
+    const coefficient = getRainfallTipCoefficient();
+
+    if(coefficient === null){
+        if(input){
+            input.setCustomValidity("1転倒あたりの係数は0より大きい数値を入力してください。");
+            input.reportValidity();
+        }
+        return;
+    }
+
+    if(input) input.setCustomValidity("");
+    saveRainfallCalculationSetting();
+    if(getRainfallCalculationMode() === "tip") reloadRainfallData();
+}
+
 function formatRainfallValue(value){
     if(value === null || value === undefined || value === "") return "-";
     const number = Number(value);
@@ -8091,9 +8213,15 @@ async function loadRainfallData(userId, displayHours, requestId){
     const timeoutId = setTimeout(()=>controller.abort(), 10000);
 
     try{
+        const mode = getRainfallCalculationMode();
+        const coefficient = getRainfallTipCoefficient();
         const url =
             "get_rainfall_data.php?user_id=" + encodeURIComponent(userId) +
-            "&point_id=P41&display_hours=" + encodeURIComponent(displayHours);
+            "&point_id=P41&display_hours=" + encodeURIComponent(displayHours) +
+            "&mode=" + encodeURIComponent(mode) +
+            (mode === "tip" && coefficient !== null
+                ? "&coefficient=" + encodeURIComponent(coefficient)
+                : "");
         const response = await fetch(url, {
             signal:controller.signal,
             cache:"no-store"

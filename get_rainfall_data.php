@@ -42,7 +42,9 @@ function buildRainfallAggregation(
     DateTimeImmutable $queryStart,
     DateTimeImmutable $displayStart,
     DateTimeImmutable $end,
-    DateTimeZone $timezone
+    DateTimeZone $timezone,
+    string $mode = 'rainfall',
+    float $coefficient = 0.20
 ): array {
     $currentHour = $end->setTime(
         (int)$end->format('H'),
@@ -87,7 +89,15 @@ function buildRainfallAggregation(
         $recordCount++;
         $buckets[$bucketKey]['sample_count']++;
 
-        $rainfallHundredths = rainfallValueToHundredths($row['rainfall_interval'] ?? null);
+        $rainfallValue = $mode === 'tip'
+            ? $row['rainfall_tip_interval'] ?? null
+            : $row['rainfall_interval'] ?? null;
+
+        if ($mode === 'tip' && $rainfallValue !== null && is_numeric($rainfallValue)) {
+            $rainfallValue = ((float)$rainfallValue) * $coefficient;
+        }
+
+        $rainfallHundredths = rainfallValueToHundredths($rainfallValue);
 
         if ($rainfallHundredths === null) {
             continue;
@@ -195,6 +205,9 @@ function runRainfallApi(): void
     $userId = is_string($userIdInput) ? trim($userIdInput) : '';
     $pointId = is_string($pointIdInput) ? trim($pointIdInput) : '';
     $displayHoursInput = $_GET['display_hours'] ?? '72';
+    $modeInput = $_GET['mode'] ?? 'rainfall';
+    $mode = is_string($modeInput) ? trim($modeInput) : '';
+    $coefficientInput = $_GET['coefficient'] ?? '0.20';
 
     if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/D', $userId)) {
         sendRainfallJson([
@@ -223,6 +236,27 @@ function runRainfallApi(): void
         ], 400);
     }
 
+    if (!in_array($mode, ['rainfall', 'tip'], true)) {
+        sendRainfallJson([
+            'success' => false,
+            'error' => 'modeはrainfallまたはtipで指定してください',
+        ], 400);
+    }
+
+    $coefficient = filter_var($coefficientInput, FILTER_VALIDATE_FLOAT);
+
+    if (
+        $mode === 'tip' &&
+        ($coefficient === false || !is_finite((float)$coefficient) || (float)$coefficient <= 0)
+    ) {
+        sendRainfallJson([
+            'success' => false,
+            'error' => 'coefficientは0より大きい数値で指定してください',
+        ], 400);
+    }
+
+    $coefficient = $coefficient === false ? 0.20 : (float)$coefficient;
+
     $timezone = new DateTimeZone(RAINFALL_TIMEZONE);
     $end = new DateTimeImmutable('now', $timezone);
     $displayStart = $end->modify('-' . $displayHours . ' hours');
@@ -239,7 +273,8 @@ function runRainfallApi(): void
 
         $sql = "SELECT
                     DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at,
-                    rainfall_interval
+                    rainfall_interval,
+                    rainfall_tip_interval
                 FROM measurements
                 WHERE user_id = ?
                   AND point_id = ?
@@ -263,7 +298,9 @@ function runRainfallApi(): void
             $queryStart,
             $displayStart,
             $end,
-            $timezone
+            $timezone,
+            $mode,
+            $coefficient
         );
 
         $stmt->close();
@@ -275,6 +312,8 @@ function runRainfallApi(): void
             'user_id' => $userId,
             'point_id' => $pointId,
             'display_hours' => $displayHours,
+            'mode' => $mode,
+            'coefficient' => $coefficient,
             'display_start' => rainfallEpochMilliseconds($displayStart),
             'query_start' => rainfallEpochMilliseconds($queryStart),
             'end' => rainfallEpochMilliseconds($end),
