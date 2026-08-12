@@ -79,6 +79,11 @@ function appendPointHeader(array &$header, string $pointId): void {
         $header[] = $pointId . '_CO2';
     } elseif (isSolarPoint($pointId)) {
         $header[] = $pointId . '_日射';
+    } elseif ($pointId === 'P41') {
+        $header[] = 'P41_累積転倒ますカウント';
+        $header[] = 'P41_10分転倒ますカウント';
+        $header[] = 'P41_累積雨量';
+        $header[] = 'P41_10分雨量';
     } elseif ($pointId === 'P91') {
         $header[] = 'P91_電圧';
     }
@@ -101,6 +106,11 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
         $line[] = $item['CO2'] ?? '';
     } elseif (isSolarPoint($pointId)) {
         $line[] = $item['日射'] ?? '';
+    } elseif ($pointId === 'P41') {
+        $line[] = $item['累積転倒ますカウント'] ?? '';
+        $line[] = $item['10分転倒ますカウント'] ?? '';
+        $line[] = $item['累積雨量'] ?? '';
+        $line[] = $item['10分雨量'] ?? '';
     } elseif ($pointId === 'P91') {
         $line[] = $item['電圧'] ?? '';
     }
@@ -108,7 +118,7 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
 
 $allowedPointIds = array_merge(
     array_map(static fn(int $number): string => sprintf('P%02d', $number), range(1, 40)),
-    ['P91']
+    ['P41', 'P91']
 );
 
 $userId = trim((string)($_GET['user_id'] ?? ''));
@@ -172,6 +182,10 @@ $sql = "SELECT
             humidity,
             CO2,
             solar_radiation,
+            rainfall_tip_count,
+            rainfall_tip_interval,
+            rainfall_cumulative,
+            rainfall_interval,
             voltage
         FROM measurements
         WHERE user_id = ?
@@ -218,6 +232,10 @@ while ($row = $result->fetch_assoc()) {
         '飽差' => '',
         'CO2' => '',
         '日射' => '',
+        '累積転倒ますカウント' => '',
+        '10分転倒ますカウント' => '',
+        '累積雨量' => '',
+        '10分雨量' => '',
         '電圧' => ''
     ];
 
@@ -239,6 +257,11 @@ while ($row = $result->fetch_assoc()) {
         $item['CO2'] = $row['CO2'];
     } elseif (isSolarPoint($pointId)) {
         $item['日射'] = $row['solar_radiation'];
+    } elseif ($pointId === 'P41') {
+        $item['累積転倒ますカウント'] = $row['rainfall_tip_count'];
+        $item['10分転倒ますカウント'] = $row['rainfall_tip_interval'];
+        $item['累積雨量'] = $row['rainfall_cumulative'];
+        $item['10分雨量'] = $row['rainfall_interval'];
     } elseif ($pointId === 'P91') {
         $item['電圧'] = $row['voltage'];
     }
