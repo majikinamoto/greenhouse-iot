@@ -11136,6 +11136,11 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     background:#ffffff;
     color:#333943;
 }
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[id$="Rain"] {
+    border-color:#369bd8;
+    background:linear-gradient(180deg, #f2f9fe, #dff0fb);
+    color:#1b5f86;
+}
 @media (max-width:600px) {
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
         grid-template-columns:36px repeat(7, 58px);
@@ -11237,12 +11242,14 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         const grid = document.querySelector(`#${prefix}TempSummaryGrid`);
         if(!grid) return;
         grid.classList.add("yui-seven-day-temp-grid");
-        if(document.getElementById(`${prefix}Day0Label`)) return;
+        if(document.getElementById(`${prefix}Day0Label`) && (prefix !== "outside" || document.getElementById(`${prefix}Day0Rain`))) return;
         let html = '<div></div>';
         for(let i = 0; i < 7; i++){
             html += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
         }
-        [["Max", "最高"], ["Min", "最低"], ["Avg", "平均"]].forEach(([key, label])=>{
+        const rows = [["Max", "最高"], ["Min", "最低"], ["Avg", "平均"]];
+        if(prefix === "outside") rows.push(["Rain", "一日降水量"]);
+        rows.forEach(([key, label])=>{
             html += `<div class="status-temp-label">${label}</div>`;
             for(let i = 0; i < 7; i++){
                 html += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
@@ -11261,7 +11268,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             for(let i = 0; i < 7; i++){
                 const label = document.getElementById(`${prefix}Day${i}Label`);
                 if(label) label.textContent = "-";
-                ["Max", "Min", "Avg"].forEach(key=>{
+                ["Max", "Min", "Avg", "Rain"].forEach(key=>{
                     const value = document.getElementById(`${prefix}Day${i}${key}`);
                     if(value) value.textContent = "-";
                 });
@@ -11269,30 +11276,46 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         });
     }
 
-    function formatYuiSevenDayLabel(dateText, index){
+    function getYuiJstDateKey(offsetDays){
+        const now = new Date();
+        const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+        const base = new Date(jstNow);
+        base.setUTCDate(jstNow.getUTCDate() - offsetDays);
+        const yyyy = base.getUTCFullYear();
+        const mm = String(base.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(base.getUTCDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getYuiJstNowSqlDateTime(){
+        const now = new Date();
+        const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+        const yyyy = jstNow.getUTCFullYear();
+        const mm = String(jstNow.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(jstNow.getUTCDate()).padStart(2, "0");
+        const hh = String(jstNow.getUTCHours()).padStart(2, "0");
+        const min = String(jstNow.getUTCMinutes()).padStart(2, "0");
+        const sec = String(jstNow.getUTCSeconds()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+    }
+
+    function formatYuiSevenDayLabel(dateText){
         const parts = String(dateText || "").split("-").map(Number);
-        if(parts.length < 3 || parts.some(part => !Number.isFinite(part))) return index === 0 ? "本日" : index === 1 ? "前日" : "-";
+        if(parts.length < 3 || parts.some(part => !Number.isFinite(part))) return "-";
         const md = `${parts[1]}/${parts[2]}`;
-        if(index === 0) return `本日(${md})`;
-        if(index === 1) return `前日(${md})`;
+        if(dateText === getYuiJstDateKey(0)) return `本日(${md})`;
+        if(dateText === getYuiJstDateKey(1)) return `前日(${md})`;
         return md;
     }
 
     function renderYuiSevenDaySummary(prefix, days){
         ensureYuiSevenDaySummaryCards();
         const dayMap = new Map((days || []).map(day => [day.date, day]));
-        const now = new Date();
-        const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
         for(let i = 0; i < 7; i++){
-            const base = new Date(jstNow);
-            base.setUTCDate(jstNow.getUTCDate() - i);
-            const yyyy = base.getUTCFullYear();
-            const mm = String(base.getUTCMonth() + 1).padStart(2, "0");
-            const dd = String(base.getUTCDate()).padStart(2, "0");
-            const dateKey = `${yyyy}-${mm}-${dd}`;
+            const dateKey = getYuiJstDateKey(6 - i);
             const day = dayMap.get(dateKey);
             const label = document.getElementById(`${prefix}Day${i}Label`);
-            if(label) label.textContent = formatYuiSevenDayLabel(dateKey, i);
+            if(label) label.textContent = formatYuiSevenDayLabel(dateKey);
             const hasData = day && Number(day.count) > 0;
             const values = {
                 Max: hasData ? formatYuiNumber(day.max) : "-",
@@ -11315,6 +11338,43 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         return Array.isArray(result.days) ? result.days : [];
     }
 
+    function formatYuiRainfallDailyValue(value){
+        return typeof formatRainfallValue === "function" ? formatRainfallValue(value) : (Number.isFinite(Number(value)) ? Number(value).toFixed(2) + "mm" : "-");
+    }
+
+    async function fetchYuiRainfallDailyStats(userId){
+        const start = getYuiJstDateKey(6) + " 00:00:00";
+        const end = getYuiJstNowSqlDateTime();
+        const url = "get_data.php?user_id=" + encodeURIComponent(userId) + "&point_id=P41&start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
+        const response = await fetch(url, { cache:"no-store" });
+        const bodyText = await response.text();
+        if(!bodyText.trim()) return new Map();
+        const rows = JSON.parse(bodyText);
+        if(!response.ok || !Array.isArray(rows)) throw new Error("日別雨量集計の取得に失敗しました");
+        const rainMap = new Map();
+        rows.forEach(row=>{
+            const dateKey = String(row.recorded_at || "").slice(0, 10);
+            if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+            const rainfall = Number(row.rainfall_interval);
+            if(!Number.isFinite(rainfall)) return;
+            const current = rainMap.get(dateKey) || { total:0, count:0 };
+            current.total += rainfall;
+            current.count += 1;
+            rainMap.set(dateKey, current);
+        });
+        return rainMap;
+    }
+
+    function renderYuiRainfallSevenDaySummary(rainMap){
+        ensureYuiSevenDaySummaryCards();
+        for(let i = 0; i < 7; i++){
+            const dateKey = getYuiJstDateKey(6 - i);
+            const day = rainMap instanceof Map ? rainMap.get(dateKey) : null;
+            const cell = document.getElementById(`outsideDay${i}Rain`);
+            if(cell) cell.textContent = day && day.count > 0 ? formatYuiRainfallDailyValue(day.total) : "-";
+        }
+    }
+
     async function loadYuiDailyStats(userId){
         ensureYuiSevenDaySummaryCards();
         resetYuiSevenDaySummary();
@@ -11326,6 +11386,12 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             ]);
             renderYuiSevenDaySummary("house", inside);
             renderYuiSevenDaySummary("outside", outside);
+        }catch(error){
+            console.error(error);
+        }
+        try{
+            const rainfall = await fetchYuiRainfallDailyStats(userId);
+            renderYuiRainfallSevenDaySummary(rainfall);
         }catch(error){
             console.error(error);
         }
