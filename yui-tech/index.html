@@ -11185,6 +11185,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-date {
         const grid = document.querySelector(`#${prefix}TempSummaryGrid`);
         if(!grid) return;
         grid.classList.add("yui-seven-day-temp-grid");
+        if(document.getElementById(`${prefix}Day0Label`)) return;
         let html = '<div></div>';
         for(let i = 0; i < 7; i++){
             html += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
