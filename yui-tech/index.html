@@ -11467,8 +11467,9 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         if(!userId || !dateValue) return;
         const selectedDate = new Date(dateValue + "T00:00:00");
         const minTime = new Date(selectedDate);
-        minTime.setHours(0,0,0,0);
+        minTime.setDate(minTime.getDate() - 1);
         const maxTime = new Date(selectedDate);
+        maxTime.setDate(maxTime.getDate() + 1);
         maxTime.setHours(23,59,59,999);
         const range = { start:formatSqlDateTime(minTime), end:formatSqlDateTime(maxTime) };
         const results = await Promise.all([
@@ -11513,8 +11514,14 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         destroyYuiReviewRainChart();
         const canvas = document.getElementById("yuiReviewRainChart");
         if(!canvas || !userId || !dateValue || typeof Chart === "undefined") return;
-        const start = dateValue + " 00:00:00";
-        const end = dateValue + " 23:59:59";
+        const selected = new Date(dateValue + "T00:00:00");
+        const minTime = new Date(selected);
+        minTime.setDate(minTime.getDate() - 1);
+        const maxTime = new Date(selected);
+        maxTime.setDate(maxTime.getDate() + 1);
+        maxTime.setHours(23,59,59,999);
+        const start = formatSqlDateTime(minTime);
+        const end = formatSqlDateTime(maxTime);
         const response = await fetch("get_data.php?user_id=" + encodeURIComponent(userId) + "&point_id=P41&start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end), { cache:"no-store" });
         const text = await response.text();
         if(!text.trim()) return;
@@ -11530,9 +11537,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             if(Number.isFinite(x) && Number.isFinite(cumulative)) cumulativeData.push({ x:x, y:cumulative });
         });
         if(!intervalData.length && !cumulativeData.length) return;
-        const selected = new Date(dateValue + "T00:00:00");
-        const max = new Date(selected); max.setHours(23, 59, 59, 999);
-        const options = baseOptions(selected, max);
+        const options = baseOptions(minTime, maxTime);
         options.scales.y = { beginAtZero:true, title:{ display:true, text:"雨量 (mm)" } };
         yuiReviewRainChart = new Chart(canvas, {
             type:"bar",
@@ -11724,8 +11729,9 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 
         const selectedDate = new Date(dateValue + "T00:00:00");
         const minTime = new Date(selectedDate);
-        minTime.setHours(0,0,0,0);
+        minTime.setDate(minTime.getDate() - 1);
         const maxTime = new Date(selectedDate);
+        maxTime.setDate(maxTime.getDate() + 1);
         maxTime.setHours(23,59,59,999);
         const range = { start:formatSqlDateTime(minTime), end:formatSqlDateTime(maxTime) };
 
