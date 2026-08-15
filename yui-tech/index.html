@@ -11072,26 +11072,69 @@ body.yui-tech-app .yui-yatsushiro-forecast-note {
 body.yui-tech-app .status-group-temp-summary {
     max-width:100%;
     overflow-x:auto;
+    border-color:#7f8fa3;
+    background:#f7f9fc;
+    border-radius:6px;
+    padding:7px 8px 8px;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-    grid-template-columns:34px repeat(7, 58px);
+    grid-template-columns:36px repeat(7, 60px);
+    gap:4px;
     width:max-content;
     min-width:100%;
+    align-items:center;
+    margin-top:7px;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
-    width:58px;
+    box-sizing:border-box;
+    width:60px;
+    min-width:0;
+    padding:4px 5px;
+    border:1px solid #c3cbd5;
+    border-radius:5px;
+    background:#ffffff;
+    text-align:center;
     white-space:nowrap;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.1;
 }
-body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-date {
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-date,
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-label {
     white-space:nowrap;
+    text-align:center;
     font-size:10px;
+    font-weight:800;
+    line-height:1.15;
+    color:#000;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-label {
+    text-align:left;
+    font-size:12px;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[id$="Max"] {
+    border-color:#c77a3a;
+    background:linear-gradient(180deg, #fff8f1, #f7e2cf);
+    color:#6b2f0f;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[id$="Min"] {
+    border-color:#4d79b8;
+    background:linear-gradient(180deg, #f3f7fc, #dfe9f7);
+    color:#1e3a8a;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[id$="Avg"] {
+    border-color:#c3cbd5;
+    background:#ffffff;
+    color:#333943;
 }
 @media (max-width:600px) {
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-        grid-template-columns:34px repeat(7, 56px);
+        grid-template-columns:36px repeat(7, 58px);
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
-        width:56px;
+        width:58px;
+        padding:4px 4px;
+        font-size:12px;
     }
 }
 @media (max-width: 600px) {
