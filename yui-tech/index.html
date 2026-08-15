@@ -3774,7 +3774,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     if(qrImage){
         qrImage.src =
             "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=" +
-            encodeURIComponent(window.location.href);
+            encodeURIComponent("http://163.43.29.108/yui-tech/");
     }
 
     const userIdInput = document.getElementById("userId");
@@ -11042,10 +11042,19 @@ body.yui-tech-app #tab-guide,
 body.yui-tech-app #tab-system,
 body.yui-tech-app .outside-source-setting,
 body.yui-tech-app .status-group-vpd-eval,
-body.yui-tech-app .status-group-mobile-qr,
 body.yui-tech-app #solarNow,
 body.yui-tech-app #co2Now { display:none !important; }
 body.yui-tech-app .yui-hidden-card { display:none !important; }
+body.yui-tech-app .status-group-mobile-qr {
+    display:flex !important;
+}
+@media (max-width:600px) {
+    body.yui-tech-app .status-group-mobile-qr {
+        display:flex !important;
+        width:150px;
+        max-width:calc(100vw - 24px);
+    }
+}
 body.yui-tech-app .yui-daily-panel {
     border:3px solid #6f7f8f;
     background:#f8f9fb;
