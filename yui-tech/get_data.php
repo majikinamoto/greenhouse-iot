@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 $yuiDbConfig = __DIR__ . '/db_config.php';
 $parentDbConfig = dirname(__DIR__) . '/db_config.php';

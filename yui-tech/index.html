@@ -1,4 +1,4 @@
-﻿<!-- U-Tech Monitor http://163.43.29.108/ -->
+<!-- U-Tech Monitor http://163.43.29.108/ -->
 
 <!DOCTYPE html>
 <html>
@@ -11242,9 +11242,9 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-date {
             if(label) label.textContent = formatYuiSevenDayLabel(dateKey, i);
             const hasData = day && Number(day.count) > 0;
             const values = {
-                Max: hasData ? formatYuiNumber(day.max_temp) : "-",
-                Min: hasData ? formatYuiNumber(day.min_temp) : "-",
-                Avg: hasData ? formatYuiNumber(day.avg_temp) : "-"
+                Max: hasData ? formatYuiNumber(day.max) : "-",
+                Min: hasData ? formatYuiNumber(day.min) : "-",
+                Avg: hasData ? formatYuiNumber(day.avg) : "-"
             };
             Object.entries(values).forEach(([key, valueText])=>{
                 const cell = document.getElementById(`${prefix}Day${i}${key}`);
