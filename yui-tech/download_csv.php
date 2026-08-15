@@ -1,6 +1,17 @@
 ﻿<?php
 
-require_once __DIR__ . '/db_config.php';
+$yuiDbConfig = __DIR__ . '/db_config.php';
+$parentDbConfig = dirname(__DIR__) . '/db_config.php';
+if (is_file($yuiDbConfig)) {
+    require_once $yuiDbConfig;
+} elseif (is_file($parentDbConfig)) {
+    require_once $parentDbConfig;
+} else {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo 'db_config.php が見つかりません';
+    exit;
+}
 
 function failCsvDownload(string $message, int $status = 400): void {
     http_response_code($status);
@@ -305,6 +316,7 @@ for ($index = 0; $index < $maxRows; $index++) {
 
 fclose($output);
 exit;
+
 
 
 

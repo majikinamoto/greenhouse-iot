@@ -11089,10 +11089,25 @@ body.yui-tech-app .yui-yatsushiro-forecast-note {
     function hideElement(element){ if(element) element.classList.add("yui-hidden-card"); }
     function hideCanvasCard(canvasId){ const canvas = document.getElementById(canvasId); if(canvas) hideElement(canvas.closest(".grid > div") || canvas.parentElement); }
 
+    function disableYuiUnusedAlertLoaders(){
+        window.loadActiveAlertSetting = async function(){};
+        window.loadAlertStatusCard = async function(){};
+    }
+
+    disableYuiUnusedAlertLoaders();
+
+    function normalizeYuiFarmCalendarTitle(){
+        const title = document.querySelector("#farmCalendarInfo .farm-calendar-title");
+        if(title) title.textContent = "地域こよみ";
+    }
+
     function configureYuiLabels(){
         document.title = "Yui-Tech Environment Monitor";
+        text(".logo-u", "Y");
+        text(".logo-title", "Yui-Tech");
         text(".logo-subtitle", "Yui-Tech Environment Monitor");
         text(".farm-calendar-title", "地域こよみ");
+        normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
         text(".status-group-current .status-group-title", "現在（P01）");
         document.querySelectorAll(".status-group-temp-summary .status-group-title").forEach((title, index)=>{ title.textContent = index === 0 ? "屋内（P01）" : "屋外（P11）"; });
@@ -11397,13 +11412,25 @@ body.yui-tech-app .yui-yatsushiro-forecast-note {
             const windText = forecast.openMeteoWindDirection || openMeteoWindSpeed
                 ? (forecast.openMeteoWindDirection || "-") + (openMeteoWindSpeed ? " " + openMeteoWindSpeed : "")
                 : "-";
+            const solarRadiationText = Number.isFinite(forecast.solarRadiationSum)
+                ? forecast.solarRadiationSum.toFixed(1)
+                : "--";
             return '<div class="forecast-day">' +
                 '<span class="tomorrow-forecast-title">' + escapeHtml(title) + '</span>' +
                 '<span class="forecast-item"><span class="forecast-label">最高</span><span class="forecast-value">' + formatForecastValue(forecast.maxTemp, "℃") + '</span></span>' +
                 '<span class="forecast-item"><span class="forecast-label">最低</span><span class="forecast-value">' + formatForecastValue(forecast.minTemp, "℃") + '</span></span>' +
                 '<span class="forecast-item"><span class="forecast-label">降水確率</span><span class="forecast-value">' + formatForecastValue(forecast.pop, "%") + '</span></span>' +
+                '<span class="forecast-item"><span class="forecast-label">予想積算日射</span><span class="forecast-value">' + solarRadiationText + ' MJ/m²</span></span>' +
                 '<span class="forecast-item"><span class="forecast-label">風</span><span class="forecast-value">' + escapeHtml(windText) + '</span></span>' +
                 '</div>';
+        };
+    }
+    const originalUpdateFarmCalendarInfo = window.updateFarmCalendarInfo;
+    if(typeof originalUpdateFarmCalendarInfo === "function"){
+        window.updateFarmCalendarInfo = function(now){
+            const result = originalUpdateFarmCalendarInfo.call(this, now);
+            normalizeYuiFarmCalendarTitle();
+            return result;
         };
     }
     function getYuiForecastAreaKey(){
@@ -11464,11 +11491,177 @@ body.yui-tech-app .yui-yatsushiro-forecast-note {
         };
     }
 
+    function resetYuiStatusValues(){
+        ["tempNow", "vpdNow", "dewNow", "humNow"].forEach(id=>{
+            const element = document.getElementById(id);
+            if(element) element.innerText = "-";
+        });
+        resetDailyTempStats();
+    }
+
+    async function loadYuiTechMainDataOnly(){
+        clearAllSyncedTooltips();
+        const rainfallRequestId = ++rainfallRequestSequence;
+        destroyRainChart();
+        resetRainfallDailyTotals();
+        const userId = getMainUserIdInputValue();
+        const msg = document.getElementById("message");
+        if(!userId){
+            if(msg) msg.innerText = "user_id を入力してください";
+            return;
+        }
+
+        localStorage.setItem("usui_user_id", userId);
+        saveUserIdHistory(userId);
+        restoreVpdTargetRange(userId);
+        resetYuiStatusValues();
+        destroyCharts();
+        ensureYuiMainDerivedPanels();
+        if(msg) msg.innerText = "読み込み中...";
+
+        try{
+            const now = new Date();
+            const minTime = new Date(now.getTime() - 72*60*60*1000);
+            const chartMinTime = isMobileView() ? new Date(now.getTime() - 48*60*60*1000) : minTime;
+            void loadRainfallData(userId, isMobileView() ? 48 : 72, rainfallRequestId);
+
+            const results = await Promise.all([
+                fetchDataSafe(userId, "P01"),
+                fetchDataSafe(userId, "P11")
+            ]);
+            const errors = results.filter(result=>result.error).map(result=>result.error);
+            const p01 = parseData(results[0].data || [], minTime);
+            const p11 = parseData(results[1].data || [], minTime);
+
+            const today = new Date(now);
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const twoDaysAgo = new Date(today);
+            twoDaysAgo.setDate(today.getDate() - 2);
+            renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
+            renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
+            renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
+            renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
+            renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
+            renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
+
+            const validP01 = p01.filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum));
+            if(validP01.length){
+                const last = validP01[validP01.length - 1];
+                document.getElementById("tempNow").innerText = last.temp.toFixed(1);
+                document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
+                document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
+                document.getElementById("humNow").innerText = last.hum.toFixed(1);
+            }
+
+            tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
+            tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
+            vaporChart = createVaporChart("vaporChart", p01, chartMinTime, now);
+            dewChart = createSingleChart("dewChart", p01, "dew", "露点温度", "℃", chartMinTime, now);
+            allCharts = [tempChartP01, tempChartP11, vaporChart, dewChart, rainChart].filter(Boolean);
+            allCharts.forEach(saveInitialScaleLimits);
+            applyMobileChartRanges(chartMinTime, now);
+            await loadYuiMainDerivedCharts(userId);
+            await loadYuiDailyStats(userId);
+            configureYuiCharts();
+            refreshVisibleCharts();
+            if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
+        }catch(error){
+            if(msg) msg.innerText = "表示エラー：" + error.message;
+            console.error(error);
+        }
+    }
+
+    async function loadYuiTechReviewDataOnly(){
+        const userId = getMainUserIdInputValue();
+        const reviewDate = document.getElementById("reviewDate");
+        const msg = document.getElementById("reviewMessage");
+        const dateValue = reviewDate ? reviewDate.value : "";
+        if(!userId){ if(msg) msg.innerText = "user_id を入力してください。"; return; }
+        if(!dateValue){ if(msg) msg.innerText = "日付を選択してください。"; return; }
+        if(msg) msg.innerText = "読み込み中...";
+
+        const selectedDate = new Date(dateValue + "T00:00:00");
+        const minTime = new Date(selectedDate);
+        minTime.setHours(0,0,0,0);
+        const maxTime = new Date(selectedDate);
+        maxTime.setHours(23,59,59,999);
+        const range = { start:formatSqlDateTime(minTime), end:formatSqlDateTime(maxTime) };
+
+        try{
+            const results = await Promise.all([
+                fetchDataSafe(userId, "P01", range),
+                fetchDataSafe(userId, "P11", range)
+            ]);
+            const p01 = parseData(results[0].data || [], minTime);
+            const p11 = parseData(results[1].data || [], minTime);
+            destroyReviewCharts();
+            reviewCharts = [
+                configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
+                configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
+                configureReviewChart(createVaporChart("reviewVaporChart", p01, minTime, maxTime))
+            ].filter(Boolean);
+            reviewDifP01 = p01;
+            reviewDifDateValue = dateValue;
+            reviewDifDisplayState = results[0].error ? "error" : "ready";
+            renderReviewDif();
+            await loadYuiReviewDerivedCharts(userId, dateValue);
+            await loadYuiReviewRainData(userId, dateValue);
+            configureYuiCharts();
+            refreshVisibleCharts();
+            const errors = results.filter(result=>result.error).map(result=>result.error);
+            if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
+        }catch(error){
+            if(msg) msg.innerText = "過去データ表示エラー：" + error.message;
+            console.error(error);
+        }
+    }
+
+    async function loadYuiTechMaintenanceDataOnly(rangeOverride){
+        clearSyncedTooltipGroup("maintenance");
+        const userId = getMainUserIdInputValue();
+        const message = document.getElementById("maintenanceMessage");
+        if(!userId){ if(message) message.innerText = "user_id を入力してください。"; return; }
+        const rangeResult = rangeOverride ? { range:rangeOverride } : getMaintenanceRange();
+        if(rangeResult.error){ if(message) message.innerText = rangeResult.error; return; }
+        const range = rangeResult.range;
+        if(message) message.innerText = "読み込み中...";
+        try{
+            const pointIds = ["P01", "P02", "P11", "P12"];
+            const results = await Promise.all(pointIds.map(pointId=>fetchDataSafe(userId, pointId, range.apiRange)));
+            const parsed = {};
+            pointIds.forEach((pointId, index)=>{ parsed[pointId] = parseData(results[index].data || [], range.startTime); });
+            destroyMaintenanceCharts();
+            tempChartP02 = configureMaintenanceChart(createTempHumChart("tempChartP02", parsed.P02, range.startTime, range.endTime, "P02"));
+            diffChart = configureMaintenanceChart(createDiffChart("diffChart", parsed.P01, parsed.P02, range.startTime, range.endTime));
+            tempChartP12 = configureMaintenanceChart(createTempHumChart("tempChartP12", parsed.P12, range.startTime, range.endTime, "P12"));
+            diffChartP11P12 = configureMaintenanceChart(createTempHumDiagnosticDiffChart("diffChartP11P12", parsed.P11, parsed.P12, "P11", "P12", getP11P12DiffAxis(), range.startTime, range.endTime));
+            const chartMap = { tempP02:tempChartP02, diffP01P02:diffChart, tempP12:tempChartP12, diffP11P12:diffChartP11P12 };
+            maintenanceCharts = Object.values(chartMap).filter(Boolean);
+            applyMaintenanceMobileChartRanges(range.startTime, range.endTime);
+            applyMaintenanceChartNoDataStates(chartMap, userId, range.startTime, range.endTime);
+            configureYuiCharts();
+            refreshVisibleCharts();
+            const errors = results.filter(result=>result.error).map(result=>result.error);
+            if(message) message.innerText = errors.length ? errors.join(" / ") : "";
+        }catch(error){
+            if(message) message.innerText = "メンテナンスデータ表示エラー：" + error.message;
+            console.error(error);
+        }
+    }
+
+    window.loadData = loadYuiTechMainDataOnly;
+    window.loadReviewData = loadYuiTechReviewDataOnly;
+    window.loadMaintenanceData = loadYuiTechMaintenanceDataOnly;
     window.addEventListener("DOMContentLoaded", ()=>{ configureYuiLabels(); configureYuiTabs(); configureYuiCharts(); ensureDailyPanel(); ensureYuiMainDerivedPanels(); ensureYuiReviewDerivedPanels(); configureCsvDefaults(); });
 })();
 </script>
 </body>
 </html>
+
+
+
+
 
 
 

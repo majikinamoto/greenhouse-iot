@@ -1,7 +1,18 @@
 ﻿<?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/db_config.php';
+$yuiDbConfig = __DIR__ . '/db_config.php';
+$parentDbConfig = dirname(__DIR__) . '/db_config.php';
+if (is_file($yuiDbConfig)) {
+    require_once $yuiDbConfig;
+} elseif (is_file($parentDbConfig)) {
+    require_once $parentDbConfig;
+} else {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo 'db_config.php が見つかりません';
+    exit;
+}
 
 header('Content-Type: application/json; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
@@ -90,3 +101,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => '日別温度集計の取得に失敗しました'], JSON_UNESCAPED_UNICODE);
 }
+

@@ -1,10 +1,21 @@
-<?php
+﻿<?php
 
 declare(strict_types=1);
 
 date_default_timezone_set('Asia/Tokyo');
 
-require_once __DIR__ . '/db_config.php';
+$yuiDbConfig = __DIR__ . '/db_config.php';
+$parentDbConfig = dirname(__DIR__) . '/db_config.php';
+if (is_file($yuiDbConfig)) {
+    require_once $yuiDbConfig;
+} elseif (is_file($parentDbConfig)) {
+    require_once $parentDbConfig;
+} else {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo 'db_config.php が見つかりません';
+    exit;
+}
 
 const RAINFALL_TIMEZONE = 'Asia/Tokyo';
 const RAINFALL_POINT_ID = 'P41';
@@ -343,3 +354,4 @@ function runRainfallApi(): void
 if (!defined('RAINFALL_API_TEST_MODE')) {
     runRainfallApi();
 }
+
