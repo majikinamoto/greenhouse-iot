@@ -95,6 +95,27 @@
     position:relative;
 }
 
+
+.site-switch-link {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:34px;
+    padding:6px 12px;
+    border:1px solid #8fa0b3;
+    border-radius:5px;
+    background:#f8fafc;
+    color:#25384d;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.2;
+    text-decoration:none;
+    box-sizing:border-box;
+}
+
+.site-switch-link:hover {
+    background:#eef3f7;
+}
 .logo-info-button {
     width:32px;
     height:32px;
@@ -1935,6 +1956,11 @@ body.data-export-active .control-panel {
         font-size:24px;
     }
 
+
+    .site-switch-link {
+        min-height:38px;
+        padding:8px 12px;
+    }
     .control-panel,
     .control-group {
         align-items:stretch;
@@ -2247,6 +2273,7 @@ body.data-export-active .control-panel {
     <div class="logo-title-area">
         <div class="logo-title-row">
             <div class="logo-title">U-Tech</div>
+            <a class="site-switch-link" href="yui-tech/" aria-label="ゆいテックへ移動">ゆいテックへ</a>
             <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
             <div id="logoInfoPopup" class="logo-info-popup">
                 <div>U-Techの「U」には、</div>
@@ -2449,30 +2476,6 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
-
-    <div>
-        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-range"><span class="axis-label-volt">飽差の目安範囲：</span>
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="handleVpdTargetRangeChange()">
-            ～
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
-            <span class="guide-range-unit">g/m³</span></span>
-            <button type="button" onclick="resetVpdTargetRange()">初期値に戻す</button>
-        </div>
-        <div class="chart-container"><canvas id="vaporChart"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>露点温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMin"> ～
-            <input class="axis-input" type="number" id="dewMax">
-            <button onclick="applySingleYAxis(dewChart,'dew')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="dewChart"></canvas></div>
-    </div>
-
     <div>
         <h4><span>ハウス内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
@@ -3060,7 +3063,7 @@ body.data-export-active .control-panel {
     <div class="maintenance-period-group">
         <strong>表示期間（日本時間）</strong>
         <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeLatest" value="latest" checked onchange="setMaintenanceMode('latest')">最新72時間</label>
-        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeCustom" value="custom" onchange="setMaintenanceMode('custom')">7日間表示</label>
+        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeCustom" value="custom" onchange="setMaintenanceMode('custom')">5日間表示</label>
     </div>
     <label class="maintenance-period-group">開始日
         <input type="date" id="maintenanceStartDate" onchange="updateMaintenancePeriodPreview()">
@@ -3068,33 +3071,13 @@ body.data-export-active .control-panel {
     <div class="maintenance-period-group maintenance-period-actions">
         <button class="show-button" type="button" onclick="showMaintenanceCustomRange()">表示する</button>
         <button type="button" onclick="showMaintenanceLatest72Hours()">最新72時間へ戻す</button>
-        <button id="maintenancePreviousPeriod" type="button" onclick="shiftMaintenanceSevenDayRange(-7)">← 前の7日間</button>
-        <button id="maintenanceNextPeriod" type="button" onclick="shiftMaintenanceSevenDayRange(7)">次の7日間 →</button>
+        <button id="maintenancePreviousPeriod" type="button" onclick="shiftMaintenanceFiveDayRange(-5)">← 前の5日間</button>
+        <button id="maintenanceNextPeriod" type="button" onclick="shiftMaintenanceFiveDayRange(5)">次の5日間 →</button>
     </div>
     <span id="maintenancePeriodPreview" class="maintenance-period-preview" hidden></span>
     <span id="maintenanceMessage" class="maintenance-period-message" role="status"></span>
 </div>
 <div class="grid">
-
-    <div>
-        <h4><span>メンテ用ハウス内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
-            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP02" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>メンテ用（P01−P02_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMin" value="-5"> ～
-            <input class="axis-input" type="number" id="diffMax" value="5">
-            <button onclick="applyDiffYAxis(diffChart)">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="diffChart"></canvas></div>
-    </div>
 
     <div>
         <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
@@ -3117,23 +3100,61 @@ body.data-export-active .control-panel {
     </div>
 
     <div>
-        <h4><span>メンテ用CO2_ハウス内（P22）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP22" value="200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2MaxP22" value="500">
-            <button onclick="applySingleYAxis(co2ChartP22,'co2',getCo2ComparisonAxis('P22'))">縦軸反映</button>
+        <h4><span>メンテ用ハウス内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP02" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
         </div>
-        <div class="chart-container"><canvas id="co2ChartP22"></canvas></div>
+        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
     </div>
 
     <div>
-        <h4><span>メンテ用（P21−P22_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <h4><span>メンテ用（P01−P02_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMinP21P22" value="-200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2DiffMaxP21P22" value="200">
-            <button onclick="applyCo2DiagnosticDiffYAxis(co2DiffChartP21P22,'P21','P22')">縦軸反映</button>
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMin" value="-5"> ～
+            <input class="axis-input" type="number" id="diffMax" value="5">
+            <button onclick="applyDiffYAxis(diffChart)">縦軸反映</button>
         </div>
-        <div class="chart-container"><canvas id="co2DiffChartP21P22"></canvas></div>
+        <div class="chart-container"><canvas id="diffChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="chart-container"><canvas id="vaporChartP11"></canvas></div>
+    </div>
+
+    <div>
+        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-range"><span class="axis-label-volt">飽差の目安範囲：</span>
+            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="handleVpdTargetRangeChange()">
+            ～
+            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
+            <span class="guide-range-unit">g/m³</span></span>
+            <button type="button" onclick="resetVpdTargetRange()">初期値に戻す</button>
+        </div>
+        <div class="chart-container"><canvas id="vaporChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>露点温度（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMinP11"> ～
+            <input class="axis-input" type="number" id="dewMaxP11">
+            <button onclick="applySingleYAxis(dewChartP11,'dew',getDewAxisP11())">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="dewChartP11"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>露点温度（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMin"> ～
+            <input class="axis-input" type="number" id="dewMax">
+            <button onclick="applySingleYAxis(dewChart,'dew')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="dewChart"></canvas></div>
     </div>
 
     <div>
@@ -3154,6 +3175,26 @@ body.data-export-active .control-panel {
             <button onclick="applyCo2DiagnosticDiffYAxis(co2DiffChartP26P27,'P26','P27')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2DiffChartP26P27"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>メンテ用CO2_ハウス内（P22）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP22" value="200"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2MaxP22" value="500">
+            <button onclick="applySingleYAxis(co2ChartP22,'co2',getCo2ComparisonAxis('P22'))">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2ChartP22"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>メンテ用（P21−P22_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMinP21P22" value="-200"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2DiffMaxP21P22" value="200">
+            <button onclick="applyCo2DiagnosticDiffYAxis(co2DiffChartP21P22,'P21','P22')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2DiffChartP21P22"></canvas></div>
     </div>
 
     <div>
@@ -3426,7 +3467,7 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
-let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, dewChart;
+let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
 let rainChart = null;
 let rainfallRequestSequence = 0;
 let co2Chart, co2OutsideChart, co2DiffChart, co2ChartP22, co2DiffChartP21P22, co2ChartP27, co2DiffChartP26P27;
@@ -3680,14 +3721,18 @@ const mainChartConfigs = [
 ];
 
 const maintenanceCanvasIds = [
-    "tempChartP02",
-    "diffChart",
     "tempChartP12",
     "diffChartP11P12",
-    "co2ChartP22",
-    "co2DiffChartP21P22",
+    "tempChartP02",
+    "diffChart",
+    "vaporChartP11",
+    "vaporChart",
+    "dewChartP11",
+    "dewChart",
     "co2ChartP27",
     "co2DiffChartP26P27",
+    "co2ChartP22",
+    "co2DiffChartP21P22",
     "solarChartP32",
     "solarDiffChartP31P32",
     "voltChart"
@@ -7077,8 +7122,6 @@ function applyMobileChartRanges(minTime, maxTime){
         tempChartP01,
         tempChartP11,
         outsideDiffChart,
-        vaporChart,
-        dewChart,
         solarChart,
         co2Chart,
         co2OutsideChart,
@@ -7379,13 +7422,13 @@ function initializeMaintenanceRangeInputs(){
     const todayStartWallClockMs = Math.floor(todayWallClockMs / (24*60*60*1000)) * (24*60*60*1000);
     const start = document.getElementById("maintenanceStartDate");
     if(start){
-        start.value = formatMaintenanceDateInput(todayStartWallClockMs - 6*24*60*60*1000);
+        start.value = formatMaintenanceDateInput(todayStartWallClockMs - 4*24*60*60*1000);
         start.max = formatMaintenanceDateInput(todayStartWallClockMs);
     }
     setMaintenanceMode("latest");
 }
 
-function getMaintenanceSevenDayRange(startValue, nowTimestamp){
+function getMaintenanceFiveDayRange(startValue, nowTimestamp){
     if(!startValue) return { error:"開始日を入力してください。" };
 
     const start = parseMaintenanceStartDate(startValue);
@@ -7398,7 +7441,7 @@ function getMaintenanceSevenDayRange(startValue, nowTimestamp){
         return { error:"開始日は今日以前の日付を選択してください。" };
     }
 
-    const fullEndWallClockMs = start.wallClockMs + 7*24*60*60*1000 - 1000;
+    const fullEndWallClockMs = start.wallClockMs + 5*24*60*60*1000 - 1000;
     const effectiveEndWallClockMs = Math.min(fullEndWallClockMs, japanNowWallClockMs);
 
     return {
@@ -7416,6 +7459,10 @@ function getMaintenanceSevenDayRange(startValue, nowTimestamp){
     };
 }
 
+function getMaintenanceSevenDayRange(startValue, nowTimestamp){
+    return getMaintenanceFiveDayRange(startValue, nowTimestamp);
+}
+
 function updateMaintenancePeriodPreview(){
     const input = document.getElementById("maintenanceStartDate");
     const preview = document.getElementById("maintenancePeriodPreview");
@@ -7428,21 +7475,21 @@ function updateMaintenancePeriodPreview(){
         preview.hidden = !isCustom;
         preview.innerText = start
             ? "表示期間：" + formatMaintenancePeriodDate(start.wallClockMs) + " ～ " +
-                formatMaintenancePeriodDate(start.wallClockMs + 6*24*60*60*1000)
+                formatMaintenancePeriodDate(start.wallClockMs + 4*24*60*60*1000)
             : "表示期間：開始日を選択してください。";
     }
 
     if(previous) previous.disabled = !isCustom || !start;
     if(next){
         const todayWallClockMs = Math.floor(getJapanWallClockMs(Date.now()) / (24*60*60*1000)) * (24*60*60*1000);
-        next.disabled = !isCustom || !start || start.wallClockMs + 7*24*60*60*1000 > todayWallClockMs;
+        next.disabled = !isCustom || !start || start.wallClockMs + 5*24*60*60*1000 > todayWallClockMs;
     }
 }
 
 function getMaintenanceRange(){
     if(maintenanceMode === "custom"){
         const start = document.getElementById("maintenanceStartDate");
-        return getMaintenanceSevenDayRange(start ? start.value : "");
+        return getMaintenanceFiveDayRange(start ? start.value : "");
     }
 
     const jstNow = new Date(Date.now() + 9*60*60*1000);
@@ -7524,7 +7571,7 @@ function showMaintenanceLatest72Hours(){
     loadMaintenanceData();
 }
 
-function shiftMaintenanceSevenDayRange(dayOffset){
+function shiftMaintenanceFiveDayRange(dayOffset){
     const input = document.getElementById("maintenanceStartDate");
     const message = document.getElementById("maintenanceMessage");
     const start = parseMaintenanceStartDate(input ? input.value : "");
@@ -7551,6 +7598,11 @@ function shiftMaintenanceSevenDayRange(dayOffset){
     loadMaintenanceData(result.range);
 }
 
+function shiftMaintenanceSevenDayRange(dayOffset){
+    const direction = dayOffset < 0 ? -1 : 1;
+    shiftMaintenanceFiveDayRange(direction * 5);
+}
+
 function configureMaintenanceChart(chart){
     if(!chart) return chart;
     if(chart.options && chart.options.plugins && chart.options.plugins.zoom && chart.options.plugins.zoom.zoom){
@@ -7571,14 +7623,18 @@ function applyMaintenanceMobileChartRanges(startTime, endTime){
 
 function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime){
     const configs = [
-        ["tempChartP02", "tempP02", ["P02"]],
-        ["diffChart", "diffP01P02", ["P01", "P02"]],
         ["tempChartP12", "tempP12", ["P12"]],
         ["diffChartP11P12", "diffP11P12", ["P11", "P12"]],
-        ["co2ChartP22", "co2P22", ["P22"]],
-        ["co2DiffChartP21P22", "diffP21P22", ["P21", "P22"]],
+        ["tempChartP02", "tempP02", ["P02"]],
+        ["diffChart", "diffP01P02", ["P01", "P02"]],
+        ["vaporChartP11", "vaporP11", ["P11"]],
+        ["vaporChart", "vaporP01", ["P01"]],
+        ["dewChartP11", "dewP11", ["P11"]],
+        ["dewChart", "dewP01", ["P01"]],
         ["co2ChartP27", "co2P27", ["P27"]],
         ["co2DiffChartP26P27", "diffP26P27", ["P26", "P27"]],
+        ["co2ChartP22", "co2P22", ["P22"]],
+        ["co2DiffChartP21P22", "diffP21P22", ["P21", "P22"]],
         ["solarChartP32", "solarP32", ["P32"]],
         ["solarDiffChartP31P32", "diffP31P32", ["P31", "P32"]],
         ["voltChart", "voltP91", ["P91"]]
@@ -7663,6 +7719,18 @@ async function loadMaintenanceData(rangeOverride){
                 getP11P12DiffAxis(), range.startTime, range.endTime
             )
         );
+        vaporChartP11 = configureMaintenanceChart(
+            createVaporChart("vaporChartP11", parsed.P11, range.startTime, range.endTime)
+        );
+        vaporChart = configureMaintenanceChart(
+            createVaporChart("vaporChart", parsed.P01, range.startTime, range.endTime)
+        );
+        dewChartP11 = configureMaintenanceChart(
+            createSingleChart("dewChartP11", parsed.P11, "dew", "露点温度", "℃", range.startTime, range.endTime, getDewAxisP11())
+        );
+        dewChart = configureMaintenanceChart(
+            createSingleChart("dewChart", parsed.P01, "dew", "露点温度", "℃", range.startTime, range.endTime)
+        );
         co2ChartP22 = configureMaintenanceChart(
             createSingleChart(
                 "co2ChartP22", parsed.P22, "co2", "co2", "ppm",
@@ -7707,14 +7775,18 @@ async function loadMaintenanceData(rangeOverride){
         );
 
         const chartMap = {
-            tempP02:tempChartP02,
-            diffP01P02:diffChart,
             tempP12:tempChartP12,
             diffP11P12:diffChartP11P12,
-            co2P22:co2ChartP22,
-            diffP21P22:co2DiffChartP21P22,
+            tempP02:tempChartP02,
+            diffP01P02:diffChart,
+            vaporP11:vaporChartP11,
+            vaporP01:vaporChart,
+            dewP11:dewChartP11,
+            dewP01:dewChart,
             co2P27:co2ChartP27,
             diffP26P27:co2DiffChartP26P27,
+            co2P22:co2ChartP22,
+            diffP21P22:co2DiffChartP21P22,
             solarP32:solarChartP32,
             diffP31P32:solarDiffChartP31P32,
             voltP91:voltChart
@@ -8512,6 +8584,12 @@ function getOutsideDiffAxis(){
     };
 }
 
+function getDewAxisP11(){
+    return {
+        min:getAxisValue("dewMinP11", dewAxisMin),
+        max:getAxisValue("dewMaxP11", dewAxisMax)
+    };
+}
 function getSingleAxis(key){
     if(key === "co2"){
         return getCo2Axis();
@@ -8583,8 +8661,6 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "tempChartP11",
         "tempChartP12",
         "outsideDiffChart",
-        "vaporChart",
-        "dewChart",
         "solarChart",
         "solarChartP32",
         "solarDiffChartP31P32",
@@ -9788,6 +9864,10 @@ function destroyMaintenanceCharts(){
     diffChart = null;
     tempChartP12 = null;
     diffChartP11P12 = null;
+    vaporChartP11 = null;
+    vaporChart = null;
+    dewChartP11 = null;
+    dewChart = null;
     co2ChartP22 = null;
     co2DiffChartP21P22 = null;
     co2ChartP27 = null;
@@ -10637,9 +10717,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
-        vaporChart = createVaporChart("vaporChart", p01, chartMinTime, now);
-        dewChart = createSingleChart("dewChart", p01, "dew", "露点温度", "℃", chartMinTime, now);
-
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
         co2OutsideChart = createSingleChart("co2OutsideChart", p26, "co2Outside", "co2", "ppm", chartMinTime, now);
@@ -10649,8 +10726,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             insideTempHumidity:tempChartP01,
             outsideTempHumidity:tempChartP11,
             outsideDiff:outsideDiffChart,
-            vapor:vaporChart,
-            dewPoint:dewChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
@@ -10661,8 +10736,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP01,
             tempChartP11,
             outsideDiffChart,
-            vaporChart,
-            dewChart,
             solarChart,
             co2Chart,
             co2OutsideChart,
@@ -10694,8 +10767,6 @@ function destroyCharts(){
     tempChartP11 = null;
     outsideDiffChart = null;
     solarChart = null;
-    vaporChart = null;
-    dewChart = null;
     co2Chart = null;
     co2OutsideChart = null;
     co2DiffChart = null;
@@ -10704,8 +10775,6 @@ function destroyCharts(){
         "tempChartP01",
         "tempChartP11",
         "outsideDiffChart",
-        "vaporChart",
-        "dewChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
