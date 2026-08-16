@@ -10931,12 +10931,44 @@ body.yui-tech-app .status-group-temp-summary {
     padding:7px 8px 8px;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-    grid-template-columns:60px repeat(5, 60px);
+    grid-template-columns:60px auto;
     gap:4px;
     width:max-content;
     min-width:100%;
-    align-items:center;
+    align-items:stretch;
     margin-top:7px;
+}
+body.yui-tech-app .status-temp-label-grid,
+body.yui-tech-app .status-temp-data-grid {
+    display:grid;
+    gap:4px;
+    align-items:center;
+}
+body.yui-tech-app .status-temp-data-scroll {
+    min-width:0;
+    overflow-x:visible;
+}
+body.yui-tech-app .status-temp-data-grid {
+    grid-template-columns:repeat(5, 60px);
+    width:max-content;
+}
+body.yui-tech-app .status-temp-label-spacer,
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-date {
+    box-sizing:border-box;
+    min-height:14px;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-label,
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
+    min-height:24px;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-label {
+    display:flex;
+    align-items:center;
+}
+body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
     box-sizing:border-box;
@@ -11024,8 +11056,8 @@ body.yui-tech-app .yui-current-status .status-box {
     body.yui-tech-app .yui-current-status {
         width:100%;
     }
-    body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-        grid-template-columns:60px repeat(5, 58px);
+    body.yui-tech-app .status-temp-data-grid {
+        grid-template-columns:repeat(5, 58px);
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
         width:58px;
@@ -11043,9 +11075,17 @@ body.yui-tech-app .yui-current-status .status-box {
         box-sizing:border-box;
         width:100%;
         max-width:calc(100vw - 24px);
-        overflow-x:visible;
+        overflow-x:hidden;
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
+        box-sizing:border-box;
+        grid-template-columns:60px minmax(0, 1fr);
+        width:100%;
+        min-width:0;
+        max-width:100%;
+        overflow:visible;
+    }
+    body.yui-tech-app .status-temp-data-scroll {
         box-sizing:border-box;
         width:100%;
         min-width:0;
@@ -11054,16 +11094,11 @@ body.yui-tech-app .yui-current-status .status-box {
         overscroll-behavior-inline:contain;
         -webkit-overflow-scrolling:touch;
     }
-    body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid > :first-child,
-    body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-label {
-        position:sticky;
-        left:0;
-        z-index:2;
+    body.yui-tech-app .status-temp-label-grid {
+        position:relative;
+        z-index:1;
         background:#f7f9fc;
         box-shadow:1px 0 0 #bcc8d4;
-    }
-    body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid > :first-child {
-        z-index:3;
     }
     body.yui-tech-app #outsideTempSummaryGrid .status-temp-label-rain,
     body.yui-tech-app #outsideTempSummaryGrid .status-temp-value[id$="Rain"] {
@@ -11171,20 +11206,25 @@ body.yui-tech-app .yui-current-status .status-box {
         if(!grid) return;
         grid.classList.add("yui-seven-day-temp-grid");
         if(document.getElementById(`${prefix}Day0Label`) && (prefix !== "outside" || document.getElementById(`${prefix}Day0Rain`))) return;
-        let html = '<div></div>';
+        let labelHtml = '<div class="status-temp-label-spacer"></div>';
+        let dataHtml = "";
         for(let i = 0; i < 5; i++){
-            html += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
+            dataHtml += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
         }
         const rows = [["Max", "最高(℃)"], ["Min", "最低(℃)"], ["Avg", "平均(℃)"]];
         if(prefix === "outside") rows.push(["Rain", "雨量(mm)"]);
         rows.forEach(([key, label])=>{
             const labelClass = key === "Rain" ? " status-temp-label-rain" : "";
-            html += `<div class="status-temp-label${labelClass}">${label}</div>`;
+            labelHtml += `<div class="status-temp-label${labelClass}">${label}</div>`;
             for(let i = 0; i < 5; i++){
-                html += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
+                dataHtml += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
             }
         });
-        grid.innerHTML = html;
+        grid.innerHTML =
+            `<div class="status-temp-label-grid">${labelHtml}</div>` +
+            `<div class="status-temp-data-scroll"><div class="status-temp-data-grid">${dataHtml}</div></div>`;
+        const scrollArea = grid.querySelector(".status-temp-data-scroll");
+        if(scrollArea) scrollArea.scrollLeft = 0;
     }
 
     function ensureYuiSevenDaySummaryCards(){
