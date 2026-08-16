@@ -2340,7 +2340,7 @@ body.data-export-active .control-panel {
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
 <div class="status-group status-group-current">
-<div class="status-group-title">現在（P01）</div>
+<div class="status-group-title">現在_屋内(P01)</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNow">-</span>%</div>
 <div class="status-break"></div>
@@ -2349,6 +2349,14 @@ body.data-export-active .control-panel {
 <div class="status-break"></div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
+</div>
+<div class="status-group status-group-current">
+<div class="status-group-title">現在_屋外(P11)</div>
+<div class="status-box">🌡️ 温度：<span id="tempNowP11">-</span>℃</div>
+<div class="status-box">💧 湿度：<span id="humNowP11">-</span>%</div>
+<div class="status-break"></div>
+<div class="status-box">露点温度：<span id="dewNowP11">-</span>℃</div>
+<div class="status-box">飽差：<span id="vpdNowP11">-</span>g/㎥</div>
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">屋内（P01）</div>
@@ -11220,7 +11228,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         text(".farm-calendar-title", "地域こよみ");
         normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
-        text(".status-group-current .status-group-title", "現在（P01）");
+        text(".status-group-current .status-group-title", "現在_屋内(P01)");
         document.querySelectorAll(".status-group-temp-summary .status-group-title").forEach((title, index)=>{ title.textContent = index === 0 ? "屋内（P01）" : "屋外（P11）"; });
         const solarBox = document.getElementById("solarNow"); if(solarBox) hideElement(solarBox.closest(".status-box"));
         const co2Box = document.getElementById("co2Now"); if(co2Box) hideElement(co2Box.closest(".status-box"));
@@ -11689,7 +11697,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     }
 
     function resetYuiStatusValues(){
-        ["tempNow", "vpdNow", "dewNow", "humNow"].forEach(id=>{
+        ["tempNow", "vpdNow", "dewNow", "humNow", "tempNowP11", "vpdNowP11", "dewNowP11", "humNowP11"].forEach(id=>{
             const element = document.getElementById(id);
             if(element) element.innerText = "-";
         });
@@ -11748,6 +11756,15 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
                 document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
                 document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
+            }
+
+            const validP11 = p11.filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum));
+            if(validP11.length){
+                const last = validP11[validP11.length - 1];
+                document.getElementById("tempNowP11").innerText = last.temp.toFixed(1);
+                document.getElementById("vpdNowP11").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
+                document.getElementById("dewNowP11").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
+                document.getElementById("humNowP11").innerText = last.hum.toFixed(1);
             }
 
             tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
