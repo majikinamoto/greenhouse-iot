@@ -1573,7 +1573,8 @@ body.data-export-active .control-panel {
     font-weight:700;
 }
 
-.outside-source-setting {
+.outside-source-setting,
+.rainfall-source-setting {
     display:flex;
     flex-wrap:wrap;
     gap:6px 8px;
@@ -1587,7 +1588,8 @@ body.data-export-active .control-panel {
     font-weight:700;
 }
 
-.outside-source-setting label {
+.outside-source-setting label,
+.rainfall-source-setting label {
     display:flex;
     align-items:center;
     gap:4px;
@@ -1603,7 +1605,8 @@ body.data-export-active .control-panel {
     width:55px;
 }
 
-.outside-source-setting button {
+.outside-source-setting button,
+.rainfall-source-setting button {
     margin:0;
     padding:4px 8px;
 }
@@ -2185,7 +2188,8 @@ body.data-export-active .control-panel {
         max-width:calc(100vw - 20px);
     }
 
-    .outside-source-setting {
+    .outside-source-setting,
+    .rainfall-source-setting {
         flex-wrap:nowrap;
         align-items:center;
         gap:4px;
@@ -2195,14 +2199,17 @@ body.data-export-active .control-panel {
     }
 
     .outside-source-setting label,
-    .outside-source-setting button {
+    .outside-source-setting button,
+    .rainfall-source-setting label,
+    .rainfall-source-setting button {
         width:auto;
         box-sizing:border-box;
         flex:0 0 auto;
         white-space:nowrap;
     }
 
-    .outside-source-setting label {
+    .outside-source-setting label,
+    .rainfall-source-setting label {
         gap:3px;
     }
 
@@ -2219,7 +2226,8 @@ body.data-export-active .control-panel {
         width:55px;
     }
 
-    .outside-source-setting button {
+    .outside-source-setting button,
+    .rainfall-source-setting button {
         margin:0;
         padding:4px 7px;
         font-size:12px;
@@ -2535,6 +2543,18 @@ body.data-export-active .control-panel {
     <button type="button" onclick="applyOutsideSourceSetting()">取得</button>
 </div>
 
+<div class="rainfall-source-setting">
+    <label>
+        <input type="checkbox" id="rainfallSourceEnabled" onchange="handleRainfallSourceEnabledChange()">
+        雨量を別userから取得
+    </label>
+    <label>
+        user
+        <input class="outside-source-input" type="text" id="rainfallSourceUserId" placeholder="例: T9999" onchange="saveRainfallSourceSetting()">
+    </label>
+    <button type="button" onclick="applyRainfallSourceSetting()">取得</button>
+</div>
+
 
 <div class="grid">
 
@@ -2608,7 +2628,7 @@ body.data-export-active .control-panel {
     </div>
 
     <div>
-        <h4><span>雨量（P41）</span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
+        <h4><span>雨量（P41）<span id="rainfallSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
@@ -3646,6 +3666,11 @@ const outsideSourceStorageKeys = {
     pointId:"usui_outside_source_point_id"
 };
 
+const rainfallSourceStorageKeys = {
+    enabled:"usui_rainfall_source_enabled",
+    userId:"usui_rainfall_source_user_id"
+};
+
 const mainChartConfigs = [
     {
         key:"insideTempHumidity",
@@ -3945,6 +3970,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
 
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
+    restoreRainfallSourceSetting();
     restoreAnalysisCompareSettings();
     restoreEnvironmentScoreRanges();
     restoreUtechAreaSelection();
@@ -4110,6 +4136,83 @@ function updateOutsideSourceNote(source){
 
     note.innerText = source && source.useAlternate
         ? "※user_id " + source.userId + "、point_id " + source.pointId + " から入手"
+        : "";
+}
+
+function restoreRainfallSourceSetting(){
+    const enabled = document.getElementById("rainfallSourceEnabled");
+    const userId = document.getElementById("rainfallSourceUserId");
+
+    if(enabled){
+        enabled.checked = localStorage.getItem(rainfallSourceStorageKeys.enabled) === "1";
+    }
+
+    if(userId){
+        userId.value = localStorage.getItem(rainfallSourceStorageKeys.userId) || "";
+    }
+
+    updateRainfallSourceControls();
+}
+
+function saveRainfallSourceSetting(){
+    const enabled = document.getElementById("rainfallSourceEnabled");
+    const userId = document.getElementById("rainfallSourceUserId");
+
+    localStorage.setItem(rainfallSourceStorageKeys.enabled, enabled && enabled.checked ? "1" : "0");
+    localStorage.setItem(rainfallSourceStorageKeys.userId, userId ? userId.value.trim() : "");
+}
+
+function updateRainfallSourceControls(){
+    const enabled = document.getElementById("rainfallSourceEnabled");
+    const userId = document.getElementById("rainfallSourceUserId");
+    const button = document.querySelector(".rainfall-source-setting button");
+    const isEnabled = enabled && enabled.checked;
+
+    if(userId) userId.disabled = !isEnabled;
+    if(button) button.disabled = !isEnabled;
+}
+
+function handleRainfallSourceEnabledChange(){
+    updateRainfallSourceControls();
+    saveRainfallSourceSetting();
+
+    if(!document.getElementById("rainfallSourceEnabled").checked){
+        updateRainfallSourceNote(null);
+        if(getMainUserIdInputValue()){
+            loadData();
+        }
+    }
+}
+
+function applyRainfallSourceSetting(){
+    saveRainfallSourceSetting();
+    loadData();
+}
+
+function getRainfallSourceRequest(currentUserId){
+    const enabled = document.getElementById("rainfallSourceEnabled");
+    const sourceUserId = document.getElementById("rainfallSourceUserId");
+    const userId = sourceUserId ? sourceUserId.value.trim() : "";
+
+    if(enabled && enabled.checked && userId){
+        return {
+            useAlternate:true,
+            userId:userId
+        };
+    }
+
+    return {
+        useAlternate:false,
+        userId:currentUserId
+    };
+}
+
+function updateRainfallSourceNote(source){
+    const note = document.getElementById("rainfallSourceNote");
+    if(!note) return;
+
+    note.innerText = source && source.useAlternate
+        ? "※user_id " + source.userId + " から入手"
         : "";
 }
 
@@ -8095,7 +8198,9 @@ function reloadRainfallData(){
     const userId = getMainUserIdInputValue();
     if(!userId) return;
 
-    void loadRainfallData(userId, isMobileView() ? 48 : 72, requestId);
+    const rainfallSource = getRainfallSourceRequest(userId);
+    updateRainfallSourceNote(rainfallSource);
+    void loadRainfallData(rainfallSource.userId, isMobileView() ? 48 : 72, requestId);
 }
 
 function handleRainfallCalculationModeChange(){
@@ -10748,6 +10853,8 @@ async function loadData(){
 
     const outsideSource = getOutsideSourceRequest(userId);
     updateOutsideSourceNote(outsideSource);
+    const rainfallSource = getRainfallSourceRequest(userId);
+    updateRainfallSourceNote(rainfallSource);
 
     msg.innerText = "読み込み中...";
 
@@ -10772,7 +10879,7 @@ async function loadData(){
             ? new Date(now.getTime() - 48*60*60*1000)
             : minTime;
         void loadRainfallData(
-            userId,
+            rainfallSource.userId,
             isMobileView() ? 48 : 72,
             rainfallRequestId
         );
