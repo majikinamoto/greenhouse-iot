@@ -2334,8 +2334,7 @@ body.data-export-active .control-panel {
     <button class="tab-button tab-button-export" type="button" role="tab" aria-selected="false" aria-controls="tab-export" onclick="switchTab('export')">データ出力</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button>
-    <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-guide" onclick="switchTab('guide')">利用案内</button>
-    <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-system" onclick="switchTab('system')">システム情報</button>
+    <button class="tab-button tab-button-guide" type="button" role="tab" aria-selected="false" aria-controls="tab-guide" onclick="switchTab('guide')">Yui-Techについて</button>
 </div>
 
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
@@ -3226,176 +3225,76 @@ body.data-export-active .control-panel {
 </section>
 
 <section id="tab-guide" class="tab-panel tab-panel-guide" role="tabpanel">
-    <div class="guide-content">
-        <h3>Yui-Techのコンセプト</h3>
-        <p>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に測定・可視化し、現地の環境変化を把握するためのモニタリングシステムです。
-        温度、湿度、露点温度、飽差、雨量などのデータを確認し、地域の環境状態を継続的に把握することを目的としています。</p>
+    <div class="guide-content yui-about-content">
+        <section class="yui-about-section">
+            <h3>Yui-Techについて</h3>
+            <p>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を見える形にし、その場にいる方々や支援にあたる方々が、周囲の環境を確認するためのシステムです。</p>
+            <p>災害時や避難生活の中では、暑さや寒さ、湿度、雨など、身の回りの環境も少しずつ変化します。Yui-Techは、その変化を知るための一つの手がかりとして使っていただくことを考えています。</p>
+            <p>何かを指示したり、判断を押しつけたりするためのシステムではありません。<br>
+            必要なときに、必要な方が、環境を確認するための道具の一つとして役立てていただければと考えています。</p>
+        </section>
 
+        <section class="yui-about-section">
+            <h3>このシステムで確認できること</h3>
+            <p>Yui-Techでは、設置されたセンサーから得られた情報を使って、次のような環境の様子を確認できます。</p>
+            <ul>
+                <li>屋内の温度・湿度</li>
+                <li>屋外の温度・湿度</li>
+                <li>屋内と屋外の温度差</li>
+                <li>雨量</li>
+                <li>これまでの環境の変化</li>
+                <li>地域の天気予報や日の出・日の入りなどの情報</li>
+            </ul>
+        </section>
 
-        <h3>使い方</h3>
-        <p>画面上部にあるuser_idを入力し、表示ボタンを押すと、あなたのデータが表示されます。
-        <br>二回目以降は、履歴からプルダウンで選択して表示できます。
-        <br>表示期間や各種グラフを確認しながら、室内外の環境変化を把握してください。</p>
+        <section class="yui-about-section">
+            <h3>使い方</h3>
+            <p>画面の「メイン」では、現在や最近の温湿度・雨量などを確認できます。<br>
+            「過去データ」では、指定した日の環境を振り返ることができます。<br>
+            画面上部の「地域こよみ」「今日の予報」「明日の予報」では、選択した地域に応じた情報を確認できます。</p>
+            <p>表示される情報の中から、必要なものだけをご利用ください。</p>
+        </section>
 
-        <h3>各シートの説明</h3>
-        <h4>＜メイン＞</h4>
-        <p>室内外の現在および直近の環境を確認するための画面です。温湿度、室内外温度差、飽差、日射量、CO2、電圧などを確認できます。</p>
+        <section class="yui-about-section">
+            <h3>ご利用にあたって</h3>
+            <p>Yui-Techの情報は、身の回りの環境を知るための参考情報です。</p>
+            <p>センサーの設置場所や通信状況などにより、実際の環境と表示される値に差が生じたり、一時的にデータが表示されなかったりすることがあります。</p>
+            <p>体調に不安がある場合や、避難・安全に関する判断が必要な場合は、Yui-Techの表示だけで判断せず、避難所の運営者、支援にあたる方、公的機関などからの情報もあわせて確認してください。</p>
+        </section>
 
-        <h4>＜分析＞</h4>
-        <p>複数の測定地点を比較するための画面です。マスターグラフ（M）を基準として、グラフAやグラフBと比較できます。差グラフを見ることで、地点間の温度差や、その日の最大温度差などを確認できます。</p>
+        <section class="yui-about-section">
+            <h3>Yui-Techの考え方</h3>
+            <p>Yui-Techは、被災された方々や、地域・避難所で支援にあたる方々の環境を少しでも確認しやすくすることを目的としています。</p>
+            <p>商用サービスではなく、環境情報を見える形にする技術が、災害時や避難生活の中で何か一つでも役立つことがあれば、という思いから取り組んでいます。</p>
+            <p>現場にはそれぞれ異なる状況があり、必要とされることも一つではありません。Yui-Techも、現場で役立つ道具の一つとして、必要に応じて使っていただければと考えています。</p>
+        </section>
 
-        <h4>＜過去データ＞</h4>
-        <p>日ごとの環境を振り返るための画面です。過去の環境データを確認し、管理作業や環境変化を見直すために利用します。</p>
+        <details class="yui-system-info">
+            <summary>システム情報</summary>
+            <div class="yui-system-info-content">
+                <ul>
+                    <li>システム名：Yui-Tech Monitor</li>
+                    <li>研究・実証を目的とした非商用システム</li>
+                    <li>温湿度センサー、雨量計などから環境情報を取得</li>
+                    <li>気象庁、Open-Meteo等の外部情報を一部利用</li>
+                </ul>
 
-        <h4>＜アラート＞</h4>
-        <p>設定した条件を超えた場合に通知を受け取るための画面です。温度などの条件を設定し、Discord、メール、LINEなどへの通知に利用します。</p>
+                <h4>主な測定項目</h4>
+                <ul>
+                    <li>P01：屋内温湿度</li>
+                    <li>P11：屋外温湿度</li>
+                    <li>P41：雨量</li>
+                </ul>
 
-        <h4>＜メンテ＞</h4>
-        <p>センサーや通信状況、測定値の確認に使用する画面です。保守や動作確認を目的とした機能を含みます。</p>
-
-        <h3>グラフの見方</h3>
-        <ul>
-            <li>グラフ上をタップまたはクリックすると、その時刻の値を確認できます。</li>
-            <li>スマートフォンでは、指で拡大・縮小や横方向の移動ができます。</li>
-            <li>ズームリセットを押すと、表示範囲や縦軸が初期状態に戻ります。</li>
-            <li>各グラフの値は、測定機器や通信状況により欠測やずれが生じる場合があります。</li>
-        </ul>
-
-        <h3>注意事項</h3>
-        <p>
-        当サイトは、user_idを入力することでデータを表示する仕組みです。
-        あなた以外の方があなたのuser_idを入力した場合でも、環境データ等を閲覧できる場合があります。
-        事務局側から、あなたのuser_idをあなた以外の方へ提供することはありません。この点を理解し、了解したうえで利用してください。
-        また、測定値はセンサーの設置場所、機器の特性、通信状況等により、実際の現地環境と異なる場合があります。</p>
-
-        <h3>免責事項</h3>
-        <p>Yui-Techに表示される環境データ、評価、アラート等は、測定値および設定条件に基づき機械的に表示・計算されるものです。
-        表示内容は、現地の環境把握を支援するための参考情報であり、特定の行動を指示・保証するものではありません。
-        Yui-Techの利用により生じた損害、通信障害、データ欠損、通知遅延等について、管理者は責任を負いません。
-        最終的な判断は、利用者自身の責任で行ってください。</p>
-
-        <h3>Yui-Techの考え方</h3>
-        <p>Yui-Techは、環境データを見える化することで、利用者が変化に気づき、状況を把握し、振り返ることを支援する仕組みです。
-        大切なのは、システムが答えを出すことではなく、データをきっかけに現地の状態を継続的に見守ることです。
-        Yui-Techは、地域や避難所などの環境状態を把握するための道具として活用してください。</p>
-    </div>
-</section>
-
-<section id="tab-system" class="tab-panel tab-panel-guide" role="tabpanel">
-    <div class="guide-content">
-        <h3>システム情報</h3>
-        <p>現在整備中です。</p>
-
-        <h3>外部データ利用状況</h3>
-        <p>Yui-Techでは、気象庁およびオープンメテオ（Open-Meteo）のデータを活用し、地域の環境把握の参考となる情報を表示しています。</p>
-
-        <p>【気象庁】</p>
-        <ul>
-            <li>最高気温、最低気温</li>
-            <li>降水確率</li>
-            <li>満潮、干潮</li>
-        </ul>
-
-        <p>【オープンメテオ（Open-Meteo）】</p>
-        <ul>
-            <li>風向、風速</li>
-            <li>予想積算日射量</li>
-            <li>過去の気象データ（今後対応予定）</li>
-            <li>積算日射量（今後対応予定）</li>
-            <li>光合成推定に活用する気象データ（今後対応予定）</li>
-        </ul>
-
-        <p>【U-Tech内部計算】</p>
-        <ul>
-            <li>日の出、日の入り</li>
-            <li>昼の長さ、夜の長さ</li>
-            <li>月齢</li>
-            <li>月相</li>
-            <li>旧暦</li>
-            <li>潮名（大潮、中潮、小潮など）</li>
-        </ul>
-
-        <p>【利用条件について】</p>
-        <p>U-Techは研究・実証を目的とした非商用システムです。<br>
-        オープンメテオ（Open-Meteo）は、非商用利用で利用可能な気象データサービスを活用しています。<br>
-        外部データの取得先や利用条件は、将来変更される場合があります。</p>
-
-        <p>【注意事項】</p>
-        <p>外部データは取得先の仕様変更や通信状況により、一時的に表示できない場合があります。<br>
-        気象情報は参考情報であり、実際の気象状況と異なる場合があります。</p>
-
-        <h3>サーバー情報</h3>
-        <ul>
-            <li>OS：Ubuntu</li>
-            <li>Webサーバー：Apache</li>
-            <li>PHP</li>
-            <li>MariaDB</li>
-        </ul>
-        <p>※詳細は作成中</p>
-
-        <h3>GitHubリポジトリ</h3>
-        <p>現在整備中です。</p>
-
-        <h3>API一覧</h3>
-        <p>現在整備中です。</p>
-
-        <h3>センサー一覧</h3>
-        <ul>
-            <li>P01：室内温湿度</li>
-            <li>P11：屋外温湿度</li>
-            <li>P21：室内CO₂</li>
-            <li>P26：屋外CO₂</li>
-            <li>P31：室内日射量</li>
-            <li>P36：屋外日射量</li>
-            <li>P91：電圧</li>
-        </ul>
-        <p>※詳細は作成中</p>
-
-        <h3>データベース構成</h3>
-        <p>U-Techでは、MariaDBを使用して、測定データ、アラート設定、アラート履歴などを管理しています。</p>
-
-        <ul>
-            <li><strong>measurements</strong>：温度、湿度、CO2、日射量、電圧などの測定データを保存</li>
-            <li><strong>alert_settings</strong>：ユーザーごとのアラート条件、通知先、通知間隔などを保存</li>
-            <li><strong>alert_history</strong>：アラートが発生した日時、内容、通知結果などを保存</li>
-            <li><strong>smtp_config</strong>：メール通知に使用するSMTP設定を保存</li>
-        </ul>
-
-        <p>測定データは、主に <code>user_id</code>、<code>point_id</code>、<code>recorded_at</code> を基準に管理しています。</p>
-
-        <ul>
-            <li><strong>user_id</strong>：測定対象や利用者を識別するID（例：T0001、NS001 など）</li>
-            <li><strong>point_id</strong>：測定地点やセンサー種別を識別するID（例：P01、P11、P21、P31 など）</li>
-            <li><strong>recorded_at</strong>：測定日時</li>
-        </ul>
-
-        <p>代表的な point_id は以下のとおりです。</p>
-
-        <ul>
-            <li><strong>P01</strong>：室内 温湿度</li>
-            <li><strong>P11</strong>：外気 温湿度</li>
-            <li><strong>P21</strong>：室内 CO2</li>
-            <li><strong>P26</strong>：外気 CO2</li>
-            <li><strong>P31〜P34</strong>：日射量</li>
-            <li><strong>P91</strong>：電圧</li>
-        </ul>
-
-        <p>なお、データベース内の測定データは、現在、直近1年分を保存対象としています。</p>
-
-        <h3>更新履歴</h3>
-        <p>現在整備中です。</p>
-
-        <h3>バージョン情報</h3>
-        <p>Ver. 0.x（開発中）</p>
-
-        <h3>今後の開発予定</h3>
-        <ul>
-            <li>機能改善</li>
-            <li>新規センサー対応</li>
-            <li>外部サービス連携</li>
-            <li>UI改善</li>
-        </ul>
-        <p>※内容は随時更新予定</p>
+                <h4>システム構成</h4>
+                <ul>
+                    <li>Ubuntu</li>
+                    <li>Apache</li>
+                    <li>PHP</li>
+                    <li>MariaDB</li>
+                </ul>
+            </div>
+        </details>
     </div>
 </section>
 
@@ -11103,17 +11002,55 @@ body.yui-tech-app .logo-subtitle { font-size:16px; }
 body.yui-tech-app .tab-button-score,
 body.yui-tech-app .tab-button-alert,
 body.yui-tech-app .tab-button-analysis,
-body.yui-tech-app .tab-button-guide,
 body.yui-tech-app #tab-score,
 body.yui-tech-app #tab-alert,
 body.yui-tech-app #tab-analysis,
-body.yui-tech-app #tab-guide,
-body.yui-tech-app #tab-system,
 body.yui-tech-app .outside-source-setting,
 body.yui-tech-app .status-group-vpd-eval,
 body.yui-tech-app #solarNow,
 body.yui-tech-app #co2Now { display:none !important; }
 body.yui-tech-app .yui-hidden-card { display:none !important; }
+body.yui-tech-app .yui-about-content {
+    max-width:900px;
+    font-size:15px;
+    overflow-wrap:anywhere;
+}
+body.yui-tech-app .yui-about-section {
+    margin:0 0 12px;
+    padding:12px 14px;
+    border:1px solid #bdd3d7;
+    border-radius:7px;
+    background:rgba(255,255,255,0.72);
+}
+body.yui-tech-app .yui-about-section h3 {
+    margin-top:0;
+}
+body.yui-tech-app .yui-system-info {
+    margin-top:16px;
+    border:1px solid #aebfc4;
+    border-radius:7px;
+    background:#f7fafb;
+}
+body.yui-tech-app .yui-system-info summary {
+    padding:11px 14px;
+    color:#173d45;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+}
+body.yui-tech-app .yui-system-info-content {
+    padding:0 14px 12px;
+}
+@media (max-width:600px) {
+    body.yui-tech-app .yui-about-content {
+        padding:8px 0;
+        font-size:15px;
+        line-height:1.75;
+    }
+    body.yui-tech-app .yui-about-section {
+        padding:11px 12px;
+    }
+}
 body.yui-tech-app .status-group-mobile-qr {
     display:flex !important;
 }
@@ -11277,7 +11214,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         });
     }
 
-    function configureYuiTabs(){ ["score", "alert", "analysis", "guide", "system"].forEach(name=>{ const panel = document.getElementById("tab-" + name); if(panel) panel.classList.remove("active"); }); }
+    function configureYuiTabs(){ ["score", "alert", "analysis", "guide"].forEach(name=>{ const panel = document.getElementById("tab-" + name); if(panel) panel.classList.remove("active"); }); }
 
     function configureYuiCharts(){
         ["solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "reviewSolarChart", "reviewCo2Chart", "reviewCo2OutsideChart", "reviewCo2DiffChart", "co2ChartP22", "co2DiffChartP21P22", "co2ChartP27", "co2DiffChartP26P27", "solarChartP32", "solarDiffChartP31P32", "voltChart"].forEach(hideCanvasCard);
