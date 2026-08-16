@@ -11478,8 +11478,8 @@ body.yui-tech-app .yui-current-status .status-box {
         rows.forEach(row=>{
             const dateKey = String(row.recorded_at || "").slice(0, 10);
             if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+            if(!isFiniteRainfallValue(row.rainfall_interval)) return;
             const rainfall = Number(row.rainfall_interval);
-            if(!Number.isFinite(rainfall)) return;
             const current = rainMap.get(dateKey) || { total:0, count:0 };
             current.total += rainfall;
             current.count += 1;
@@ -11566,10 +11566,12 @@ body.yui-tech-app .yui-current-status .status-box {
         const cumulativeData = [];
         rows.forEach(row=>{
             const x = new Date(row.recorded_at).getTime();
-            const interval = Number(row.rainfall_interval);
-            const cumulative = Number(row.rainfall_cumulative);
-            if(Number.isFinite(x) && Number.isFinite(interval)) intervalData.push({ x:x, y:interval });
-            if(Number.isFinite(x) && Number.isFinite(cumulative)) cumulativeData.push({ x:x, y:cumulative });
+            if(Number.isFinite(x) && isFiniteRainfallValue(row.rainfall_interval)){
+                intervalData.push({ x:x, y:Number(row.rainfall_interval) });
+            }
+            if(Number.isFinite(x) && isFiniteRainfallValue(row.rainfall_cumulative)){
+                cumulativeData.push({ x:x, y:Number(row.rainfall_cumulative) });
+            }
         });
         if(!intervalData.length && !cumulativeData.length) return;
         const options = baseOptions(minTime, maxTime);
