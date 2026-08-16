@@ -11162,6 +11162,21 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         padding-bottom:9px;
     }
 }
+@media (max-width:600px) and (orientation:portrait) {
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-label-rain,
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-value[id$="Rain"] {
+        box-sizing:border-box;
+        min-height:38px;
+        display:flex;
+        align-items:center;
+    }
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-label-rain {
+        justify-content:flex-start;
+    }
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-value[id$="Rain"] {
+        justify-content:center;
+    }
+}
 @media (max-width: 600px) {
     body.yui-tech-app .yui-daily-panel { max-width:calc(100vw - 24px); overflow-x:auto; }
     body.yui-tech-app .yui-daily-table { min-width:420px; }
