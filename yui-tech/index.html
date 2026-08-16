@@ -2339,17 +2339,22 @@ body.data-export-active .control-panel {
 
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
-<div class="status-group status-group-current">
-<div class="status-group-title">現在_屋内(P01)</div>
+<div class="status-group status-group-current yui-current-status">
+<div class="status-group-title">現在状況</div>
+<div class="yui-current-status-grid">
+<div class="yui-current-status-section">
+<div class="yui-current-status-title">屋内（P01）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNow">-</span>%</div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
 </div>
-<div class="status-group status-group-current">
-<div class="status-group-title">現在_屋外(P11)</div>
+<div class="yui-current-status-section">
+<div class="yui-current-status-title">屋外（P11）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNowP11">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNowP11">-</span>%</div>
+</div>
+</div>
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">屋内（P01）</div>
@@ -10980,7 +10985,45 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     background:linear-gradient(180deg, #f2f9fe, #dff0fb);
     color:#1b5f86;
 }
+body.yui-tech-app .yui-current-status {
+    width:430px;
+    max-width:calc(100vw - 24px);
+}
+body.yui-tech-app .yui-current-status-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    width:100%;
+}
+body.yui-tech-app .yui-current-status-section {
+    display:grid;
+    gap:5px;
+    min-width:0;
+    padding:0 8px;
+}
+body.yui-tech-app .yui-current-status-section:first-child {
+    padding-left:0;
+    border-right:1px solid #bcc8d4;
+}
+body.yui-tech-app .yui-current-status-section:last-child {
+    padding-right:0;
+}
+body.yui-tech-app .yui-current-status-title {
+    font-size:12px;
+    font-weight:800;
+    line-height:1.2;
+    color:#263f38;
+}
+body.yui-tech-app .yui-current-status .status-box {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    padding:5px 6px;
+    white-space:nowrap;
+}
 @media (max-width:600px) {
+    body.yui-tech-app .yui-current-status {
+        width:100%;
+    }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
         grid-template-columns:60px repeat(5, 58px);
     }
@@ -11053,7 +11096,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         text(".farm-calendar-title", "地域こよみ");
         normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
-        text(".status-group-current .status-group-title", "現在_屋内(P01)");
+        text(".status-group-current .status-group-title", "現在状況");
         document.querySelectorAll(".status-group-temp-summary .status-group-title").forEach((title, index)=>{ title.textContent = index === 0 ? "屋内（P01）" : "屋外（P11）"; });
         const solarBox = document.getElementById("solarNow"); if(solarBox) hideElement(solarBox.closest(".status-box"));
         const co2Box = document.getElementById("co2Now"); if(co2Box) hideElement(co2Box.closest(".status-box"));
