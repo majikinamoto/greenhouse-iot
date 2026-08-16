@@ -2259,6 +2259,82 @@ body.data-export-active .control-panel {
         box-sizing:border-box;
     }
 }
+.mobile-share-qr-control {
+    display:none;
+}
+
+.mobile-share-qr-image-home {
+    display:flex;
+    justify-content:center;
+    width:100%;
+}
+
+.mobile-share-qr-dialog {
+    box-sizing:border-box;
+    width:min(330px, calc(100vw - 24px));
+    max-height:calc(100vh - 24px);
+    margin:auto;
+    padding:16px;
+    border:2px solid #83c2ca;
+    border-radius:10px;
+    background:#eef7f8;
+    color:#1f3d33;
+    text-align:center;
+    overflow-y:auto;
+}
+
+.mobile-share-qr-dialog::backdrop {
+    background:rgba(18, 34, 42, 0.55);
+}
+
+.mobile-share-qr-title {
+    margin-bottom:12px;
+    font-size:16px;
+    font-weight:800;
+}
+
+.mobile-share-qr-image-slot {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.mobile-share-qr-dialog .mobile-qr-image {
+    width:min(72vw, 60vh, 280px);
+    height:min(72vw, 60vh, 280px);
+    max-width:280px;
+    max-height:280px;
+    padding:8px;
+}
+
+.mobile-share-qr-button,
+.mobile-share-qr-close {
+    min-height:40px;
+    padding:7px 14px;
+    border:1px solid #5a9ca5;
+    border-radius:7px;
+    background:#ffffff;
+    color:#24545a;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.mobile-share-qr-close {
+    margin-top:12px;
+}
+
+@media (max-width:600px), (max-width:900px) and (pointer:coarse) {
+    .mobile-share-qr-control {
+        display:flex;
+        justify-content:flex-end;
+        margin:4px 10px 6px;
+    }
+
+    .status-group-mobile-qr {
+        display:none !important;
+    }
+}
 </style>
 </head>
 
@@ -2325,6 +2401,15 @@ body.data-export-active .control-panel {
 </div>
 
 <div id="message" style="color:#666;"></div>
+
+<div class="mobile-share-qr-control">
+    <button id="mobileShareQrButton" class="mobile-share-qr-button" type="button" aria-expanded="false" aria-controls="mobileShareQrDialog" onclick="toggleMobileShareQr()">共有QR</button>
+</div>
+<dialog id="mobileShareQrDialog" class="mobile-share-qr-dialog" aria-labelledby="mobileShareQrTitle">
+    <div id="mobileShareQrTitle" class="mobile-share-qr-title">この画面を共有</div>
+    <div id="mobileShareQrImageSlot" class="mobile-share-qr-image-slot"></div>
+    <button class="mobile-share-qr-close" type="button" onclick="closeMobileShareQr()">閉じる</button>
+</dialog>
 
 <div class="tab-nav" role="tablist" aria-label="画面切り替え">
     <button class="tab-button tab-button-monitor active" type="button" role="tab" aria-selected="true" aria-controls="tab-monitor" onclick="switchTab('monitor')">メイン</button>
@@ -2423,7 +2508,9 @@ body.data-export-active .control-panel {
 </div>
 <div class="status-group status-group-mobile-qr">
 <div class="status-group-title">スマホで開く</div>
+<div id="mobileQrImageHome" class="mobile-share-qr-image-home">
 <img id="mobileQrImage" class="mobile-qr-image" alt="スマホ用URL QRコード">
+</div>
 <div class="mobile-qr-note">スマホで読み取って表示</div>
 </div>
 </div>
@@ -3634,6 +3721,55 @@ const RAINFALL_COEFFICIENT_STORAGE_KEY = "utechRainfallTipCoefficient";
 const DEFAULT_RAINFALL_COEFFICIENT = 0.4721;
 let selectedUtechAreaKey = "naha";
 
+function restoreMobileShareQrImage(){
+    const qrImage = document.getElementById("mobileQrImage");
+    const qrImageHome = document.getElementById("mobileQrImageHome");
+    const shareButton = document.getElementById("mobileShareQrButton");
+    if(qrImage && qrImageHome && !qrImageHome.contains(qrImage)){
+        qrImageHome.appendChild(qrImage);
+    }
+    if(shareButton){
+        shareButton.setAttribute("aria-expanded", "false");
+    }
+}
+
+function openMobileShareQr(){
+    const dialog = document.getElementById("mobileShareQrDialog");
+    const qrImage = document.getElementById("mobileQrImage");
+    const imageSlot = document.getElementById("mobileShareQrImageSlot");
+    const shareButton = document.getElementById("mobileShareQrButton");
+    if(!dialog || !qrImage || !imageSlot) return;
+
+    imageSlot.appendChild(qrImage);
+    if(shareButton){
+        shareButton.setAttribute("aria-expanded", "true");
+    }
+    if(typeof dialog.showModal === "function"){
+        if(!dialog.open) dialog.showModal();
+    }else{
+        dialog.setAttribute("open", "");
+    }
+}
+
+function closeMobileShareQr(){
+    const dialog = document.getElementById("mobileShareQrDialog");
+    if(dialog && dialog.open && typeof dialog.close === "function"){
+        dialog.close();
+    }else{
+        if(dialog) dialog.removeAttribute("open");
+        restoreMobileShareQrImage();
+    }
+}
+
+function toggleMobileShareQr(){
+    const dialog = document.getElementById("mobileShareQrDialog");
+    if(dialog && dialog.hasAttribute("open")){
+        closeMobileShareQr();
+    }else{
+        openMobileShareQr();
+    }
+}
+
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
@@ -3655,9 +3791,20 @@ window.addEventListener("DOMContentLoaded", ()=>{
     const qrImage = document.getElementById("mobileQrImage");
     if(qrImage){
         qrImage.src =
-            "https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=" +
+            "https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=" +
             encodeURIComponent("http://163.43.29.108/yui-tech/");
     }
+
+    const shareDialog = document.getElementById("mobileShareQrDialog");
+    if(shareDialog){
+        shareDialog.addEventListener("close", restoreMobileShareQrImage);
+    }
+    window.addEventListener("resize", ()=>{
+        const mobileShareQuery = window.matchMedia("(max-width:600px), (max-width:900px) and (pointer:coarse)");
+        if(!mobileShareQuery.matches){
+            closeMobileShareQr();
+        }
+    });
 
     const userIdInput = document.getElementById("userId");
     const userIdHistorySelect = document.getElementById("userIdHistorySelect");
@@ -10897,6 +11044,11 @@ body.yui-tech-app .status-group-mobile-qr {
         display:none !important;
         width:150px;
         max-width:calc(100vw - 24px);
+    }
+}
+@media (max-width:900px) and (pointer:coarse) {
+    body.yui-tech-app .status-group-mobile-qr {
+        display:none !important;
     }
 }
 body.yui-tech-app .yui-daily-panel {
