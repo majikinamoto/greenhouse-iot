@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>U-Tech Monitor</title>
+<title>Yui-Tech Monitor</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" crossorigin="anonymous"></script>
@@ -2273,10 +2273,10 @@ body.data-export-active .control-panel {
     <div class="logo-title-area">
         <div class="logo-title-row">
             <div class="logo-title">Yui-Tech</div>
-            <a class="site-switch-link" href="../" aria-label="U-Techへ移動">U-Techへ</a>
             <button class="logo-info-button" type="button" aria-label="Yui-Techの説明" onclick="toggleLogoInfo()">ℹ️</button>
+            <a class="site-switch-link" href="../" aria-label="U-Techへ移動">U-Techへ移動</a>
             <div id="logoInfoPopup" class="logo-info-popup">
-                <div>Yui-Tech Environment Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に測定・可視化し、現地の環境変化を把握するためのモニタリングシステムです。</div>
+                <div>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に可視化し、その場にいる方々や支援にあたる方々が、周囲の環境を確認するためのシステムです。</div>
             </div>
         </div>
         <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
@@ -3228,7 +3228,7 @@ body.data-export-active .control-panel {
 <section id="tab-guide" class="tab-panel tab-panel-guide" role="tabpanel">
     <div class="guide-content">
         <h3>Yui-Techのコンセプト</h3>
-        <p>Yui-Tech Environment Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に測定・可視化し、現地の環境変化を把握するためのモニタリングシステムです。
+        <p>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に測定・可視化し、現地の環境変化を把握するためのモニタリングシステムです。
         温度、湿度、露点温度、飽差、雨量などのデータを確認し、地域の環境状態を継続的に把握することを目的としています。</p>
 
 
@@ -11156,7 +11156,7 @@ body.yui-tech-app .status-group-temp-summary {
     padding:7px 8px 8px;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-    grid-template-columns:36px repeat(7, 60px);
+    grid-template-columns:36px repeat(5, 60px);
     gap:4px;
     width:max-content;
     min-width:100%;
@@ -11212,7 +11212,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 }
 @media (max-width:600px) {
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-        grid-template-columns:36px repeat(7, 58px);
+        grid-template-columns:36px repeat(5, 58px);
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
         width:58px;
@@ -11248,10 +11248,10 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     }
 
     function configureYuiLabels(){
-        document.title = "Yui-Tech Environment Monitor";
+        document.title = "Yui-Tech Monitor";
         const logoInfoPopup = document.getElementById("logoInfoPopup");
         if(logoInfoPopup){
-            logoInfoPopup.innerHTML = '<div>Yui-Tech Environment Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に測定・可視化し、現地の環境変化を把握するためのモニタリングシステムです。</div>';
+            logoInfoPopup.innerHTML = '<div>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を継続的に可視化し、その場にいる方々や支援にあたる方々が、周囲の環境を確認するためのシステムです。</div>';
         }
         const logoInfoButton = document.querySelector(".logo-info-button");
         if(logoInfoButton){
@@ -11259,7 +11259,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         }
         text(".logo-u", "Y");
         text(".logo-title", "Yui-Tech");
-        text(".logo-subtitle", "Yui-Tech Environment Monitor");
+        text(".logo-subtitle", "Yui-Tech Monitor");
         text(".farm-calendar-title", "地域こよみ");
         normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
@@ -11280,7 +11280,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     function configureYuiTabs(){ ["score", "alert", "analysis", "guide", "system"].forEach(name=>{ const panel = document.getElementById("tab-" + name); if(panel) panel.classList.remove("active"); }); }
 
     function configureYuiCharts(){
-        ["outsideDiffChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "reviewOutsideDiffChart", "reviewSolarChart", "reviewCo2Chart", "reviewCo2OutsideChart", "reviewCo2DiffChart", "co2ChartP22", "co2DiffChartP21P22", "co2ChartP27", "co2DiffChartP26P27", "solarChartP32", "solarDiffChartP31P32", "voltChart"].forEach(hideCanvasCard);
+        ["solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "reviewSolarChart", "reviewCo2Chart", "reviewCo2OutsideChart", "reviewCo2DiffChart", "co2ChartP22", "co2DiffChartP21P22", "co2ChartP27", "co2DiffChartP26P27", "solarChartP32", "solarDiffChartP31P32", "voltChart"].forEach(hideCanvasCard);
         const p01Title = document.querySelector("#tempChartP01")?.closest(".grid > div")?.querySelector("h4 span"); if(p01Title) p01Title.textContent = "室内温湿度（P01）";
         const p11Title = document.querySelector("#tempChartP11")?.closest(".grid > div")?.querySelector("h4 span"); if(p11Title) p11Title.textContent = "屋外温湿度（P11）";
         const p02Title = document.querySelector("#tempChartP02")?.closest(".grid > div")?.querySelector("h4 span"); if(p02Title) p02Title.textContent = "室内温湿度（確認用 P02）";
@@ -11313,14 +11313,14 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         grid.classList.add("yui-seven-day-temp-grid");
         if(document.getElementById(`${prefix}Day0Label`) && (prefix !== "outside" || document.getElementById(`${prefix}Day0Rain`))) return;
         let html = '<div></div>';
-        for(let i = 0; i < 7; i++){
+        for(let i = 0; i < 5; i++){
             html += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
         }
         const rows = [["Max", "最高"], ["Min", "最低"], ["Avg", "平均"]];
         if(prefix === "outside") rows.push(["Rain", "一日降水量"]);
         rows.forEach(([key, label])=>{
             html += `<div class="status-temp-label">${label}</div>`;
-            for(let i = 0; i < 7; i++){
+            for(let i = 0; i < 5; i++){
                 html += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
             }
         });
@@ -11334,7 +11334,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 
     function resetYuiSevenDaySummary(){
         ["house", "outside"].forEach(prefix=>{
-            for(let i = 0; i < 7; i++){
+            for(let i = 0; i < 5; i++){
                 const label = document.getElementById(`${prefix}Day${i}Label`);
                 if(label) label.textContent = "-";
                 ["Max", "Min", "Avg", "Rain"].forEach(key=>{
@@ -11380,8 +11380,8 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     function renderYuiSevenDaySummary(prefix, days){
         ensureYuiSevenDaySummaryCards();
         const dayMap = new Map((days || []).map(day => [day.date, day]));
-        for(let i = 0; i < 7; i++){
-            const dateKey = getYuiJstDateKey(6 - i);
+        for(let i = 0; i < 5; i++){
+            const dateKey = getYuiJstDateKey(4 - i);
             const day = dayMap.get(dateKey);
             const label = document.getElementById(`${prefix}Day${i}Label`);
             if(label) label.textContent = formatYuiSevenDayLabel(dateKey);
@@ -11412,7 +11412,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     }
 
     async function fetchYuiRainfallDailyStats(userId){
-        const start = getYuiJstDateKey(6) + " 00:00:00";
+        const start = getYuiJstDateKey(4) + " 00:00:00";
         const end = getYuiJstNowSqlDateTime();
         const url = "get_data.php?user_id=" + encodeURIComponent(userId) + "&point_id=P41&start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
         const response = await fetch(url, { cache:"no-store" });
@@ -11436,8 +11436,8 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 
     function renderYuiRainfallSevenDaySummary(rainMap){
         ensureYuiSevenDaySummaryCards();
-        for(let i = 0; i < 7; i++){
-            const dateKey = getYuiJstDateKey(6 - i);
+        for(let i = 0; i < 5; i++){
+            const dateKey = getYuiJstDateKey(4 - i);
             const day = rainMap instanceof Map ? rainMap.get(dateKey) : null;
             const cell = document.getElementById(`outsideDay${i}Rain`);
             if(cell) cell.textContent = day && day.count > 0 ? formatYuiRainfallDailyValue(day.total) : "-";
@@ -11792,7 +11792,8 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 
             tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
             tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
-            allCharts = [tempChartP01, tempChartP11, rainChart].filter(Boolean);
+            outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
+            allCharts = [tempChartP01, tempChartP11, outsideDiffChart, rainChart].filter(Boolean);
             allCharts.forEach(saveInitialScaleLimits);
             await loadRainfallData(userId, rainDisplayHours, rainfallRequestId);
             applyMobileChartRanges(chartMinTime, now);
@@ -11834,6 +11835,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             reviewCharts = [
                 configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
                 configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
+                configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime)),
                 configureReviewChart(createVaporChart("reviewVaporChart", p01, minTime, maxTime))
             ].filter(Boolean);
             reviewDifP01 = p01;

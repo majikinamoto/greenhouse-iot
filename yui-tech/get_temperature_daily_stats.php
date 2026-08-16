@@ -53,7 +53,7 @@ try {
             WHERE user_id = ?
               AND point_id = ?
               AND temperature IS NOT NULL
-              AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+              AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
               AND recorded_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
             GROUP BY DATE(recorded_at)";
 
@@ -75,7 +75,7 @@ try {
     }
 
     $rows = [];
-    for ($offset = 0; $offset < 7; $offset++) {
+    for ($offset = 0; $offset < 5; $offset++) {
         $dateKey = $today->modify('-' . $offset . ' days')->format('Y-m-d');
         $rows[] = $statsByDate[$dateKey] ?? [
             'date' => $dateKey,
