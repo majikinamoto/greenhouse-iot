@@ -11156,7 +11156,7 @@ body.yui-tech-app .status-group-temp-summary {
     padding:7px 8px 8px;
 }
 body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-    grid-template-columns:36px repeat(5, 60px);
+    grid-template-columns:60px repeat(5, 60px);
     gap:4px;
     width:max-content;
     min-width:100%;
@@ -11212,7 +11212,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 }
 @media (max-width:600px) {
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid {
-        grid-template-columns:36px repeat(5, 58px);
+        grid-template-columns:60px repeat(5, 58px);
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
         width:58px;
@@ -11300,7 +11300,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         if(index === 1) return "前日（" + label + "）";
         return label;
     }
-    function formatYuiNumber(value){ const number = Number(value); return Number.isFinite(number) ? number.toFixed(1) + "℃" : "-"; }
+    function formatYuiNumber(value){ const number = Number(value); return Number.isFinite(number) ? number.toFixed(1) : "-"; }
 
     function removeYuiDailyPanel(){
         const panel = document.getElementById("yuiDailyPanel");
@@ -11316,8 +11316,8 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         for(let i = 0; i < 5; i++){
             html += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
         }
-        const rows = [["Max", "最高"], ["Min", "最低"], ["Avg", "平均"]];
-        if(prefix === "outside") rows.push(["Rain", "一日降水量"]);
+        const rows = [["Max", "最高(℃)"], ["Min", "最低(℃)"], ["Avg", "平均(℃)"]];
+        if(prefix === "outside") rows.push(["Rain", "雨量(mm)"]);
         rows.forEach(([key, label])=>{
             html += `<div class="status-temp-label">${label}</div>`;
             for(let i = 0; i < 5; i++){
@@ -11408,7 +11408,9 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     }
 
     function formatYuiRainfallDailyValue(value){
-        return typeof formatRainfallValue === "function" ? formatRainfallValue(value) : (Number.isFinite(Number(value)) ? Number(value).toFixed(2) + "mm" : "-");
+        if(value === null || value === undefined || value === "") return "-";
+        const number = Number(value);
+        return Number.isFinite(number) ? String(Math.round(number)) : "-";
     }
 
     async function fetchYuiRainfallDailyStats(userId){

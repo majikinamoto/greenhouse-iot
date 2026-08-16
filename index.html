@@ -1728,7 +1728,7 @@ body.data-export-active .control-panel {
 
 .status-temp-grid {
     display:grid;
-    grid-template-columns:32px repeat(3, 62px);
+    grid-template-columns:60px repeat(3, 62px);
     gap:4px;
     align-items:center;
     margin-top:6px;
@@ -2067,7 +2067,7 @@ body.data-export-active .control-panel {
     }
 
     .status-temp-grid {
-        grid-template-columns:32px repeat(3, minmax(0, 1fr));
+        grid-template-columns:60px repeat(3, minmax(0, 1fr));
     }
 
     .status-temp-value {
@@ -2363,15 +2363,15 @@ body.data-export-active .control-panel {
 <div class="status-temp-col-heading">前々日</div>
 <div class="status-temp-col-heading">前日</div>
 <div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高</div>
+<div class="status-temp-row-heading">最高(℃)</div>
 <div class="status-box temp-high status-temp-value"><span id="houseTwoDaysAgoMax">-</span></div>
 <div class="status-box temp-high status-temp-value"><span id="houseYesterdayMax">-</span></div>
 <div class="status-box temp-high status-temp-value"><span id="houseTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低</div>
+<div class="status-temp-row-heading">最低(℃)</div>
 <div class="status-box temp-low status-temp-value"><span id="houseTwoDaysAgoMin">-</span></div>
 <div class="status-box temp-low status-temp-value"><span id="houseYesterdayMin">-</span></div>
 <div class="status-box temp-low status-temp-value"><span id="houseTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均</div>
+<div class="status-temp-row-heading">平均(℃)</div>
 <div class="status-box average-box status-temp-value"><span id="houseTwoDaysAgoAvg">-</span></div>
 <div class="status-box average-box status-temp-value"><span id="houseYesterdayAvg">-</span></div>
 <div class="status-box average-box status-temp-value"><span id="houseTodayAvg">-</span></div>
@@ -2384,18 +2384,22 @@ body.data-export-active .control-panel {
 <div class="status-temp-col-heading">前々日</div>
 <div class="status-temp-col-heading">前日</div>
 <div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高</div>
+<div class="status-temp-row-heading">最高(℃)</div>
 <div class="status-box temp-high status-temp-value"><span id="outsideTwoDaysAgoMax">-</span></div>
 <div class="status-box temp-high status-temp-value"><span id="outsideYesterdayMax">-</span></div>
 <div class="status-box temp-high status-temp-value"><span id="outsideTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低</div>
+<div class="status-temp-row-heading">最低(℃)</div>
 <div class="status-box temp-low status-temp-value"><span id="outsideTwoDaysAgoMin">-</span></div>
 <div class="status-box temp-low status-temp-value"><span id="outsideYesterdayMin">-</span></div>
 <div class="status-box temp-low status-temp-value"><span id="outsideTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均</div>
+<div class="status-temp-row-heading">平均(℃)</div>
 <div class="status-box average-box status-temp-value"><span id="outsideTwoDaysAgoAvg">-</span></div>
 <div class="status-box average-box status-temp-value"><span id="outsideYesterdayAvg">-</span></div>
 <div class="status-box average-box status-temp-value"><span id="outsideTodayAvg">-</span></div>
+<div class="status-temp-row-heading">雨量(mm)</div>
+<div class="status-box status-temp-value"><span id="outsideTwoDaysAgoRain">-</span></div>
+<div class="status-box status-temp-value"><span id="outsideYesterdayRain">-</span></div>
+<div class="status-box status-temp-value"><span id="outsideTodayRain">-</span></div>
 </div>
 </div>
 <div class="status-group status-group-vpd-eval">
@@ -5663,7 +5667,7 @@ function renderDailyTempStats(prefix, stats){
     Object.keys(values).forEach(key=>{
         const el = document.getElementById(prefix + key);
         if(el){
-            el.innerText = values[key] === null ? "-" : values[key].toFixed(1) + "℃";
+            el.innerText = values[key] === null ? "-" : values[key].toFixed(1);
         }
     });
 }
@@ -7881,7 +7885,14 @@ function parseData(data, minTime){
 }
 
 function resetRainfallDailyTotals(){
-    ["rainDayBeforeYesterday", "rainYesterday", "rainToday"].forEach(id=>{
+    [
+        "rainDayBeforeYesterday",
+        "rainYesterday",
+        "rainToday",
+        "outsideTwoDaysAgoRain",
+        "outsideYesterdayRain",
+        "outsideTodayRain"
+    ].forEach(id=>{
         const element = document.getElementById(id);
         if(element) element.innerText = "-";
     });
@@ -7981,6 +7992,12 @@ function formatRainfallValue(value){
     return Number.isFinite(number) ? number.toFixed(2) + "mm" : "-";
 }
 
+function formatDailySummaryRainfallValue(value){
+    if(value === null || value === undefined || value === "") return "-";
+    const number = Number(value);
+    return Number.isFinite(number) ? String(Math.round(number)) : "-";
+}
+
 function isFiniteRainfallValue(value){
     return value !== null &&
         value !== undefined &&
@@ -7998,6 +8015,17 @@ function renderRainfallDailyTotals(totals){
     Object.keys(values).forEach(id=>{
         const element = document.getElementById(id);
         if(element) element.innerText = formatRainfallValue(values[id]);
+    });
+
+    const summaryValues = {
+        outsideTwoDaysAgoRain:totals ? totals.day_before_yesterday : null,
+        outsideYesterdayRain:totals ? totals.yesterday : null,
+        outsideTodayRain:totals ? totals.today : null
+    };
+
+    Object.keys(summaryValues).forEach(id=>{
+        const element = document.getElementById(id);
+        if(element) element.innerText = formatDailySummaryRainfallValue(summaryValues[id]);
     });
 }
 
