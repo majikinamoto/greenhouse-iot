@@ -2343,10 +2343,6 @@ body.data-export-active .control-panel {
 <div class="status-group-title">現在_屋内(P01)</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNow">-</span>%</div>
-<div class="status-break"></div>
-<div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
-<div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
-<div class="status-break"></div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
 </div>
@@ -2354,9 +2350,6 @@ body.data-export-active .control-panel {
 <div class="status-group-title">現在_屋外(P11)</div>
 <div class="status-box">🌡️ 温度：<span id="tempNowP11">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNowP11">-</span>%</div>
-<div class="status-break"></div>
-<div class="status-box">露点温度：<span id="dewNowP11">-</span>℃</div>
-<div class="status-box">飽差：<span id="vpdNowP11">-</span>g/㎥</div>
 </div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">屋内（P01）</div>
@@ -2844,16 +2837,6 @@ body.data-export-active .control-panel {
         </div>
 
         <div>
-            <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
-            <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin"> ～
-                <input class="axis-input" type="number" id="reviewVaporMax">
-                <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
-            </div>
-            <div class="chart-container"><canvas id="reviewVaporChart"></canvas></div>
-        </div>
-
-        <div>
             <h4><span>日射量（P31）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
                 <span class="axis-label-solar">日射軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewSolarMin"> ～
@@ -3082,26 +3065,6 @@ body.data-export-active .control-panel {
 <div class="grid">
 
     <div>
-        <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP12" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP12" value="100"></span>
-            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP12" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP12" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP12,'P12')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="tempChartP12"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>メンテ用（P11−P12_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMinP11P12" value="-5"> ～
-            <input class="axis-input" type="number" id="diffMaxP11P12" value="5">
-            <button onclick="applyP11P12DiffYAxis(diffChartP11P12)">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="diffChartP11P12"></canvas></div>
-    </div>
-
-    <div>
         <h4><span>メンテ用室内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
@@ -3122,41 +3085,23 @@ body.data-export-active .control-panel {
     </div>
 
     <div>
-        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="chart-container"><canvas id="vaporChartP11"></canvas></div>
+        <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP12" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP12" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP12" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP12" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP12,'P12')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="tempChartP12"></canvas></div>
     </div>
 
     <div>
-        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <h4><span>メンテ用（P11−P12_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-range"><span class="axis-label-volt">飽差の目安範囲：</span>
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="handleVpdTargetRangeChange()">
-            ～
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
-            <span class="guide-range-unit">g/m³</span></span>
-            <button type="button" onclick="resetVpdTargetRange()">初期値に戻す</button>
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMinP11P12" value="-5"> ～
+            <input class="axis-input" type="number" id="diffMaxP11P12" value="5">
+            <button onclick="applyP11P12DiffYAxis(diffChartP11P12)">縦軸反映</button>
         </div>
-        <div class="chart-container"><canvas id="vaporChart"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>露点温度（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMinP11"> ～
-            <input class="axis-input" type="number" id="dewMaxP11">
-            <button onclick="applySingleYAxis(dewChartP11,'dew',getDewAxisP11())">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="dewChartP11"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>露点温度（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMin"> ～
-            <input class="axis-input" type="number" id="dewMax">
-            <button onclick="applySingleYAxis(dewChart,'dew')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="dewChart"></canvas></div>
+        <div class="chart-container"><canvas id="diffChartP11P12"></canvas></div>
     </div>
 
     <div>
@@ -3369,7 +3314,7 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
-let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
+let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart;
 let rainChart = null;
 let rainfallRequestSequence = 0;
 let co2Chart, co2OutsideChart, co2DiffChart, co2ChartP22, co2DiffChartP21P22, co2ChartP27, co2DiffChartP26P27;
@@ -3427,7 +3372,6 @@ let co2DiffMax = 250;
 const reviewAxisDefaults = {
     tempHum:{ humMin:40, humMax:100, tempMin:20, tempMax:40 },
     outsideDiff:{ min:-1, max:5 },
-    vapor:{ min:undefined, max:undefined },
     solar:{ min:undefined, max:undefined },
     co2:{ min:200, max:500 },
     co2Outside:{ min:200, max:500 },
@@ -3495,20 +3439,6 @@ const mainChartConfigs = [
             { userId:context.userId, pointId:"P01" },
             { userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }
         ]
-    },
-    {
-        key:"vapor",
-        canvasId:"vaporChart",
-        title:"飽和水蒸気量/水蒸気量/飽差",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
-    },
-    {
-        key:"dewPoint",
-        canvasId:"dewChart",
-        title:"露点温度",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
         key:"solarRadiation",
@@ -3627,10 +3557,6 @@ const maintenanceCanvasIds = [
     "diffChartP11P12",
     "tempChartP02",
     "diffChart",
-    "vaporChartP11",
-    "vaporChart",
-    "dewChartP11",
-    "dewChart",
     "co2ChartP27",
     "co2DiffChartP26P27",
     "co2ChartP22",
@@ -3708,7 +3634,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
         const restoredUserId = getMainUserIdInputValue();
-        restoreVpdTargetRange(restoredUserId);
         saveUserIdHistory(restoredUserId);
         alertFormUserId = restoredUserId;
         loadActiveAlertSetting(restoredUserId);
@@ -3737,7 +3662,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
         userIdInput.addEventListener("input", clearAlertFormIfUserChanged);
         userIdInput.addEventListener("change", ()=>{
             clearAlertFormIfUserChanged();
-            restoreVpdTargetRange(userIdInput.value.trim());
             handleMaintenanceUserIdChange();
         });
     }
@@ -3745,7 +3669,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
     if(userIdHistorySelect){
         userIdHistorySelect.addEventListener("change", ()=>{
             const selectedUserId = document.getElementById("userId").value.trim();
-            restoreVpdTargetRange(selectedUserId);
             setTimeout(clearAlertFormIfUserChanged, 0);
             handleMaintenanceUserIdChange();
         });
@@ -5093,37 +5016,6 @@ ctx.fillText(valueText, x + 5 + labelWidth, y - 5);
     }
 };
 
-const vpdTargetZonePlugin = {
-    id:"vpdTargetZonePlugin",
-    beforeDatasetsDraw(chart){
-        if(chart.canvas.id !== "vaporChart") return;
-
-        const yScale = chart.scales.y;
-        const chartArea = chart.chartArea;
-
-        if(!yScale || !chartArea) return;
-
-        const range = getGuideRange("vpdTargetMin", "vpdTargetMax", 5, 10);
-        const yTop = Math.max(chartArea.top, yScale.getPixelForValue(range.max));
-        const yBottom = Math.min(chartArea.bottom, yScale.getPixelForValue(range.min));
-
-        if(yBottom <= yTop) return;
-
-        const ctx = chart.ctx;
-        ctx.save();
-
-        ctx.fillStyle = "rgba(120, 200, 120, 0.18)";
-        ctx.fillRect(
-            chartArea.left,
-            yTop,
-            chartArea.right - chartArea.left,
-            yBottom - yTop
-        );
-
-        ctx.restore();
-    }
-};
-
 const voltTargetZonePlugin = {
     id:"voltTargetZonePlugin",
     beforeDatasetsDraw(chart){
@@ -5487,7 +5379,6 @@ Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
     rainfallTooltipPlugin,
-    vpdTargetZonePlugin,
     voltTargetZonePlugin,
     syncedCrosshairPlugin,
     pointLabelPlugin
@@ -7208,7 +7099,6 @@ function applyReviewChartNoDataStates(charts, userId, startTime, endTime){
         ["reviewTempChartP01", ["P01"]],
         ["reviewTempChartP11", ["P11"]],
         ["reviewOutsideDiffChart", ["P01", "P11"]],
-        ["reviewVaporChart", ["P01"]],
         ["reviewSolarChart", ["P31"]],
         ["reviewCo2Chart", ["P21"]],
         ["reviewCo2OutsideChart", ["P26"]],
@@ -7538,10 +7428,6 @@ function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime)
         ["diffChartP11P12", "diffP11P12", ["P11", "P12"]],
         ["tempChartP02", "tempP02", ["P02"]],
         ["diffChart", "diffP01P02", ["P01", "P02"]],
-        ["vaporChartP11", "vaporP11", ["P11"]],
-        ["vaporChart", "vaporP01", ["P01"]],
-        ["dewChartP11", "dewP11", ["P11"]],
-        ["dewChart", "dewP01", ["P01"]],
         ["co2ChartP27", "co2P27", ["P27"]],
         ["co2DiffChartP26P27", "diffP26P27", ["P26", "P27"]],
         ["co2ChartP22", "co2P22", ["P22"]],
@@ -7630,18 +7516,6 @@ async function loadMaintenanceData(rangeOverride){
                 getP11P12DiffAxis(), range.startTime, range.endTime
             )
         );
-        vaporChartP11 = configureMaintenanceChart(
-            createVaporChart("vaporChartP11", parsed.P11, range.startTime, range.endTime)
-        );
-        vaporChart = configureMaintenanceChart(
-            createVaporChart("vaporChart", parsed.P01, range.startTime, range.endTime)
-        );
-        dewChartP11 = configureMaintenanceChart(
-            createSingleChart("dewChartP11", parsed.P11, "dew", "露点温度", "℃", range.startTime, range.endTime, getDewAxisP11())
-        );
-        dewChart = configureMaintenanceChart(
-            createSingleChart("dewChart", parsed.P01, "dew", "露点温度", "℃", range.startTime, range.endTime)
-        );
         co2ChartP22 = configureMaintenanceChart(
             createSingleChart(
                 "co2ChartP22", parsed.P22, "co2", "co2", "ppm",
@@ -7690,10 +7564,6 @@ async function loadMaintenanceData(rangeOverride){
             diffP11P12:diffChartP11P12,
             tempP02:tempChartP02,
             diffP01P02:diffChart,
-            vaporP11:vaporChartP11,
-            vaporP01:vaporChart,
-            dewP11:dewChartP11,
-            dewP01:dewChart,
             co2P27:co2ChartP27,
             diffP26P27:co2DiffChartP26P27,
             co2P22:co2ChartP22,
@@ -8404,11 +8274,6 @@ function saveGuideRangeSetting(userId, graphType, minId, maxId, defaultMin, defa
     localStorage.setItem(getRangeStorageKey(userId, graphType), JSON.stringify(range));
 }
 
-function restoreVpdTargetRange(userId){
-    restoreGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
-    updateVpdTargetZone();
-}
-
 function getTempHumAxis(pointId){
     return {
         humMin:getAxisValue("humMin" + pointId, humMin),
@@ -8495,12 +8360,6 @@ function getOutsideDiffAxis(){
     };
 }
 
-function getDewAxisP11(){
-    return {
-        min:getAxisValue("dewMinP11", dewAxisMin),
-        max:getAxisValue("dewMaxP11", dewAxisMax)
-    };
-}
 function getSingleAxis(key){
     if(key === "co2"){
         return getCo2Axis();
@@ -9535,7 +9394,6 @@ function getReviewSingleAxis(key){
 
     const inputMap = {
         outsideDiff:["reviewOutsideDiffMin", "reviewOutsideDiffMax"],
-        vapor:["reviewVaporMin", "reviewVaporMax"],
         solar:["reviewSolarMin", "reviewSolarMax"],
         co2:["reviewCo2Min", "reviewCo2Max"],
         co2Outside:["reviewCo2OutsideMin", "reviewCo2OutsideMax"],
@@ -9560,7 +9418,6 @@ function applyReviewDefaultYAxis(chart){
 
     const axisMap = {
         reviewOutsideDiffChart:"outsideDiff",
-        reviewVaporChart:"vapor",
         reviewSolarChart:"solar",
         reviewCo2Chart:"co2",
         reviewCo2OutsideChart:"co2Outside",
@@ -9582,8 +9439,6 @@ function resetReviewAxisInputs(){
         ["reviewTempMaxP11", reviewAxisDefaults.tempHum.tempMax],
         ["reviewOutsideDiffMin", reviewAxisDefaults.outsideDiff.min],
         ["reviewOutsideDiffMax", reviewAxisDefaults.outsideDiff.max],
-        ["reviewVaporMin", reviewAxisDefaults.vapor.min],
-        ["reviewVaporMax", reviewAxisDefaults.vapor.max],
         ["reviewSolarMin", reviewAxisDefaults.solar.min],
         ["reviewSolarMax", reviewAxisDefaults.solar.max],
         ["reviewCo2Min", reviewAxisDefaults.co2.min],
@@ -9775,10 +9630,6 @@ function destroyMaintenanceCharts(){
     diffChart = null;
     tempChartP12 = null;
     diffChartP11P12 = null;
-    vaporChartP11 = null;
-    vaporChart = null;
-    dewChartP11 = null;
-    dewChart = null;
     co2ChartP22 = null;
     co2DiffChartP21P22 = null;
     co2ChartP27 = null;
@@ -9818,7 +9669,6 @@ function destroyReviewCharts(){
         "reviewTempChartP01",
         "reviewTempChartP11",
         "reviewOutsideDiffChart",
-        "reviewVaporChart",
         "reviewSolarChart",
         "reviewCo2Chart",
         "reviewCo2OutsideChart",
@@ -10427,7 +10277,6 @@ async function loadReviewData(){
             configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
             configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
             configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime)),
-            configureReviewChart(createVaporChart("reviewVaporChart", p01, minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewSolarChart", p31, "solar", "日射", "日射", minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewCo2Chart", p21, "co2", "co2", "ppm", minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewCo2OutsideChart", p26, "co2Outside", "co2", "ppm", minTime, maxTime)),
@@ -10478,7 +10327,6 @@ async function loadData(){
 
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
-    restoreVpdTargetRange(userId);
     alertFormUserId = userId;
     loadActiveAlertSetting(userId);
 
@@ -10488,8 +10336,6 @@ async function loadData(){
     msg.innerText = "読み込み中...";
 
     document.getElementById("tempNow").innerText = "-";
-    document.getElementById("vpdNow").innerText = "-";
-    document.getElementById("dewNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
     document.getElementById("solarNow").innerText = "-";
     document.getElementById("co2Now").innerText = "-";
@@ -10605,8 +10451,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
                 const last = validP01[validP01.length - 1];
 
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-                document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
-                document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
                 const yStart = new Date();
@@ -10747,25 +10591,6 @@ function applySingleYAxis(chart, key, axisOverride){
     setLinearYAxis(chart, axis);
 
     chart.update();
-}
-
-function updateVpdTargetZone(){
-    if(vaporChart){
-        vaporChart.update("none");
-    }
-}
-
-function handleVpdTargetRangeChange(){
-    const userIdInput = document.getElementById("userId");
-    const userId = userIdInput ? userIdInput.value.trim() : "";
-
-    saveGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
-    updateVpdTargetZone();
-}
-
-function resetVpdTargetRange(){
-    setGuideRangeInputs("vpdTargetMin", "vpdTargetMax", { min:5, max:10 });
-    handleVpdTargetRangeChange();
 }
 
 function applyDiffYAxis(chart){
@@ -11438,118 +11263,6 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         document.querySelectorAll('#csvPointGroups input[name="point_ids[]"]').forEach(input=>{ input.checked = ["P01", "P02", "P11", "P12", "P41"].includes(input.value); });
     }
 
-    let yuiMainVaporP11Chart = null;
-    let yuiMainDewP11Chart = null;
-    let yuiReviewDewP01Chart = null;
-    let yuiReviewVaporP11Chart = null;
-    let yuiReviewDewP11Chart = null;
-
-    function getCardForCanvas(canvasId){
-        const canvas = document.getElementById(canvasId);
-        return canvas ? canvas.closest(".grid > div") : null;
-    }
-
-    function createYuiChartCard(id, title, buttonHtml){
-        const card = document.createElement("div");
-        card.id = id + "Card";
-        card.innerHTML = '<h4><span>' + title + '</span>' + buttonHtml + '</h4><div class="chart-container"><canvas id="' + id + '"></canvas></div>';
-        return card;
-    }
-
-    function ensureYuiMainDerivedPanels(){}
-
-    function destroyYuiMainDerivedCharts(){
-        ["yuiVaporChartP11", "yuiDewChartP11"].forEach(canvasId=>{
-            const existing = typeof Chart !== "undefined" ? Chart.getChart(canvasId) : null;
-            if(existing) existing.destroy();
-        });
-        [yuiMainVaporP11Chart, yuiMainDewP11Chart].forEach(chart=>{ if(chart) chart.destroy(); });
-        allCharts = allCharts.filter(chart=>chart && !["yuiVaporChartP11", "yuiDewChartP11"].includes(chart.canvas && chart.canvas.id));
-        yuiMainVaporP11Chart = null;
-        yuiMainDewP11Chart = null;
-        window.yuiMainVaporP11Chart = null;
-        window.yuiMainDewP11Chart = null;
-    }
-
-    async function loadYuiMainDerivedCharts(userId){}
-
-    function ensureYuiReviewDerivedPanels(){
-        const reviewGrid = document.querySelector("#tab-review .grid");
-        if(!reviewGrid) return;
-        const p01VaporCard = getCardForCanvas("reviewVaporChart");
-        if(!document.getElementById("yuiReviewDewChartP01")){
-            const card = createYuiChartCard("yuiReviewDewChartP01", "露点温度（P01）", '<button class="chart-reset-button" type="button" onclick="if(window.yuiReviewDewP01Chart&&window.yuiReviewDewP01Chart.resetZoom)window.yuiReviewDewP01Chart.resetZoom();">ズームリセット</button>');
-            (p01VaporCard || reviewGrid.lastElementChild).insertAdjacentElement("afterend", card);
-        }
-        const p11Card = getCardForCanvas("reviewTempChartP11");
-        if(!document.getElementById("yuiReviewVaporChartP11")){
-            const card = createYuiChartCard("yuiReviewVaporChartP11", "飽和水蒸気量/水蒸気量/飽差（P11）", '<button class="chart-reset-button" type="button" onclick="if(window.yuiReviewVaporP11Chart&&window.yuiReviewVaporP11Chart.resetZoom)window.yuiReviewVaporP11Chart.resetZoom();">ズームリセット</button>');
-            (p11Card || reviewGrid.lastElementChild).insertAdjacentElement("afterend", card);
-        }
-        if(!document.getElementById("yuiReviewDewChartP11")){
-            const card = createYuiChartCard("yuiReviewDewChartP11", "露点温度（P11）", '<button class="chart-reset-button" type="button" onclick="if(window.yuiReviewDewP11Chart&&window.yuiReviewDewP11Chart.resetZoom)window.yuiReviewDewP11Chart.resetZoom();">ズームリセット</button>');
-            const vaporCard = getCardForCanvas("yuiReviewVaporChartP11");
-            (vaporCard || p11Card || reviewGrid.lastElementChild).insertAdjacentElement("afterend", card);
-        }
-    }
-
-    function configureYuiReviewDerivedChart(chart, key){
-        if(!chart) return chart;
-        if(chart.options && chart.options.plugins && chart.options.plugins.zoom && chart.options.plugins.zoom.zoom){
-            chart.options.plugins.zoom.zoom.onZoomComplete = ({chart})=>{ syncReviewZoom(chart); };
-        }
-        if(chart.options && chart.options.plugins && chart.options.plugins.crosshair && chart.options.plugins.crosshair.sync){
-            chart.options.plugins.crosshair.sync.group = 3;
-        }
-        if(key === "vapor") setLinearYAxis(chart, getReviewSingleAxis("vapor"));
-        if(key === "dew") setLinearYAxis(chart, getSingleAxis("dew"));
-        saveInitialScaleLimits(chart);
-        return chart;
-    }
-
-    function destroyYuiReviewDerivedCharts(){
-        ["yuiReviewDewChartP01", "yuiReviewVaporChartP11", "yuiReviewDewChartP11"].forEach(canvasId=>{
-            const existing = typeof Chart !== "undefined" ? Chart.getChart(canvasId) : null;
-            if(existing) existing.destroy();
-        });
-        [yuiReviewDewP01Chart, yuiReviewVaporP11Chart, yuiReviewDewP11Chart].forEach(chart=>{ if(chart) chart.destroy(); });
-        reviewCharts = reviewCharts.filter(chart=>chart && !["yuiReviewDewChartP01", "yuiReviewVaporChartP11", "yuiReviewDewChartP11"].includes(chart.canvas && chart.canvas.id));
-        yuiReviewDewP01Chart = null;
-        yuiReviewVaporP11Chart = null;
-        yuiReviewDewP11Chart = null;
-        window.yuiReviewDewP01Chart = null;
-        window.yuiReviewVaporP11Chart = null;
-        window.yuiReviewDewP11Chart = null;
-    }
-
-    async function loadYuiReviewDerivedCharts(userId, dateValue){
-        ensureYuiReviewDerivedPanels();
-        destroyYuiReviewDerivedCharts();
-        if(!userId || !dateValue) return;
-        const selectedDate = new Date(dateValue + "T00:00:00");
-        const minTime = new Date(selectedDate);
-        minTime.setDate(minTime.getDate() - 1);
-        const maxTime = new Date(selectedDate);
-        maxTime.setDate(maxTime.getDate() + 1);
-        maxTime.setHours(23,59,59,999);
-        const range = { start:formatSqlDateTime(minTime), end:formatSqlDateTime(maxTime) };
-        const results = await Promise.all([
-            fetchDataSafe(userId, "P01", range),
-            fetchDataSafe(userId, "P11", range)
-        ]);
-        const p01 = parseData(results[0].data || [], minTime);
-        const p11 = parseData(results[1].data || [], minTime);
-        yuiReviewDewP01Chart = configureYuiReviewDerivedChart(createSingleChart("yuiReviewDewChartP01", p01, "dew", "露点温度", "℃", minTime, maxTime), "dew");
-        yuiReviewVaporP11Chart = configureYuiReviewDerivedChart(createVaporChart("yuiReviewVaporChartP11", p11, minTime, maxTime), "vapor");
-        yuiReviewDewP11Chart = configureYuiReviewDerivedChart(createSingleChart("yuiReviewDewChartP11", p11, "dew", "露点温度", "℃", minTime, maxTime), "dew");
-        [yuiReviewDewP01Chart, yuiReviewVaporP11Chart, yuiReviewDewP11Chart].filter(Boolean).forEach(chart=>{
-            if(!reviewCharts.includes(chart)) reviewCharts.push(chart);
-        });
-        window.yuiReviewDewP01Chart = yuiReviewDewP01Chart;
-        window.yuiReviewVaporP11Chart = yuiReviewVaporP11Chart;
-        window.yuiReviewDewP11Chart = yuiReviewDewP11Chart;
-        refreshVisibleCharts();
-    }
     let yuiReviewRainChart = null;
 
     function ensureReviewRainPanel(){
@@ -11671,7 +11384,6 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             const result = await originalLoadReviewData.apply(this, arguments);
             const userId = getMainUserIdInputValue();
             const reviewDate = document.getElementById("reviewDate");
-            await loadYuiReviewDerivedCharts(userId, reviewDate ? reviewDate.value : "");
             await loadYuiReviewRainData(userId, reviewDate ? reviewDate.value : "");
             configureYuiCharts();
             return result;
@@ -11697,7 +11409,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     }
 
     function resetYuiStatusValues(){
-        ["tempNow", "vpdNow", "dewNow", "humNow", "tempNowP11", "vpdNowP11", "dewNowP11", "humNowP11"].forEach(id=>{
+        ["tempNow", "humNow", "tempNowP11", "humNowP11"].forEach(id=>{
             const element = document.getElementById(id);
             if(element) element.innerText = "-";
         });
@@ -11718,7 +11430,6 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
 
         localStorage.setItem("usui_user_id", userId);
         saveUserIdHistory(userId);
-        restoreVpdTargetRange(userId);
         resetYuiStatusValues();
         destroyCharts();
         if(msg) msg.innerText = "読み込み中...";
@@ -11753,8 +11464,6 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             if(validP01.length){
                 const last = validP01[validP01.length - 1];
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-                document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
-                document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
             }
 
@@ -11762,8 +11471,6 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             if(validP11.length){
                 const last = validP11[validP11.length - 1];
                 document.getElementById("tempNowP11").innerText = last.temp.toFixed(1);
-                document.getElementById("vpdNowP11").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
-                document.getElementById("dewNowP11").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNowP11").innerText = last.hum.toFixed(1);
             }
 
@@ -11812,14 +11519,12 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             reviewCharts = [
                 configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
                 configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
-                configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime)),
-                configureReviewChart(createVaporChart("reviewVaporChart", p01, minTime, maxTime))
+                configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime))
             ].filter(Boolean);
             reviewDifP01 = p01;
             reviewDifDateValue = dateValue;
             reviewDifDisplayState = results[0].error ? "error" : "ready";
             renderReviewDif();
-            await loadYuiReviewDerivedCharts(userId, dateValue);
             await loadYuiReviewRainData(userId, dateValue);
             configureYuiCharts();
             refreshVisibleCharts();
@@ -11850,11 +11555,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
             diffChartP11P12 = configureMaintenanceChart(createTempHumDiagnosticDiffChart("diffChartP11P12", parsed.P11, parsed.P12, "P11", "P12", getP11P12DiffAxis(), range.startTime, range.endTime));
             tempChartP02 = configureMaintenanceChart(createTempHumChart("tempChartP02", parsed.P02, range.startTime, range.endTime, "P02"));
             diffChart = configureMaintenanceChart(createDiffChart("diffChart", parsed.P01, parsed.P02, range.startTime, range.endTime));
-            vaporChartP11 = configureMaintenanceChart(createVaporChart("vaporChartP11", parsed.P11, range.startTime, range.endTime));
-            vaporChart = configureMaintenanceChart(createVaporChart("vaporChart", parsed.P01, range.startTime, range.endTime));
-            dewChartP11 = configureMaintenanceChart(createSingleChart("dewChartP11", parsed.P11, "dew", "露点温度", "℃", range.startTime, range.endTime, getDewAxisP11()));
-            dewChart = configureMaintenanceChart(createSingleChart("dewChart", parsed.P01, "dew", "露点温度", "℃", range.startTime, range.endTime));
-            const chartMap = { tempP12:tempChartP12, diffP11P12:diffChartP11P12, tempP02:tempChartP02, diffP01P02:diffChart, vaporP11:vaporChartP11, vaporP01:vaporChart, dewP11:dewChartP11, dewP01:dewChart };
+            const chartMap = { tempP02:tempChartP02, diffP01P02:diffChart, tempP12:tempChartP12, diffP11P12:diffChartP11P12 };
             maintenanceCharts = Object.values(chartMap).filter(Boolean);
             applyMaintenanceMobileChartRanges(range.startTime, range.endTime);
             applyMaintenanceChartNoDataStates(chartMap, userId, range.startTime, range.endTime);
@@ -11871,7 +11572,7 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
     window.loadData = loadYuiTechMainDataOnly;
     window.loadReviewData = loadYuiTechReviewDataOnly;
     window.loadMaintenanceData = loadYuiTechMaintenanceDataOnly;
-    window.addEventListener("DOMContentLoaded", ()=>{ configureYuiLabels(); configureYuiTabs(); configureYuiCharts(); ensureDailyPanel(); ensureYuiReviewDerivedPanels(); configureCsvDefaults(); });
+    window.addEventListener("DOMContentLoaded", ()=>{ configureYuiLabels(); configureYuiTabs(); configureYuiCharts(); ensureDailyPanel(); configureCsvDefaults(); });
 })();
 </script>
 </body>
