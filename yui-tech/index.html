@@ -11056,7 +11056,7 @@ body.yui-tech-app .status-group-mobile-qr {
 }
 @media (max-width:600px) {
     body.yui-tech-app .status-group-mobile-qr {
-        display:flex !important;
+        display:none !important;
         width:150px;
         max-width:calc(100vw - 24px);
     }
@@ -11155,6 +11155,11 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         width:58px;
         padding:4px 4px;
         font-size:12px;
+    }
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-label-rain,
+    body.yui-tech-app #outsideTempSummaryGrid .status-temp-value[id$="Rain"] {
+        padding-top:9px;
+        padding-bottom:9px;
     }
 }
 @media (max-width: 600px) {
@@ -11256,7 +11261,8 @@ body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value[i
         const rows = [["Max", "最高(℃)"], ["Min", "最低(℃)"], ["Avg", "平均(℃)"]];
         if(prefix === "outside") rows.push(["Rain", "雨量(mm)"]);
         rows.forEach(([key, label])=>{
-            html += `<div class="status-temp-label">${label}</div>`;
+            const labelClass = key === "Rain" ? " status-temp-label-rain" : "";
+            html += `<div class="status-temp-label${labelClass}">${label}</div>`;
             for(let i = 0; i < 5; i++){
                 html += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
             }
