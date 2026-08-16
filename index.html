@@ -8518,7 +8518,7 @@ function createRainfallChart(response){
     options.plugins.zoom.zoom.wheel.enabled = false;
     options.plugins.zoom.zoom.pinch.enabled = zoomEnabled;
     options.plugins.zoom.zoom.drag.enabled = zoomEnabled;
-    options.plugins.zoom.zoom.mode = "x";
+    options.plugins.zoom.zoom.mode = "xy";
     options.plugins.zoom.zoom.onZoomComplete = ()=>hideRainfallTooltip();
     options.scales = {
         ...options.scales,
