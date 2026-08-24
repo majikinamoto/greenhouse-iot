@@ -2436,13 +2436,6 @@ body.data-export-active .control-panel {
 <div class="status-group-title">現在状況</div>
 <div class="yui-current-status-grid">
 <div class="yui-current-status-section">
-<div class="yui-current-status-title">屋内（P01）</div>
-<div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
-<div class="status-box">💧 湿度：<span id="humNow">-</span>%</div>
-<div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
-<div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
-</div>
-<div class="yui-current-status-section">
 <div class="yui-current-status-title">屋外（P11）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNowP11">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNowP11">-</span>%</div>
@@ -2450,69 +2443,8 @@ body.data-export-active .control-panel {
 </div>
 </div>
 <div class="status-group status-group-temp-summary">
-<div class="status-group-title">屋内（P01）</div>
-<div class="status-temp-grid" id="houseTempSummaryGrid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高</div>
-<div class="status-box temp-high status-temp-value"><span id="houseTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低</div>
-<div class="status-box temp-low status-temp-value"><span id="houseTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均</div>
-<div class="status-box average-box status-temp-value"><span id="houseTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseTodayAvg">-</span></div>
-</div>
-</div>
-<div class="status-group status-group-temp-summary">
-<div class="status-group-title">外気（P11）</div>
-<div class="status-temp-grid" id="outsideTempSummaryGrid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高</div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低</div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均</div>
-<div class="status-box average-box status-temp-value"><span id="outsideTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideTodayAvg">-</span></div>
-</div>
-</div>
-<div class="status-group status-group-vpd-eval">
-<div class="status-group-title">昨日の飽差評価</div>
-<div class="vpd-eval-line">午前：<span id="vpdEvalAm">データなし</span></div>
-<div class="vpd-eval-line">午後：<span id="vpdEvalPm">データなし</span></div>
-<details class="vpd-eval-note">
-<summary>評価基準と注意事項</summary>
-※昨日の飽差評価は、P01の温度・湿度データから算出した平均飽差（g/㎥）を、以下の基準に当てはめて機械的に評価したものです。実際の現地環境とは異なる場合がありますので、参考情報としてご利用ください。<br>
-<br>
-午前（6:00～12:00）の評価基準：<br>
-0以上 2未満：加湿傾向<br>
-2以上 3未満：やや加湿<br>
-3以上 7以下：良好<br>
-7超 15未満：やや乾燥<br>
-15以上：乾燥ストレス<br>
-<br>
-午後（12:00～18:00）の評価基準：<br>
-0以上 3未満：加湿傾向<br>
-3以上 5未満：やや加湿<br>
-5以上 10以下：良好<br>
-10超 15未満：やや乾燥<br>
-15以上：乾燥ストレス
-</details>
+<div class="status-group-title">屋外（P11）・直近10日</div>
+<div class="status-temp-grid" id="outsideTempSummaryGrid" aria-label="屋外温度・雨量の直近10日集計"></div>
 </div>
 <div class="status-group status-group-mobile-qr">
 <div class="status-group-title">スマホで開く</div>
@@ -2555,16 +2487,6 @@ body.data-export-active .control-panel {
 <div class="grid">
 
     <div>
-        <h4><span>室内（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
-            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
-    </div>
-
-    <div>
         <h4><span>外気（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
@@ -2574,15 +2496,6 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
 
-    <div>
-        <h4><span>温度差_内外（P01-P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="outsideDiffMin" value="-1"> ～
-            <input class="axis-input" type="number" id="outsideDiffMax" value="5">
-            <button onclick="applyOutsideDiffYAxis(outsideDiffChart)">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
-    </div>
     <div>
         <h4><span>室内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
@@ -2661,7 +2574,7 @@ body.data-export-active .control-panel {
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
                 point_id
-                <input class="analysis-compare-input" type="text" id="analysisPointIdA" placeholder="例: P01" onchange="saveAnalysisCompareSetting('A')">
+                <input class="analysis-compare-input" type="text" id="analysisPointIdA" placeholder="例: P11" onchange="saveAnalysisCompareSetting('A')">
                 <button type="button" onclick="loadAnalysisCompareChart('A')">表示</button>
             </div>
             <div class="control-group axis-control-group chart-axis-control">
@@ -2678,7 +2591,7 @@ body.data-export-active .control-panel {
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
                 point_id
-                <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P01" onchange="saveAnalysisCompareSetting('B')">
+                <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P11" onchange="saveAnalysisCompareSetting('B')">
                 <button type="button" onclick="loadAnalysisCompareChart('B')">表示</button>
             </div>
             <div class="control-group axis-control-group chart-axis-control">
@@ -2695,7 +2608,7 @@ body.data-export-active .control-panel {
                 user_id
                 <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
                 point_id
-                <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P01" onchange="saveAnalysisCompareSetting('C')">
+                <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P11" onchange="saveAnalysisCompareSetting('C')">
                 <button type="button" onclick="loadAnalysisCompareChart('C')">表示</button>
             </div>
             <div class="control-group axis-control-group chart-axis-control">
@@ -2760,22 +2673,6 @@ body.data-export-active .control-panel {
 
             <div class="csv-point-groups">
                 <details class="csv-point-group">
-                    <summary>温湿度（室内）<span>P01～P10</span></summary>
-                    <div class="csv-point-options">
-                        <label><input type="checkbox" name="point_ids[]" value="P01">P01</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P02">P02</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P03">P03</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P04">P04</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P05">P05</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P06">P06</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P07">P07</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P08">P08</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P09">P09</label>
-                        <label><input type="checkbox" name="point_ids[]" value="P10">P10</label>
-                    </div>
-                </details>
-
-                <details class="csv-point-group">
                     <summary>温湿度（外気）<span>P11～P20</span></summary>
                     <div class="csv-point-options">
                         <label><input type="checkbox" name="point_ids[]" value="P11">P11</label>
@@ -2836,12 +2733,6 @@ body.data-export-active .control-panel {
                     </div>
                 </details>
 
-                <details class="csv-point-group">
-                    <summary>電圧<span>P91</span></summary>
-                    <div class="csv-point-options">
-                        <label><input type="checkbox" name="point_ids[]" value="P91">P91</label>
-                    </div>
-                </details>
             </div>
 
             <p class="csv-storage-note">※CSVでダウンロードできるデータは、データベースに保存されている直近1年分です。</p>
@@ -2860,92 +2751,15 @@ body.data-export-active .control-panel {
         <span id="reviewMessage" class="review-message"></span>
     </div>
 
-    <section id="reviewDifPeriodPanel" class="review-dif-period-panel" aria-labelledby="reviewDifPeriodTitle" hidden>
-        <div class="review-dif-period-heading">
-            <h3 id="reviewDifPeriodTitle">昼夜温度・DIF（直近7日）</h3>
-            <div class="review-dif-period-meta">
-                <span>対象期間：<strong id="reviewDifPeriodRange">－</strong></span>
-                <span>基準地域：<strong id="reviewDifPeriodArea">－</strong></span>
-            </div>
-        </div>
-        <table class="review-dif-period-table">
-            <thead>
-                <tr>
-                    <th>日付</th>
-                    <th>昼平均</th>
-                    <th>夜平均</th>
-                    <th>DIF</th>
-                    <th class="review-dif-period-secondary">日平均</th>
-                    <th class="review-dif-period-secondary">状態</th>
-                </tr>
-            </thead>
-            <tbody id="reviewDifPeriodBody"></tbody>
-        </table>
-        <p class="review-dif-period-note">DIFの符号は昼温と夜温の差を示し、良否を示すものではありません。</p>
-    </section>
-
-    <section id="reviewDifPanel" class="review-dif-panel" aria-labelledby="reviewDifTitle" hidden>
-        <div class="review-dif-heading">
-            <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
-            <div class="review-dif-basic">
-                <span>対象日：<strong id="reviewDifDate">－</strong></span>
-                <span>基準地域：<strong id="reviewDifArea">－</strong></span>
-            </div>
-        </div>
-        <div class="review-dif-periods">
-            <span>昼：<strong id="reviewDifDayPeriod">－</strong></span>
-            <span>夜：<strong id="reviewDifNightPeriod">－</strong></span>
-        </div>
-        <div class="review-dif-values">
-            <div class="review-dif-value">
-                <span class="review-dif-value-label">昼平均温度</span>
-                <strong id="reviewDifDayAverage" class="review-dif-value-number">－</strong>
-            </div>
-            <div class="review-dif-value">
-                <span class="review-dif-value-label">夜平均温度</span>
-                <strong id="reviewDifNightAverage" class="review-dif-value-number">－</strong>
-            </div>
-            <div class="review-dif-value">
-                <span class="review-dif-value-label">DIF</span>
-                <strong id="reviewDifValue" class="review-dif-value-number">－</strong>
-            </div>
-        </div>
-        <div class="review-dif-footer">
-            <span>昼 <strong id="reviewDifDayCount">0件</strong></span>
-            <span>夜 <strong id="reviewDifNightCount">0件</strong></span>
-            <span>状態：<strong id="reviewDifStatus">－</strong></span>
-        </div>
-    </section>
-
     <div class="grid">
-        <div>
-            <h4><span>温湿度_室内（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
-            <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-                <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMaxP01" value="100"></span>
-                <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="reviewTempMaxP01" value="40"></span>
-                <button class="temp-hum-axis-apply-button" onclick="applyReviewTempHumYAxis(reviewCharts[0],'P01')">縦軸反映</button>
-            </div>
-            <div class="chart-container"><canvas id="reviewTempChartP01"></canvas></div>
-        </div>
-
         <div>
             <h4><span>温湿度_屋外（P11）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
                 <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMaxP11" value="100"></span>
                 <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="reviewTempMaxP11" value="40"></span>
-                <button class="temp-hum-axis-apply-button" onclick="applyReviewTempHumYAxis(reviewCharts[1],'P11')">縦軸反映</button>
+                <button class="temp-hum-axis-apply-button" onclick="applyReviewTempHumYAxis(reviewCharts.find(chart=>chart?.canvas?.id==='reviewTempChartP11'),'P11')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewTempChartP11"></canvas></div>
-        </div>
-
-        <div>
-            <h4><span>温度差_内外（P01-P11）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
-            <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewOutsideDiffMin" value="-1"> ～
-                <input class="axis-input" type="number" id="reviewOutsideDiffMax" value="5">
-                <button onclick="applyReviewSingleYAxis(reviewCharts[2], 'outsideDiff')">縦軸反映</button>
-            </div>
-            <div class="chart-container"><canvas id="reviewOutsideDiffChart"></canvas></div>
         </div>
 
         <div>
@@ -3065,7 +2879,6 @@ body.data-export-active .control-panel {
     <div id="alertStatusCard" class="alert-status-card">
         <div class="alert-status-title">現在のアラート状態</div>
         <div class="alert-status-current">現在の状態：-</div>
-        <div>室内温度（P01）：-</div>
         <div>外気温度（P11）：-</div>
         <div>設定条件：-</div>
         <div>再通知間隔：-</div>
@@ -3074,7 +2887,6 @@ body.data-export-active .control-panel {
         <label>
             point_id：
             <select id="alertPointId" onchange="handleAlertPointChange()">
-                <option value="P01">P01 室内</option>
                 <option value="P11">P11 外気</option>
             </select>
         </label>
@@ -3177,26 +2989,6 @@ body.data-export-active .control-panel {
 <div class="grid">
 
     <div>
-        <h4><span>メンテ用室内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
-            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP02" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
-    </div>
-
-    <div>
-        <h4><span>メンテ用（P01−P02_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMin" value="-5"> ～
-            <input class="axis-input" type="number" id="diffMax" value="5">
-            <button onclick="applyDiffYAxis(diffChart)">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="diffChart"></canvas></div>
-    </div>
-
-    <div>
         <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP12" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP12" value="100"></span>
@@ -3293,7 +3085,7 @@ body.data-export-active .control-panel {
     <div class="guide-content yui-about-content">
         <section class="yui-about-section">
             <h3>Yui-Techについて</h3>
-            <p>Yui-Tech Monitorは、地域や避難所などの温湿度・雨量などの環境情報を見える形にし、その場にいる方々や支援にあたる方々が、周囲の環境を確認するためのシステムです。</p>
+            <p>Yui-Tech Monitorは、地域や避難所周辺の屋外温湿度・雨量などの環境情報を継続的に見える形にし、その場にいる方々や支援にあたる方々が、周囲の変化を確認するためのシステムです。</p>
             <p>災害時や避難生活の中では、暑さや寒さ、湿度、雨など、身の回りの環境も少しずつ変化します。Yui-Techは、その変化を知るための一つの手がかりとして使っていただくことを考えています。</p>
             <p>何かを指示したり、判断を押しつけたりするためのシステムではありません。<br>
             必要なときに、必要な方が、環境を確認するための道具の一つとして役立てていただければと考えています。</p>
@@ -3303,9 +3095,7 @@ body.data-export-active .control-panel {
             <h3>このシステムで確認できること</h3>
             <p>Yui-Techでは、設置されたセンサーから得られた情報を使って、次のような環境の様子を確認できます。</p>
             <ul>
-                <li>屋内の温度・湿度</li>
                 <li>屋外の温度・湿度</li>
-                <li>屋内と屋外の温度差</li>
                 <li>雨量</li>
                 <li>これまでの環境の変化</li>
                 <li>地域の天気予報や日の出・日の入りなどの情報</li>
@@ -3314,7 +3104,7 @@ body.data-export-active .control-panel {
 
         <section class="yui-about-section">
             <h3>使い方</h3>
-            <p>画面の「メイン」では、現在や最近の温湿度・雨量などを確認できます。<br>
+            <p>画面の「メイン」では、現在や最近の屋外温湿度・雨量などを確認できます。<br>
             「過去データ」では、指定した日の環境を振り返ることができます。<br>
             画面上部の「地域こよみ」「今日の予報」「明日の予報」では、選択した地域に応じた情報を確認できます。</p>
             <p>表示される情報の中から、必要なものだけをご利用ください。</p>
@@ -3340,14 +3130,14 @@ body.data-export-active .control-panel {
                 <ul>
                     <li>システム名：Yui-Tech Monitor</li>
                     <li>研究・実証を目的とした非商用システム</li>
-                    <li>温湿度センサー、雨量計などから環境情報を取得</li>
+                    <li>屋外温湿度センサー、雨量計などから環境情報を取得</li>
                     <li>気象庁、Open-Meteo等の外部情報を一部利用</li>
                 </ul>
 
                 <h4>主な測定項目</h4>
                 <ul>
-                    <li>P01：屋内温湿度</li>
                     <li>P11：屋外温湿度</li>
+                    <li>P12：屋外温湿度（確認用）</li>
                     <li>P41：雨量</li>
                 </ul>
 
@@ -3425,8 +3215,8 @@ function validateExternalLibraries(){
     }
 };
 
-let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
-let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart;
+let tempChartP11, tempChartP12;
+let diffChartP11P12, solarChart, solarChartP32, solarDiffChartP31P32, voltChart;
 let rainChart = null;
 let rainfallRequestSequence = 0;
 let co2Chart, co2OutsideChart, co2DiffChart, co2ChartP22, co2DiffChartP21P22, co2ChartP27, co2DiffChartP26P27;
@@ -3439,17 +3229,8 @@ let syncingAnalysisZoom = false;
 let allCharts = [];
 let maintenanceCharts = [];
 let reviewCharts = [];
-let reviewDifP01 = [];
-let reviewDifDateValue = "";
-let reviewDifDisplayState = "idle";
 let reviewDataRequestSequence = 0;
 let reviewDataLoadingKey = "";
-let reviewDifPeriodP01 = [];
-let reviewDifRows = [];
-let reviewDifPeriodDisplayState = "idle";
-let reviewDifPeriodRequestSequence = 0;
-let reviewDifPeriodLoadingKey = "";
-let reviewDifPeriodEndDateValue = "";
 let syncingZoom = false;
 let syncingMaintenanceZoom = false;
 let syncingReviewZoom = false;
@@ -3503,7 +3284,7 @@ let voltAxisMax = 14;
 let alertFormUserId = "";
 let activeAlertSettingExists = false;
 let tideCalendarText = "満潮・干潮：読み込み中...";
-let environmentScoreP01 = [];
+let environmentScoreTempHumidity = [];
 let environmentScoreP21 = [];
 let environmentScoreP31 = [];
 
@@ -3520,20 +3301,6 @@ const rainfallSourceStorageKeys = {
 
 const mainChartConfigs = [
     {
-        key:"insideTempHumidity",
-        canvasId:"tempChartP01",
-        title:"温湿度_内",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
-    },
-    {
-        key:"maintenanceTempHumidity",
-        canvasId:"tempChartP02",
-        title:"温湿度_メンテナンス",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P02" }]
-    },
-    {
         key:"maintenanceOutsideTempHumidity",
         canvasId:"tempChartP12",
         title:"温湿度_外気メンテナンス",
@@ -3546,16 +3313,6 @@ const mainChartConfigs = [
         title:"温湿度_外",
         fields:["temperature", "humidity"],
         requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }]
-    },
-    {
-        key:"outsideDiff",
-        canvasId:"outsideDiffChart",
-        title:"温度差_内外",
-        fields:["temperature"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P01" },
-            { userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }
-        ]
     },
     {
         key:"solarRadiation",
@@ -3640,16 +3397,6 @@ const mainChartConfigs = [
         ]
     },
     {
-        key:"maintenanceDiff",
-        canvasId:"diffChart",
-        title:"温度差_メンテナンス",
-        fields:["temperature", "humidity"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P01" },
-            { userId:context.userId, pointId:"P02" }
-        ]
-    },
-    {
         key:"maintenanceOutsideDiff",
         canvasId:"diffChartP11P12",
         title:"温湿度差_外気センサー診断",
@@ -3672,8 +3419,6 @@ const mainChartConfigs = [
 const maintenanceCanvasIds = [
     "tempChartP12",
     "diffChartP11P12",
-    "tempChartP02",
-    "diffChart",
     "co2ChartP27",
     "co2DiffChartP26P27",
     "co2ChartP22",
@@ -3689,8 +3434,6 @@ const primaryChartConfigs = mainChartConfigs.filter(config=>!maintenanceCanvasId
 const analysisCompareGraphs = ["A", "B", "C"];
 const analysisDiffGraphs = ["B", "C"];
 const alertPointLabels = {
-    P01:"P01 室内",
-    P02:"P02 メンテ用室内",
     P11:"P11 外気"
 };
 const UTECH_AREAS = {
@@ -4626,11 +4369,11 @@ function clearAlertFormIfUserChanged(){
 
 function getSelectedAlertPointId(){
     const pointId = document.getElementById("alertPointId");
-    return pointId && pointId.value ? pointId.value : "P01";
+    return pointId && pointId.value ? pointId.value : "P11";
 }
 
 function getAlertPointLabel(pointId){
-    return alertPointLabels[pointId] || pointId || "P01";
+    return alertPointLabels[pointId] || pointId || "P11";
 }
 
 function handleAlertPointChange(){
@@ -4780,7 +4523,6 @@ function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
     card.innerHTML =
         '<div class="alert-status-title">現在のアラート状態</div>' +
         '<div class="alert-status-current">現在の状態：' + escapeHtml(statusText) + '</div>' +
-        '<div>室内温度（P01）：' + escapeHtml(formatAlertTemperature(p01Temp)) + '</div>' +
         '<div>外気温度（P11）：' + escapeHtml(formatAlertTemperature(p11Temp)) + '</div>' +
         '<div>設定条件：' + escapeHtml(getAlertConditionText(setting)) + '</div>' +
         '<div>再通知間隔：' + escapeHtml(isNaN(cooldownMinutes) ? "-" : cooldownMinutes + "分") + '</div>';
@@ -4794,10 +4536,7 @@ async function loadAlertStatusCard(userId, setting, requestedPointId){
 
     renderAlertStatusCard(setting, null, null, "読み込み中...");
 
-    const results = await Promise.all([
-        fetchDataSafe(userId, "P01"),
-        fetchDataSafe(userId, "P11")
-    ]);
+    const resultP11 = await fetchDataSafe(userId, "P11");
 
     const currentUserId = document.getElementById("userId").value.trim();
     if(currentUserId !== userId) return;
@@ -4805,8 +4544,8 @@ async function loadAlertStatusCard(userId, setting, requestedPointId){
 
     renderAlertStatusCard(
         setting,
-        getLatestTemperature(results[0].data),
-        getLatestTemperature(results[1].data)
+        null,
+        getLatestTemperature(resultP11.data)
     );
 }
 
@@ -5354,14 +5093,6 @@ const syncedCrosshairPlugin = {
             return;
         }
 
-        if(!inLatestZone && chart.canvas.id === "reviewTempChartP11"){
-            const reviewP01Chart = reviewCharts.find(reviewChart=>
-                reviewChart && reviewChart.canvas.id === "reviewTempChartP01"
-            );
-            const reviewP01XValue = getNearestChartXValue(reviewP01Chart, xValue);
-            if(reviewP01XValue !== null) xValue = reviewP01XValue;
-        }
-
         syncedCrosshairValues[syncGroup] = xValue;
         syncedCrosshairLatest[syncGroup] = inLatestZone;
         syncAllChartTooltips(xValue, chart);
@@ -5842,7 +5573,7 @@ function saveEnvironmentScoreRanges(){
 
 function handleEnvironmentScoreRangeChange(){
     saveEnvironmentScoreRanges();
-    renderEnvironmentScores(environmentScoreP01, environmentScoreP21, environmentScoreP31);
+    renderEnvironmentScores(environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
 }
 
 function formatScoreDate(date){
@@ -5862,7 +5593,7 @@ function renderBest30DayScore(todayStart){
         start.setDate(todayStart.getDate() - i);
         const end = new Date(start);
         end.setDate(start.getDate() + 1);
-        const scores = calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+        const scores = calcEnvironmentScoreRow(start, end, environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
 
         if(scores.total === null || scores.total === undefined || isNaN(scores.total)) continue;
         ranking.push({
@@ -5918,21 +5649,21 @@ function isDaytimeScoreData(d){
     return hour >= 6 && hour < 18;
 }
 
-function getScoreRowsForPeriod(start, end, p01, p21, p31){
-    const sourceP01 = (p01 || []).filter(d=>d.x >= start && d.x < end);
+function getScoreRowsForPeriod(start, end, tempHumidityData, p21, p31){
+    const sourceTempHumidity = (tempHumidityData || []).filter(d=>d.x >= start && d.x < end);
     const sourceP21 = (p21 || []).filter(d=>d.x >= start && d.x < end);
     const sourceP31 = (p31 || []).filter(d=>d.x >= start && d.x < end);
-    const daytimeP01 = sourceP01.filter(isDaytimeScoreData);
+    const daytimeTempHumidity = sourceTempHumidity.filter(isDaytimeScoreData);
     const daytimeP21 = sourceP21.filter(isDaytimeScoreData);
 
     return {
-        vpd:daytimeP01
+        vpd:daytimeTempHumidity
             .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
             .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum)),
-        temp:sourceP01
+        temp:sourceTempHumidity
             .filter(d=>d.temp !== null && !isNaN(d.temp))
             .map(d=>d.temp),
-        hum:sourceP01
+        hum:sourceTempHumidity
             .filter(d=>d.hum !== null && !isNaN(d.hum))
             .map(d=>d.hum),
         co2:daytimeP21
@@ -5952,9 +5683,9 @@ function calcEnvironmentScore(values, range){
     return Math.round((inRangeCount / validValues.length) * 100);
 }
 
-function calcEnvironmentScoreRow(start, end, p01, p21, p31){
+function calcEnvironmentScoreRow(start, end, tempHumidityData, p21, p31){
     const ranges = getEnvironmentScoreRanges();
-    const values = getScoreRowsForPeriod(start, end, p01, p21, p31);
+    const values = getScoreRowsForPeriod(start, end, tempHumidityData, p21, p31);
     const scores = {};
 
     environmentScoreItems.forEach(item=>{
@@ -6031,8 +5762,8 @@ function renderEnvironmentScoreTableRow(label, scores, diffText, dayDiffText){
     "</tr>";
 }
 
-function renderEnvironmentScores(p01, p21, p31){
-    environmentScoreP01 = p01 || [];
+function renderEnvironmentScores(tempHumidityData, p21, p31){
+    environmentScoreTempHumidity = tempHumidityData || [];
     environmentScoreP21 = p21 || [];
     environmentScoreP31 = p31 || [];
 
@@ -6047,8 +5778,8 @@ function renderEnvironmentScores(p01, p21, p31){
     if(todayBody){
         const yesterdayStart = new Date(todayStart);
         yesterdayStart.setDate(todayStart.getDate() - 1);
-        todayScores = calcEnvironmentScoreRow(todayStart, now, environmentScoreP01, environmentScoreP21, environmentScoreP31);
-        const yesterdayScores = calcEnvironmentScoreRow(yesterdayStart, todayStart, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+        todayScores = calcEnvironmentScoreRow(todayStart, now, environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
+        const yesterdayScores = calcEnvironmentScoreRow(yesterdayStart, todayStart, environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
 
         todayBody.innerHTML = renderEnvironmentScoreTableRow(
             "今日の途中経過",
@@ -6070,8 +5801,8 @@ function renderEnvironmentScores(p01, p21, p31){
 
             const previousStart = new Date(start);
             previousStart.setDate(start.getDate() - 1);
-            const scores = calcEnvironmentScoreRow(start, end, environmentScoreP01, environmentScoreP21, environmentScoreP31);
-            const previousScores = calcEnvironmentScoreRow(previousStart, start, environmentScoreP01, environmentScoreP21, environmentScoreP31);
+            const scores = calcEnvironmentScoreRow(start, end, environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
+            const previousScores = calcEnvironmentScoreRow(previousStart, start, environmentScoreTempHumidity, environmentScoreP21, environmentScoreP31);
 
             rows.push(renderEnvironmentScoreTableRow(
                 formatScoreDate(start),
@@ -6268,7 +5999,7 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const tempHumChartIds = ["tempChartP01", "tempChartP11"];
+    const tempHumChartIds = ["tempChartP11"];
     const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
@@ -6476,8 +6207,6 @@ function handleUtechAreaChange(){
     updateHeaderTimeInfo();
     loadTideCalendarInfo();
     loadTomorrowForecast();
-    renderReviewDif();
-    recalculateReviewDifPeriodRows();
 }
 
 function calculateSunTime(year, month, day, isSunrise, area){
@@ -7176,9 +6905,7 @@ function applyMobileChartRanges(minTime, maxTime){
     if(!isMobileView()) return;
 
     [
-        tempChartP01,
         tempChartP11,
-        outsideDiffChart,
         solarChart,
         co2Chart,
         co2OutsideChart,
@@ -7351,9 +7078,7 @@ function applyMainChartNoDataStates(chartMap, context){
 
 function applyReviewChartNoDataStates(charts, userId, startTime, endTime){
     const configs = [
-        ["reviewTempChartP01", ["P01"]],
         ["reviewTempChartP11", ["P11"]],
-        ["reviewOutsideDiffChart", ["P01", "P11"]],
         ["reviewSolarChart", ["P31"]],
         ["reviewCo2Chart", ["P21"]],
         ["reviewCo2OutsideChart", ["P26"]],
@@ -7681,8 +7406,6 @@ function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime)
     const configs = [
         ["tempChartP12", "tempP12", ["P12"]],
         ["diffChartP11P12", "diffP11P12", ["P11", "P12"]],
-        ["tempChartP02", "tempP02", ["P02"]],
-        ["diffChart", "diffP01P02", ["P01", "P02"]],
         ["co2ChartP27", "co2P27", ["P27"]],
         ["co2DiffChartP26P27", "diffP26P27", ["P26", "P27"]],
         ["co2ChartP22", "co2P22", ["P22"]],
@@ -7735,7 +7458,7 @@ async function loadMaintenanceData(rangeOverride){
     maintenanceLastLoadSucceeded = false;
     if(message) message.innerText = "読み込み中...";
 
-    const pointIds = ["P01", "P02", "P11", "P12", "P21", "P22", "P26", "P27", "P31", "P32", "P91"];
+    const pointIds = ["P11", "P12", "P21", "P22", "P26", "P27", "P31", "P32", "P91"];
 
     try{
         const results = await Promise.all(pointIds.map(pointId=>
@@ -7756,12 +7479,6 @@ async function loadMaintenanceData(rangeOverride){
 
         destroyMaintenanceCharts();
 
-        tempChartP02 = configureMaintenanceChart(
-            createTempHumChart("tempChartP02", parsed.P02, range.startTime, range.endTime, "P02")
-        );
-        diffChart = configureMaintenanceChart(
-            createDiffChart("diffChart", parsed.P01, parsed.P02, range.startTime, range.endTime)
-        );
         tempChartP12 = configureMaintenanceChart(
             createTempHumChart("tempChartP12", parsed.P12, range.startTime, range.endTime, "P12")
         );
@@ -7817,8 +7534,6 @@ async function loadMaintenanceData(rangeOverride){
         const chartMap = {
             tempP12:tempChartP12,
             diffP11P12:diffChartP11P12,
-            tempP02:tempChartP02,
-            diffP01P02:diffChart,
             co2P27:co2ChartP27,
             diffP26P27:co2DiffChartP26P27,
             co2P22:co2ChartP22,
@@ -8683,11 +8398,8 @@ function setTempHumYAxis(chart, axis){
 
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
-        "tempChartP01",
-        "tempChartP02",
         "tempChartP11",
         "tempChartP12",
-        "outsideDiffChart",
         "solarChart",
         "solarChartP32",
         "solarDiffChartP31P32",
@@ -8698,7 +8410,6 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "co2DiffChartP21P22",
         "co2ChartP27",
         "co2DiffChartP26P27",
-        "diffChart",
         "diffChartP11P12"
     ];
 
@@ -8955,132 +8666,6 @@ yRight:createRightYAxis(yAxisOptions)
     });
 }
 
-function createDiffChart(canvasId, p01, p02, minTime, maxTime){
-
-    const canvas = getChartCanvas(canvasId);
-    if(!canvas || !hasChartSourceData(p01) || !hasChartSourceData(p02)) return null;
-
-    destroyExistingChart(canvasId);
-    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
-
-    const tempDiffData = [];
-    const humDiffData = [];
-const diffAxis = getDiffAxis();
-const yAxisOptions = {
-    min:diffAxis.min,
-    max:diffAxis.max,
-    ticks:{
-        stepSize:1,
-        color:"#000"
-    },
-    title:{
-        display:true,
-        text:"差",
-        color:"#000"
-    }
-};
-
-// P01の時刻に一番近いP02データを探す
-// ずれ許容：6分（360秒）以内
-const toleranceMs = 360 * 1000;
-const zeroOriginFill = {
-    target:"origin",
-    above:"rgba(120, 120, 120, 0.18)",
-    below:"rgba(120, 120, 120, 0.18)"
-};
-
-p01.forEach(d=>{
-
-    let nearestP02 = null;
-    let nearestDiff = Infinity;
-
-    p02.forEach(p=>{
-        const diff = Math.abs(d.xValue - p.xValue);
-
-        if(diff < nearestDiff){
-            nearestDiff = diff;
-            nearestP02 = p;
-        }
-    });
-
-    if(!nearestP02) return;
-
-    // 時刻差が大きすぎるものは使わない
-    if(nearestDiff > toleranceMs) return;
-
-    const p02Data = nearestP02;
-
-        if(d.temp !== null && p02Data.temp !== null && !isNaN(d.temp) && !isNaN(p02Data.temp)){
-            tempDiffData.push({ x:d.xValue, y:d.temp - p02Data.temp });
-        }
-
-        if(d.hum !== null && p02Data.hum !== null && !isNaN(d.hum) && !isNaN(p02Data.hum)){
-            humDiffData.push({ x:d.xValue, y:d.hum - p02Data.hum });
-        }
-    });
-
-    if(!tempDiffData.length && !humDiffData.length) return null;
-
-    return new Chart(canvas,{
-        type:"line",
-        data:{
-            datasets:[
-                {
-                    label:"温度差 P01−P02 (℃)",
-                    data:tempDiffData,
-                    borderColor:"rgb(255, 0, 0)",
-                    backgroundColor:"rgba(255, 0, 0, 0.15)",
-                    pointBackgroundColor:"rgb(255, 0, 0)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2,
-                    fill:zeroOriginFill
-                },
-                {
-                    label:"湿度差 P01−P02 (%)",
-                    data:humDiffData,
-                    borderColor:"rgb(120, 170, 255)",
-                    backgroundColor:"rgba(120, 170, 255, 0.12)",
-                    pointBackgroundColor:"rgb(120, 170, 255)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2,
-                    fill:zeroOriginFill
-                },
-                {
-                    label:"ゼロライン",
-                    data:[
-                        {x:minTime, y:0},
-                        {x:maxTime, y:0}
-                    ],
-                    borderColor:"rgba(0, 120, 255, 0.8)",
-                    borderWidth:1.5,
-                    pointRadius:0,
-                    tension:0,
-                    fill:false
-                }
-            ]
-        },
-        options:{
-            ...baseOptions(displayMinTime,maxTime),
-            plugins:{
-                ...baseOptions(displayMinTime,maxTime).plugins,
-                legend:{
-                    labels:{
-                        filter(item){
-                            return item.text !== "ゼロライン";
-                        }
-                    }
-                }
-            },
-            scales:{
-                ...baseOptions(displayMinTime,maxTime).scales,
-y:yAxisOptions,
-yRight:createRightYAxis(yAxisOptions)
-            }
-        }
-    });
-}
 
 function createTempHumDiagnosticDiffChart(canvasId, firstData, secondData, firstPointId, secondPointId, axis, minTime, maxTime){
 
@@ -9198,108 +8783,6 @@ function createTempHumDiagnosticDiffChart(canvasId, firstData, secondData, first
     });
 }
 
-function createOutsideDiffChart(canvasId, p01, p11, minTime, maxTime){
-
-    const canvas = getChartCanvas(canvasId);
-    if(!canvas || !hasChartSourceData(p01) || !hasChartSourceData(p11)) return null;
-
-    destroyExistingChart(canvasId);
-    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
-
-    const tempDiffData = [];
-    const toleranceMs = 360 * 1000;
-    const axis = getOutsideDiffAxis();
-    const yAxisOptions = {
-        min:axis.min,
-        max:axis.max,
-        ticks:{
-            stepSize:1,
-            color:"#000"
-        },
-        title:{
-            display:true,
-            text:"℃",
-            color:"#000"
-        }
-    };
-    const zeroOriginFill = {
-        target:"origin",
-        above:"rgba(120, 120, 120, 0.18)",
-        below:"rgba(120, 120, 120, 0.18)"
-    };
-
-    p01.forEach(d=>{
-
-        let nearestP11 = null;
-        let nearestDiff = Infinity;
-
-        p11.forEach(p=>{
-            const diff = Math.abs(d.xValue - p.xValue);
-
-            if(diff < nearestDiff){
-                nearestDiff = diff;
-                nearestP11 = p;
-            }
-        });
-
-        if(!nearestP11) return;
-        if(nearestDiff > toleranceMs) return;
-
-        if(d.temp !== null && nearestP11.temp !== null && !isNaN(d.temp) && !isNaN(nearestP11.temp)){
-            tempDiffData.push({ x:d.xValue, y:d.temp - nearestP11.temp });
-        }
-
-    });
-
-    if(!tempDiffData.length) return null;
-
-    return new Chart(canvas,{
-        type:"line",
-        data:{
-            datasets:[{
-                label:"温度差 (℃)",
-                data:tempDiffData,
-                borderColor:"rgba(0, 0, 0, 0.55)",
-                backgroundColor:"rgba(0, 0, 0, 0.08)",
-                pointBackgroundColor:"rgb(255, 0, 0)",
-                pointRadius:0,
-                borderWidth:2,
-                tension:0.2,
-                fill:zeroOriginFill
-            },
-            {
-                label:"ゼロライン",
-                data:[
-                    {x:minTime, y:0},
-                    {x:maxTime, y:0}
-                ],
-                borderColor:"rgba(0, 120, 255, 0.8)",
-                borderWidth:1.5,
-                pointRadius:0,
-                tension:0,
-                fill:false
-            }]
-        },
-        options:{
-            ...baseOptions(displayMinTime,maxTime),
-            plugins:{
-                ...baseOptions(displayMinTime,maxTime).plugins,
-                legend:{
-                    labels:{
-                        filter(item){
-                            return item.text !== "ゼロライン";
-                        }
-                    }
-                }
-            },
-            scales:{
-                ...baseOptions(displayMinTime,maxTime).scales,
-y:yAxisOptions,
-yRight:createRightYAxis(yAxisOptions)
-            }
-        }
-    });
-}
 
 function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
 
@@ -9668,7 +9151,7 @@ function applyReviewDefaultYAxis(chart){
     if(!chart || !chart.canvas) return;
 
     const id = chart.canvas.id;
-    if(id === "reviewTempChartP01" || id === "reviewTempChartP11"){
+    if(id === "reviewTempChartP11"){
         setTempHumYAxis(chart, reviewAxisDefaults.tempHum);
         return;
     }
@@ -9686,10 +9169,6 @@ function applyReviewDefaultYAxis(chart){
 
 function resetReviewAxisInputs(){
     [
-        ["reviewHumMinP01", reviewAxisDefaults.tempHum.humMin],
-        ["reviewHumMaxP01", reviewAxisDefaults.tempHum.humMax],
-        ["reviewTempMinP01", reviewAxisDefaults.tempHum.tempMin],
-        ["reviewTempMaxP01", reviewAxisDefaults.tempHum.tempMax],
         ["reviewHumMinP11", reviewAxisDefaults.tempHum.humMin],
         ["reviewHumMaxP11", reviewAxisDefaults.tempHum.humMax],
         ["reviewTempMinP11", reviewAxisDefaults.tempHum.tempMin],
@@ -9724,7 +9203,7 @@ function applyReviewSingleYAxis(chart, key){
 
 function getReviewChartGroup(chart){
     if(!chart || !chart.canvas) return "";
-    if(["reviewTempChartP01", "reviewTempChartP11"].includes(chart.canvas.id)) return "tempHum";
+    if(chart.canvas.id === "reviewTempChartP11") return "tempHum";
     return "";
 }
 
@@ -9816,7 +9295,7 @@ function syncMaintenanceZoom(sourceChart){
 
     try{
         const xRange = { min:sourceChart.scales.x.min, max:sourceChart.scales.x.max };
-        const tempHumChartIds = ["tempChartP02", "tempChartP12"];
+        const tempHumChartIds = ["tempChartP12"];
         const co2ChartIds = ["co2ChartP22", "co2ChartP27"];
         const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
         const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
@@ -9883,8 +9362,6 @@ function destroyMaintenanceCharts(){
         if(chart) chart.destroy();
     });
 
-    tempChartP02 = null;
-    diffChart = null;
     tempChartP12 = null;
     diffChartP11P12 = null;
     co2ChartP22 = null;
@@ -9923,9 +9400,7 @@ function destroyReviewCharts(){
     reviewCharts = [];
 
     [
-        "reviewTempChartP01",
         "reviewTempChartP11",
-        "reviewOutsideDiffChart",
         "reviewSolarChart",
         "reviewCo2Chart",
         "reviewCo2OutsideChart",
@@ -9957,497 +9432,7 @@ function resetReviewZoom(){
     });
 }
 
-function createReviewDifBoundaries(dateValue, area){
-    const dateParts = String(dateValue || "").split("-").map(Number);
-    if(dateParts.length !== 3 || dateParts.some(part=>!Number.isInteger(part))) return null;
 
-    const year = dateParts[0];
-    const month = dateParts[1];
-    const day = dateParts[2];
-    const selectedDate = new Date(year, month - 1, day);
-    if(
-        selectedDate.getFullYear() !== year ||
-        selectedDate.getMonth() !== month - 1 ||
-        selectedDate.getDate() !== day
-    ){
-        return null;
-    }
-
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    const sunriseText = calculateSunTime(year, month, day, true, area);
-    const sunsetText = calculateSunTime(year, month, day, false, area);
-    const nextSunriseText = calculateSunTime(
-        nextDate.getFullYear(),
-        nextDate.getMonth() + 1,
-        nextDate.getDate(),
-        true,
-        area
-    );
-    const sunriseMinutes = timeTextToMinutes(sunriseText);
-    const sunsetMinutes = timeTextToMinutes(sunsetText);
-    const nextSunriseMinutes = timeTextToMinutes(nextSunriseText);
-
-    if(
-        sunriseMinutes === null ||
-        sunsetMinutes === null ||
-        nextSunriseMinutes === null
-    ){
-        return null;
-    }
-
-    const sunrise = new Date(selectedDate);
-    sunrise.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
-    const sunset = new Date(selectedDate);
-    sunset.setHours(Math.floor(sunsetMinutes / 60), sunsetMinutes % 60, 0, 0);
-    const nextSunrise = new Date(nextDate);
-    nextSunrise.setHours(
-        Math.floor(nextSunriseMinutes / 60),
-        nextSunriseMinutes % 60,
-        0,
-        0
-    );
-
-    return {
-        date:selectedDate,
-        sunrise:sunrise.getTime(),
-        sunset:sunset.getTime(),
-        nextSunrise:nextSunrise.getTime(),
-        sunriseText,
-        sunsetText,
-        nextSunriseText
-    };
-}
-
-function calculateReviewDif(p01, boundaries, nowTime){
-    const result = {
-        dayAverage:null,
-        nightAverage:null,
-        dif:null,
-        dayCount:0,
-        nightCount:0,
-        status:"計算前"
-    };
-    if(!boundaries) return result;
-
-    let dayTotal = 0;
-    let nightTotal = 0;
-    (Array.isArray(p01) ? p01 : []).forEach(item=>{
-        if(!item) return;
-        const temperature = item.temp;
-        if(
-            temperature === null ||
-            temperature === undefined ||
-            temperature === "" ||
-            !Number.isFinite(Number(temperature))
-        ){
-            return;
-        }
-
-        const xValue = Number.isFinite(item.xValue)
-            ? item.xValue
-            : item.x instanceof Date
-                ? item.x.getTime()
-                : NaN;
-        if(!Number.isFinite(xValue)) return;
-
-        const value = Number(temperature);
-        if(xValue >= boundaries.sunrise && xValue < boundaries.sunset){
-            dayTotal += value;
-            result.dayCount++;
-        }else if(xValue >= boundaries.sunset && xValue < boundaries.nextSunrise){
-            nightTotal += value;
-            result.nightCount++;
-        }
-    });
-
-    result.dayAverage = result.dayCount ? dayTotal / result.dayCount : null;
-    result.nightAverage = result.nightCount ? nightTotal / result.nightCount : null;
-
-    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
-    if(currentTime < boundaries.sunrise){
-        result.status = "計算前";
-    }else if(currentTime < boundaries.sunset){
-        result.status = "昼集計中";
-    }else if(currentTime < boundaries.nextSunrise){
-        result.status = "夜集計中";
-    }else{
-        result.status = "確定";
-        if(result.dayAverage !== null && result.nightAverage !== null){
-            result.dif = result.dayAverage - result.nightAverage;
-        }
-    }
-
-    return result;
-}
-
-function formatReviewDifTemperature(value){
-    return value === null ? "－（データなし）" : value.toFixed(1) + "℃";
-}
-
-function formatReviewDifValue(value){
-    if(value === null) return "－（算出不可）";
-    const rounded = Number(value.toFixed(1));
-    return (rounded > 0 ? "+" : "") + rounded.toFixed(1) + "℃";
-}
-
-function setReviewDifText(id, text){
-    const element = document.getElementById(id);
-    if(element) element.textContent = text;
-}
-
-function renderReviewDifRequestState(dateValue, status){
-    const panel = document.getElementById("reviewDifPanel");
-    const area = getSelectedUtechArea();
-    const boundaries = createReviewDifBoundaries(dateValue, area);
-    if(!panel || !boundaries) return;
-
-    const date = boundaries.date;
-    const isLoading = status === "データ取得中";
-    const valueText = isLoading ? "読み込み中" : "－";
-
-    setReviewDifText(
-        "reviewDifDate",
-        date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日"
-    );
-    setReviewDifText("reviewDifArea", area.label);
-    setReviewDifText(
-        "reviewDifDayPeriod",
-        boundaries.sunriseText + "～" + boundaries.sunsetText
-    );
-    setReviewDifText(
-        "reviewDifNightPeriod",
-        boundaries.sunsetText + "～翌" + boundaries.nextSunriseText
-    );
-    setReviewDifText("reviewDifDayAverage", valueText);
-    setReviewDifText("reviewDifNightAverage", valueText);
-    setReviewDifText("reviewDifValue", valueText);
-    setReviewDifText("reviewDifDayCount", "－");
-    setReviewDifText("reviewDifNightCount", "－");
-    setReviewDifText("reviewDifStatus", status);
-    panel.hidden = false;
-}
-
-function renderReviewDif(){
-    const panel = document.getElementById("reviewDifPanel");
-    if(!panel || !reviewDifDateValue) return;
-
-    if(reviewDifDisplayState === "loading"){
-        renderReviewDifRequestState(reviewDifDateValue, "データ取得中");
-        return;
-    }
-    if(reviewDifDisplayState === "error"){
-        renderReviewDifRequestState(reviewDifDateValue, "取得エラー");
-        return;
-    }
-
-    const area = getSelectedUtechArea();
-    const boundaries = createReviewDifBoundaries(reviewDifDateValue, area);
-    if(!boundaries){
-        panel.hidden = true;
-        return;
-    }
-
-    const result = calculateReviewDif(reviewDifP01, boundaries, Date.now());
-    const beforeSunrise = result.status === "計算前";
-    const duringDay = result.status === "昼集計中";
-    const duringNight = result.status === "夜集計中";
-    const date = boundaries.date;
-
-    setReviewDifText(
-        "reviewDifDate",
-        date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日"
-    );
-    setReviewDifText("reviewDifArea", area.label);
-    setReviewDifText(
-        "reviewDifDayPeriod",
-        boundaries.sunriseText + "～" + boundaries.sunsetText
-    );
-    setReviewDifText(
-        "reviewDifNightPeriod",
-        boundaries.sunsetText + "～翌" + boundaries.nextSunriseText
-    );
-    setReviewDifText(
-        "reviewDifDayAverage",
-        beforeSunrise
-            ? "計算前"
-            : formatReviewDifTemperature(result.dayAverage) + (duringDay && result.dayAverage !== null ? "（途中経過）" : "")
-    );
-    setReviewDifText(
-        "reviewDifNightAverage",
-        beforeSunrise || duringDay
-            ? "計算前"
-            : formatReviewDifTemperature(result.nightAverage) + (duringNight && result.nightAverage !== null ? "（途中経過）" : "")
-    );
-    setReviewDifText(
-        "reviewDifValue",
-        beforeSunrise || duringDay || duringNight ? "未確定" : formatReviewDifValue(result.dif)
-    );
-    setReviewDifText("reviewDifDayCount", result.dayCount + "件");
-    setReviewDifText("reviewDifNightCount", result.nightCount + "件");
-    setReviewDifText("reviewDifStatus", result.status);
-    panel.hidden = false;
-}
-
-function createReviewDifPeriodDateValues(endDateValue, dayCount){
-    const parts = String(endDateValue || "").split("-").map(Number);
-    if(parts.length !== 3 || parts.some(part=>!Number.isInteger(part))) return [];
-
-    const endDate = new Date(parts[0], parts[1] - 1, parts[2]);
-    if(
-        endDate.getFullYear() !== parts[0] ||
-        endDate.getMonth() !== parts[1] - 1 ||
-        endDate.getDate() !== parts[2]
-    ){
-        return [];
-    }
-
-    const count = Number.isInteger(dayCount) && dayCount > 0 ? dayCount : 7;
-    const dateValues = [];
-    for(let offset = count - 1; offset >= 0; offset--){
-        const date = new Date(endDate);
-        date.setDate(endDate.getDate() - offset);
-        dateValues.push(formatDateInputValue(date));
-    }
-    return dateValues;
-}
-
-function calculateReviewDailyAverage(p01, targetDate){
-    const result = { average:null, count:0 };
-    if(!(targetDate instanceof Date) || isNaN(targetDate.getTime())) return result;
-
-    const start = new Date(targetDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    let total = 0;
-
-    (Array.isArray(p01) ? p01 : []).forEach(item=>{
-        if(!item) return;
-        const temperature = item.temp;
-        if(
-            temperature === null ||
-            temperature === undefined ||
-            temperature === "" ||
-            !Number.isFinite(Number(temperature))
-        ){
-            return;
-        }
-
-        const xValue = Number.isFinite(item.xValue)
-            ? item.xValue
-            : item.x instanceof Date
-                ? item.x.getTime()
-                : NaN;
-        if(!Number.isFinite(xValue) || xValue < start.getTime() || xValue >= end.getTime()) return;
-
-        total += Number(temperature);
-        result.count++;
-    });
-
-    if(result.count) result.average = total / result.count;
-    return result;
-}
-
-function getReviewDifPeriodStatus(boundaries, difResult, nowTime){
-    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
-    if(!boundaries || !difResult) return "データなし";
-    if(boundaries.date.getTime() > currentTime) return "未到来";
-
-    if(difResult.status === "計算前") return "日の出前";
-    if(difResult.status === "昼集計中") return "昼間集計中";
-    if(difResult.status === "夜集計中") return "夜間集計中";
-    if(difResult.dayCount === 0 && difResult.nightCount === 0) return "データなし";
-    if(difResult.dayCount === 0 || difResult.nightCount === 0) return "データ不足";
-    return "確定";
-}
-
-function calculateReviewDifPeriodRows(p01, endDateValue, area, nowTime){
-    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
-    return createReviewDifPeriodDateValues(endDateValue, 7).map(dateValue=>{
-        const boundaries = createReviewDifBoundaries(dateValue, area);
-        const difResult = calculateReviewDif(p01, boundaries, currentTime);
-        const dailyResult = calculateReviewDailyAverage(p01, boundaries ? boundaries.date : null);
-        const date = boundaries ? boundaries.date : null;
-
-        return {
-            dateValue,
-            dateText:date ? (date.getMonth() + 1) + "/" + date.getDate() : dateValue,
-            dayAverage:difResult.dayAverage,
-            nightAverage:difResult.nightAverage,
-            dif:difResult.dif,
-            dailyAverage:dailyResult.average,
-            status:getReviewDifPeriodStatus(boundaries, difResult, currentTime)
-        };
-    }).reverse();
-}
-
-function formatReviewDifPeriodTemperature(value, showSign){
-    if(value === null || value === undefined || !Number.isFinite(value)) return "—";
-    const rounded = Number(value.toFixed(1));
-    return (showSign && rounded > 0 ? "+" : "") + rounded.toFixed(1) + "℃";
-}
-
-function updateReviewDifPeriodMeta(){
-    const dateValues = createReviewDifPeriodDateValues(reviewDifPeriodEndDateValue, 7);
-    const area = getSelectedUtechArea();
-    const rangeElement = document.getElementById("reviewDifPeriodRange");
-    const areaElement = document.getElementById("reviewDifPeriodArea");
-
-    if(rangeElement){
-        if(dateValues.length){
-            const first = dateValues[0].split("-").map(Number);
-            const last = dateValues[dateValues.length - 1].split("-").map(Number);
-            rangeElement.textContent =
-                first[0] + "年" + first[1] + "月" + first[2] + "日～" +
-                last[0] + "年" + last[1] + "月" + last[2] + "日";
-        }else{
-            rangeElement.textContent = "－";
-        }
-    }
-    if(areaElement) areaElement.textContent = area.label;
-}
-
-function renderReviewDifPeriodMessage(message){
-    const body = document.getElementById("reviewDifPeriodBody");
-    if(!body) return;
-
-    body.textContent = "";
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 6;
-    cell.textContent = message;
-    row.appendChild(cell);
-    body.appendChild(row);
-}
-
-function renderReviewDifPeriod(){
-    const panel = document.getElementById("reviewDifPeriodPanel");
-    const body = document.getElementById("reviewDifPeriodBody");
-    if(!panel || !body || !reviewDifPeriodEndDateValue) return;
-
-    updateReviewDifPeriodMeta();
-    panel.hidden = false;
-
-    if(reviewDifPeriodDisplayState === "loading"){
-        renderReviewDifPeriodMessage("データ取得中");
-        return;
-    }
-    if(reviewDifPeriodDisplayState === "error"){
-        renderReviewDifPeriodMessage("取得エラー");
-        return;
-    }
-
-    body.textContent = "";
-    reviewDifRows.forEach(item=>{
-        const row = document.createElement("tr");
-        [
-            { text:item.dateText, secondary:false },
-            { text:formatReviewDifPeriodTemperature(item.dayAverage, false), secondary:false },
-            { text:formatReviewDifPeriodTemperature(item.nightAverage, false), secondary:false },
-            { text:formatReviewDifPeriodTemperature(item.dif, true), secondary:false },
-            { text:formatReviewDifPeriodTemperature(item.dailyAverage, false), secondary:true },
-            { text:item.status, secondary:true }
-        ].forEach(column=>{
-            const cell = document.createElement("td");
-            cell.textContent = column.text;
-            if(column.secondary) cell.className = "review-dif-period-secondary";
-            row.appendChild(cell);
-        });
-        body.appendChild(row);
-    });
-}
-
-function recalculateReviewDifPeriodRows(){
-    if(!reviewDifPeriodEndDateValue) return;
-    if(reviewDifPeriodDisplayState !== "ready"){
-        renderReviewDifPeriod();
-        return;
-    }
-
-    reviewDifRows = calculateReviewDifPeriodRows(
-        reviewDifPeriodP01,
-        reviewDifPeriodEndDateValue,
-        getSelectedUtechArea(),
-        Date.now()
-    );
-    renderReviewDifPeriod();
-}
-
-async function loadReviewDifPeriodData(userId, endDateValue){
-    const requestKey = userId + "\n" + endDateValue + "\n7";
-    if(reviewDifPeriodLoadingKey === requestKey) return;
-
-    const dateValues = createReviewDifPeriodDateValues(endDateValue, 7);
-    if(dateValues.length !== 7) return;
-
-    const requestId = ++reviewDifPeriodRequestSequence;
-    reviewDifPeriodLoadingKey = requestKey;
-    reviewDifPeriodP01 = [];
-    reviewDifRows = [];
-    reviewDifPeriodEndDateValue = endDateValue;
-    reviewDifPeriodDisplayState = "loading";
-    renderReviewDifPeriod();
-
-    const startParts = dateValues[0].split("-").map(Number);
-    const startTime = new Date(startParts[0], startParts[1] - 1, startParts[2]);
-    startTime.setHours(0, 0, 0, 0);
-    const endTime = new Date(startTime);
-    endTime.setDate(endTime.getDate() + 7);
-    endTime.setHours(23, 59, 59, 999);
-
-    try{
-        const result = await fetchDataSafe(userId, "P01", {
-            start:formatSqlDateTime(startTime),
-            end:formatSqlDateTime(endTime)
-        });
-        const currentUserId = document.getElementById("userId").value.trim();
-        const reviewDate = document.getElementById("reviewDate");
-
-        if(
-            requestId !== reviewDifPeriodRequestSequence ||
-            currentUserId !== userId ||
-            !reviewDate ||
-            reviewDate.value !== endDateValue
-        ){
-            if(reviewDifPeriodLoadingKey === requestKey) reviewDifPeriodLoadingKey = "";
-            return;
-        }
-
-        reviewDifPeriodLoadingKey = "";
-        if(result.error){
-            reviewDifPeriodP01 = [];
-            reviewDifRows = [];
-            reviewDifPeriodDisplayState = "error";
-            renderReviewDifPeriod();
-            return;
-        }
-
-        reviewDifPeriodP01 = parseData(result.data, startTime);
-        reviewDifPeriodDisplayState = "ready";
-        recalculateReviewDifPeriodRows();
-
-    }catch(e){
-        const currentUserId = document.getElementById("userId").value.trim();
-        const reviewDate = document.getElementById("reviewDate");
-        if(
-            requestId !== reviewDifPeriodRequestSequence ||
-            currentUserId !== userId ||
-            !reviewDate ||
-            reviewDate.value !== endDateValue
-        ){
-            if(reviewDifPeriodLoadingKey === requestKey) reviewDifPeriodLoadingKey = "";
-            return;
-        }
-
-        reviewDifPeriodLoadingKey = "";
-        reviewDifPeriodP01 = [];
-        reviewDifRows = [];
-        reviewDifPeriodDisplayState = "error";
-        renderReviewDifPeriod();
-        console.error(e);
-    }
-}
 
 async function loadReviewData(){
     clearSyncedTooltipGroup("review");
@@ -10468,8 +9453,6 @@ async function loadReviewData(){
         return;
     }
 
-    loadReviewDifPeriodData(userId, dateValue);
-
     const requestKey = userId + "\n" + dateValue;
     if(reviewDataLoadingKey === requestKey){
         if(msg) msg.innerText = "読み込み中...";
@@ -10478,11 +9461,6 @@ async function loadReviewData(){
 
     const requestId = ++reviewDataRequestSequence;
     reviewDataLoadingKey = requestKey;
-    reviewDifP01 = [];
-    reviewDifDateValue = dateValue;
-    reviewDifDisplayState = "loading";
-    renderReviewDif();
-
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
 
@@ -10500,7 +9478,6 @@ async function loadReviewData(){
     try{
         const range = { start:start, end:end };
         const results = await Promise.all([
-            fetchDataSafe(userId, "P01", range),
             fetchDataSafe(userId, "P11", range),
             fetchDataSafe(userId, "P31", range),
             fetchDataSafe(userId, "P21", range),
@@ -10517,23 +9494,15 @@ async function loadReviewData(){
         }
 
         const errors = results.filter(r=>r.error).map(r=>r.error);
-        const p01 = parseData(results[0].data, minTime);
-        const p11 = parseData(results[1].data, minTime);
-        const p31 = parseData(results[2].data, minTime);
-        const p21 = parseData(results[3].data, minTime);
-        const p26 = parseData(results[4].data, minTime);
-
-        reviewDifP01 = p01;
-        reviewDifDateValue = dateValue;
-        reviewDifDisplayState = results[0].error ? "error" : "ready";
-        renderReviewDif();
+        const p11 = parseData(results[0].data, minTime);
+        const p31 = parseData(results[1].data, minTime);
+        const p21 = parseData(results[2].data, minTime);
+        const p26 = parseData(results[3].data, minTime);
 
         destroyReviewCharts();
 
         reviewCharts = [
-            configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
             configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
-            configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewSolarChart", p31, "solar", "日射", "日射", minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewCo2Chart", p21, "co2", "co2", "ppm", minTime, maxTime)),
             configureReviewChart(createSingleChart("reviewCo2OutsideChart", p26, "co2Outside", "co2", "ppm", minTime, maxTime)),
@@ -10557,10 +9526,6 @@ async function loadReviewData(){
         }
 
         reviewDataLoadingKey = "";
-        reviewDifP01 = [];
-        reviewDifDateValue = dateValue;
-        reviewDifDisplayState = "error";
-        renderReviewDif();
         if(msg) msg.innerText = "過去データ表示エラー：" + e.message;
         console.error(e);
     }
@@ -10592,14 +9557,7 @@ async function loadData(){
 
     msg.innerText = "読み込み中...";
 
-    document.getElementById("tempNow").innerText = "-";
-    document.getElementById("humNow").innerText = "-";
-    document.getElementById("solarNow").innerText = "-";
-    document.getElementById("co2Now").innerText = "-";
     resetDailyTempStats();
-    document.getElementById("vpdEvalAm").innerText = "データなし";
-    document.getElementById("vpdEvalPm").innerText = "データなし";
-    renderEnvironmentScores([], [], []);
 
     destroyCharts();
 
@@ -10616,18 +9574,9 @@ async function loadData(){
             rainfallRequestId
         );
         const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
-        const scoreMinTime = new Date(now);
-        scoreMinTime.setHours(0,0,0,0);
-        scoreMinTime.setDate(scoreMinTime.getDate() - 30);
-
         const chartContext = getMainChartContext(userId, outsideSource, minTime, now, voltMinTime);
         const chartFetchRequests = buildMainChartFetchRequests(chartContext);
-        const scoreFetchRequests = [
-            { userId:userId, pointId:"P01", rangeKey:"score" },
-            { userId:userId, pointId:"P21", rangeKey:"score" },
-            { userId:userId, pointId:"P31", rangeKey:"score" }
-        ];
-        const fetchRequests = chartFetchRequests.concat(scoreFetchRequests);
+        const fetchRequests = chartFetchRequests;
         const results = await Promise.all(fetchRequests.map(request=>{
             const range = request.rangeKey === "score"
                 ? {
@@ -10643,38 +9592,20 @@ async function loadData(){
             resultMap[getFetchRequestKey(request)] = results[index];
         });
 
-        const resultP01 = getFetchedResult(resultMap, userId, "P01");
         const resultP11 = getFetchedResult(resultMap, outsideSource.userId, outsideSource.pointId);
         const resultP31 = getFetchedResult(resultMap, userId, "P31");
         const resultP21 = getFetchedResult(resultMap, userId, "P21");
         const resultP26 = getFetchedResult(resultMap, userId, "P26");
-        const resultScoreP01 = getFetchedResult(resultMap, userId, "P01", "score");
-        const resultScoreP21 = getFetchedResult(resultMap, userId, "P21", "score");
-        const resultScoreP31 = getFetchedResult(resultMap, userId, "P31", "score");
-
-        const p01 = parseData(resultP01.data, minTime);
         const p11 = parseData(resultP11.data, minTime);
         const p31 = parseData(resultP31.data, minTime);
 const p21 = parseData(resultP21.data, minTime);
 const p26 = parseData(resultP26.data, minTime);
-const scoreP01 = parseData(resultScoreP01.data, scoreMinTime);
-const scoreP21 = parseData(resultScoreP21.data, scoreMinTime);
-const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
-        renderEnvironmentScores(scoreP01, scoreP21, scoreP31);
 
         const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
         const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
         const validP26 = p26.filter(d=>d.co2 !== null && !isNaN(d.co2));
 
         console.log("[CO2_外気_P26] 描画可能CO2件数:", validP26.length);
-
-        if(validP31.length){
-            document.getElementById("solarNow").innerText = validP31[validP31.length - 1].solar.toFixed(1);
-        }
-
-        if(validP21.length){
-            document.getElementById("co2Now").innerText = validP21[validP21.length - 1].co2.toFixed(0);
-        }
 
         const today = new Date(now);
 
@@ -10684,9 +9615,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         const twoDaysAgo = new Date(today);
         twoDaysAgo.setDate(today.getDate() - 2);
 
-        renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
-        renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
-        renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
         renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
         renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
         renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
@@ -10696,38 +9624,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             .filter(r=>r.error)
             .map(r=>r.error);
 
-        if(p01.length){
-            const validP01 = p01.filter(d=>
-                d.temp !== null &&
-                d.hum !== null &&
-                !isNaN(d.temp) &&
-                !isNaN(d.hum)
-            );
-
-            if(validP01.length){
-                const last = validP01[validP01.length - 1];
-
-                document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-                document.getElementById("humNow").innerText = last.hum.toFixed(1);
-
-                const yStart = new Date();
-                yStart.setDate(yStart.getDate() - 1);
-                yStart.setHours(0,0,0,0);
-
-                const yEnd = new Date(yStart);
-                yEnd.setHours(23,59,59,999);
-
-                const amVpdAverage = calcVpdAverage(validP01, 6, 12, yStart);
-                const pmVpdAverage = calcVpdAverage(validP01, 12, 18, yStart);
-
-                document.getElementById("vpdEvalAm").innerText = evaluateVpdAverage(amVpdAverage, "am");
-                document.getElementById("vpdEvalPm").innerText = evaluateVpdAverage(pmVpdAverage, "pm");
-            }
-        }
-
-        tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
         tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
-        outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
@@ -10735,9 +9632,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
 
         applyMainChartNoDataStates({
-            insideTempHumidity:tempChartP01,
             outsideTempHumidity:tempChartP11,
-            outsideDiff:outsideDiffChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
@@ -10745,9 +9640,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         }, chartContext);
 
         allCharts = [
-            tempChartP01,
             tempChartP11,
-            outsideDiffChart,
             solarChart,
             co2Chart,
             co2OutsideChart,
@@ -10775,18 +9668,14 @@ function destroyCharts(){
         if(c) c.destroy();
     });
     allCharts = [];
-    tempChartP01 = null;
     tempChartP11 = null;
-    outsideDiffChart = null;
     solarChart = null;
     co2Chart = null;
     co2OutsideChart = null;
     co2DiffChart = null;
 
     [
-        "tempChartP01",
         "tempChartP11",
-        "outsideDiffChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
@@ -11206,7 +10095,7 @@ body.yui-tech-app .status-temp-data-scroll {
     overflow-x:visible;
 }
 body.yui-tech-app .status-temp-data-grid {
-    grid-template-columns:repeat(5, 60px);
+    grid-template-columns:repeat(10, 60px);
     width:max-content;
 }
 body.yui-tech-app .status-temp-label-spacer,
@@ -11280,7 +10169,7 @@ body.yui-tech-app .yui-current-status {
 }
 body.yui-tech-app .yui-current-status-grid {
     display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
+    grid-template-columns:minmax(0, 1fr);
     width:100%;
 }
 body.yui-tech-app .yui-current-status-section {
@@ -11291,7 +10180,6 @@ body.yui-tech-app .yui-current-status-section {
 }
 body.yui-tech-app .yui-current-status-section:first-child {
     padding-left:0;
-    border-right:1px solid #bcc8d4;
 }
 body.yui-tech-app .yui-current-status-section:last-child {
     padding-right:0;
@@ -11314,7 +10202,7 @@ body.yui-tech-app .yui-current-status .status-box {
         width:100%;
     }
     body.yui-tech-app .status-temp-data-grid {
-        grid-template-columns:repeat(5, 58px);
+        grid-template-columns:repeat(10, 58px);
     }
     body.yui-tech-app .status-temp-grid.yui-seven-day-temp-grid .status-temp-value {
         width:58px;
@@ -11415,16 +10303,11 @@ body.yui-tech-app .yui-current-status .status-box {
         normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
         text(".status-group-current .status-group-title", "現在状況");
-        document.querySelectorAll(".status-group-temp-summary .status-group-title").forEach((title, index)=>{ title.textContent = index === 0 ? "屋内（P01）" : "屋外（P11）"; });
-        const solarBox = document.getElementById("solarNow"); if(solarBox) hideElement(solarBox.closest(".status-box"));
-        const co2Box = document.getElementById("co2Now"); if(co2Box) hideElement(co2Box.closest(".status-box"));
         const reviewDescription = document.querySelector("#tab-review .analysis-description");
-        if(reviewDescription) reviewDescription.textContent = "過去の環境データを、メインタブと同じグラフで確認できます。P01・P11の温湿度とP41雨量を中心に確認します。";
+        if(reviewDescription) reviewDescription.textContent = "過去の屋外環境データを、メインタブと同じ見やすいグラフで確認できます。P11の温湿度とP41の雨量を中心に振り返れます。";
         document.querySelectorAll("summary").forEach(summary=>{
             const value = summary.textContent || "";
-            if(value.includes("温湿度（室内）")) summary.firstChild.textContent = "温湿度（屋内）";
             if(value.includes("温湿度（外気）")) summary.firstChild.textContent = "温湿度（屋外）";
-            if(value.includes("CO2") || value.includes("日射")) hideElement(summary.closest("details"));
         });
     }
 
@@ -11432,9 +10315,7 @@ body.yui-tech-app .yui-current-status .status-box {
 
     function configureYuiCharts(){
         ["solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "reviewSolarChart", "reviewCo2Chart", "reviewCo2OutsideChart", "reviewCo2DiffChart", "co2ChartP22", "co2DiffChartP21P22", "co2ChartP27", "co2DiffChartP26P27", "solarChartP32", "solarDiffChartP31P32", "voltChart"].forEach(hideCanvasCard);
-        const p01Title = document.querySelector("#tempChartP01")?.closest(".grid > div")?.querySelector("h4 span"); if(p01Title) p01Title.textContent = "室内温湿度（P01）";
         const p11Title = document.querySelector("#tempChartP11")?.closest(".grid > div")?.querySelector("h4 span"); if(p11Title) p11Title.textContent = "屋外温湿度（P11）";
-        const p02Title = document.querySelector("#tempChartP02")?.closest(".grid > div")?.querySelector("h4 span"); if(p02Title) p02Title.textContent = "室内温湿度（確認用 P02）";
         const p12Title = document.querySelector("#tempChartP12")?.closest(".grid > div")?.querySelector("h4 span"); if(p12Title) p12Title.textContent = "屋外温湿度（確認用 P12）";
     }
 
@@ -11465,7 +10346,7 @@ body.yui-tech-app .yui-current-status .status-box {
         if(document.getElementById(`${prefix}Day0Label`) && (prefix !== "outside" || document.getElementById(`${prefix}Day0Rain`))) return;
         let labelHtml = '<div class="status-temp-label-spacer"></div>';
         let dataHtml = "";
-        for(let i = 0; i < 5; i++){
+        for(let i = 0; i < 10; i++){
             dataHtml += `<div class="status-temp-date" id="${prefix}Day${i}Label">-</div>`;
         }
         const rows = [["Max", "最高(℃)"], ["Min", "最低(℃)"], ["Avg", "平均(℃)"]];
@@ -11473,7 +10354,7 @@ body.yui-tech-app .yui-current-status .status-box {
         rows.forEach(([key, label])=>{
             const labelClass = key === "Rain" ? " status-temp-label-rain" : "";
             labelHtml += `<div class="status-temp-label${labelClass}">${label}</div>`;
-            for(let i = 0; i < 5; i++){
+            for(let i = 0; i < 10; i++){
                 dataHtml += `<div class="status-temp-value" id="${prefix}Day${i}${key}">-</div>`;
             }
         });
@@ -11481,17 +10362,16 @@ body.yui-tech-app .yui-current-status .status-box {
             `<div class="status-temp-label-grid">${labelHtml}</div>` +
             `<div class="status-temp-data-scroll"><div class="status-temp-data-grid">${dataHtml}</div></div>`;
         const scrollArea = grid.querySelector(".status-temp-data-scroll");
-        if(scrollArea) scrollArea.scrollLeft = 0;
+        if(scrollArea) requestAnimationFrame(()=>{ scrollArea.scrollLeft = scrollArea.scrollWidth; });
     }
 
     function ensureYuiSevenDaySummaryCards(){
-        buildYuiSevenDayCells("house");
         buildYuiSevenDayCells("outside");
     }
 
     function resetYuiSevenDaySummary(){
-        ["house", "outside"].forEach(prefix=>{
-            for(let i = 0; i < 5; i++){
+        ["outside"].forEach(prefix=>{
+            for(let i = 0; i < 10; i++){
                 const label = document.getElementById(`${prefix}Day${i}Label`);
                 if(label) label.textContent = "-";
                 ["Max", "Min", "Avg", "Rain"].forEach(key=>{
@@ -11537,8 +10417,8 @@ body.yui-tech-app .yui-current-status .status-box {
     function renderYuiSevenDaySummary(prefix, days){
         ensureYuiSevenDaySummaryCards();
         const dayMap = new Map((days || []).map(day => [day.date, day]));
-        for(let i = 0; i < 5; i++){
-            const dateKey = getYuiJstDateKey(4 - i);
+        for(let i = 0; i < 10; i++){
+            const dateKey = getYuiJstDateKey(9 - i);
             const day = dayMap.get(dateKey);
             const label = document.getElementById(`${prefix}Day${i}Label`);
             if(label) label.textContent = formatYuiSevenDayLabel(dateKey);
@@ -11571,7 +10451,7 @@ body.yui-tech-app .yui-current-status .status-box {
     }
 
     async function fetchYuiRainfallDailyStats(userId){
-        const start = getYuiJstDateKey(4) + " 00:00:00";
+        const start = getYuiJstDateKey(9) + " 00:00:00";
         const end = getYuiJstNowSqlDateTime();
         const url = "get_data.php?user_id=" + encodeURIComponent(userId) + "&point_id=P41&start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
         const response = await fetch(url, { cache:"no-store" });
@@ -11595,8 +10475,8 @@ body.yui-tech-app .yui-current-status .status-box {
 
     function renderYuiRainfallSevenDaySummary(rainMap){
         ensureYuiSevenDaySummaryCards();
-        for(let i = 0; i < 5; i++){
-            const dateKey = getYuiJstDateKey(4 - i);
+        for(let i = 0; i < 10; i++){
+            const dateKey = getYuiJstDateKey(9 - i);
             const day = rainMap instanceof Map ? rainMap.get(dateKey) : null;
             const cell = document.getElementById(`outsideDay${i}Rain`);
             if(cell) cell.textContent = day && day.count > 0 ? formatYuiRainfallDailyValue(day.total) : "-";
@@ -11608,11 +10488,7 @@ body.yui-tech-app .yui-current-status .status-box {
         resetYuiSevenDaySummary();
         if(!userId) return;
         try{
-            const [inside, outside] = await Promise.all([
-                fetchYuiDailyStats(userId, "P01"),
-                fetchYuiDailyStats(userId, "P11")
-            ]);
-            renderYuiSevenDaySummary("house", inside);
+            const outside = await fetchYuiDailyStats(userId, "P11");
             renderYuiSevenDaySummary("outside", outside);
         }catch(error){
             console.error(error);
@@ -11627,7 +10503,7 @@ body.yui-tech-app .yui-current-status .status-box {
     }
 
     function configureCsvDefaults(){
-        document.querySelectorAll('#csvPointGroups input[name="point_ids[]"]').forEach(input=>{ input.checked = ["P01", "P02", "P11", "P12", "P41"].includes(input.value); });
+        document.querySelectorAll('#csvPointGroups input[name="point_ids[]"]').forEach(input=>{ input.checked = ["P11", "P12", "P41"].includes(input.value); });
     }
 
     let yuiReviewRainChart = null;
@@ -11770,16 +10646,8 @@ body.yui-tech-app .yui-current-status .status-box {
         };
     }
 
-    const originalDownloadCSV = window.downloadCSV;
-    if(typeof originalDownloadCSV === "function"){
-        window.downloadCSV = function(event){
-            document.querySelectorAll('#csvPointGroups input[name="point_ids[]"]').forEach(input=>{ if(!["P01", "P02", "P11", "P12", "P41"].includes(input.value)) input.checked = false; });
-            return originalDownloadCSV.apply(this, arguments);
-        };
-    }
-
     function resetYuiStatusValues(){
-        ["tempNow", "humNow", "tempNowP11", "humNowP11"].forEach(id=>{
+        ["tempNowP11", "humNowP11"].forEach(id=>{
             const element = document.getElementById(id);
             if(element) element.innerText = "-";
         });
@@ -11812,32 +10680,9 @@ body.yui-tech-app .yui-current-status .status-box {
             const chartMinTime = isMobileView() ? new Date(now.getTime() - 48*60*60*1000) : minTime;
             const rainDisplayHours = isMobileView() ? 48 : 72;
 
-            const results = await Promise.all([
-                fetchDataSafe(userId, "P01"),
-                fetchDataSafe(userId, "P11")
-            ]);
-            const errors = results.filter(result=>result.error).map(result=>result.error);
-            const p01 = parseData(results[0].data || [], minTime);
-            const p11 = parseData(results[1].data || [], minTime);
-
-            const today = new Date(now);
-            const yesterday = new Date(today);
-            yesterday.setDate(today.getDate() - 1);
-            const twoDaysAgo = new Date(today);
-            twoDaysAgo.setDate(today.getDate() - 2);
-            renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
-            renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
-            renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
-            renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
-            renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
-            renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
-
-            const validP01 = p01.filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum));
-            if(validP01.length){
-                const last = validP01[validP01.length - 1];
-                document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-                document.getElementById("humNow").innerText = last.hum.toFixed(1);
-            }
+            const resultP11 = await fetchDataSafe(userId, "P11");
+            const errors = resultP11.error ? [resultP11.error] : [];
+            const p11 = parseData(resultP11.data || [], minTime);
 
             const validP11 = p11.filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum));
             if(validP11.length){
@@ -11846,10 +10691,8 @@ body.yui-tech-app .yui-current-status .status-box {
                 document.getElementById("humNowP11").innerText = last.hum.toFixed(1);
             }
 
-            tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
             tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
-            outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
-            allCharts = [tempChartP01, tempChartP11, outsideDiffChart, rainChart].filter(Boolean);
+            allCharts = [tempChartP11, rainChart].filter(Boolean);
             allCharts.forEach(saveInitialScaleLimits);
             await loadRainfallData(rainfallSource.userId, rainDisplayHours, rainfallRequestId);
             applyMobileChartRanges(chartMinTime, now);
@@ -11881,26 +10724,16 @@ body.yui-tech-app .yui-current-status .status-box {
         const range = { start:formatSqlDateTime(minTime), end:formatSqlDateTime(maxTime) };
 
         try{
-            const results = await Promise.all([
-                fetchDataSafe(userId, "P01", range),
-                fetchDataSafe(userId, "P11", range)
-            ]);
-            const p01 = parseData(results[0].data || [], minTime);
-            const p11 = parseData(results[1].data || [], minTime);
+            const resultP11 = await fetchDataSafe(userId, "P11", range);
+            const p11 = parseData(resultP11.data || [], minTime);
             destroyReviewCharts();
             reviewCharts = [
-                configureReviewChart(createTempHumChart("reviewTempChartP01", p01, minTime, maxTime, "P01")),
-                configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11")),
-                configureReviewChart(createOutsideDiffChart("reviewOutsideDiffChart", p01, p11, minTime, maxTime))
+                configureReviewChart(createTempHumChart("reviewTempChartP11", p11, minTime, maxTime, "P11"))
             ].filter(Boolean);
-            reviewDifP01 = p01;
-            reviewDifDateValue = dateValue;
-            reviewDifDisplayState = results[0].error ? "error" : "ready";
-            renderReviewDif();
             await loadYuiReviewRainData(userId, dateValue);
             configureYuiCharts();
             refreshVisibleCharts();
-            const errors = results.filter(result=>result.error).map(result=>result.error);
+            const errors = resultP11.error ? [resultP11.error] : [];
             if(msg) msg.innerText = errors.length ? errors.join(" / ") : "";
         }catch(error){
             if(msg) msg.innerText = "過去データ表示エラー：" + error.message;
@@ -11918,16 +10751,14 @@ body.yui-tech-app .yui-current-status .status-box {
         const range = rangeResult.range;
         if(message) message.innerText = "読み込み中...";
         try{
-            const pointIds = ["P01", "P02", "P11", "P12"];
+            const pointIds = ["P11", "P12"];
             const results = await Promise.all(pointIds.map(pointId=>fetchDataSafe(userId, pointId, range.apiRange)));
             const parsed = {};
             pointIds.forEach((pointId, index)=>{ parsed[pointId] = parseData(results[index].data || [], range.startTime); });
             destroyMaintenanceCharts();
             tempChartP12 = configureMaintenanceChart(createTempHumChart("tempChartP12", parsed.P12, range.startTime, range.endTime, "P12"));
             diffChartP11P12 = configureMaintenanceChart(createTempHumDiagnosticDiffChart("diffChartP11P12", parsed.P11, parsed.P12, "P11", "P12", getP11P12DiffAxis(), range.startTime, range.endTime));
-            tempChartP02 = configureMaintenanceChart(createTempHumChart("tempChartP02", parsed.P02, range.startTime, range.endTime, "P02"));
-            diffChart = configureMaintenanceChart(createDiffChart("diffChart", parsed.P01, parsed.P02, range.startTime, range.endTime));
-            const chartMap = { tempP02:tempChartP02, diffP01P02:diffChart, tempP12:tempChartP12, diffP11P12:diffChartP11P12 };
+            const chartMap = { tempP12:tempChartP12, diffP11P12:diffChartP11P12 };
             maintenanceCharts = Object.values(chartMap).filter(Boolean);
             applyMaintenanceMobileChartRanges(range.startTime, range.endTime);
             applyMaintenanceChartNoDataStates(chartMap, userId, range.startTime, range.endTime);

@@ -19,7 +19,7 @@ header('X-Content-Type-Options: nosniff');
 
 $userId = isset($_GET['user_id']) && is_string($_GET['user_id']) ? trim($_GET['user_id']) : '';
 $pointId = isset($_GET['point_id']) && is_string($_GET['point_id']) ? trim($_GET['point_id']) : '';
-$allowedPointIds = ['P01', 'P11'];
+$allowedPointIds = ['P11'];
 
 if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/D', $userId)) {
     http_response_code(400);
@@ -29,7 +29,7 @@ if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/D', $userId)) {
 
 if (!in_array($pointId, $allowedPointIds, true)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'point_idはP01またはP11を指定してください'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'error' => 'point_idはP11を指定してください'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -53,7 +53,7 @@ try {
             WHERE user_id = ?
               AND point_id = ?
               AND temperature IS NOT NULL
-              AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
+              AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 9 DAY)
               AND recorded_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
             GROUP BY DATE(recorded_at)";
 
@@ -75,7 +75,7 @@ try {
     }
 
     $rows = [];
-    for ($offset = 0; $offset < 5; $offset++) {
+    for ($offset = 0; $offset < 10; $offset++) {
         $dateKey = $today->modify('-' . $offset . ' days')->format('Y-m-d');
         $rows[] = $statsByDate[$dateKey] ?? [
             'date' => $dateKey,

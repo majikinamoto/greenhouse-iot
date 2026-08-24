@@ -48,12 +48,6 @@ function normalizeCsvDateTime(string $value, string $defaultSeconds): ?array {
     return ['sql' => $normalized, 'date' => $date];
 }
 
-function calcVapor(float $temp, float $hum): float {
-    $es = 6.1078 * pow(10, (7.5 * $temp) / (237.3 + $temp));
-    $ea = $es * $hum / 100;
-    return 216.7 * ($ea / ($temp + 273.15));
-}
-
 function getPointNumber(string $pointId): int {
     return (int)substr($pointId, 1);
 }
@@ -77,13 +71,7 @@ function appendPointHeader(array &$header, string $pointId): void {
     $header[] = '';
     $header[] = $pointId . '_日時';
 
-    if ($pointId === 'P01') {
-        $header[] = 'P01_温度';
-        $header[] = 'P01_湿度';
-        $header[] = 'P01_飽和水蒸気量';
-        $header[] = 'P01_水蒸気量';
-        $header[] = 'P01_飽差';
-    } elseif (isTemperatureHumidityPoint($pointId)) {
+    if (isTemperatureHumidityPoint($pointId)) {
         $header[] = $pointId . '_温度';
         $header[] = $pointId . '_湿度';
     } elseif (isCo2Point($pointId)) {
@@ -95,8 +83,6 @@ function appendPointHeader(array &$header, string $pointId): void {
         $header[] = 'P41_10分転倒ますカウント';
         $header[] = 'P41_累積雨量';
         $header[] = 'P41_10分雨量';
-    } elseif ($pointId === 'P91') {
-        $header[] = 'P91_電圧';
     }
 }
 
@@ -104,13 +90,7 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
     $line[] = '';
     $line[] = $item['日時'] ?? '';
 
-    if ($pointId === 'P01') {
-        $line[] = $item['温度'] ?? '';
-        $line[] = $item['湿度'] ?? '';
-        $line[] = $item['飽和水蒸気量'] ?? '';
-        $line[] = $item['水蒸気量'] ?? '';
-        $line[] = $item['飽差'] ?? '';
-    } elseif (isTemperatureHumidityPoint($pointId)) {
+    if (isTemperatureHumidityPoint($pointId)) {
         $line[] = $item['温度'] ?? '';
         $line[] = $item['湿度'] ?? '';
     } elseif (isCo2Point($pointId)) {
@@ -122,12 +102,13 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
         $line[] = $item['10分転倒ますカウント'] ?? '';
         $line[] = $item['累積雨量'] ?? '';
         $line[] = $item['10分雨量'] ?? '';
-    } elseif ($pointId === 'P91') {
-        $line[] = $item['電圧'] ?? '';
     }
 }
 
-$allowedPointIds = ['P01', 'P02', 'P11', 'P12', 'P41'];
+$allowedPointIds = array_map(
+    static fn(int $pointNumber): string => sprintf('P%02d', $pointNumber),
+    range(11, 41)
+);
 
 $userId = trim((string)($_GET['user_id'] ?? ''));
 $startInput = (string)($_GET['start'] ?? '');
@@ -193,8 +174,7 @@ $sql = "SELECT
             rainfall_tip_count,
             rainfall_tip_interval,
             rainfall_cumulative,
-            rainfall_interval,
-            voltage
+            rainfall_interval
         FROM measurements
         WHERE user_id = ?
           AND recorded_at BETWEEN ? AND ?
@@ -235,32 +215,18 @@ while ($row = $result->fetch_assoc()) {
         '日時' => $row['recorded_at'],
         '温度' => '',
         '湿度' => '',
-        '飽和水蒸気量' => '',
-        '水蒸気量' => '',
-        '飽差' => '',
         'CO2' => '',
         '日射' => '',
         '累積転倒ますカウント' => '',
         '10分転倒ますカウント' => '',
         '累積雨量' => '',
-        '10分雨量' => '',
-        '電圧' => ''
+        '10分雨量' => ''
     ];
 
     if (isTemperatureHumidityPoint($pointId)) {
         $item['温度'] = $row['temperature'];
         $item['湿度'] = $row['humidity'];
 
-        if ($pointId === 'P01' && $row['temperature'] !== null && $row['humidity'] !== null) {
-            $temperature = (float)$row['temperature'];
-            $humidity = (float)$row['humidity'];
-            $saturatedVapor = calcVapor($temperature, 100);
-            $vapor = calcVapor($temperature, $humidity);
-
-            $item['飽和水蒸気量'] = round($saturatedVapor, 3);
-            $item['水蒸気量'] = round($vapor, 3);
-            $item['飽差'] = round($saturatedVapor - $vapor, 3);
-        }
     } elseif (isCo2Point($pointId)) {
         $item['CO2'] = $row['CO2'];
     } elseif (isSolarPoint($pointId)) {
@@ -270,8 +236,6 @@ while ($row = $result->fetch_assoc()) {
         $item['10分転倒ますカウント'] = $row['rainfall_tip_interval'];
         $item['累積雨量'] = $row['rainfall_cumulative'];
         $item['10分雨量'] = $row['rainfall_interval'];
-    } elseif ($pointId === 'P91') {
-        $item['電圧'] = $row['voltage'];
     }
 
     $data[$pointId][] = $item;
