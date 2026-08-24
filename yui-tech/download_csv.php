@@ -59,7 +59,7 @@ function isTemperatureHumidityPoint(string $pointId): bool {
 
 function isCo2Point(string $pointId): bool {
     $number = getPointNumber($pointId);
-    return $number >= 21 && $number <= 30;
+    return $number >= 21 && $number <= 25;
 }
 
 function isSolarPoint(string $pointId): bool {
@@ -105,9 +105,10 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
     }
 }
 
+$allowedPointNumbers = array_merge(range(11, 25), range(31, 41));
 $allowedPointIds = array_map(
     static fn(int $pointNumber): string => sprintf('P%02d', $pointNumber),
-    range(11, 41)
+    $allowedPointNumbers
 );
 
 $userId = trim((string)($_GET['user_id'] ?? ''));
