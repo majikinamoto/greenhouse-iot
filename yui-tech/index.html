@@ -2573,7 +2573,7 @@ body.data-export-active .control-panel {
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
-            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.4721" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm(例0.4721)
+            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.1799" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm(例0.1799)
             </label>
         </div>
         <div class="rainfall-daily-summary" aria-label="日別雨量">
@@ -3524,7 +3524,8 @@ const UTECH_AREAS = {
 const UTECH_AREA_STORAGE_KEY = "utechSelectedArea";
 const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
 const RAINFALL_COEFFICIENT_STORAGE_KEY = "utechRainfallTipCoefficient";
-const DEFAULT_RAINFALL_COEFFICIENT = 0.4721;
+const DEFAULT_RAINFALL_COEFFICIENT = 0.1799;
+const LEGACY_DEFAULT_RAINFALL_COEFFICIENT = 4721 / 10000;
 let selectedUtechAreaKey = "naha";
 
 function restoreMobileShareQrImage(){
@@ -7684,9 +7685,15 @@ function restoreRainfallCalculationSetting(){
 
     const savedCoefficientText = localStorage.getItem(RAINFALL_COEFFICIENT_STORAGE_KEY);
     const savedCoefficient = Number(savedCoefficientText);
-    const coefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0
+    const hasValidSavedCoefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0;
+    const usesLegacyDefault = hasValidSavedCoefficient &&
+        savedCoefficient === LEGACY_DEFAULT_RAINFALL_COEFFICIENT;
+    const coefficient = hasValidSavedCoefficient && !usesLegacyDefault
         ? savedCoefficientText
         : String(DEFAULT_RAINFALL_COEFFICIENT);
+    if(usesLegacyDefault){
+        localStorage.setItem(RAINFALL_COEFFICIENT_STORAGE_KEY, coefficient);
+    }
     const input = document.getElementById("rainfallTipCoefficient");
     if(input) input.value = coefficient;
     updateRainfallCoefficientInputState();
