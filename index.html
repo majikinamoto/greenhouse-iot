@@ -882,7 +882,7 @@ button { margin:5px; }
 
 .wbgt-summary-table {
     width:100%;
-    min-width:560px;
+    min-width:700px;
     border-collapse:collapse;
     table-layout:fixed;
     background:#fff;
@@ -2422,7 +2422,7 @@ body.data-export-active .control-panel {
     }
 
     .wbgt-summary-table {
-        min-width:540px;
+        min-width:640px;
     }
 
     .wbgt-summary-table th,
@@ -3046,14 +3046,14 @@ body.data-export-active .control-panel {
             </div>
 
             <div class="wbgt-card wbgt-summary-card">
-                <h3>WBGT 5日間集計</h3>
+                <h3>WBGT 7日間集計</h3>
                 <div class="wbgt-summary-table-wrap">
                     <table class="wbgt-summary-table">
                         <thead id="wbgtFiveDayHead">
-                            <tr><th>項目</th><th colspan="5">直近5日</th></tr>
+                            <tr><th>項目</th><th colspan="7">直近7日</th></tr>
                         </thead>
                         <tbody id="wbgtFiveDayBody">
-                            <tr><td colspan="6">センサー設定を適用すると表示します</td></tr>
+                            <tr><td colspan="8">センサー設定を適用すると表示します</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -5379,7 +5379,7 @@ function getWbgtFiveDayRange(nowTime){
     const endTime = nowTime instanceof Date ? new Date(nowTime) : new Date(nowTime || Date.now());
     const startTime = new Date(endTime);
     startTime.setHours(0, 0, 0, 0);
-    startTime.setDate(startTime.getDate() - 4);
+    startTime.setDate(startTime.getDate() - 6);
     return { startTime:startTime, endTime:endTime };
 }
 
@@ -5403,7 +5403,7 @@ function calculateWbgtFiveDayRows(wbgtData, nowTime){
     ];
     const rows = [];
 
-    for(let offset = 4; offset >= 0; offset--){
+    for(let offset = 6; offset >= 0; offset--){
         const date = new Date(today);
         date.setDate(today.getDate() - offset);
         const dayStart = date.getTime();
@@ -5449,12 +5449,12 @@ function resetWbgtFiveDaySummary(message){
     const body = document.getElementById("wbgtFiveDayBody");
     if(!body) return;
     if(head){
-        head.innerHTML = "<tr><th>項目</th><th colspan=\"5\">直近5日</th></tr>";
+        head.innerHTML = "<tr><th>項目</th><th colspan=\"7\">直近7日</th></tr>";
     }
     body.replaceChildren();
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 6;
+    cell.colSpan = 8;
     cell.textContent = message || "—";
     row.appendChild(cell);
     body.appendChild(row);
@@ -5579,8 +5579,8 @@ async function loadWbgtData(){
     ]);
     if(requestId !== wbgtDataRequestSequence) return;
 
-    const tempHumData = parseData(results[0].data, minTime);
-    const globeData = parseData(results[1].data, minTime);
+    const tempHumData = parseData(results[0].data, fiveDayRange.startTime);
+    const globeData = parseData(results[1].data, fiveDayRange.startTime);
     renderWbgtCurrent(tempHumData, globeData, now.getTime(), settings);
 
     const fiveDayWbgtData = buildWbgtSeries(tempHumData, globeData);
