@@ -731,6 +731,8 @@ button { margin:5px; }
 }
 
 .wbgt-card {
+    width:100%;
+    min-width:0;
     padding:12px;
     border:2px solid #dfb18f;
     background:#fff;
@@ -746,9 +748,20 @@ button { margin:5px; }
     padding:9px 12px;
 }
 
+.wbgt-overview {
+    display:grid;
+    grid-template-columns:minmax(300px, 0.8fr) minmax(0, 1.5fr);
+    gap:12px;
+    align-items:start;
+}
+
+.wbgt-overview > .wbgt-card {
+    height:100%;
+}
+
 .wbgt-current-grid {
     display:grid;
-    grid-template-columns:repeat(4, minmax(150px, 1fr));
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     gap:8px;
 }
 
@@ -762,6 +775,36 @@ button { margin:5px; }
 .wbgt-current-item-primary {
     border-color:#e3a06f;
     background:#fff4ec;
+    text-align:center;
+}
+
+.wbgt-current-item-temperature {
+    grid-column:1 / -1;
+    padding:12px 9px;
+}
+
+.wbgt-current-item-temperature .wbgt-current-value {
+    font-size:30px;
+}
+
+.wbgt-current-primary .wbgt-current-value {
+    font-size:24px;
+}
+
+.wbgt-current-secondary {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:6px;
+    margin-top:8px;
+}
+
+.wbgt-current-secondary .wbgt-current-item {
+    padding:7px 8px;
+    font-size:12px;
+}
+
+.wbgt-current-secondary .wbgt-current-value {
+    font-size:15px;
 }
 
 .wbgt-current-label {
@@ -839,7 +882,7 @@ button { margin:5px; }
 
 .wbgt-summary-table {
     width:100%;
-    min-width:620px;
+    min-width:560px;
     border-collapse:collapse;
     table-layout:fixed;
     background:#fff;
@@ -861,14 +904,16 @@ button { margin:5px; }
 
 .wbgt-summary-table th:first-child,
 .wbgt-summary-table td:first-child {
-    width:92px;
+    width:142px;
+    text-align:left;
+    font-weight:700;
 }
 
 .wbgt-summary-table tbody tr:last-child td {
     border-bottom:none;
 }
 
-.wbgt-summary-table tbody tr:last-child {
+.wbgt-summary-table .wbgt-summary-today {
     background:#fff8f2;
     font-weight:700;
 }
@@ -2346,6 +2391,18 @@ body.data-export-active .control-panel {
         grid-template-columns:1fr;
     }
 
+    .wbgt-overview {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .wbgt-current-item-temperature {
+        grid-column:auto;
+    }
+
+    .wbgt-current-secondary {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
     .wbgt-setting-form,
     .wbgt-setting-form label,
     .wbgt-setting-form button {
@@ -2365,7 +2422,7 @@ body.data-export-active .control-panel {
     }
 
     .wbgt-summary-table {
-        min-width:570px;
+        min-width:540px;
     }
 
     .wbgt-summary-table th,
@@ -2649,7 +2706,7 @@ body.data-export-active .control-panel {
     <button class="tab-button tab-button-score" type="button" role="tab" aria-selected="false" aria-controls="tab-score" onclick="switchTab('score')">環境スコア</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
-    <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">暑さ指数</button>
+    <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">WBGT</button>
     <button class="tab-button tab-button-export" type="button" role="tab" aria-selected="false" aria-controls="tab-export" onclick="switchTab('export')">データ出力</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button>
@@ -2960,6 +3017,41 @@ body.data-export-active .control-panel {
     <div class="wbgt-content">
         <h2 class="wbgt-title">暑さ指数（WBGT）</h2>
 
+        <div class="wbgt-overview">
+            <div class="wbgt-card wbgt-current-card">
+                <h3>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</h3>
+                <div class="wbgt-current-grid wbgt-current-primary">
+                    <div class="wbgt-current-item wbgt-current-item-primary wbgt-current-item-temperature"><span class="wbgt-current-label">現地温度</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                    <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
+                    <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
+                </div>
+                <div class="wbgt-current-secondary">
+                    <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
+                    <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
+                    <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
+                    <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
+                    <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
+                </div>
+                <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
+            </div>
+
+            <div class="wbgt-card wbgt-summary-card">
+                <h3>WBGT 5日間集計</h3>
+                <div class="wbgt-summary-table-wrap">
+                    <table class="wbgt-summary-table">
+                        <thead id="wbgtFiveDayHead">
+                            <tr><th>項目</th><th colspan="5">直近5日</th></tr>
+                        </thead>
+                        <tbody id="wbgtFiveDayBody">
+                            <tr><td colspan="6">センサー設定を適用すると表示します</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
+                <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
+            </div>
+        </div>
+
         <div class="wbgt-card wbgt-setting-card">
             <h3>センサー設定</h3>
             <div class="wbgt-setting-form">
@@ -2968,43 +3060,6 @@ body.data-export-active .control-panel {
                 <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
                 <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
             </div>
-        </div>
-
-        <div class="wbgt-card">
-            <h3>現在の暑さ指数（WBGT）</h3>
-            <div class="wbgt-current-grid">
-                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">現地気温 Ta</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
-            </div>
-            <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
-        </div>
-
-        <div class="wbgt-card">
-            <h3>5日間WBGT集計</h3>
-            <div class="wbgt-summary-table-wrap">
-                <table class="wbgt-summary-table">
-                    <thead>
-                        <tr>
-                            <th>日付</th>
-                            <th>最高WBGT</th>
-                            <th>9:00～12:00<br>平均</th>
-                            <th>12:00～15:00<br>平均</th>
-                            <th>15:00～17:00<br>平均</th>
-                        </tr>
-                    </thead>
-                    <tbody id="wbgtFiveDayBody">
-                        <tr><td colspan="5">センサー設定を適用すると表示します</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
-            <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
         </div>
 
         <div class="wbgt-card">
@@ -5390,33 +5445,52 @@ function formatWbgtSummaryValue(value){
 }
 
 function resetWbgtFiveDaySummary(message){
+    const head = document.getElementById("wbgtFiveDayHead");
     const body = document.getElementById("wbgtFiveDayBody");
     if(!body) return;
+    if(head){
+        head.innerHTML = "<tr><th>項目</th><th colspan=\"5\">直近5日</th></tr>";
+    }
     body.replaceChildren();
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.textContent = message || "—";
     row.appendChild(cell);
     body.appendChild(row);
 }
 
 function renderWbgtFiveDaySummary(wbgtData, nowTime){
+    const head = document.getElementById("wbgtFiveDayHead");
     const body = document.getElementById("wbgtFiveDayBody");
-    if(!body) return;
+    if(!head || !body) return;
     const rows = calculateWbgtFiveDayRows(wbgtData, nowTime);
-    body.replaceChildren();
+    const headRow = document.createElement("tr");
+    const itemHeading = document.createElement("th");
+    itemHeading.textContent = "項目";
+    headRow.appendChild(itemHeading);
     rows.forEach(item=>{
+        const heading = document.createElement("th");
+        heading.textContent = item.dateLabel;
+        if(item.isToday) heading.classList.add("wbgt-summary-today");
+        headRow.appendChild(heading);
+    });
+    head.replaceChildren(headRow);
+    body.replaceChildren();
+    [
+        { label:"最高WBGT", key:"maximum" },
+        { label:"9:00～12:00平均", key:"average9To12" },
+        { label:"12:00～15:00平均", key:"average12To15" },
+        { label:"15:00～17:00平均", key:"average15To17" }
+    ].forEach(metric=>{
         const row = document.createElement("tr");
-        [
-            item.dateLabel,
-            formatWbgtSummaryValue(item.maximum),
-            formatWbgtSummaryValue(item.average9To12),
-            formatWbgtSummaryValue(item.average12To15),
-            formatWbgtSummaryValue(item.average15To17)
-        ].forEach(value=>{
+        const label = document.createElement("td");
+        label.textContent = metric.label;
+        row.appendChild(label);
+        rows.forEach(item=>{
             const cell = document.createElement("td");
-            cell.textContent = value;
+            cell.textContent = formatWbgtSummaryValue(item[metric.key]);
+            if(item.isToday) cell.classList.add("wbgt-summary-today");
             row.appendChild(cell);
         });
         body.appendChild(row);
@@ -5467,6 +5541,7 @@ function resetWbgtZoom(){
 
 async function loadWbgtData(){
     const settings = getWbgtSettings();
+    setWbgtText("wbgtCurrentPointLabel", settings.tempHumPointId || "－");
     const currentMessage = document.getElementById("wbgtCurrentMessage");
     const chartMessage = document.getElementById("wbgtChartMessage");
     const fiveDayMessage = document.getElementById("wbgtFiveDayMessage");
