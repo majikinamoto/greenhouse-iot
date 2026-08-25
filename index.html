@@ -5526,7 +5526,8 @@ function createWbgtChart(wbgtData, minTime, maxTime){
                 fill:true
             }]
         },
-        options:options
+        options:options,
+        plugins:[wbgtAlertBandsPlugin]
     });
     saveInitialScaleLimits(chart);
     return chart;
@@ -6106,6 +6107,56 @@ const chartBackgroundPlugin = {
     }
 };
 
+const wbgtAlertBandsPlugin = {
+    id:"wbgtAlertBandsPlugin",
+    beforeDraw(chart){
+        if(chart.canvas.id !== "wbgtChart") return;
+
+        const yScale = chart.scales.y;
+        const chartArea = chart.chartArea;
+        if(!yScale || !chartArea) return;
+
+        const bands = [
+            { min:31, max:Infinity, className:"wbgt-level-danger" },
+            { min:28, max:31, className:"wbgt-level-severe" },
+            { min:25, max:28, className:"wbgt-level-warning" },
+            { min:-Infinity, max:25, className:"wbgt-level-caution" }
+        ];
+        const ctx = chart.ctx;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(
+            chartArea.left,
+            chartArea.top,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - chartArea.top
+        );
+        ctx.clip();
+        ctx.globalAlpha = 0.4;
+
+        bands.forEach(band=>{
+            const min = Math.max(yScale.min, band.min);
+            const max = Math.min(yScale.max, band.max);
+            if(max <= min) return;
+
+            const colorSource = document.querySelector("." + band.className);
+            if(!colorSource) return;
+
+            const top = yScale.getPixelForValue(max);
+            const bottom = yScale.getPixelForValue(min);
+            ctx.fillStyle = getComputedStyle(colorSource).backgroundColor;
+            ctx.fillRect(
+                chartArea.left,
+                top,
+                chartArea.right - chartArea.left,
+                bottom - top
+            );
+        });
+
+        ctx.restore();
+    }
+};
 const midnightLinePlugin = {
     id:"midnightLinePlugin",
     afterDraw(chart){
