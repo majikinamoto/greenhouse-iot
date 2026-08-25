@@ -607,6 +607,12 @@ button { margin:5px; }
     color:#264f9b;
 }
 
+.tab-button-wbgt {
+    background:#fff0e5;
+    border-color:#e3a06f;
+    color:#8a4217;
+}
+
 .tab-button-review {
     background:#fff5df;
     border-color:#e1b75c;
@@ -651,6 +657,11 @@ button { margin:5px; }
 .tab-button-analysis.active {
     background:#3f6fc2;
     border-color:#2f5598;
+}
+
+.tab-button-wbgt.active {
+    background:#d76a2b;
+    border-color:#ad4e18;
 }
 
 .tab-button-review.active {
@@ -702,6 +713,182 @@ button { margin:5px; }
 
 .tab-panel-analysis {
     background:#eaf1ff;
+}
+
+.tab-panel-wbgt {
+    background:#fff0e5;
+}
+
+.wbgt-content {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.wbgt-title {
+    margin:0;
+    color:#74380f;
+}
+
+.wbgt-card {
+    padding:12px;
+    border:2px solid #dfb18f;
+    background:#fff;
+    box-sizing:border-box;
+}
+
+.wbgt-card h3,
+.wbgt-card h4 {
+    margin:0 0 10px;
+}
+
+.wbgt-setting-card {
+    padding:9px 12px;
+}
+
+.wbgt-current-grid {
+    display:grid;
+    grid-template-columns:repeat(4, minmax(150px, 1fr));
+    gap:8px;
+}
+
+.wbgt-current-item {
+    padding:9px;
+    border:1px solid #d7dee5;
+    border-radius:5px;
+    background:#f8fafc;
+}
+
+.wbgt-current-item-primary {
+    border-color:#e3a06f;
+    background:#fff4ec;
+}
+
+.wbgt-current-label {
+    display:block;
+    margin-bottom:4px;
+    color:#526474;
+    font-size:12px;
+}
+
+.wbgt-current-value {
+    font-size:20px;
+    font-weight:700;
+}
+
+.wbgt-message {
+    min-height:1.5em;
+    margin:10px 0 0;
+    color:#a13d22;
+    font-weight:700;
+}
+
+.wbgt-level-grid {
+    display:grid;
+    grid-template-columns:repeat(4, minmax(170px, 1fr));
+    gap:8px;
+}
+
+.wbgt-level-card {
+    padding:10px;
+    border-radius:6px;
+    line-height:1.6;
+}
+
+.wbgt-level-danger { background:#f8d7da; border:1px solid #d86b75; }
+.wbgt-level-severe { background:#ffe4c7; border:1px solid #e19a52; }
+.wbgt-level-warning { background:#fff3bf; border:1px solid #d5b644; }
+.wbgt-level-caution { background:#e5f4df; border:1px solid #7eb273; }
+
+.wbgt-setting-form {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px 14px;
+}
+
+.wbgt-setting-form label {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.wbgt-setting-form input {
+    width:140px;
+    min-width:80px;
+    padding:7px;
+    box-sizing:border-box;
+}
+
+.wbgt-setting-form .wbgt-point-input {
+    width:90px;
+}
+
+.wbgt-setting-form button {
+    margin:0;
+}
+
+.wbgt-summary-table-wrap {
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+}
+
+.wbgt-summary-table {
+    width:100%;
+    min-width:620px;
+    border-collapse:collapse;
+    table-layout:fixed;
+    background:#fff;
+}
+
+.wbgt-summary-table th,
+.wbgt-summary-table td {
+    padding:7px 5px;
+    border-bottom:1px solid #ead9cc;
+    text-align:center;
+    white-space:nowrap;
+}
+
+.wbgt-summary-table th {
+    background:#fff0e5;
+    color:#74380f;
+    font-weight:700;
+}
+
+.wbgt-summary-table th:first-child,
+.wbgt-summary-table td:first-child {
+    width:92px;
+}
+
+.wbgt-summary-table tbody tr:last-child td {
+    border-bottom:none;
+}
+
+.wbgt-summary-table tbody tr:last-child {
+    background:#fff8f2;
+    font-weight:700;
+}
+
+.wbgt-summary-note {
+    margin:7px 0 0;
+    color:#5f6870;
+    font-size:12px;
+    line-height:1.6;
+}
+
+.wbgt-note-list {
+    margin:0;
+    padding-left:1.5em;
+    line-height:1.8;
+}
+
+.wbgt-source-links {
+    margin:10px 0 0;
+    line-height:1.8;
 }
 
 .tab-panel-review {
@@ -2154,6 +2341,39 @@ body.data-export-active .control-panel {
         white-space:nowrap;
     }
 
+    .wbgt-current-grid,
+    .wbgt-level-grid {
+        grid-template-columns:1fr;
+    }
+
+    .wbgt-setting-form,
+    .wbgt-setting-form label,
+    .wbgt-setting-form button {
+        width:100%;
+    }
+
+    .wbgt-setting-form label {
+        display:grid;
+        grid-template-columns:112px minmax(0, 1fr);
+        white-space:normal;
+    }
+
+    .wbgt-setting-form input,
+    .wbgt-setting-form .wbgt-point-input {
+        width:100%;
+        min-width:0;
+    }
+
+    .wbgt-summary-table {
+        min-width:570px;
+    }
+
+    .wbgt-summary-table th,
+    .wbgt-summary-table td {
+        padding:6px 4px;
+        font-size:12px;
+    }
+
     .alert-setting-form {
         padding:0 10px 16px;
         align-items:stretch;
@@ -2429,6 +2649,7 @@ body.data-export-active .control-panel {
     <button class="tab-button tab-button-score" type="button" role="tab" aria-selected="false" aria-controls="tab-score" onclick="switchTab('score')">環境スコア</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
+    <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">暑さ指数</button>
     <button class="tab-button tab-button-export" type="button" role="tab" aria-selected="false" aria-controls="tab-export" onclick="switchTab('export')">データ出力</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button>
@@ -2732,6 +2953,88 @@ body.data-export-active .control-panel {
             <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
         </div>
 
+    </div>
+</section>
+
+<section id="tab-wbgt" class="tab-panel tab-panel-wbgt" role="tabpanel">
+    <div class="wbgt-content">
+        <h2 class="wbgt-title">暑さ指数（WBGT）</h2>
+
+        <div class="wbgt-card wbgt-setting-card">
+            <h3>センサー設定</h3>
+            <div class="wbgt-setting-form">
+                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: T0001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>温湿度 point_id<input class="wbgt-point-input" type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
+            </div>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>現在の暑さ指数（WBGT）</h3>
+            <div class="wbgt-current-grid">
+                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">現地気温 Ta</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
+                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
+            </div>
+            <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>5日間WBGT集計</h3>
+            <div class="wbgt-summary-table-wrap">
+                <table class="wbgt-summary-table">
+                    <thead>
+                        <tr>
+                            <th>日付</th>
+                            <th>最高WBGT</th>
+                            <th>9:00～12:00<br>平均</th>
+                            <th>12:00～15:00<br>平均</th>
+                            <th>15:00～17:00<br>平均</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wbgtFiveDayBody">
+                        <tr><td colspan="5">センサー設定を適用すると表示します</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
+            <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
+        </div>
+
+        <div class="wbgt-card">
+            <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
+            <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
+            <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>WBGTの警戒レベル</h3>
+            <div class="wbgt-level-grid">
+                <div class="wbgt-level-card wbgt-level-danger"><strong>危険（31以上）</strong><br>外出はなるべく避け、涼しい室内に移動してください。</div>
+                <div class="wbgt-level-card wbgt-level-severe"><strong>厳重警戒（28以上31未満）</strong><br>外出時は炎天下を避け、室内では室温の上昇に注意してください。</div>
+                <div class="wbgt-level-card wbgt-level-warning"><strong>警戒（25以上28未満）</strong><br>運動や激しい作業では、定期的に十分な休息を取ってください。</div>
+                <div class="wbgt-level-card wbgt-level-caution"><strong>注意（25未満）</strong><br>激しい運動や重労働時には熱中症に注意してください。</div>
+            </div>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>算出方法・注意事項</h3>
+            <ul class="wbgt-note-list">
+                <li>湿球温度Twは実測値ではなく、指定した温湿度Pointの気温・相対湿度と固定気圧1013.25 hPaから計算した値です。</li>
+                <li>黒球温度Tgには、指定した黒球温度Pointのtemperatureを使用しています。</li>
+                <li>屋外・日射ありの式「WBGT＝0.7×Tw＋0.2×Tg＋0.1×Ta」で算出しています。</li>
+                <li>市販のJIS適合WBGT計等と完全に同一の測定方式・精度を保証するものではありません。体調や現場状況、公的情報もあわせて確認してください。</li>
+            </ul>
+            <p class="wbgt-source-links">出典：<a href="https://www.wbgt.env.go.jp/wbgt_detail.php" target="_blank" rel="noopener noreferrer">環境省 熱中症予防情報サイト「当サイトで提供する暑さ指数（WBGT）について」</a><br>
+            湿球温度の計算式：<a href="https://www.wbgt.env.go.jp/pdf/doc_ccaa/20260401_doc01.pdf" target="_blank" rel="noopener noreferrer">環境省「暑さ指数（WBGT）の予測値の算出について」（PDF）</a><br>
+            警戒区分：<a href="https://www.wbgt.env.go.jp/wbgt.php" target="_blank" rel="noopener noreferrer">環境省 熱中症予防情報サイト「暑さ指数とは？」（日本生気象学会「日常生活における熱中症予防指針Ver.4」より改編）</a></p>
+        </div>
     </div>
 </section>
 
@@ -3587,6 +3890,10 @@ let analysisCompareData = {};
 let analysisCompareMeta = {};
 let analysisDiffCharts = {};
 let syncingAnalysisZoom = false;
+let wbgtChart = null;
+let wbgtDataRequestSequence = 0;
+let wbgtLoadedKey = "";
+let wbgtLastLoadedAt = 0;
 
 let allCharts = [];
 let maintenanceCharts = [];
@@ -3605,8 +3912,8 @@ let reviewDifPeriodEndDateValue = "";
 let syncingZoom = false;
 let syncingMaintenanceZoom = false;
 let syncingReviewZoom = false;
-let syncedCrosshairValues = { main:null, analysis:null, maintenance:null, review:null };
-let syncedCrosshairLatest = { main:false, analysis:false, maintenance:false, review:false };
+let syncedCrosshairValues = { main:null, analysis:null, wbgt:null, maintenance:null, review:null };
+let syncedCrosshairLatest = { main:false, analysis:false, wbgt:false, maintenance:false, review:false };
 let lastTouchChart = null;
 let lastTouchChartEventAt = 0;
 let maintenanceMode = "latest";
@@ -3659,6 +3966,15 @@ let tideCalendarText = "満潮・干潮：読み込み中...";
 let environmentScoreP01 = [];
 let environmentScoreP21 = [];
 let environmentScoreP31 = [];
+
+const WBGT_PRESSURE_HPA = 1013.25;
+const WBGT_PAIR_TOLERANCE_MS = 6*60*1000;
+const WBGT_CURRENT_FRESHNESS_MS = 30*60*1000;
+const wbgtStorageKeys = {
+    userId:"utech_wbgt_user_id",
+    tempHumPointId:"utech_wbgt_temp_hum_point_id",
+    globePointId:"utech_wbgt_globe_point_id"
+};
 
 const outsideSourceStorageKeys = {
     enabled:"usui_outside_source_enabled",
@@ -3972,6 +4288,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     restoreOutsideSourceSetting();
     restoreRainfallSourceSetting();
     restoreAnalysisCompareSettings();
+    restoreWbgtSettings();
     restoreEnvironmentScoreRanges();
     restoreUtechAreaSelection();
     restoreRainfallCalculationSetting();
@@ -4747,6 +5064,475 @@ async function loadAnalysisCompareChart(graphId){
     }
 }
 
+function restoreWbgtSettings(){
+    const userId = document.getElementById("wbgtUserId");
+    const tempHumPointId = document.getElementById("wbgtTempHumPointId");
+    const globePointId = document.getElementById("wbgtGlobePointId");
+    if(userId){
+        userId.value = localStorage.getItem(wbgtStorageKeys.userId) ||
+            localStorage.getItem("usui_user_id") || "";
+    }
+    if(tempHumPointId){
+        tempHumPointId.value = localStorage.getItem(wbgtStorageKeys.tempHumPointId) || "P11";
+    }
+    if(globePointId){
+        globePointId.value = localStorage.getItem(wbgtStorageKeys.globePointId) || "P51";
+    }
+}
+
+function getWbgtSettings(){
+    const userId = document.getElementById("wbgtUserId");
+    const tempHumPointId = document.getElementById("wbgtTempHumPointId");
+    const globePointId = document.getElementById("wbgtGlobePointId");
+    return {
+        userId:userId ? userId.value.trim() : "",
+        tempHumPointId:tempHumPointId ? tempHumPointId.value.trim() : "",
+        globePointId:globePointId ? globePointId.value.trim() : ""
+    };
+}
+
+function applyWbgtSettings(){
+    const settings = getWbgtSettings();
+    localStorage.setItem(wbgtStorageKeys.userId, settings.userId);
+    localStorage.setItem(wbgtStorageKeys.tempHumPointId, settings.tempHumPointId);
+    localStorage.setItem(wbgtStorageKeys.globePointId, settings.globePointId);
+    wbgtLoadedKey = "";
+    loadWbgtData();
+}
+
+function isFiniteWbgtValue(value){
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
+function calculateWbgtDewPoint(temperature, relativeHumidity){
+    const ta = Number(temperature);
+    const rh = Number(relativeHumidity);
+    if(!Number.isFinite(ta) || !Number.isFinite(rh) || rh <= 0 || rh > 100) return null;
+
+    const isWater = ta >= 0;
+    const a = isWater ? 7.5 : 9.5;
+    const b = isWater ? 237.3 : 265.5;
+    const gamma = Math.log10(rh / 100) + (a * ta) / (b + ta);
+    const dewPoint = (b * gamma) / (a - gamma);
+    return Number.isFinite(dewPoint) ? dewPoint : null;
+}
+
+function calculateWbgtSaturationPressure(kelvin){
+    const c0 = 26.66082;
+    const c1 = 0.0091379024;
+    const c2 = 6106.396;
+    return Math.exp(c0 - c1 * kelvin - c2 / kelvin);
+}
+
+function calculateWetBulbTemperature(temperature, relativeHumidity, pressureHpa){
+    const ta = Number(temperature);
+    const rh = Number(relativeHumidity);
+    const pressure = pressureHpa === undefined ? WBGT_PRESSURE_HPA : Number(pressureHpa);
+    if(!Number.isFinite(ta) || !Number.isFinite(rh) || !Number.isFinite(pressure)) return null;
+    if(rh <= 0 || rh > 100 || pressure <= 0) return null;
+    if(rh === 100) return ta;
+
+    const dewPoint = calculateWbgtDewPoint(ta, rh);
+    if(dewPoint === null) return null;
+
+    const taKelvin = ta + 273.15;
+    const tdKelvin = dewPoint + 273.15;
+    const es = calculateWbgtSaturationPressure(taKelvin);
+    const ed = calculateWbgtSaturationPressure(tdKelvin);
+    const slope = (es - ed) / (taKelvin - tdKelvin);
+    const psychrometric = 0.0006355;
+    let twKelvin = (taKelvin * psychrometric * pressure + tdKelvin * slope) /
+        (psychrometric * pressure + slope);
+
+    for(let iteration = 0; iteration < 50; iteration++){
+        const ew = calculateWbgtSaturationPressure(twKelvin);
+        const de = psychrometric * pressure * (taKelvin - twKelvin) - (ew - ed);
+        const derivative = ew * (0.0091379024 - 6106.396 / (twKelvin * twKelvin)) -
+            psychrometric * pressure;
+        if(!Number.isFinite(derivative) || derivative === 0) return null;
+        const nextTwKelvin = twKelvin - de / derivative;
+        if(!Number.isFinite(nextTwKelvin)) return null;
+        if(Math.abs(nextTwKelvin - twKelvin) < 0.1){
+            twKelvin = nextTwKelvin;
+            break;
+        }
+        twKelvin = nextTwKelvin;
+    }
+
+    const wetBulb = twKelvin - 273.15;
+    const lower = Math.min(dewPoint, ta);
+    const upper = Math.max(dewPoint, ta);
+    return Number.isFinite(wetBulb) ? Math.min(upper, Math.max(lower, wetBulb)) : null;
+}
+
+function calculateWbgt(temperature, relativeHumidity, globeTemperature){
+    if(
+        !isFiniteWbgtValue(temperature) ||
+        !isFiniteWbgtValue(relativeHumidity) ||
+        !isFiniteWbgtValue(globeTemperature)
+    ){
+        return null;
+    }
+
+    const ta = Number(temperature);
+    const rh = Number(relativeHumidity);
+    const tg = Number(globeTemperature);
+    if(rh <= 0 || rh > 100) return null;
+    const tw = calculateWetBulbTemperature(ta, rh, WBGT_PRESSURE_HPA);
+    if(tw === null) return null;
+    const wbgt = 0.7 * tw + 0.2 * tg + 0.1 * ta;
+    if(!Number.isFinite(wbgt)) return null;
+    return { wbgt:wbgt, tw:tw, ta:ta, rh:rh, tg:tg };
+}
+
+function getWbgtLevel(value){
+    const wbgt = Number(value);
+    if(!Number.isFinite(wbgt)) return null;
+    if(wbgt >= 31) return { key:"danger", label:"危険" };
+    if(wbgt >= 28) return { key:"severe", label:"厳重警戒" };
+    if(wbgt >= 25) return { key:"warning", label:"警戒" };
+    return { key:"caution", label:"注意" };
+}
+
+function setWbgtText(id, text){
+    const element = document.getElementById(id);
+    if(element) element.innerText = text;
+}
+
+function resetWbgtCurrentDisplay(){
+    [
+        "wbgtNow", "wbgtLevelNow", "wbgtTaNow", "wbgtRhNow",
+        "wbgtTgNow", "wbgtTwNow", "wbgtTempHumTime", "wbgtGlobeTime"
+    ].forEach(id=>setWbgtText(id, "－"));
+    setWbgtText("wbgtCurrentMessage", "");
+}
+
+function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
+    resetWbgtCurrentDisplay();
+    const latestTempHum = tempHumData.length ? tempHumData[tempHumData.length - 1] : null;
+    const latestGlobe = globeData.length ? globeData[globeData.length - 1] : null;
+
+    if(latestTempHum && Number.isFinite(latestTempHum.xValue)){
+        setWbgtText("wbgtTempHumTime", formatTime(latestTempHum.xValue));
+    }
+    if(latestGlobe && Number.isFinite(latestGlobe.xValue)){
+        setWbgtText("wbgtGlobeTime", formatTime(latestGlobe.xValue));
+    }
+    if(!latestTempHum){
+        setWbgtText("wbgtCurrentMessage", "温湿度データ（" + settings.tempHumPointId + "）を取得できません");
+        return;
+    }
+    if(!latestGlobe){
+        setWbgtText("wbgtCurrentMessage", "黒球温度データ（" + settings.globePointId + "）を取得できません");
+        return;
+    }
+    if(isFiniteWbgtValue(latestTempHum.temp)){
+        setWbgtText("wbgtTaNow", Number(latestTempHum.temp).toFixed(1) + " ℃");
+    }
+    if(isFiniteWbgtValue(latestTempHum.hum)){
+        setWbgtText("wbgtRhNow", Number(latestTempHum.hum).toFixed(1) + " %");
+    }
+    if(isFiniteWbgtValue(latestGlobe.temp)){
+        setWbgtText("wbgtTgNow", Number(latestGlobe.temp).toFixed(1) + " ℃");
+    }
+    if(!isFiniteWbgtValue(latestTempHum.temp) || !isFiniteWbgtValue(latestTempHum.hum)){
+        setWbgtText("wbgtCurrentMessage", "最新の温湿度データに必要な項目がないため算出できません");
+        return;
+    }
+    if(Number(latestTempHum.hum) <= 0 || Number(latestTempHum.hum) > 100){
+        setWbgtText("wbgtCurrentMessage", "最新の相対湿度が不正なため算出できません");
+        return;
+    }
+    if(!isFiniteWbgtValue(latestGlobe.temp)){
+        setWbgtText("wbgtCurrentMessage", "最新の黒球温度データにtemperatureがないため算出できません");
+        return;
+    }
+    const latestWetBulb = calculateWetBulbTemperature(
+        latestTempHum.temp,
+        latestTempHum.hum,
+        WBGT_PRESSURE_HPA
+    );
+    if(latestWetBulb !== null){
+        setWbgtText("wbgtTwNow", latestWetBulb.toFixed(1) + " ℃");
+    }
+    if(!Number.isFinite(latestTempHum.xValue) || !Number.isFinite(latestGlobe.xValue)){
+        setWbgtText("wbgtCurrentMessage", "最新データの測定時刻が不正なため算出できません");
+        return;
+    }
+
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    const tempHumAge = currentTime - latestTempHum.xValue;
+    const globeAge = currentTime - latestGlobe.xValue;
+    if(Math.abs(tempHumAge) > WBGT_CURRENT_FRESHNESS_MS){
+        const reason = tempHumAge > 0 ? "古い" : "現在より先の時刻になっている";
+        setWbgtText("wbgtCurrentMessage", "温湿度データが" + reason + "ため算出できません");
+        return;
+    }
+    if(Math.abs(globeAge) > WBGT_CURRENT_FRESHNESS_MS){
+        const reason = globeAge > 0 ? "古い" : "現在より先の時刻になっている";
+        setWbgtText("wbgtCurrentMessage", "黒球温度データが" + reason + "ため算出できません");
+        return;
+    }
+    if(Math.abs(latestTempHum.xValue - latestGlobe.xValue) > WBGT_PAIR_TOLERANCE_MS){
+        setWbgtText("wbgtCurrentMessage", "最新データの時刻差が大きいため算出できません");
+        return;
+    }
+
+    const result = calculateWbgt(latestTempHum.temp, latestTempHum.hum, latestGlobe.temp);
+    if(!result){
+        setWbgtText("wbgtCurrentMessage", "最新データからWBGTを算出できません");
+        return;
+    }
+    const level = getWbgtLevel(result.wbgt);
+    setWbgtText("wbgtNow", result.wbgt.toFixed(1));
+    setWbgtText("wbgtLevelNow", level ? level.label : "－");
+    setWbgtText("wbgtTaNow", result.ta.toFixed(1) + " ℃");
+    setWbgtText("wbgtRhNow", result.rh.toFixed(1) + " %");
+    setWbgtText("wbgtTgNow", result.tg.toFixed(1) + " ℃");
+    setWbgtText("wbgtTwNow", result.tw.toFixed(1) + " ℃");
+}
+
+function buildWbgtSeries(tempHumData, globeData){
+    const wbgtData = [];
+    tempHumData.forEach(tempHum=>{
+        let nearestGlobe = null;
+        let nearestDiff = Infinity;
+        globeData.forEach(globe=>{
+            const diff = Math.abs(tempHum.xValue - globe.xValue);
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearestGlobe = globe;
+            }
+        });
+        if(!nearestGlobe || nearestDiff > WBGT_PAIR_TOLERANCE_MS) return;
+        const result = calculateWbgt(tempHum.temp, tempHum.hum, nearestGlobe.temp);
+        if(!result) return;
+        wbgtData.push({
+            x:tempHum.xValue,
+            y:result.wbgt,
+            tw:result.tw,
+            ta:result.ta,
+            rh:result.rh,
+            tg:result.tg,
+            globeX:nearestGlobe.xValue
+        });
+    });
+    return wbgtData;
+}
+
+function getWbgtFiveDayRange(nowTime){
+    const endTime = nowTime instanceof Date ? new Date(nowTime) : new Date(nowTime || Date.now());
+    const startTime = new Date(endTime);
+    startTime.setHours(0, 0, 0, 0);
+    startTime.setDate(startTime.getDate() - 4);
+    return { startTime:startTime, endTime:endTime };
+}
+
+function calculateWbgtPeriodAverage(data, startTime, endTime){
+    const values = data
+        .filter(point=>point.x >= startTime && point.x < endTime && Number.isFinite(Number(point.y)))
+        .map(point=>Number(point.y));
+    if(!values.length) return null;
+    return values.reduce((total, value)=>total + value, 0) / values.length;
+}
+
+function calculateWbgtFiveDayRows(wbgtData, nowTime){
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    const today = new Date(currentTime);
+    today.setHours(0, 0, 0, 0);
+    const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+    const periods = [
+        { key:"average9To12", startHour:9, endHour:12 },
+        { key:"average12To15", startHour:12, endHour:15 },
+        { key:"average15To17", startHour:15, endHour:17 }
+    ];
+    const rows = [];
+
+    for(let offset = 4; offset >= 0; offset--){
+        const date = new Date(today);
+        date.setDate(today.getDate() - offset);
+        const dayStart = date.getTime();
+        const nextDay = new Date(date);
+        nextDay.setDate(date.getDate() + 1);
+        const dayEnd = nextDay.getTime();
+        const isToday = offset === 0;
+        const dailyData = wbgtData.filter(point=>
+            point.x >= dayStart && point.x < dayEnd && Number.isFinite(Number(point.y))
+        );
+        const maximum = dailyData.length
+            ? Math.max(...dailyData.map(point=>Number(point.y)))
+            : null;
+        const row = {
+            dateValue:formatDateInputValue(date),
+            dateLabel:(date.getMonth() + 1) + "/" + date.getDate() + "（" + weekdayLabels[date.getDay()] + "）" +
+                (isToday ? " 本日" : ""),
+            maximum:maximum,
+            isToday:isToday
+        };
+
+        periods.forEach(period=>{
+            const periodStart = new Date(date);
+            periodStart.setHours(period.startHour, 0, 0, 0);
+            const periodEnd = new Date(date);
+            periodEnd.setHours(period.endHour, 0, 0, 0);
+            const isCompleted = !isToday || currentTime >= periodEnd.getTime();
+            row[period.key] = isCompleted
+                ? calculateWbgtPeriodAverage(dailyData, periodStart.getTime(), periodEnd.getTime())
+                : null;
+        });
+        rows.push(row);
+    }
+    return rows;
+}
+
+function formatWbgtSummaryValue(value){
+    return Number.isFinite(Number(value)) && value !== null ? Number(value).toFixed(1) : "—";
+}
+
+function resetWbgtFiveDaySummary(message){
+    const body = document.getElementById("wbgtFiveDayBody");
+    if(!body) return;
+    body.replaceChildren();
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.textContent = message || "—";
+    row.appendChild(cell);
+    body.appendChild(row);
+}
+
+function renderWbgtFiveDaySummary(wbgtData, nowTime){
+    const body = document.getElementById("wbgtFiveDayBody");
+    if(!body) return;
+    const rows = calculateWbgtFiveDayRows(wbgtData, nowTime);
+    body.replaceChildren();
+    rows.forEach(item=>{
+        const row = document.createElement("tr");
+        [
+            item.dateLabel,
+            formatWbgtSummaryValue(item.maximum),
+            formatWbgtSummaryValue(item.average9To12),
+            formatWbgtSummaryValue(item.average12To15),
+            formatWbgtSummaryValue(item.average15To17)
+        ].forEach(value=>{
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+        body.appendChild(row);
+    });
+}
+
+function createWbgtChart(wbgtData, minTime, maxTime){
+    const canvas = getChartCanvas("wbgtChart");
+    if(!canvas || !wbgtData.length) return null;
+    destroyExistingChart("wbgtChart");
+    const options = baseOptions(minTime, maxTime);
+    options.plugins.crosshair.sync.group = 5;
+    options.plugins.zoom.zoom.onZoomComplete = function(){};
+    options.scales = {
+        ...options.scales,
+        y:{
+            ticks:{ color:"#000" },
+            title:{ display:true, text:"WBGT", color:"#000" }
+        }
+    };
+    const chart = new Chart(canvas, {
+        type:"line",
+        data:{
+            datasets:[{
+                label:"暑さ指数（WBGT）",
+                data:wbgtData,
+                borderColor:"rgb(215, 106, 43)",
+                backgroundColor:"rgba(215, 106, 43, 0.16)",
+                pointBackgroundColor:"rgb(215, 106, 43)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2,
+                fill:true
+            }]
+        },
+        options:options
+    });
+    saveInitialScaleLimits(chart);
+    return chart;
+}
+
+function resetWbgtZoom(){
+    clearSyncedTooltipGroup("wbgt");
+    if(!wbgtChart) return;
+    if(wbgtChart.resetZoom) wbgtChart.resetZoom("none");
+    redrawChart(wbgtChart);
+}
+
+async function loadWbgtData(){
+    const settings = getWbgtSettings();
+    const currentMessage = document.getElementById("wbgtCurrentMessage");
+    const chartMessage = document.getElementById("wbgtChartMessage");
+    const fiveDayMessage = document.getElementById("wbgtFiveDayMessage");
+    if(!settings.userId || !settings.tempHumPointId || !settings.globePointId){
+        resetWbgtCurrentDisplay();
+        resetWbgtFiveDaySummary("センサー設定を入力してください");
+        if(currentMessage) currentMessage.innerText = "user_idと2つのpoint_idを入力してください";
+        if(chartMessage) chartMessage.innerText = "センサー設定を入力してください";
+        if(fiveDayMessage) fiveDayMessage.innerText = "";
+        if(wbgtChart) wbgtChart.destroy();
+        wbgtChart = null;
+        return;
+    }
+
+    const requestId = ++wbgtDataRequestSequence;
+    resetWbgtCurrentDisplay();
+    resetWbgtFiveDaySummary("読み込み中...");
+    if(currentMessage) currentMessage.innerText = "読み込み中...";
+    if(chartMessage) chartMessage.innerText = "読み込み中...";
+    if(fiveDayMessage) fiveDayMessage.innerText = "";
+    if(wbgtChart) wbgtChart.destroy();
+    wbgtChart = null;
+
+    const now = new Date();
+    const minTime = new Date(now.getTime() - 72*60*60*1000);
+    const fiveDayRange = getWbgtFiveDayRange(now);
+    const apiRange = {
+        start:formatSqlDateTime(fiveDayRange.startTime),
+        end:formatSqlDateTime(fiveDayRange.endTime)
+    };
+    const results = await Promise.all([
+        fetchDataSafe(settings.userId, settings.tempHumPointId, apiRange),
+        fetchDataSafe(settings.userId, settings.globePointId, apiRange)
+    ]);
+    if(requestId !== wbgtDataRequestSequence) return;
+
+    const tempHumData = parseData(results[0].data, minTime);
+    const globeData = parseData(results[1].data, minTime);
+    renderWbgtCurrent(tempHumData, globeData, now.getTime(), settings);
+
+    const fiveDayWbgtData = buildWbgtSeries(tempHumData, globeData);
+    renderWbgtFiveDaySummary(fiveDayWbgtData, now.getTime());
+    const wbgtData = fiveDayWbgtData.filter(point=>
+        point.x >= minTime.getTime() && point.x <= now.getTime()
+    );
+    wbgtChart = createWbgtChart(wbgtData, minTime, now);
+    const errors = results.filter(result=>result.error).map(result=>result.error);
+    if(fiveDayMessage){
+        fiveDayMessage.innerText = errors.length
+            ? errors.join(" / ")
+            : fiveDayWbgtData.length
+                ? ""
+                : "6分以内で対応できる有効なデータがありません";
+    }
+    if(chartMessage){
+        chartMessage.innerText = errors.length
+            ? errors.join(" / ")
+            : wbgtData.length
+                ? ""
+                : "6分以内で対応できる有効なデータがないため、WBGTグラフを表示できません";
+    }
+    wbgtLoadedKey = settings.userId + "|" + settings.tempHumPointId + "|" + settings.globePointId;
+    wbgtLastLoadedAt = Date.now();
+    refreshVisibleCharts();
+}
+
 function handleAlertNotifyTargetChange(){
     const notifyTarget = document.getElementById("alertNotifyTarget");
     const destinationLabel = document.getElementById("alertDestinationLabel");
@@ -5211,6 +5997,14 @@ function switchTab(tabName){
             loadMaintenanceData(rangeResult.range);
         }
     }
+
+    if(tabName === "wbgt"){
+        const settings = getWbgtSettings();
+        const requestKey = settings.userId + "|" + settings.tempHumPointId + "|" + settings.globePointId;
+        if(requestKey !== wbgtLoadedKey || Date.now() - wbgtLastLoadedAt >= 5*60*1000){
+            loadWbgtData();
+        }
+    }
 }
 
 const chartBackgroundPlugin = {
@@ -5592,6 +6386,7 @@ function getChartSyncGroup(chart){
     if(chart && chart.canvas && chart.canvas.id.indexOf("review") === 0) return "review";
     if(chart && chart.canvas && maintenanceCanvasIdSet.has(chart.canvas.id)) return "maintenance";
     if(chart && chart.canvas && chart.canvas.id.indexOf("analysis") === 0) return "analysis";
+    if(chart && chart.canvas && chart.canvas.id === "wbgtChart") return "wbgt";
     return "main";
 }
 
@@ -5612,6 +6407,7 @@ function getSyncedTooltipCharts(sourceChart){
     }
 
     if(syncGroup === "analysis") return getAnalysisCharts();
+    if(syncGroup === "wbgt") return wbgtChart ? [wbgtChart] : [];
     return getMainSyncedTooltipCharts();
 }
 
@@ -5619,13 +6415,14 @@ function getSyncedTooltipChartsByGroup(syncGroup){
     if(syncGroup === "review") return reviewCharts;
     if(syncGroup === "maintenance") return maintenanceCharts;
     if(syncGroup === "analysis") return getAnalysisCharts();
+    if(syncGroup === "wbgt") return wbgtChart ? [wbgtChart] : [];
     return getMainSyncedTooltipCharts();
 }
 
 function getAllSyncedTooltipCharts(){
     const charts = [];
 
-    allCharts.concat(getAnalysisCharts(), maintenanceCharts, reviewCharts).forEach(chart=>{
+    allCharts.concat(getAnalysisCharts(), wbgtChart ? [wbgtChart] : [], maintenanceCharts, reviewCharts).forEach(chart=>{
         if(!chart || charts.includes(chart)) return;
         charts.push(chart);
     });
