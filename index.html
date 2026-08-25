@@ -3015,6 +3015,16 @@ body.data-export-active .control-panel {
 
 <section id="tab-wbgt" class="tab-panel tab-panel-wbgt" role="tabpanel">
     <div class="wbgt-content">
+        <div class="wbgt-card wbgt-setting-card">
+            <h3>センサー設定</h3>
+            <div class="wbgt-setting-form">
+                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: T0001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>温湿度 point_id<input class="wbgt-point-input" type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
+            </div>
+        </div>
+
         <h2 class="wbgt-title">暑さ指数（WBGT）</h2>
 
         <div class="wbgt-overview">
@@ -3049,16 +3059,6 @@ body.data-export-active .control-panel {
                 </div>
                 <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
                 <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
-            </div>
-        </div>
-
-        <div class="wbgt-card wbgt-setting-card">
-            <h3>センサー設定</h3>
-            <div class="wbgt-setting-form">
-                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: T0001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <label>温湿度 point_id<input class="wbgt-point-input" type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
             </div>
         </div>
 
