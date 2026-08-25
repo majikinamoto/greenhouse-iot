@@ -454,8 +454,16 @@ button { margin:5px; }
     box-sizing:border-box;
 }
 
-body.yui-tech-app .grid > .p11-split-chart-card {
-    width:min(100%, 810px);
+body.yui-tech-app .grid > .p11-split-chart-card,
+body.yui-tech-app .grid > .yui-temp-hum-chart-card {
+    width:400px;
+    max-width:100%;
+    flex-basis:400px;
+}
+
+body.yui-tech-app .grid > .p11-flex-row-break {
+    width:0;
+    height:0;
     flex-basis:100%;
 }
 
@@ -2128,6 +2136,17 @@ body.data-export-active .control-panel {
         border-right:none;
     }
 
+    body.yui-tech-app .grid > .p11-split-chart-card,
+    body.yui-tech-app .grid > .yui-temp-hum-chart-card {
+        width:100%;
+        max-width:100%;
+        flex-basis:100%;
+    }
+
+    body.yui-tech-app .grid > .p11-flex-row-break {
+        display:none;
+    }
+
     .chart-container {
         min-width:0;
         width:min(100%, calc((100vh - 44px) * 10 / 7));
@@ -2499,6 +2518,7 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideTempChartP11"></canvas></div>
     </div>
+    <span class="p11-flex-row-break" aria-hidden="true"></span>
 
     <div class="p11-split-chart-card">
         <h4><span>屋外湿度（P11）</span><button class="chart-reset-button" onclick="resetChartZoom(outsideHumChartP11)">ズームリセット</button></h4>
@@ -2508,6 +2528,7 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideHumChartP11"></canvas></div>
     </div>
+    <span class="p11-flex-row-break" aria-hidden="true"></span>
 
     <div>
         <h4><span>室内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
@@ -2762,6 +2783,7 @@ body.data-export-active .control-panel {
             </div>
             <div class="chart-container"><canvas id="reviewOutsideTempChartP11"></canvas></div>
         </div>
+        <span class="p11-flex-row-break" aria-hidden="true"></span>
 
         <div class="p11-split-chart-card">
             <h4><span>屋外湿度（P11）</span><button class="chart-reset-button" onclick="resetChartZoom(reviewOutsideHumChartP11)">ズームリセット</button></h4>
@@ -2771,6 +2793,7 @@ body.data-export-active .control-panel {
             </div>
             <div class="chart-container"><canvas id="reviewOutsideHumChartP11"></canvas></div>
         </div>
+        <span class="p11-flex-row-break" aria-hidden="true"></span>
 
         <div>
             <h4><span>日射量（P31）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
@@ -2998,7 +3021,7 @@ body.data-export-active .control-panel {
 </div>
 <div class="grid">
 
-    <div>
+    <div class="yui-temp-hum-chart-card">
         <h4><span>メンテ用外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP12" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP12" value="100"></span>
@@ -3008,7 +3031,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="tempChartP12"></canvas></div>
     </div>
 
-    <div>
+    <div class="yui-temp-hum-chart-card">
         <h4><span>メンテ用（P11−P12_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMinP11P12" value="-5"> ～
@@ -5888,7 +5911,7 @@ interaction:{
             zoom:{
                 zoom:{
                     wheel:{enabled:false},
-                    pinch:{enabled:zoomEnabled},
+                    pinch:{enabled:true},
                     drag:{
     enabled:zoomEnabled,
     backgroundColor:"rgba(30,120,255,0.35)",
@@ -7989,7 +8012,7 @@ function createRainfallChart(response){
         }
     };
     options.plugins.zoom.zoom.wheel.enabled = false;
-    options.plugins.zoom.zoom.pinch.enabled = zoomEnabled;
+    options.plugins.zoom.zoom.pinch.enabled = true;
     options.plugins.zoom.zoom.drag.enabled = zoomEnabled;
     options.plugins.zoom.zoom.mode = "xy";
     options.plugins.zoom.zoom.onZoomComplete = ()=>hideRainfallTooltip();
@@ -8601,25 +8624,27 @@ function createP11MetricChart(canvasId, parsed, metric, minTime, maxTime, review
     if(!chartData.length) return null;
 
     const options = baseOptions(displayMinTime, maxTime);
-    options.plugins.zoom.zoom.wheel.enabled = !isMobileView();
+    options.plugins.zoom.zoom.wheel.enabled = false;
     options.plugins.zoom.zoom.pinch.enabled = true;
     options.plugins.zoom.zoom.drag.enabled = !isMobileView();
+    const yAxisOptions = {
+        min:metricAxis.min,
+        max:metricAxis.max,
+        ticks:{
+            stepSize:isTemperature ? 5 : 10,
+            color:"#000"
+        },
+        title:{
+            display:true,
+            text:isTemperature ? "℃" : "%",
+            color:"#000"
+        },
+        grid:{ borderColor:color }
+    };
     options.scales = {
         ...options.scales,
-        y:{
-            min:metricAxis.min,
-            max:metricAxis.max,
-            ticks:{
-                stepSize:isTemperature ? 5 : 10,
-                color:"#000"
-            },
-            title:{
-                display:true,
-                text:isTemperature ? "℃" : "%",
-                color:"#000"
-            },
-            grid:{ borderColor:color }
-        }
+        y:yAxisOptions,
+        yRight:createRightYAxis(yAxisOptions)
     };
 
     return new Chart(canvas,{
