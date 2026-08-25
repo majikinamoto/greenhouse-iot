@@ -878,7 +878,7 @@ button { margin:5px; }
     left:30px;
     width:72px;
     display:grid;
-    grid-template-rows:4fr 3fr 3fr 5fr;
+    grid-template-rows:5fr 3fr 3fr 5fr;
 }
 
 .wbgt-gauge-zone {
@@ -911,10 +911,10 @@ button { margin:5px; }
     border-top:1px solid #74380f;
 }
 
-.wbgt-gauge-value-35 { bottom:100%; }
-.wbgt-gauge-value-31 { bottom:73.333333%; }
-.wbgt-gauge-value-28 { bottom:53.333333%; }
-.wbgt-gauge-value-25 { bottom:33.333333%; }
+.wbgt-gauge-value-36 { bottom:100%; }
+.wbgt-gauge-value-31 { bottom:68.75%; }
+.wbgt-gauge-value-28 { bottom:50%; }
+.wbgt-gauge-value-25 { bottom:31.25%; }
 .wbgt-gauge-value-20 { bottom:0; }
 
 .wbgt-gauge-marker {
@@ -3199,7 +3199,7 @@ body.data-export-active .control-panel {
                                 <div class="wbgt-gauge-zone wbgt-level-severe">厳重警戒</div>
                                 <div class="wbgt-gauge-zone wbgt-level-warning">警戒</div>
                                 <div class="wbgt-gauge-zone wbgt-level-caution">注意</div>
-                                <span class="wbgt-gauge-tick wbgt-gauge-value-35">35</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-36">36</span>
                                 <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-31">31</span>
                                 <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-28">28</span>
                                 <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-25">25</span>
@@ -5483,8 +5483,8 @@ function renderWbgtGauge(value){
         return;
     }
 
-    const clippedValue = Math.min(35, Math.max(20, wbgt));
-    const position = (clippedValue - 20) / (35 - 20) * 100;
+    const clippedValue = Math.min(36, Math.max(20, wbgt));
+    const position = (clippedValue - 20) / (36 - 20) * 100;
     marker.style.setProperty("--wbgt-gauge-position", position + "%");
     valueLabel.textContent = wbgt.toFixed(1);
     if(gauge) gauge.setAttribute("aria-label", "現在WBGT " + wbgt.toFixed(1));
@@ -5732,14 +5732,16 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     const options = baseOptions(minTime, maxTime);
     options.plugins.crosshair.sync.group = 5;
     options.plugins.zoom.zoom.onZoomComplete = function(){};
+    const yAxisOptions = {
+        min:20,
+        max:36,
+        ticks:{ color:"#000" },
+        title:{ display:true, text:"WBGT", color:"#000" }
+    };
     options.scales = {
         ...options.scales,
-        y:{
-            min:20,
-            max:36,
-            ticks:{ color:"#000" },
-            title:{ display:true, text:"WBGT", color:"#000" }
-        }
+        y:yAxisOptions,
+        yRight:createRightYAxis(yAxisOptions)
     };
     const chart = new Chart(canvas, {
         type:"line",
