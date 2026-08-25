@@ -750,7 +750,7 @@ button { margin:5px; }
 
 .wbgt-overview {
     display:grid;
-    grid-template-columns:minmax(300px, 0.8fr) minmax(0, 1.5fr);
+    grid-template-columns:minmax(420px, 0.8fr) minmax(0, 1.5fr);
     gap:12px;
     align-items:start;
 }
@@ -763,6 +763,126 @@ button { margin:5px; }
     display:grid;
     grid-template-columns:repeat(2, minmax(0, 1fr));
     gap:8px;
+}
+.wbgt-current-layout {
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 170px;
+    gap:12px;
+    align-items:start;
+}
+
+.wbgt-current-details {
+    min-width:0;
+}
+
+.wbgt-gauge-panel {
+    width:170px;
+    max-width:100%;
+    padding:8px;
+    border:1px solid #d7dee5;
+    border-radius:5px;
+    background:#f8fafc;
+    box-sizing:border-box;
+}
+
+.wbgt-gauge-heading {
+    margin-bottom:5px;
+    color:#526474;
+    font-size:12px;
+    font-weight:700;
+    text-align:center;
+}
+
+.wbgt-gauge-scale {
+    position:relative;
+    width:154px;
+    max-width:100%;
+    height:270px;
+    margin:0 auto;
+}
+
+.wbgt-gauge-zones {
+    position:absolute;
+    top:10px;
+    bottom:10px;
+    left:30px;
+    width:72px;
+    display:grid;
+    grid-template-rows:4fr 3fr 3fr 5fr;
+}
+
+.wbgt-gauge-zone {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:0;
+    font-size:11px;
+    font-weight:700;
+}
+
+.wbgt-gauge-tick {
+    position:absolute;
+    left:-30px;
+    width:25px;
+    color:#74380f;
+    font-size:11px;
+    font-weight:700;
+    line-height:1;
+    text-align:right;
+    transform:translateY(50%);
+}
+
+.wbgt-gauge-tick-boundary::after {
+    content:"";
+    position:absolute;
+    top:50%;
+    left:30px;
+    width:72px;
+    border-top:1px solid #74380f;
+}
+
+.wbgt-gauge-value-35 { bottom:100%; }
+.wbgt-gauge-value-31 { bottom:73.333333%; }
+.wbgt-gauge-value-28 { bottom:53.333333%; }
+.wbgt-gauge-value-25 { bottom:33.333333%; }
+.wbgt-gauge-value-20 { bottom:0; }
+
+.wbgt-gauge-marker {
+    position:absolute;
+    left:calc(100% + 3px);
+    bottom:var(--wbgt-gauge-position, 0%);
+    display:flex;
+    align-items:center;
+    color:#74380f;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+    transform:translateY(50%);
+}
+
+.wbgt-gauge-marker[hidden],
+.wbgt-gauge-unavailable[hidden] {
+    display:none;
+}
+
+.wbgt-gauge-marker-arrow {
+    margin-right:2px;
+    font-size:16px;
+    line-height:1;
+}
+
+.wbgt-gauge-marker-value {
+    padding:1px 3px;
+    border:1px solid #74380f;
+    border-radius:3px;
+    background:#fff;
+}
+
+.wbgt-gauge-unavailable {
+    margin-top:3px;
+    color:#526474;
+    font-size:11px;
+    text-align:center;
 }
 
 .wbgt-current-item {
@@ -2390,6 +2510,13 @@ body.data-export-active .control-panel {
     .wbgt-level-grid {
         grid-template-columns:1fr;
     }
+    .wbgt-current-layout {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .wbgt-gauge-panel {
+        justify-self:center;
+    }
 
     .wbgt-overview {
         grid-template-columns:minmax(0, 1fr);
@@ -3030,19 +3157,41 @@ body.data-export-active .control-panel {
         <div class="wbgt-overview">
             <div class="wbgt-card wbgt-current-card">
                 <h3>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</h3>
-                <div class="wbgt-current-grid wbgt-current-primary">
-                    <div class="wbgt-current-item wbgt-current-item-primary wbgt-current-item-temperature"><span class="wbgt-current-label">現地温度</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
-                    <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
-                    <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
+                <div class="wbgt-current-layout">
+                    <div class="wbgt-current-details">
+                        <div class="wbgt-current-grid wbgt-current-primary">
+                            <div class="wbgt-current-item wbgt-current-item-primary wbgt-current-item-temperature"><span class="wbgt-current-label">現地温度</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
+                        </div>
+                        <div class="wbgt-current-secondary">
+                            <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
+                            <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
+                        </div>
+                        <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
+                    </div>
+                    <div class="wbgt-gauge-panel">
+                        <div class="wbgt-gauge-heading">現在WBGTレベル</div>
+                        <div id="wbgtGauge" class="wbgt-gauge-scale" aria-label="現在WBGTは算出できません">
+                            <div class="wbgt-gauge-zones">
+                                <div class="wbgt-gauge-zone wbgt-level-danger">危険</div>
+                                <div class="wbgt-gauge-zone wbgt-level-severe">厳重警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-warning">警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-caution">注意</div>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-35">35</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-31">31</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-28">28</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-25">25</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-20">20</span>
+                                <div id="wbgtGaugeMarker" class="wbgt-gauge-marker" hidden><span class="wbgt-gauge-marker-arrow">◀</span><span id="wbgtGaugeValue" class="wbgt-gauge-marker-value">—</span></div>
+                            </div>
+                        </div>
+                        <div id="wbgtGaugeUnavailable" class="wbgt-gauge-unavailable">現在値 —</div>
+                    </div>
                 </div>
-                <div class="wbgt-current-secondary">
-                    <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
-                    <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
-                    <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
-                    <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
-                    <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
-                </div>
-                <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
             </div>
 
             <div class="wbgt-card wbgt-summary-card">
@@ -3062,10 +3211,17 @@ body.data-export-active .control-panel {
             </div>
         </div>
 
-        <div class="wbgt-card">
-            <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
-            <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
-            <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+        <div class="grid">
+            <div>
+                <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
+                <div class="control-group axis-control-group chart-axis-control">
+                    <span class="axis-label-temp">WBGT軸：</span><input class="axis-input" type="number" id="wbgtMin" value="20"> ～
+                    <input class="axis-input" type="number" id="wbgtMax" value="35">
+                    <button type="button" onclick="applyWbgtYAxis(wbgtChart)">縦軸反映</button>
+                </div>
+                <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
+                <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+            </div>
         </div>
 
         <div class="wbgt-card">
@@ -5260,8 +5416,34 @@ function resetWbgtCurrentDisplay(){
         "wbgtTgNow", "wbgtTwNow", "wbgtTempHumTime", "wbgtGlobeTime"
     ].forEach(id=>setWbgtText(id, "－"));
     setWbgtText("wbgtCurrentMessage", "");
+    renderWbgtGauge(null);
 }
 
+function renderWbgtGauge(value){
+    const gauge = document.getElementById("wbgtGauge");
+    const marker = document.getElementById("wbgtGaugeMarker");
+    const valueLabel = document.getElementById("wbgtGaugeValue");
+    const unavailable = document.getElementById("wbgtGaugeUnavailable");
+    const wbgt = Number(value);
+    const isAvailable = value !== null && value !== "" && Number.isFinite(wbgt);
+
+    if(!marker || !valueLabel || !unavailable) return;
+    marker.hidden = !isAvailable;
+    unavailable.hidden = isAvailable;
+
+    if(!isAvailable){
+        marker.style.removeProperty("--wbgt-gauge-position");
+        valueLabel.textContent = "—";
+        if(gauge) gauge.setAttribute("aria-label", "現在WBGTは算出できません");
+        return;
+    }
+
+    const clippedValue = Math.min(35, Math.max(20, wbgt));
+    const position = (clippedValue - 20) / (35 - 20) * 100;
+    marker.style.setProperty("--wbgt-gauge-position", position + "%");
+    valueLabel.textContent = wbgt.toFixed(1);
+    if(gauge) gauge.setAttribute("aria-label", "現在WBGT " + wbgt.toFixed(1));
+}
 function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     resetWbgtCurrentDisplay();
     const latestTempHum = tempHumData.length ? tempHumData[tempHumData.length - 1] : null;
@@ -5341,6 +5523,7 @@ function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     const level = getWbgtLevel(result.wbgt);
     setWbgtText("wbgtNow", result.wbgt.toFixed(1));
     setWbgtText("wbgtLevelNow", level ? level.label : "－");
+    renderWbgtGauge(result.wbgt);
     setWbgtText("wbgtTaNow", result.ta.toFixed(1) + " ℃");
     setWbgtText("wbgtRhNow", result.rh.toFixed(1) + " %");
     setWbgtText("wbgtTgNow", result.tg.toFixed(1) + " ℃");
@@ -5507,6 +5690,8 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     options.scales = {
         ...options.scales,
         y:{
+            min:20,
+            max:35,
             ticks:{ color:"#000" },
             title:{ display:true, text:"WBGT", color:"#000" }
         }
@@ -5531,6 +5716,26 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     });
     saveInitialScaleLimits(chart);
     return chart;
+}
+
+function getWbgtYAxis(){
+    const min = getFiniteInputValue("wbgtMin");
+    const max = getFiniteInputValue("wbgtMax");
+    if(min === null || max === null || max <= min){
+        return { error:"WBGT軸には有効な最小値と最大値を入力してください。" };
+    }
+    return { min:min, max:max };
+}
+
+function applyWbgtYAxis(chart){
+    if(!chart) return;
+    const axis = getWbgtYAxis();
+    if(axis.error){
+        alert(axis.error);
+        return;
+    }
+    setLinearYAxis(chart, axis);
+    chart.update();
 }
 
 function resetWbgtZoom(){
