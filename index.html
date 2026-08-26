@@ -744,6 +744,21 @@ button { margin:5px; }
     margin:0 0 10px;
 }
 
+.wbgt-current-heading {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:2px 8px;
+    min-width:0;
+}
+
+.wbgt-current-heading-time {
+    color:#68727d;
+    font-size:0.82em;
+    font-weight:400;
+    white-space:nowrap;
+}
+
 .wbgt-setting-card {
     padding:9px 12px;
 }
@@ -3198,11 +3213,11 @@ body.data-export-active .control-panel {
 
         <div class="wbgt-overview">
             <div class="wbgt-card wbgt-current-card">
-                <h3>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</h3>
+                <h3 class="wbgt-current-heading"><span>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</span><span id="wbgtCurrentHeadingTime" class="wbgt-current-heading-time" hidden></span></h3>
                 <div class="wbgt-current-layout">
                     <div class="wbgt-current-details">
                         <div class="wbgt-current-primary">
-                            <div class="wbgt-current-row"><span class="wbgt-current-label">現地温度</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">現地気温</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
                             <div class="wbgt-current-row wbgt-current-wbgt-row"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value wbgt-current-wbgt-value">－</span><span id="wbgtLevelNow" class="wbgt-level-badge">－</span></div>
                         </div>
                         <div class="wbgt-current-secondary">
@@ -5451,6 +5466,30 @@ function setWbgtText(id, text){
     if(element) element.innerText = text;
 }
 
+function setWbgtCurrentHeadingTime(value){
+    const element = document.getElementById("wbgtCurrentHeadingTime");
+    if(!element) return;
+
+    const timestamp = value === null || value === "" ? NaN : Number(value);
+    let text = "";
+
+    if(Number.isFinite(timestamp)){
+        const date = new Date(timestamp);
+        if(Number.isFinite(date.getTime())){
+            try{
+                const parts = getJapanDateParts(date);
+                if(Number.isFinite(parts.hour) && Number.isFinite(parts.minute)){
+                    text = String(parts.hour).padStart(2, "0") + ":" +
+                        String(parts.minute).padStart(2, "0") + "時点";
+                }
+            }catch(e){}
+        }
+    }
+
+    element.textContent = text;
+    element.hidden = !text;
+}
+
 const wbgtLevelClassNames = [
     "wbgt-level-danger", "wbgt-level-severe", "wbgt-level-warning", "wbgt-level-caution"
 ];
@@ -5482,6 +5521,7 @@ function resetWbgtCurrentDisplay(){
     ].forEach(id=>setWbgtText(id, "－"));
     setWbgtLevelDisplay(null);
     setWbgtText("wbgtCurrentMessage", "");
+    setWbgtCurrentHeadingTime(null);
     renderWbgtGauge(null);
 }
 
@@ -5516,6 +5556,7 @@ function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     const latestGlobe = globeData.length ? globeData[globeData.length - 1] : null;
 
     if(latestTempHum && Number.isFinite(latestTempHum.xValue)){
+        setWbgtCurrentHeadingTime(latestTempHum.xValue);
         setWbgtText("wbgtTempHumTime", formatWbgtCurrentTime(latestTempHum.xValue, nowTime));
     }
     if(latestGlobe && Number.isFinite(latestGlobe.xValue)){
