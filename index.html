@@ -2169,6 +2169,92 @@ body.data-export-active .control-panel {
     white-space:nowrap;
 }
 
+.status-group-temp-summary.ten-day-summary {
+    box-sizing:border-box;
+    width:700px;
+    max-width:100%;
+    overflow:hidden;
+}
+
+.status-temp-grid.ten-day-temp-grid {
+    grid-template-columns:60px minmax(0, 1fr);
+    width:100%;
+    min-width:0;
+    align-items:stretch;
+}
+
+.ten-day-temp-grid .status-temp-label-grid,
+.ten-day-temp-grid .status-temp-data-grid {
+    display:grid;
+    gap:4px;
+    align-items:center;
+}
+
+.ten-day-temp-grid .status-temp-label-grid {
+    position:relative;
+    z-index:2;
+    background:#f7f9fc;
+    box-shadow:1px 0 0 #bcc8d4;
+}
+
+.ten-day-temp-grid .status-temp-data-scroll {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
+}
+
+.ten-day-temp-grid .status-temp-data-grid {
+    grid-template-columns:repeat(10, 60px);
+    width:max-content;
+}
+
+.ten-day-temp-grid .status-temp-label-spacer,
+.ten-day-temp-grid .status-temp-date {
+    box-sizing:border-box;
+    min-height:24px;
+}
+
+.ten-day-temp-grid .status-temp-label,
+.ten-day-temp-grid .status-temp-value {
+    box-sizing:border-box;
+    min-height:24px;
+}
+
+.ten-day-temp-grid .status-temp-label {
+    display:flex;
+    align-items:center;
+    position:relative;
+    z-index:2;
+    background:#f7f9fc;
+    white-space:nowrap;
+    text-align:left;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.15;
+    color:#000;
+}
+
+.ten-day-temp-grid .status-temp-date {
+    white-space:nowrap;
+    text-align:center;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.15;
+    color:#000;
+}
+
+.status-group-temp-summary .ten-day-temp-grid .status-temp-value {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:60px;
+    padding:4px 5px;
+}
+
 .status-group-vpd-eval {
     border-color:#6b879a;
     background:#f8fafc;
@@ -2467,8 +2553,17 @@ body.data-export-active .control-panel {
         max-width:calc(100vw - 24px);
     }
 
-    .status-temp-grid {
+    .status-temp-grid:not(.ten-day-temp-grid) {
         grid-template-columns:60px repeat(3, minmax(0, 1fr));
+    }
+
+    .status-group-temp-summary.ten-day-summary {
+        width:100%;
+        max-width:calc(100vw - 24px);
+    }
+
+    .status-temp-grid.ten-day-temp-grid {
+        grid-template-columns:60px minmax(0, 1fr);
     }
 
     .status-temp-value {
@@ -2911,51 +3006,13 @@ body.data-export-active .control-panel {
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
 </div>
-<div class="status-group status-group-temp-summary">
-<div class="status-group-title">ハウス内_P01</div>
-<div class="status-temp-grid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高(℃)</div>
-<div class="status-box temp-high status-temp-value"><span id="houseTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低(℃)</div>
-<div class="status-box temp-low status-temp-value"><span id="houseTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均(℃)</div>
-<div class="status-box average-box status-temp-value"><span id="houseTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseTodayAvg">-</span></div>
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">ハウス内（P01）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
 </div>
-</div>
-<div class="status-group status-group-temp-summary">
-<div class="status-group-title">外気（P11）</div>
-<div class="status-temp-grid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高(℃)</div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低(℃)</div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均(℃)</div>
-<div class="status-box average-box status-temp-value"><span id="outsideTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideTodayAvg">-</span></div>
-<div class="status-temp-row-heading">雨量(mm)</div>
-<div class="status-box status-temp-value"><span id="outsideTwoDaysAgoRain">-</span></div>
-<div class="status-box status-temp-value"><span id="outsideYesterdayRain">-</span></div>
-<div class="status-box status-temp-value"><span id="outsideTodayRain">-</span></div>
-</div>
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">外気（P11）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
 </div>
 <div class="status-group status-group-vpd-eval">
 <div class="status-group-title">昨日の飽差評価</div>
@@ -4559,6 +4616,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     restoreEnvironmentScoreRanges();
     restoreUtechAreaSelection();
     restoreRainfallCalculationSetting();
+    initializeTenDaySummaryTables();
     handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
@@ -7149,63 +7207,216 @@ function calcDewPoint(temp, hum){
     return (b * alpha) / (a - alpha);
 }
 
-function calcDailyTempStats(data, targetDate, isToday){
-    const start = new Date(targetDate);
-    start.setHours(0,0,0,0);
-
-    const end = new Date(targetDate);
-
-    if(isToday){
-        end.setTime(new Date().getTime());
-    }else{
-        end.setHours(23,59,59,999);
-    }
-
-    const temps = data
-        .filter(d=>d.x>=start && d.x<=end && d.temp !== null && d.temp !== undefined && !isNaN(d.temp))
-        .map(d=>d.temp);
-
-    if(!temps.length){
-        return {
-            max:null,
-            avg:null,
-            min:null
-        };
-    }
-
-    return {
-        max:Math.max(...temps),
-        avg:temps.reduce((sum, temp)=>sum + temp, 0) / temps.length,
-        min:Math.min(...temps)
-    };
-}
-
-function renderDailyTempStats(prefix, stats){
-    const values = {
-        Max:stats.max,
-        Avg:stats.avg,
-        Min:stats.min
-    };
-
-    Object.keys(values).forEach(key=>{
-        const el = document.getElementById(prefix + key);
-        if(el){
-            el.innerText = values[key] === null ? "-" : values[key].toFixed(1);
+function resetDailyTempStats(){
+    initializeTenDaySummaryTables();
+    ["house", "outside"].forEach(prefix=>{
+        for(let i = 0; i < 10; i++){
+            ["Max", "Min", "Avg", "Rain"].forEach(key=>{
+                const value = document.getElementById(prefix + "Day" + i + key);
+                if(value) value.textContent = "-";
+            });
         }
     });
 }
 
-function resetDailyTempStats(){
-    [
-        "houseTwoDaysAgo",
-        "houseYesterday",
-        "houseToday",
-        "outsideTwoDaysAgo",
-        "outsideYesterday",
-        "outsideToday"
-    ].forEach(prefix=>{
-        renderDailyTempStats(prefix, { max:null, avg:null, min:null });
+function buildTenDaySummaryCells(prefix, includeRain){
+    const grid = document.getElementById(prefix + "TempSummaryGrid");
+    if(!grid || grid.querySelector(".status-temp-data-grid")) return;
+
+    let labelHtml = '<div class="status-temp-label-spacer"></div>';
+    let dataHtml = "";
+    for(let i = 0; i < 10; i++){
+        dataHtml += '<div class="status-temp-date" id="' + prefix + "Day" + i + 'Label">-</div>';
+    }
+
+    const rows = [
+        ["Max", "最高(℃)", " temp-high"],
+        ["Min", "最低(℃)", " temp-low"],
+        ["Avg", "平均(℃)", " average-box"]
+    ];
+    if(includeRain) rows.push(["Rain", "雨量(mm)", ""]);
+
+    rows.forEach(row=>{
+        const key = row[0];
+        labelHtml += '<div class="status-temp-label">' + row[1] + "</div>";
+        for(let i = 0; i < 10; i++){
+            dataHtml += '<div class="status-box status-temp-value' + row[2] + '" id="' +
+                prefix + "Day" + i + key + '">-</div>';
+        }
     });
+
+    grid.innerHTML =
+        '<div class="status-temp-label-grid">' + labelHtml + "</div>" +
+        '<div class="status-temp-data-scroll" tabindex="0" aria-label="日別集計値を横スクロール">' +
+            '<div class="status-temp-data-grid">' + dataHtml + "</div>" +
+        "</div>";
+
+    const scrollArea = grid.querySelector(".status-temp-data-scroll");
+    if(scrollArea) requestAnimationFrame(()=>{ scrollArea.scrollLeft = scrollArea.scrollWidth; });
+}
+
+function initializeTenDaySummaryTables(){
+    buildTenDaySummaryCells("house", false);
+    buildTenDaySummaryCells("outside", true);
+    renderTenDaySummaryDateLabels();
+}
+
+function getTenDayJstDateKey(offsetDays){
+    const now = new Date();
+    const jstNow = new Date(now.getTime() + 9*60*60*1000);
+    const date = new Date(jstNow);
+    date.setUTCDate(jstNow.getUTCDate() - offsetDays);
+    return date.getUTCFullYear() + "-" +
+        String(date.getUTCMonth() + 1).padStart(2, "0") + "-" +
+        String(date.getUTCDate()).padStart(2, "0");
+}
+
+function getTenDayJstNowSqlDateTime(){
+    const now = new Date();
+    const jstNow = new Date(now.getTime() + 9*60*60*1000);
+    return jstNow.getUTCFullYear() + "-" +
+        String(jstNow.getUTCMonth() + 1).padStart(2, "0") + "-" +
+        String(jstNow.getUTCDate()).padStart(2, "0") + " " +
+        String(jstNow.getUTCHours()).padStart(2, "0") + ":" +
+        String(jstNow.getUTCMinutes()).padStart(2, "0") + ":" +
+        String(jstNow.getUTCSeconds()).padStart(2, "0");
+}
+
+function formatTenDaySummaryDateLabel(dateKey){
+    const parts = String(dateKey || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(part=>!Number.isFinite(part))) return "-";
+    const monthDay = parts[1] + "/" + parts[2];
+    if(dateKey === getTenDayJstDateKey(0)) return "本日(" + monthDay + ")";
+    if(dateKey === getTenDayJstDateKey(1)) return "前日(" + monthDay + ")";
+    return monthDay;
+}
+
+function renderTenDaySummaryDateLabels(){
+    ["house", "outside"].forEach(prefix=>{
+        for(let i = 0; i < 10; i++){
+            const dateKey = getTenDayJstDateKey(9 - i);
+            const label = document.getElementById(prefix + "Day" + i + "Label");
+            if(label) label.textContent = formatTenDaySummaryDateLabel(dateKey);
+        }
+    });
+}
+
+function getSummaryRowDateKey(row){
+    const dateKey = String(row && row.recorded_at || "").slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateKey) ? dateKey : "";
+}
+
+function createDailyTemperatureMap(rows){
+    const dayMap = new Map();
+    (Array.isArray(rows) ? rows : []).forEach(row=>{
+        const dateKey = getSummaryRowDateKey(row);
+        if(!dateKey || row.temperature === null || row.temperature === undefined || row.temperature === "") return;
+        const temperature = Number(row.temperature);
+        if(!Number.isFinite(temperature)) return;
+        const day = dayMap.get(dateKey) || { max:temperature, min:temperature, total:0, count:0 };
+        day.max = Math.max(day.max, temperature);
+        day.min = Math.min(day.min, temperature);
+        day.total += temperature;
+        day.count++;
+        dayMap.set(dateKey, day);
+    });
+    return dayMap;
+}
+
+function renderTenDayTemperatureSummary(prefix, dayMap){
+    for(let i = 0; i < 10; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+        const values = {
+            Max:day && day.count ? day.max.toFixed(1) : "-",
+            Min:day && day.count ? day.min.toFixed(1) : "-",
+            Avg:day && day.count ? (day.total / day.count).toFixed(1) : "-"
+        };
+        Object.keys(values).forEach(key=>{
+            const cell = document.getElementById(prefix + "Day" + i + key);
+            if(cell) cell.textContent = values[key];
+        });
+    }
+}
+
+function createDailyRainfallMap(rows, mode, coefficient){
+    const dayMap = new Map();
+    (Array.isArray(rows) ? rows : []).forEach(row=>{
+        const dateKey = getSummaryRowDateKey(row);
+        const rawValue = mode === "tip" ? row.rainfall_tip_interval : row.rainfall_interval;
+        if(!dateKey || !isFiniteRainfallValue(rawValue)) return;
+        const rainfall = Number(rawValue) * (mode === "tip" ? coefficient : 1);
+        const hundredths = Math.round(rainfall * 100);
+        const day = dayMap.get(dateKey) || { hundredths:0, count:0 };
+        day.hundredths += hundredths;
+        day.count++;
+        dayMap.set(dateKey, day);
+    });
+    return dayMap;
+}
+
+function renderTenDayRainfallSummary(dayMap){
+    for(let i = 0; i < 10; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+        const cell = document.getElementById("outsideDay" + i + "Rain");
+        if(cell) cell.textContent = day && day.count
+            ? formatDailySummaryRainfallValue(day.hundredths / 100)
+            : "-";
+    }
+}
+
+let tenDayTemperatureRequestSequence = 0;
+let tenDayRainfallRequestSequence = 0;
+
+async function loadTenDayTemperatureSummaries(userId, outsideSource){
+    const requestId = ++tenDayTemperatureRequestSequence;
+    const range = {
+        start:getTenDayJstDateKey(9) + " 00:00:00",
+        end:getTenDayJstNowSqlDateTime()
+    };
+    const results = await Promise.all([
+        fetchDataSafe(userId, "P01", range),
+        fetchDataSafe(outsideSource.userId, outsideSource.pointId, range)
+    ]);
+    const currentOutsideSource = getOutsideSourceRequest(getMainUserIdInputValue());
+    if(
+        requestId !== tenDayTemperatureRequestSequence ||
+        getMainUserIdInputValue() !== userId ||
+        currentOutsideSource.userId !== outsideSource.userId ||
+        currentOutsideSource.pointId !== outsideSource.pointId
+    ) return;
+
+    renderTenDayTemperatureSummary("house", createDailyTemperatureMap(results[0].data));
+    renderTenDayTemperatureSummary("outside", createDailyTemperatureMap(results[1].data));
+    results.filter(result=>result.error).forEach(result=>console.error(result.error));
+}
+
+async function loadTenDayRainfallSummary(userId){
+    const requestId = ++tenDayRainfallRequestSequence;
+    const mode = getRainfallCalculationMode();
+    const coefficient = getRainfallTipCoefficient();
+    if(mode === "tip" && coefficient === null) return;
+    const range = {
+        start:getTenDayJstDateKey(9) + " 00:00:00",
+        end:getTenDayJstNowSqlDateTime()
+    };
+    const result = await fetchDataSafe(userId, "P41", range);
+    const currentUserId = getMainUserIdInputValue();
+    const currentRainfallSource = getRainfallSourceRequest(currentUserId);
+    if(
+        requestId !== tenDayRainfallRequestSequence ||
+        currentRainfallSource.userId !== userId ||
+        getRainfallCalculationMode() !== mode ||
+        (mode === "tip" && getRainfallTipCoefficient() !== coefficient)
+    ) return;
+
+    renderTenDayRainfallSummary(createDailyRainfallMap(result.data, mode, coefficient));
+    if(result.error) console.error(result.error);
+}
+
+function loadTenDayDailySummaries(userId, outsideSource, rainfallSource){
+    initializeTenDaySummaryTables();
+    void loadTenDayTemperatureSummaries(userId, outsideSource);
+    void loadTenDayRainfallSummary(rainfallSource.userId);
 }
 
 function calcVpdAverage(data, startHour, endHour, baseDate){
@@ -9411,10 +9622,7 @@ function resetRainfallDailyTotals(){
     [
         "rainDayBeforeYesterday",
         "rainYesterday",
-        "rainToday",
-        "outsideTwoDaysAgoRain",
-        "outsideYesterdayRain",
-        "outsideTodayRain"
+        "rainToday"
     ].forEach(id=>{
         const element = document.getElementById(id);
         if(element) element.innerText = "-";
@@ -9480,6 +9688,7 @@ function reloadRainfallData(){
     const rainfallSource = getRainfallSourceRequest(userId);
     updateRainfallSourceNote(rainfallSource);
     void loadRainfallData(rainfallSource.userId, isMobileView() ? 48 : 72, requestId);
+    void loadTenDayRainfallSummary(rainfallSource.userId);
 }
 
 function handleRainfallCalculationModeChange(){
@@ -9548,16 +9757,6 @@ function renderRainfallDailyTotals(totals){
         if(element) element.innerText = formatRainfallValue(values[id]);
     });
 
-    const summaryValues = {
-        outsideTwoDaysAgoRain:totals ? totals.day_before_yesterday : null,
-        outsideYesterdayRain:totals ? totals.yesterday : null,
-        outsideTodayRain:totals ? totals.today : null
-    };
-
-    Object.keys(summaryValues).forEach(id=>{
-        const element = document.getElementById(id);
-        if(element) element.innerText = formatDailySummaryRainfallValue(summaryValues[id]);
-    });
 }
 
 function hideRainfallTooltip(){
@@ -12144,6 +12343,7 @@ async function loadData(){
     document.getElementById("solarNow").innerText = "-";
     document.getElementById("co2Now").innerText = "-";
     resetDailyTempStats();
+    loadTenDayDailySummaries(userId, outsideSource, rainfallSource);
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
     renderEnvironmentScores([], [], []);
@@ -12222,22 +12422,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         if(validP21.length){
             document.getElementById("co2Now").innerText = validP21[validP21.length - 1].co2.toFixed(0);
         }
-
-        const today = new Date(now);
-
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-
-        const twoDaysAgo = new Date(today);
-        twoDaysAgo.setDate(today.getDate() - 2);
-
-        renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
-        renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
-        renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
-        renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
-        renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
-        renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
-
 
         const errors = results
             .filter(r=>r.error)
