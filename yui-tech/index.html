@@ -1670,6 +1670,12 @@ body.data-export-active .control-panel {
     margin:10px 0;
 }
 
+.status-flex-row-break {
+    flex-basis:100%;
+    width:0;
+    height:0;
+}
+
 .status-group {
     display:flex;
     gap:6px;
@@ -2466,6 +2472,7 @@ body.data-export-active .control-panel {
 </div>
 </div>
 </div>
+<div class="status-flex-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-temp-summary">
 <div class="status-group-title">屋外（P11）・直近10日</div>
 <div class="status-temp-grid" id="outsideTempSummaryGrid" aria-label="屋外温度・雨量の直近10日集計"></div>
@@ -4826,6 +4833,44 @@ function switchTab(tabName){
     }
 }
 
+const p11FixedFillCanvasIds = new Set([
+    "outsideTempChartP11",
+    "outsideHumChartP11",
+    "reviewOutsideTempChartP11",
+    "reviewOutsideHumChartP11"
+]);
+
+function applyP11FixedFill(chart, includeResolvedOptions){
+    if(!chart || !chart.canvas || !p11FixedFillCanvasIds.has(chart.canvas.id)) return;
+    const isTemperature = chart.canvas.id.includes("Temp");
+    const borderColor = isTemperature ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
+    const backgroundColor = isTemperature ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)";
+
+    chart.data.datasets.forEach((dataset, index)=>{
+        dataset.borderColor = borderColor;
+        dataset.backgroundColor = backgroundColor;
+        dataset.pointBackgroundColor = borderColor;
+        dataset.fill = true;
+
+        if(!includeResolvedOptions) return;
+        const lineElement = chart.getDatasetMeta(index).dataset;
+        if(!lineElement || !lineElement.options) return;
+        lineElement.options.borderColor = borderColor;
+        lineElement.options.backgroundColor = backgroundColor;
+        lineElement.options.fill = true;
+    });
+}
+
+const p11FixedFillPlugin = {
+    id:"p11FixedFillPlugin",
+    beforeUpdate(chart){
+        applyP11FixedFill(chart, false);
+    },
+    beforeDatasetsDraw(chart){
+        applyP11FixedFill(chart, true);
+    }
+};
+
 const chartBackgroundPlugin = {
     id: 'chartBackgroundPlugin',
     beforeDraw(chart) {
@@ -5402,6 +5447,7 @@ validateExternalLibraries();
 
 Chart.register(
     chartBackgroundPlugin,
+    p11FixedFillPlugin,
     midnightLinePlugin,
     rainfallTooltipPlugin,
     voltTargetZonePlugin,
