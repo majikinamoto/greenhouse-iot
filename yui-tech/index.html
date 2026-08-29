@@ -8620,7 +8620,6 @@ function createP11MetricChart(canvasId, parsed, metric, minTime, maxTime, review
     const metricAxis = getP11MetricAxis(metric, review);
 
     const color = isTemperature ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
-    const fallbackBackground = isTemperature ? "rgba(255, 0, 0, 0.25)" : "rgba(0, 100, 255, 0.25)";
     const chartData = parsed
         .filter(d=>d[metric] !== null && !isNaN(d[metric]))
         .map(d=>({ x:d.xValue, y:d[metric] }));
@@ -8658,16 +8657,7 @@ function createP11MetricChart(canvasId, parsed, metric, minTime, maxTime, review
                 label:isTemperature ? "温度 (℃)" : "湿度 (%)",
                 data:chartData,
                 borderColor:color,
-                backgroundColor(context){
-                    const chart = context.chart;
-                    const {ctx, chartArea} = chart;
-                    if(!chartArea) return fallbackBackground;
-                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, isTemperature ? "rgba(255, 0, 0, 0.80)" : "rgba(0, 100, 255, 0.80)");
-                    gradient.addColorStop(0.18, isTemperature ? "rgba(255, 0, 0, 0.35)" : "rgba(0, 100, 255, 0.35)");
-                    gradient.addColorStop(0.55, isTemperature ? "rgba(255, 0, 0, 0.00)" : "rgba(0, 100, 255, 0.00)");
-                    return gradient;
-                },
+                backgroundColor:isTemperature ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",
                 pointBackgroundColor:color,
                 pointRadius:0,
                 borderWidth:2,

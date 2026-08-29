@@ -2055,6 +2055,12 @@ body.data-export-active .control-panel {
     margin:10px 0;
 }
 
+.status-row-break {
+    flex-basis:100%;
+    width:0;
+    height:0;
+}
+
 .status-group {
     display:flex;
     gap:6px;
@@ -2995,6 +3001,15 @@ body.data-export-active .control-panel {
 
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">ハウス内（P01）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
+</div>
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">外気（P11）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-current">
 <div class="status-group-title">現在（P01）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
@@ -3005,14 +3020,6 @@ body.data-export-active .control-panel {
 <div class="status-break"></div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
-</div>
-<div class="status-group status-group-temp-summary ten-day-summary">
-<div class="status-group-title">ハウス内（P01）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
-</div>
-<div class="status-group status-group-temp-summary ten-day-summary">
-<div class="status-group-title">外気（P11）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
 </div>
 <div class="status-group status-group-vpd-eval">
 <div class="status-group-title">昨日の飽差評価</div>
