@@ -3078,21 +3078,19 @@ body.data-export-active .control-panel {
 <div class="grid">
 
     <div>
-        <h4><span>ハウス内（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>ハウス内温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP01,'P01','temperature')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
     </div>
 
     <div>
-        <h4><span>外気（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>外気温度（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP11,'P11')">縦軸反映</button>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP11,'P11','temperature')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
@@ -3106,6 +3104,24 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
+    <div>
+        <h4><span>ハウス内湿度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
+            <button onclick="applyTempHumSingleYAxis(humChartP01,'P01','humidity')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="humChartP01"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>外気湿度（P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
+            <button onclick="applyTempHumSingleYAxis(humChartP11,'P11','humidity')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="humChartP11"></canvas></div>
+    </div>
+
     <div>
         <h4><span>ハウス内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
@@ -4204,6 +4220,7 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
+let humChartP01, humChartP11;
 let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
 let rainChart = null;
 let rainfallRequestSequence = 0;
@@ -4312,12 +4329,13 @@ const rainfallSourceStorageKeys = {
 
 const mainChartConfigs = [
     {
-        key:"insideTempHumidity",
+        key:"insideTemperature",
         canvasId:"tempChartP01",
-        title:"温湿度_内",
-        fields:["temperature", "humidity"],
+        title:"ハウス内温度",
+        fields:["temperature"],
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
+    { key:"insideHumidity", canvasId:"humChartP01", title:"ハウス内湿度", fields:["humidity"], requests:context=>[{ userId:context.userId, pointId:"P01" }] },
     {
         key:"maintenanceTempHumidity",
         canvasId:"tempChartP02",
@@ -4333,12 +4351,13 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P12" }]
     },
     {
-        key:"outsideTempHumidity",
+        key:"outsideTemperature",
         canvasId:"tempChartP11",
-        title:"温湿度_外",
-        fields:["temperature", "humidity"],
+        title:"外気温度",
+        fields:["temperature"],
         requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }]
     },
+    { key:"outsideHumidity", canvasId:"humChartP11", title:"外気湿度", fields:["humidity"], requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }] },
     {
         key:"outsideDiff",
         canvasId:"outsideDiffChart",
@@ -7949,8 +7968,8 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const tempHumChartIds = ["tempChartP01", "tempChartP11"];
-    const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
+    const tempHumChartGroups = [["tempChartP01", "tempChartP11"], ["humChartP01", "humChartP11"]];
+    const tempHumChartGroup = tempHumChartGroups.find(group=>group.includes(sourceChart.canvas.id));
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
     const co2DiffChartIds = ["co2DiffChart"];
@@ -7985,21 +8004,13 @@ function syncZoom(sourceChart){
                 chart.update("none");
             }
 
-            if(isTempHumSource && tempHumChartIds.includes(chart.canvas.id)){
+            if(tempHumChartGroup && tempHumChartGroup.includes(chart.canvas.id) && sourceChart.scales.y){
+                const yRange = { min:sourceChart.scales.y.min, max:sourceChart.scales.y.max };
                 if(chart.zoomScale){
-                    chart.zoomScale("yHum", {
-                        min:sourceChart.scales.yHum.min,
-                        max:sourceChart.scales.yHum.max
-                    }, "none");
-                    chart.zoomScale("yTemp", {
-                        min:sourceChart.scales.yTemp.min,
-                        max:sourceChart.scales.yTemp.max
-                    }, "none");
+                    chart.zoomScale("y", yRange, "none");
+                    if(chart.scales.yRight) chart.zoomScale("yRight", yRange, "none");
                 }else{
-                    chart.options.scales.yHum.min = sourceChart.scales.yHum.min;
-                    chart.options.scales.yHum.max = sourceChart.scales.yHum.max;
-                    chart.options.scales.yTemp.min = sourceChart.scales.yTemp.min;
-                    chart.options.scales.yTemp.max = sourceChart.scales.yTemp.max;
+                    setLinearYAxis(chart, yRange);
                     chart.update("none");
                 }
             }
@@ -8859,6 +8870,8 @@ function applyMobileChartRanges(minTime, maxTime){
     [
         tempChartP01,
         tempChartP11,
+        humChartP01,
+        humChartP11,
         outsideDiffChart,
         solarChart,
         co2Chart,
@@ -10415,8 +10428,10 @@ function setTempHumYAxis(chart, axis){
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
         "tempChartP01",
+        "humChartP01",
         "tempChartP02",
         "tempChartP11",
+        "humChartP11",
         "tempChartP12",
         "outsideDiffChart",
         "solarChart",
@@ -10585,6 +10600,24 @@ yTemp:{
 }            }
         }
     });
+}
+
+function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, measurement){
+    const canvas=getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+    destroyExistingChart(canvasId);
+    const axis=getTempHumAxis(pointId);
+    const isTemp=measurement==="temperature";
+    const key=isTemp ? "temp" : "hum";
+    const data=parsed.filter(d=>d[key]!==null && !isNaN(d[key])).map(d=>({x:d.xValue,y:d[key]}));
+    if(!data.length) return null;
+    const range=isTemp ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax};
+    const unit=isTemp ? "℃" : "%";
+    const yAxis={...range,ticks:{stepSize:isTemp ? 5 : 10,color:"#000"},title:{display:true,text:unit,color:"#000"}};
+    const options=baseOptions(getChartDisplayMinTime(canvasId,minTime,maxTime),maxTime);
+    options.scales={...options.scales,y:yAxis,yRight:createRightYAxis(yAxis)};
+    const color=isTemp ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
+    return new Chart(canvas,{type:"line",data:{datasets:[{label:(isTemp ? "温度" : "湿度")+" ("+unit+")",data:data,borderColor:color,backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",pointBackgroundColor:color,pointRadius:0,borderWidth:2,tension:0.2,fill:true}]},options:options});
 }
 
 function createVaporChart(canvasId, parsed, minTime, maxTime){
@@ -12458,8 +12491,10 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             }
         }
 
-        tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
-        tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
+        tempChartP01 = createTempHumSingleChart("tempChartP01", p01, chartMinTime, now, "P01", "temperature");
+        tempChartP11 = createTempHumSingleChart("tempChartP11", p11, chartMinTime, now, "P11", "temperature");
+        humChartP01 = createTempHumSingleChart("humChartP01", p01, chartMinTime, now, "P01", "humidity");
+        humChartP11 = createTempHumSingleChart("humChartP11", p11, chartMinTime, now, "P11", "humidity");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
@@ -12468,8 +12503,10 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
 
         applyMainChartNoDataStates({
-            insideTempHumidity:tempChartP01,
-            outsideTempHumidity:tempChartP11,
+            insideTemperature:tempChartP01,
+            insideHumidity:humChartP01,
+            outsideTemperature:tempChartP11,
+            outsideHumidity:humChartP11,
             outsideDiff:outsideDiffChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
@@ -12481,6 +12518,8 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP01,
             tempChartP11,
             outsideDiffChart,
+            humChartP01,
+            humChartP11,
             solarChart,
             co2Chart,
             co2OutsideChart,
@@ -12510,6 +12549,8 @@ function destroyCharts(){
     allCharts = [];
     tempChartP01 = null;
     tempChartP11 = null;
+    humChartP01 = null;
+    humChartP11 = null;
     outsideDiffChart = null;
     solarChart = null;
     co2Chart = null;
@@ -12519,6 +12560,8 @@ function destroyCharts(){
     [
         "tempChartP01",
         "tempChartP11",
+        "humChartP01",
+        "humChartP11",
         "outsideDiffChart",
         "solarChart",
         "co2Chart",
@@ -12563,6 +12606,13 @@ function applyTempHumYAxis(chart, pointId){
     const axis = getTempHumAxis(pointId);
     setTempHumYAxis(chart, axis);
 
+    chart.update();
+}
+
+function applyTempHumSingleYAxis(chart, pointId, measurement){
+    if(!chart) return;
+    const axis=getTempHumAxis(pointId);
+    setLinearYAxis(chart,measurement==="temperature" ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax});
     chart.update();
 }
 
