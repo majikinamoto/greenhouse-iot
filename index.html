@@ -3113,6 +3113,15 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
     <div>
+        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="mainVaporMin"> ～
+            <input class="axis-input" type="number" id="mainVaporMax">
+            <button onclick="applyMainVaporYAxis(mainVaporChart)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="mainVaporChart"></canvas></div>
+    </div>
+    <div>
         <h4><span>ハウス内湿度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
@@ -4229,6 +4238,7 @@ function validateExternalLibraries(){
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
 let humChartP01, humChartP11;
+let mainVaporChart;
 let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
 let rainChart = null;
 let rainfallRequestSequence = 0;
@@ -4375,6 +4385,13 @@ const mainChartConfigs = [
             { userId:context.userId, pointId:"P01" },
             { userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }
         ]
+    },
+    {
+        key:"mainVapor",
+        canvasId:"mainVaporChart",
+        title:"飽和水蒸気量/水蒸気量/飽差",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
         key:"vapor",
@@ -8881,6 +8898,7 @@ function applyMobileChartRanges(minTime, maxTime){
         humChartP01,
         humChartP11,
         outsideDiffChart,
+        mainVaporChart,
         solarChart,
         co2Chart,
         co2OutsideChart,
@@ -10442,6 +10460,7 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "humChartP11",
         "tempChartP12",
         "outsideDiffChart",
+        "mainVaporChart",
         "solarChart",
         "solarChartP32",
         "solarDiffChartP31P32",
@@ -12504,6 +12523,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         humChartP01 = createTempHumSingleChart("humChartP01", p01, chartMinTime, now, "P01", "humidity");
         humChartP11 = createTempHumSingleChart("humChartP11", p11, chartMinTime, now, "P11", "humidity");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
+        mainVaporChart = createVaporChart("mainVaporChart", p01, chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
@@ -12516,6 +12536,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             outsideTemperature:tempChartP11,
             outsideHumidity:humChartP11,
             outsideDiff:outsideDiffChart,
+            mainVapor:mainVaporChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
@@ -12526,6 +12547,7 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP01,
             tempChartP11,
             outsideDiffChart,
+            mainVaporChart,
             humChartP01,
             humChartP11,
             solarChart,
@@ -12560,6 +12582,7 @@ function destroyCharts(){
     humChartP01 = null;
     humChartP11 = null;
     outsideDiffChart = null;
+    mainVaporChart = null;
     solarChart = null;
     co2Chart = null;
     co2OutsideChart = null;
@@ -12571,6 +12594,7 @@ function destroyCharts(){
         "humChartP01",
         "humChartP11",
         "outsideDiffChart",
+        "mainVaporChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
@@ -12638,6 +12662,31 @@ function applySingleYAxis(chart, key, axisOverride){
     const axis = axisOverride || getSingleAxis(key);
     setLinearYAxis(chart, axis);
 
+    chart.update();
+}
+
+function applyMainVaporYAxis(chart){
+    if(!chart) return;
+
+    const minInput = document.getElementById("mainVaporMin");
+    const maxInput = document.getElementById("mainVaporMax");
+    const minText = minInput ? String(minInput.value).trim() : "";
+    const maxText = maxInput ? String(maxInput.value).trim() : "";
+
+    if(minText === "" && maxText === ""){
+        setLinearYAxis(chart, { min:undefined, max:undefined });
+        chart.update();
+        return;
+    }
+
+    const min = getFiniteInputValue("mainVaporMin");
+    const max = getFiniteInputValue("mainVaporMax");
+    if(min === null || max === null || min >= max){
+        alert("飽差軸には有効な最小値と最大値を入力してください。");
+        return;
+    }
+
+    setLinearYAxis(chart, { min:min, max:max });
     chart.update();
 }
 
