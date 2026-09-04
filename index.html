@@ -725,7 +725,14 @@ button { margin:5px; }
     gap:12px;
 }
 
+.wbgt-title {
+    margin:0;
+    color:#74380f;
+}
+
 .wbgt-card {
+    width:100%;
+    min-width:0;
     padding:12px;
     border:2px solid #dfb18f;
     background:#fff;
@@ -737,35 +744,232 @@ button { margin:5px; }
     margin:0 0 10px;
 }
 
-.wbgt-current-grid {
+.wbgt-current-heading {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:2px 8px;
+    min-width:0;
+}
+
+.wbgt-current-heading-time {
+    color:#000;
+    font-size:0.85em;
+    font-weight:400;
+    white-space:nowrap;
+}
+
+.wbgt-setting-card {
+    padding:9px 12px;
+}
+
+.wbgt-overview {
     display:grid;
-    grid-template-columns:repeat(4, minmax(150px, 1fr));
-    gap:8px;
+    grid-template-columns:minmax(420px, 0.8fr) minmax(0, 1.5fr);
+    gap:12px;
+    align-items:start;
 }
 
-.wbgt-current-item {
-    padding:9px;
-    border:1px solid #d7dee5;
-    border-radius:5px;
-    background:#f8fafc;
+.wbgt-overview > .wbgt-card {
+    height:100%;
 }
 
-.wbgt-current-item-primary {
-    border-color:#e3a06f;
-    background:#fff4ec;
+.wbgt-current-layout {
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 170px;
+    gap:12px;
+    align-items:start;
+}
+
+.wbgt-current-details {
+    min-width:0;
+}
+.wbgt-current-primary,
+.wbgt-current-secondary {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.wbgt-current-secondary {
+    margin-top:7px;
+    padding-top:7px;
+    border-top:1px solid #d7dee5;
+}
+
+.wbgt-current-row {
+    display:grid;
+    grid-template-columns:minmax(78px, 1fr) auto;
+    gap:6px;
+    align-items:center;
+    min-height:25px;
+}
+
+.wbgt-current-wbgt-row {
+    grid-template-columns:minmax(48px, 1fr) auto auto;
 }
 
 .wbgt-current-label {
-    display:block;
-    margin-bottom:4px;
     color:#526474;
-    font-size:12px;
+    font-size:11px;
 }
 
 .wbgt-current-value {
-    font-size:20px;
+    font-size:15px;
+    font-weight:700;
+    text-align:right;
+    white-space:nowrap;
+}
+
+.wbgt-current-wbgt-value {
+    font-size:18px;
+}
+
+.wbgt-level-badge {
+    display:inline-block;
+    min-width:52px;
+    padding:2px 5px;
+    border-radius:999px;
+    box-sizing:border-box;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.3;
+    text-align:center;
+    white-space:nowrap;
+}
+
+.wbgt-current-times {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:3px 5px;
+    margin-top:8px;
+    padding-top:6px;
+    border-top:1px solid #d7dee5;
+    color:#526474;
+    font-size:11px;
+}
+
+.wbgt-current-time-value {
+    color:#000;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.wbgt-current-card .wbgt-message:empty {
+    display:none;
+}
+
+.wbgt-gauge-panel {
+    width:170px;
+    max-width:100%;
+    padding:8px;
+    border:1px solid #d7dee5;
+    border-radius:5px;
+    background:#f8fafc;
+    box-sizing:border-box;
+}
+
+.wbgt-gauge-heading {
+    margin-bottom:5px;
+    color:#526474;
+    font-size:12px;
+    font-weight:700;
+    text-align:center;
+}
+
+.wbgt-gauge-scale {
+    position:relative;
+    width:154px;
+    max-width:100%;
+    height:270px;
+    margin:0 auto;
+}
+
+.wbgt-gauge-zones {
+    position:absolute;
+    top:10px;
+    bottom:10px;
+    left:30px;
+    width:72px;
+    display:grid;
+    grid-template-rows:5fr 3fr 3fr 5fr;
+}
+
+.wbgt-gauge-zone {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:0;
+    font-size:11px;
     font-weight:700;
 }
+
+.wbgt-gauge-tick {
+    position:absolute;
+    left:-30px;
+    width:25px;
+    color:#74380f;
+    font-size:11px;
+    font-weight:700;
+    line-height:1;
+    text-align:right;
+    transform:translateY(50%);
+}
+
+.wbgt-gauge-tick-boundary::after {
+    content:"";
+    position:absolute;
+    top:50%;
+    left:30px;
+    width:72px;
+    border-top:1px solid #74380f;
+}
+
+.wbgt-gauge-value-36 { bottom:100%; }
+.wbgt-gauge-value-31 { bottom:68.75%; }
+.wbgt-gauge-value-28 { bottom:50%; }
+.wbgt-gauge-value-25 { bottom:31.25%; }
+.wbgt-gauge-value-20 { bottom:0; }
+
+.wbgt-gauge-marker {
+    position:absolute;
+    left:calc(100% + 3px);
+    bottom:var(--wbgt-gauge-position, 0%);
+    display:flex;
+    align-items:center;
+    color:#74380f;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+    transform:translateY(50%);
+}
+
+.wbgt-gauge-marker[hidden],
+.wbgt-gauge-unavailable[hidden] {
+    display:none;
+}
+
+.wbgt-gauge-marker-arrow {
+    margin-right:2px;
+    font-size:16px;
+    line-height:1;
+}
+
+.wbgt-gauge-marker-value {
+    padding:1px 3px;
+    border:1px solid #74380f;
+    border-radius:3px;
+    background:#fff;
+}
+
+.wbgt-gauge-unavailable {
+    margin-top:3px;
+    color:#526474;
+    font-size:11px;
+    text-align:center;
+}
+
 
 .wbgt-message {
     min-height:1.5em;
@@ -794,22 +998,97 @@ button { margin:5px; }
 .wbgt-setting-form {
     display:flex;
     flex-wrap:wrap;
-    align-items:flex-end;
-    gap:10px;
+    align-items:center;
+    gap:8px 14px;
 }
 
 .wbgt-setting-form label {
     display:flex;
-    flex-direction:column;
-    gap:4px;
-    min-width:180px;
+    align-items:center;
+    gap:6px;
+    min-width:0;
     font-weight:700;
+    white-space:nowrap;
 }
 
 .wbgt-setting-form input {
-    min-width:0;
+    width:140px;
+    min-width:80px;
     padding:7px;
     box-sizing:border-box;
+}
+
+.wbgt-setting-form .wbgt-point-input {
+    width:90px;
+}
+
+.wbgt-setting-form button {
+    margin:0;
+}
+
+.wbgt-summary-table-wrap {
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+}
+
+.wbgt-summary-table {
+    width:100%;
+    min-width:700px;
+    border-collapse:collapse;
+    table-layout:fixed;
+    background:#fff;
+}
+
+.wbgt-summary-table th,
+.wbgt-summary-table td {
+    padding:7px 5px;
+    border-bottom:1px solid #ead9cc;
+    text-align:center;
+    white-space:nowrap;
+}
+
+.wbgt-summary-table th {
+    background:#fff0e5;
+    color:#74380f;
+    font-weight:700;
+}
+
+.wbgt-summary-table th:first-child,
+.wbgt-summary-table td:first-child {
+    width:142px;
+    text-align:left;
+    font-weight:700;
+}
+
+.wbgt-summary-table thead th:first-child,
+.wbgt-summary-table tbody td:first-child:not([colspan]) {
+    position:sticky;
+    left:0;
+    z-index:2;
+    background:#fff;
+    box-shadow:2px 0 0 #ead9cc;
+}
+
+.wbgt-summary-table thead th:first-child {
+    z-index:3;
+    background:#fff0e5;
+}
+
+.wbgt-summary-table tbody tr:last-child td {
+    border-bottom:none;
+}
+
+.wbgt-summary-table .wbgt-summary-today {
+    background:#fff8f2;
+    font-weight:700;
+}
+
+.wbgt-summary-note {
+    margin:7px 0 0;
+    color:#5f6870;
+    font-size:12px;
+    line-height:1.6;
 }
 
 .wbgt-note-list {
@@ -1776,6 +2055,12 @@ body.data-export-active .control-panel {
     margin:10px 0;
 }
 
+.status-row-break {
+    flex-basis:100%;
+    width:0;
+    height:0;
+}
+
 .status-group {
     display:flex;
     gap:6px;
@@ -1888,6 +2173,92 @@ body.data-export-active .control-panel {
     display:inline;
     margin-top:0;
     white-space:nowrap;
+}
+
+.status-group-temp-summary.ten-day-summary {
+    box-sizing:border-box;
+    width:700px;
+    max-width:100%;
+    overflow:hidden;
+}
+
+.status-temp-grid.ten-day-temp-grid {
+    grid-template-columns:60px minmax(0, 1fr);
+    width:100%;
+    min-width:0;
+    align-items:stretch;
+}
+
+.ten-day-temp-grid .status-temp-label-grid,
+.ten-day-temp-grid .status-temp-data-grid {
+    display:grid;
+    gap:4px;
+    align-items:center;
+}
+
+.ten-day-temp-grid .status-temp-label-grid {
+    position:relative;
+    z-index:2;
+    background:#f7f9fc;
+    box-shadow:1px 0 0 #bcc8d4;
+}
+
+.ten-day-temp-grid .status-temp-data-scroll {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
+}
+
+.ten-day-temp-grid .status-temp-data-grid {
+    grid-template-columns:repeat(10, 60px);
+    width:max-content;
+}
+
+.ten-day-temp-grid .status-temp-label-spacer,
+.ten-day-temp-grid .status-temp-date {
+    box-sizing:border-box;
+    min-height:24px;
+}
+
+.ten-day-temp-grid .status-temp-label,
+.ten-day-temp-grid .status-temp-value {
+    box-sizing:border-box;
+    min-height:24px;
+}
+
+.ten-day-temp-grid .status-temp-label {
+    display:flex;
+    align-items:center;
+    position:relative;
+    z-index:2;
+    background:#f7f9fc;
+    white-space:nowrap;
+    text-align:left;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.15;
+    color:#000;
+}
+
+.ten-day-temp-grid .status-temp-date {
+    white-space:nowrap;
+    text-align:center;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.15;
+    color:#000;
+}
+
+.status-group-temp-summary .ten-day-temp-grid .status-temp-value {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:60px;
+    padding:4px 5px;
 }
 
 .status-group-vpd-eval {
@@ -2188,8 +2559,17 @@ body.data-export-active .control-panel {
         max-width:calc(100vw - 24px);
     }
 
-    .status-temp-grid {
+    .status-temp-grid:not(.ten-day-temp-grid) {
         grid-template-columns:60px repeat(3, minmax(0, 1fr));
+    }
+
+    .status-group-temp-summary.ten-day-summary {
+        width:100%;
+        max-width:calc(100vw - 24px);
+    }
+
+    .status-temp-grid.ten-day-temp-grid {
+        grid-template-columns:60px minmax(0, 1fr);
     }
 
     .status-temp-value {
@@ -2273,15 +2653,56 @@ body.data-export-active .control-panel {
         white-space:nowrap;
     }
 
-    .wbgt-current-grid,
     .wbgt-level-grid {
         grid-template-columns:1fr;
+    }
+
+    .wbgt-current-layout {
+        grid-template-columns:minmax(0, 1fr) 160px;
+        gap:6px;
+    }
+
+    .wbgt-gauge-panel {
+        width:160px;
+        padding:4px;
+    }
+
+    .wbgt-overview {
+        grid-template-columns:minmax(0, 1fr);
     }
 
     .wbgt-setting-form,
     .wbgt-setting-form label,
     .wbgt-setting-form button {
         width:100%;
+    }
+
+    .wbgt-setting-form label {
+        display:grid;
+        grid-template-columns:minmax(136px, 1fr) minmax(80px, 112px);
+        white-space:nowrap;
+    }
+
+    .wbgt-setting-form input,
+    .wbgt-setting-form .wbgt-point-input {
+        width:100%;
+        min-width:0;
+    }
+
+    .wbgt-setting-form button {
+        min-height:44px;
+        padding:10px 14px;
+        font-size:15px;
+    }
+
+    .wbgt-summary-table {
+        min-width:640px;
+    }
+
+    .wbgt-summary-table th,
+    .wbgt-summary-table td {
+        padding:6px 4px;
+        font-size:12px;
     }
 
     .alert-setting-form {
@@ -2473,6 +2894,17 @@ body.data-export-active .control-panel {
         display:none !important;
     }
 }
+
+@media (max-width: 350px) {
+    .wbgt-current-layout {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .wbgt-gauge-panel {
+        justify-self:center;
+    }
+}
+
 </style>
 </head>
 
@@ -2559,7 +2991,7 @@ body.data-export-active .control-panel {
     <button class="tab-button tab-button-score" type="button" role="tab" aria-selected="false" aria-controls="tab-score" onclick="switchTab('score')">環境スコア</button>
     <button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
     <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
-    <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">暑さ指数</button>
+    <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">WBGT</button>
     <button class="tab-button tab-button-export" type="button" role="tab" aria-selected="false" aria-controls="tab-export" onclick="switchTab('export')">データ出力</button>
     <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
     <button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button>
@@ -2569,6 +3001,16 @@ body.data-export-active .control-panel {
 
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">ハウス内（P01）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
+<div class="status-group status-group-temp-summary ten-day-summary">
+<div class="status-group-title">外気（P11）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-current">
 <div class="status-group-title">現在（P01）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
@@ -2579,52 +3021,6 @@ body.data-export-active .control-panel {
 <div class="status-break"></div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
-</div>
-<div class="status-group status-group-temp-summary">
-<div class="status-group-title">ハウス内_P01</div>
-<div class="status-temp-grid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高(℃)</div>
-<div class="status-box temp-high status-temp-value"><span id="houseTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="houseTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低(℃)</div>
-<div class="status-box temp-low status-temp-value"><span id="houseTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="houseTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均(℃)</div>
-<div class="status-box average-box status-temp-value"><span id="houseTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="houseTodayAvg">-</span></div>
-</div>
-</div>
-<div class="status-group status-group-temp-summary">
-<div class="status-group-title">外気（P11）</div>
-<div class="status-temp-grid">
-<div></div>
-<div class="status-temp-col-heading">前々日</div>
-<div class="status-temp-col-heading">前日</div>
-<div class="status-temp-col-heading">本日</div>
-<div class="status-temp-row-heading">最高(℃)</div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTwoDaysAgoMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideYesterdayMax">-</span></div>
-<div class="status-box temp-high status-temp-value"><span id="outsideTodayMax">-</span></div>
-<div class="status-temp-row-heading">最低(℃)</div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTwoDaysAgoMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideYesterdayMin">-</span></div>
-<div class="status-box temp-low status-temp-value"><span id="outsideTodayMin">-</span></div>
-<div class="status-temp-row-heading">平均(℃)</div>
-<div class="status-box average-box status-temp-value"><span id="outsideTwoDaysAgoAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideYesterdayAvg">-</span></div>
-<div class="status-box average-box status-temp-value"><span id="outsideTodayAvg">-</span></div>
-<div class="status-temp-row-heading">雨量(mm)</div>
-<div class="status-box status-temp-value"><span id="outsideTwoDaysAgoRain">-</span></div>
-<div class="status-box status-temp-value"><span id="outsideYesterdayRain">-</span></div>
-<div class="status-box status-temp-value"><span id="outsideTodayRain">-</span></div>
-</div>
 </div>
 <div class="status-group status-group-vpd-eval">
 <div class="status-group-title">昨日の飽差評価</div>
@@ -2690,21 +3086,19 @@ body.data-export-active .control-panel {
 <div class="grid">
 
     <div>
-        <h4><span>ハウス内（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>ハウス内温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP01,'P01','temperature')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
     </div>
 
     <div>
-        <h4><span>外気（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>外気温度（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP11,'P11')">縦軸反映</button>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP11,'P11','temperature')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
@@ -2718,6 +3112,33 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
+    <div>
+        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="mainVaporMin"> ～
+            <input class="axis-input" type="number" id="mainVaporMax">
+            <button onclick="applyMainVaporYAxis(mainVaporChart)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="mainVaporChart"></canvas></div>
+    </div>
+    <div>
+        <h4><span>ハウス内湿度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
+            <button onclick="applyTempHumSingleYAxis(humChartP01,'P01','humidity')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="humChartP01"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>外気湿度（P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
+            <button onclick="applyTempHumSingleYAxis(humChartP11,'P11','humidity')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="humChartP11"></canvas></div>
+    </div>
+
     <div>
         <h4><span>ハウス内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
@@ -2763,7 +3184,7 @@ body.data-export-active .control-panel {
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
-            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.4721" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm(例0.4721)
+            <label>1転倒あたり <input class="rainfall-coefficient-input" type="number" id="rainfallTipCoefficient" value="0.1799" min="0" step="any" inputmode="decimal" onchange="handleRainfallCoefficientChange()"> mm(例0.1799)
             </label>
         </div>
         <div class="rainfall-daily-summary" aria-label="日別雨量">
@@ -2868,25 +3289,84 @@ body.data-export-active .control-panel {
 
 <section id="tab-wbgt" class="tab-panel tab-panel-wbgt" role="tabpanel">
     <div class="wbgt-content">
-        <div class="wbgt-card">
-            <h3>現在の暑さ指数（WBGT）</h3>
-            <div class="wbgt-current-grid">
-                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item wbgt-current-item-primary"><span class="wbgt-current-label">警戒レベル</span><span id="wbgtLevelNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">気温 Ta</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">温湿度の測定時刻</span><span id="wbgtTempHumTime">－</span></div>
-                <div class="wbgt-current-item"><span class="wbgt-current-label">黒球温度の測定時刻</span><span id="wbgtGlobeTime">－</span></div>
+        <div class="wbgt-card wbgt-setting-card">
+            <h3>WBGT用センサー設定</h3>
+            <div class="wbgt-setting-form">
+                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: T0001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>温湿度 point_id<input class="wbgt-point-input" type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
             </div>
-            <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
         </div>
 
-        <div class="wbgt-card">
-            <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
-            <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
-            <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+        <h2 class="wbgt-title">暑さ指数（WBGT）</h2>
+
+        <div class="wbgt-overview">
+            <div class="wbgt-card wbgt-current-card">
+                <h3 class="wbgt-current-heading"><span>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</span><span id="wbgtCurrentHeadingTime" class="wbgt-current-heading-time" hidden></span></h3>
+                <div class="wbgt-current-layout">
+                    <div class="wbgt-current-details">
+                        <div class="wbgt-current-primary">
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">現地気温</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row wbgt-current-wbgt-row"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value wbgt-current-wbgt-value">－</span><span id="wbgtLevelNow" class="wbgt-level-badge">－</span></div>
+                        </div>
+                        <div class="wbgt-current-secondary">
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
+                        </div>
+                    </div>
+                    <div class="wbgt-gauge-panel">
+                        <div class="wbgt-gauge-heading">現在WBGTレベル</div>
+                        <div id="wbgtGauge" class="wbgt-gauge-scale" aria-label="現在WBGTは算出できません">
+                            <div class="wbgt-gauge-zones">
+                                <div class="wbgt-gauge-zone wbgt-level-danger">危険</div>
+                                <div class="wbgt-gauge-zone wbgt-level-severe">厳重警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-warning">警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-caution">注意</div>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-36">36</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-31">31</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-28">28</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-25">25</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-20">20</span>
+                                <div id="wbgtGaugeMarker" class="wbgt-gauge-marker" hidden><span class="wbgt-gauge-marker-arrow">◀</span><span id="wbgtGaugeValue" class="wbgt-gauge-marker-value">—</span></div>
+                            </div>
+                        </div>
+                        <div id="wbgtGaugeUnavailable" class="wbgt-gauge-unavailable">現在値 —</div>
+                    </div>
+                </div>
+                <div class="wbgt-current-times"><span>温湿度 <span id="wbgtTempHumTime" class="wbgt-current-time-value">－</span></span><span aria-hidden="true">｜</span><span>黒球 <span id="wbgtGlobeTime" class="wbgt-current-time-value">－</span></span></div>
+                <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
+            </div>
+
+            <div class="wbgt-card wbgt-summary-card">
+                <h3>WBGT 7日間集計</h3>
+                <div class="wbgt-summary-table-wrap">
+                    <table class="wbgt-summary-table">
+                        <thead id="wbgtFiveDayHead">
+                            <tr><th>項目</th><th colspan="7">直近7日</th></tr>
+                        </thead>
+                        <tbody id="wbgtFiveDayBody">
+                            <tr><td colspan="8">センサー設定を適用すると表示します</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
+                <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
+                <div class="control-group axis-control-group chart-axis-control">
+                    <span class="axis-label-temp">WBGT軸：</span><input class="axis-input" type="number" id="wbgtMin" value="20"> ～
+                    <input class="axis-input" type="number" id="wbgtMax" value="36">
+                    <button type="button" onclick="applyWbgtYAxis(wbgtChart)">縦軸反映</button>
+                </div>
+                <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
+                <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+            </div>
         </div>
 
         <div class="wbgt-card">
@@ -2896,16 +3376,6 @@ body.data-export-active .control-panel {
                 <div class="wbgt-level-card wbgt-level-severe"><strong>厳重警戒（28以上31未満）</strong><br>外出時は炎天下を避け、室内では室温の上昇に注意してください。</div>
                 <div class="wbgt-level-card wbgt-level-warning"><strong>警戒（25以上28未満）</strong><br>運動や激しい作業では、定期的に十分な休息を取ってください。</div>
                 <div class="wbgt-level-card wbgt-level-caution"><strong>注意（25未満）</strong><br>激しい運動や重労働時には熱中症に注意してください。</div>
-            </div>
-        </div>
-
-        <div class="wbgt-card">
-            <h3>WBGT用センサー設定</h3>
-            <div class="wbgt-setting-form">
-                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: NS001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <label>温湿度 point_id<input type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <label>黒球温度 point_id<input type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
-                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
             </div>
         </div>
 
@@ -3144,7 +3614,7 @@ body.data-export-active .control-panel {
         <div>
             <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">縦差軸：</span><input class="axis-input" type="number" id="reviewVaporMin"> ～
+                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin"> ～
                 <input class="axis-input" type="number" id="reviewVaporMax">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
             </div>
@@ -3767,6 +4237,8 @@ function validateExternalLibraries(){
 };
 
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
+let humChartP01, humChartP11;
+let mainVaporChart;
 let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
 let rainChart = null;
 let rainfallRequestSequence = 0;
@@ -3875,12 +4347,13 @@ const rainfallSourceStorageKeys = {
 
 const mainChartConfigs = [
     {
-        key:"insideTempHumidity",
+        key:"insideTemperature",
         canvasId:"tempChartP01",
-        title:"温湿度_内",
-        fields:["temperature", "humidity"],
+        title:"ハウス内温度",
+        fields:["temperature"],
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
+    { key:"insideHumidity", canvasId:"humChartP01", title:"ハウス内湿度", fields:["humidity"], requests:context=>[{ userId:context.userId, pointId:"P01" }] },
     {
         key:"maintenanceTempHumidity",
         canvasId:"tempChartP02",
@@ -3896,12 +4369,13 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P12" }]
     },
     {
-        key:"outsideTempHumidity",
+        key:"outsideTemperature",
         canvasId:"tempChartP11",
-        title:"温湿度_外",
-        fields:["temperature", "humidity"],
+        title:"外気温度",
+        fields:["temperature"],
         requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }]
     },
+    { key:"outsideHumidity", canvasId:"humChartP11", title:"外気湿度", fields:["humidity"], requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }] },
     {
         key:"outsideDiff",
         canvasId:"outsideDiffChart",
@@ -3911,6 +4385,13 @@ const mainChartConfigs = [
             { userId:context.userId, pointId:"P01" },
             { userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }
         ]
+    },
+    {
+        key:"mainVapor",
+        canvasId:"mainVaporChart",
+        title:"飽和水蒸気量/水蒸気量/飽差",
+        fields:["temperature", "humidity"],
+        requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
         key:"vapor",
@@ -4107,7 +4588,8 @@ const UTECH_AREAS = {
 const UTECH_AREA_STORAGE_KEY = "utechSelectedArea";
 const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
 const RAINFALL_COEFFICIENT_STORAGE_KEY = "utechRainfallTipCoefficient";
-const DEFAULT_RAINFALL_COEFFICIENT = 0.4721;
+const DEFAULT_RAINFALL_COEFFICIENT = 0.1799;
+const LEGACY_DEFAULT_RAINFALL_COEFFICIENT = 4721 / 10000;
 let selectedUtechAreaKey = "naha";
 
 function restoreMobileShareQrImage(){
@@ -4178,6 +4660,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     restoreEnvironmentScoreRanges();
     restoreUtechAreaSelection();
     restoreRainfallCalculationSetting();
+    initializeTenDaySummaryTables();
     handleAlertNotifyTargetChange();
 
     const qrImage = document.getElementById("mobileQrImage");
@@ -5085,24 +5568,101 @@ function setWbgtText(id, text){
     if(element) element.innerText = text;
 }
 
-function resetWbgtCurrentDisplay(){
-    [
-        "wbgtNow", "wbgtLevelNow", "wbgtTaNow", "wbgtRhNow",
-        "wbgtTgNow", "wbgtTwNow", "wbgtTempHumTime", "wbgtGlobeTime"
-    ].forEach(id=>setWbgtText(id, "－"));
-    setWbgtText("wbgtCurrentMessage", "");
+function setWbgtCurrentHeadingTime(value){
+    const element = document.getElementById("wbgtCurrentHeadingTime");
+    if(!element) return;
+
+    const timestamp = value === null || value === "" ? NaN : Number(value);
+    let text = "";
+
+    if(Number.isFinite(timestamp)){
+        const date = new Date(timestamp);
+        if(Number.isFinite(date.getTime())){
+            try{
+                const parts = getJapanDateParts(date);
+                if(Number.isFinite(parts.hour) && Number.isFinite(parts.minute)){
+                    text = String(parts.hour).padStart(2, "0") + ":" +
+                        String(parts.minute).padStart(2, "0") + "時点";
+                }
+            }catch(e){}
+        }
+    }
+
+    element.textContent = text;
+    element.hidden = !text;
 }
 
+const wbgtLevelClassNames = [
+    "wbgt-level-danger", "wbgt-level-severe", "wbgt-level-warning", "wbgt-level-caution"
+];
+
+function setWbgtLevelDisplay(level){
+    const element = document.getElementById("wbgtLevelNow");
+    if(!element) return;
+    element.classList.remove(...wbgtLevelClassNames);
+    element.textContent = level ? level.label : "－";
+    if(level) element.classList.add("wbgt-level-" + level.key);
+}
+
+function formatWbgtCurrentTime(value, nowTime){
+    const date = new Date(value);
+    if(!Number.isFinite(date.getTime())) return "－";
+    const current = new Date(Number.isFinite(nowTime) ? nowTime : Date.now());
+    const time = String(date.getHours()).padStart(2, "0") + ":" +
+        String(date.getMinutes()).padStart(2, "0");
+    const isToday = date.getFullYear() === current.getFullYear() &&
+        date.getMonth() === current.getMonth() && date.getDate() === current.getDate();
+    if(isToday) return time;
+    const dateText = (date.getMonth() + 1) + "/" + date.getDate();
+    return (date.getFullYear() === current.getFullYear() ? dateText : date.getFullYear() + "/" + dateText) + " " + time;
+}
+function resetWbgtCurrentDisplay(){
+    [
+        "wbgtNow", "wbgtTaNow", "wbgtRhNow",
+        "wbgtTgNow", "wbgtTwNow", "wbgtTempHumTime", "wbgtGlobeTime"
+    ].forEach(id=>setWbgtText(id, "－"));
+    setWbgtLevelDisplay(null);
+    setWbgtText("wbgtCurrentMessage", "");
+    setWbgtCurrentHeadingTime(null);
+    renderWbgtGauge(null);
+}
+
+function renderWbgtGauge(value){
+    const gauge = document.getElementById("wbgtGauge");
+    const marker = document.getElementById("wbgtGaugeMarker");
+    const valueLabel = document.getElementById("wbgtGaugeValue");
+    const unavailable = document.getElementById("wbgtGaugeUnavailable");
+    const wbgt = Number(value);
+    const isAvailable = value !== null && value !== "" && Number.isFinite(wbgt);
+
+    if(!marker || !valueLabel || !unavailable) return;
+    marker.hidden = !isAvailable;
+    unavailable.hidden = isAvailable;
+
+    if(!isAvailable){
+        marker.style.removeProperty("--wbgt-gauge-position");
+        valueLabel.textContent = "—";
+        if(gauge) gauge.setAttribute("aria-label", "現在WBGTは算出できません");
+        return;
+    }
+
+    const clippedValue = Math.min(36, Math.max(20, wbgt));
+    const position = (clippedValue - 20) / (36 - 20) * 100;
+    marker.style.setProperty("--wbgt-gauge-position", position + "%");
+    valueLabel.textContent = wbgt.toFixed(1);
+    if(gauge) gauge.setAttribute("aria-label", "現在WBGT " + wbgt.toFixed(1));
+}
 function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     resetWbgtCurrentDisplay();
     const latestTempHum = tempHumData.length ? tempHumData[tempHumData.length - 1] : null;
     const latestGlobe = globeData.length ? globeData[globeData.length - 1] : null;
 
     if(latestTempHum && Number.isFinite(latestTempHum.xValue)){
-        setWbgtText("wbgtTempHumTime", formatTime(latestTempHum.xValue));
+        setWbgtCurrentHeadingTime(latestTempHum.xValue);
+        setWbgtText("wbgtTempHumTime", formatWbgtCurrentTime(latestTempHum.xValue, nowTime));
     }
     if(latestGlobe && Number.isFinite(latestGlobe.xValue)){
-        setWbgtText("wbgtGlobeTime", formatTime(latestGlobe.xValue));
+        setWbgtText("wbgtGlobeTime", formatWbgtCurrentTime(latestGlobe.xValue, nowTime));
     }
     if(!latestTempHum){
         setWbgtText("wbgtCurrentMessage", "温湿度データ（" + settings.tempHumPointId + "）を取得できません");
@@ -5171,7 +5731,8 @@ function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     }
     const level = getWbgtLevel(result.wbgt);
     setWbgtText("wbgtNow", result.wbgt.toFixed(1));
-    setWbgtText("wbgtLevelNow", level ? level.label : "－");
+    setWbgtLevelDisplay(level);
+    renderWbgtGauge(result.wbgt);
     setWbgtText("wbgtTaNow", result.ta.toFixed(1) + " ℃");
     setWbgtText("wbgtRhNow", result.rh.toFixed(1) + " %");
     setWbgtText("wbgtTgNow", result.tg.toFixed(1) + " ℃");
@@ -5206,6 +5767,128 @@ function buildWbgtSeries(tempHumData, globeData){
     return wbgtData;
 }
 
+function getWbgtFiveDayRange(nowTime){
+    const endTime = nowTime instanceof Date ? new Date(nowTime) : new Date(nowTime || Date.now());
+    const startTime = new Date(endTime);
+    startTime.setHours(0, 0, 0, 0);
+    startTime.setDate(startTime.getDate() - 6);
+    return { startTime:startTime, endTime:endTime };
+}
+
+function calculateWbgtPeriodAverage(data, startTime, endTime){
+    const values = data
+        .filter(point=>point.x >= startTime && point.x < endTime && Number.isFinite(Number(point.y)))
+        .map(point=>Number(point.y));
+    if(!values.length) return null;
+    return values.reduce((total, value)=>total + value, 0) / values.length;
+}
+
+function calculateWbgtFiveDayRows(wbgtData, nowTime){
+    const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
+    const today = new Date(currentTime);
+    today.setHours(0, 0, 0, 0);
+    const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+    const periods = [
+        { key:"average9To12", startHour:9, endHour:12 },
+        { key:"average12To15", startHour:12, endHour:15 },
+        { key:"average15To17", startHour:15, endHour:17 }
+    ];
+    const rows = [];
+
+    for(let offset = 6; offset >= 0; offset--){
+        const date = new Date(today);
+        date.setDate(today.getDate() - offset);
+        const dayStart = date.getTime();
+        const nextDay = new Date(date);
+        nextDay.setDate(date.getDate() + 1);
+        const dayEnd = nextDay.getTime();
+        const isToday = offset === 0;
+        const dailyData = wbgtData.filter(point=>
+            point.x >= dayStart && point.x < dayEnd && Number.isFinite(Number(point.y))
+        );
+        const maximum = dailyData.length
+            ? Math.max(...dailyData.map(point=>Number(point.y)))
+            : null;
+        const row = {
+            dateValue:formatDateInputValue(date),
+            dateLabel:(date.getMonth() + 1) + "/" + date.getDate() + "（" + weekdayLabels[date.getDay()] + "）" +
+                (isToday ? " 本日" : ""),
+            maximum:maximum,
+            isToday:isToday
+        };
+
+        periods.forEach(period=>{
+            const periodStart = new Date(date);
+            periodStart.setHours(period.startHour, 0, 0, 0);
+            const periodEnd = new Date(date);
+            periodEnd.setHours(period.endHour, 0, 0, 0);
+            const isCompleted = !isToday || currentTime >= periodEnd.getTime();
+            row[period.key] = isCompleted
+                ? calculateWbgtPeriodAverage(dailyData, periodStart.getTime(), periodEnd.getTime())
+                : null;
+        });
+        rows.push(row);
+    }
+    return rows;
+}
+
+function formatWbgtSummaryValue(value){
+    return Number.isFinite(Number(value)) && value !== null ? Number(value).toFixed(1) : "—";
+}
+
+function resetWbgtFiveDaySummary(message){
+    const head = document.getElementById("wbgtFiveDayHead");
+    const body = document.getElementById("wbgtFiveDayBody");
+    if(!body) return;
+    if(head){
+        head.innerHTML = "<tr><th>項目</th><th colspan=\"7\">直近7日</th></tr>";
+    }
+    body.replaceChildren();
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.textContent = message || "—";
+    row.appendChild(cell);
+    body.appendChild(row);
+}
+
+function renderWbgtFiveDaySummary(wbgtData, nowTime){
+    const head = document.getElementById("wbgtFiveDayHead");
+    const body = document.getElementById("wbgtFiveDayBody");
+    if(!head || !body) return;
+    const rows = calculateWbgtFiveDayRows(wbgtData, nowTime);
+    const headRow = document.createElement("tr");
+    const itemHeading = document.createElement("th");
+    itemHeading.textContent = "項目";
+    headRow.appendChild(itemHeading);
+    rows.forEach(item=>{
+        const heading = document.createElement("th");
+        heading.textContent = item.dateLabel;
+        if(item.isToday) heading.classList.add("wbgt-summary-today");
+        headRow.appendChild(heading);
+    });
+    head.replaceChildren(headRow);
+    body.replaceChildren();
+    [
+        { label:"最高WBGT", key:"maximum" },
+        { label:"9:00～12:00平均", key:"average9To12" },
+        { label:"12:00～15:00平均", key:"average12To15" },
+        { label:"15:00～17:00平均", key:"average15To17" }
+    ].forEach(metric=>{
+        const row = document.createElement("tr");
+        const label = document.createElement("td");
+        label.textContent = metric.label;
+        row.appendChild(label);
+        rows.forEach(item=>{
+            const cell = document.createElement("td");
+            cell.textContent = formatWbgtSummaryValue(item[metric.key]);
+            if(item.isToday) cell.classList.add("wbgt-summary-today");
+            row.appendChild(cell);
+        });
+        body.appendChild(row);
+    });
+}
+
 function createWbgtChart(wbgtData, minTime, maxTime){
     const canvas = getChartCanvas("wbgtChart");
     if(!canvas || !wbgtData.length) return null;
@@ -5213,12 +5896,16 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     const options = baseOptions(minTime, maxTime);
     options.plugins.crosshair.sync.group = 5;
     options.plugins.zoom.zoom.onZoomComplete = function(){};
+    const yAxisOptions = {
+        min:20,
+        max:36,
+        ticks:{ color:"#000" },
+        title:{ display:true, text:"WBGT", color:"#000" }
+    };
     options.scales = {
         ...options.scales,
-        y:{
-            ticks:{ color:"#000" },
-            title:{ display:true, text:"WBGT", color:"#000" }
-        }
+        y:yAxisOptions,
+        yRight:createRightYAxis(yAxisOptions)
     };
     const chart = new Chart(canvas, {
         type:"line",
@@ -5235,10 +5922,31 @@ function createWbgtChart(wbgtData, minTime, maxTime){
                 fill:true
             }]
         },
-        options:options
+        options:options,
+        plugins:[wbgtAlertBandsPlugin]
     });
     saveInitialScaleLimits(chart);
     return chart;
+}
+
+function getWbgtYAxis(){
+    const min = getFiniteInputValue("wbgtMin");
+    const max = getFiniteInputValue("wbgtMax");
+    if(min === null || max === null || max <= min){
+        return { error:"WBGT軸には有効な最小値と最大値を入力してください。" };
+    }
+    return { min:min, max:max };
+}
+
+function applyWbgtYAxis(chart){
+    if(!chart) return;
+    const axis = getWbgtYAxis();
+    if(axis.error){
+        alert(axis.error);
+        return;
+    }
+    setLinearYAxis(chart, axis);
+    chart.update();
 }
 
 function resetWbgtZoom(){
@@ -5250,12 +5958,16 @@ function resetWbgtZoom(){
 
 async function loadWbgtData(){
     const settings = getWbgtSettings();
+    setWbgtText("wbgtCurrentPointLabel", settings.tempHumPointId || "－");
     const currentMessage = document.getElementById("wbgtCurrentMessage");
     const chartMessage = document.getElementById("wbgtChartMessage");
+    const fiveDayMessage = document.getElementById("wbgtFiveDayMessage");
     if(!settings.userId || !settings.tempHumPointId || !settings.globePointId){
         resetWbgtCurrentDisplay();
+        resetWbgtFiveDaySummary("センサー設定を入力してください");
         if(currentMessage) currentMessage.innerText = "user_idと2つのpoint_idを入力してください";
         if(chartMessage) chartMessage.innerText = "センサー設定を入力してください";
+        if(fiveDayMessage) fiveDayMessage.innerText = "";
         if(wbgtChart) wbgtChart.destroy();
         wbgtChart = null;
         return;
@@ -5263,26 +5975,44 @@ async function loadWbgtData(){
 
     const requestId = ++wbgtDataRequestSequence;
     resetWbgtCurrentDisplay();
+    resetWbgtFiveDaySummary("読み込み中...");
     if(currentMessage) currentMessage.innerText = "読み込み中...";
     if(chartMessage) chartMessage.innerText = "読み込み中...";
+    if(fiveDayMessage) fiveDayMessage.innerText = "";
     if(wbgtChart) wbgtChart.destroy();
     wbgtChart = null;
 
     const now = new Date();
     const minTime = new Date(now.getTime() - 72*60*60*1000);
+    const fiveDayRange = getWbgtFiveDayRange(now);
+    const apiRange = {
+        start:formatSqlDateTime(fiveDayRange.startTime),
+        end:formatSqlDateTime(fiveDayRange.endTime)
+    };
     const results = await Promise.all([
-        fetchDataSafe(settings.userId, settings.tempHumPointId),
-        fetchDataSafe(settings.userId, settings.globePointId)
+        fetchDataSafe(settings.userId, settings.tempHumPointId, apiRange),
+        fetchDataSafe(settings.userId, settings.globePointId, apiRange)
     ]);
     if(requestId !== wbgtDataRequestSequence) return;
 
-    const tempHumData = parseData(results[0].data, minTime);
-    const globeData = parseData(results[1].data, minTime);
+    const tempHumData = parseData(results[0].data, fiveDayRange.startTime);
+    const globeData = parseData(results[1].data, fiveDayRange.startTime);
     renderWbgtCurrent(tempHumData, globeData, now.getTime(), settings);
 
-    const wbgtData = buildWbgtSeries(tempHumData, globeData);
+    const fiveDayWbgtData = buildWbgtSeries(tempHumData, globeData);
+    renderWbgtFiveDaySummary(fiveDayWbgtData, now.getTime());
+    const wbgtData = fiveDayWbgtData.filter(point=>
+        point.x >= minTime.getTime() && point.x <= now.getTime()
+    );
     wbgtChart = createWbgtChart(wbgtData, minTime, now);
     const errors = results.filter(result=>result.error).map(result=>result.error);
+    if(fiveDayMessage){
+        fiveDayMessage.innerText = errors.length
+            ? errors.join(" / ")
+            : fiveDayWbgtData.length
+                ? ""
+                : "6分以内で対応できる有効なデータがありません";
+    }
     if(chartMessage){
         chartMessage.innerText = errors.length
             ? errors.join(" / ")
@@ -5793,6 +6523,92 @@ const chartBackgroundPlugin = {
     }
 };
 
+const wbgtAlertBandsPlugin = {
+    id:"wbgtAlertBandsPlugin",
+    beforeDraw(chart){
+        if(chart.canvas.id !== "wbgtChart") return;
+
+        const yScale = chart.scales.y;
+        const chartArea = chart.chartArea;
+        if(!yScale || !chartArea) return;
+
+        const bands = [
+            { min:31, max:Infinity, className:"wbgt-level-danger" },
+            { min:28, max:31, className:"wbgt-level-severe" },
+            { min:25, max:28, className:"wbgt-level-warning" },
+            { min:-Infinity, max:25, className:"wbgt-level-caution" }
+        ];
+        const ctx = chart.ctx;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(
+            chartArea.left,
+            chartArea.top,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - chartArea.top
+        );
+        ctx.clip();
+        ctx.globalAlpha = 0.4;
+
+        bands.forEach(band=>{
+            const min = Math.max(yScale.min, band.min);
+            const max = Math.min(yScale.max, band.max);
+            if(max <= min) return;
+
+            const colorSource = document.querySelector("." + band.className);
+            if(!colorSource) return;
+
+            const top = yScale.getPixelForValue(max);
+            const bottom = yScale.getPixelForValue(min);
+            ctx.fillStyle = getComputedStyle(colorSource).backgroundColor;
+            ctx.fillRect(
+                chartArea.left,
+                top,
+                chartArea.right - chartArea.left,
+                bottom - top
+            );
+        });
+
+        ctx.restore();
+    },
+    beforeDatasetsDraw(chart){
+        if(chart.canvas.id !== "wbgtChart") return;
+
+        const yScale = chart.scales.y;
+        const chartArea = chart.chartArea;
+        if(!yScale || !chartArea) return;
+
+        const colorSource = document.querySelector(".wbgt-level-danger");
+        if(!colorSource) return;
+
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(
+            chartArea.left,
+            chartArea.top,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - chartArea.top
+        );
+        ctx.clip();
+        ctx.strokeStyle = getComputedStyle(colorSource).borderTopColor;
+        ctx.globalAlpha = 0.65;
+        ctx.lineWidth = 1;
+
+        [25, 28, 31].forEach(value=>{
+            if(value < yScale.min || value > yScale.max) return;
+
+            const y = yScale.getPixelForValue(value);
+            ctx.beginPath();
+            ctx.moveTo(chartArea.left, y);
+            ctx.lineTo(chartArea.right, y);
+            ctx.stroke();
+        });
+
+        ctx.restore();
+    }
+};
 const midnightLinePlugin = {
     id:"midnightLinePlugin",
     afterDraw(chart){
@@ -6435,63 +7251,216 @@ function calcDewPoint(temp, hum){
     return (b * alpha) / (a - alpha);
 }
 
-function calcDailyTempStats(data, targetDate, isToday){
-    const start = new Date(targetDate);
-    start.setHours(0,0,0,0);
-
-    const end = new Date(targetDate);
-
-    if(isToday){
-        end.setTime(new Date().getTime());
-    }else{
-        end.setHours(23,59,59,999);
-    }
-
-    const temps = data
-        .filter(d=>d.x>=start && d.x<=end && d.temp !== null && d.temp !== undefined && !isNaN(d.temp))
-        .map(d=>d.temp);
-
-    if(!temps.length){
-        return {
-            max:null,
-            avg:null,
-            min:null
-        };
-    }
-
-    return {
-        max:Math.max(...temps),
-        avg:temps.reduce((sum, temp)=>sum + temp, 0) / temps.length,
-        min:Math.min(...temps)
-    };
-}
-
-function renderDailyTempStats(prefix, stats){
-    const values = {
-        Max:stats.max,
-        Avg:stats.avg,
-        Min:stats.min
-    };
-
-    Object.keys(values).forEach(key=>{
-        const el = document.getElementById(prefix + key);
-        if(el){
-            el.innerText = values[key] === null ? "-" : values[key].toFixed(1);
+function resetDailyTempStats(){
+    initializeTenDaySummaryTables();
+    ["house", "outside"].forEach(prefix=>{
+        for(let i = 0; i < 10; i++){
+            ["Max", "Min", "Avg", "Rain"].forEach(key=>{
+                const value = document.getElementById(prefix + "Day" + i + key);
+                if(value) value.textContent = "-";
+            });
         }
     });
 }
 
-function resetDailyTempStats(){
-    [
-        "houseTwoDaysAgo",
-        "houseYesterday",
-        "houseToday",
-        "outsideTwoDaysAgo",
-        "outsideYesterday",
-        "outsideToday"
-    ].forEach(prefix=>{
-        renderDailyTempStats(prefix, { max:null, avg:null, min:null });
+function buildTenDaySummaryCells(prefix, includeRain){
+    const grid = document.getElementById(prefix + "TempSummaryGrid");
+    if(!grid || grid.querySelector(".status-temp-data-grid")) return;
+
+    let labelHtml = '<div class="status-temp-label-spacer"></div>';
+    let dataHtml = "";
+    for(let i = 0; i < 10; i++){
+        dataHtml += '<div class="status-temp-date" id="' + prefix + "Day" + i + 'Label">-</div>';
+    }
+
+    const rows = [
+        ["Max", "最高(℃)", " temp-high"],
+        ["Min", "最低(℃)", " temp-low"],
+        ["Avg", "平均(℃)", " average-box"]
+    ];
+    if(includeRain) rows.push(["Rain", "雨量(mm)", ""]);
+
+    rows.forEach(row=>{
+        const key = row[0];
+        labelHtml += '<div class="status-temp-label">' + row[1] + "</div>";
+        for(let i = 0; i < 10; i++){
+            dataHtml += '<div class="status-box status-temp-value' + row[2] + '" id="' +
+                prefix + "Day" + i + key + '">-</div>';
+        }
     });
+
+    grid.innerHTML =
+        '<div class="status-temp-label-grid">' + labelHtml + "</div>" +
+        '<div class="status-temp-data-scroll" tabindex="0" aria-label="日別集計値を横スクロール">' +
+            '<div class="status-temp-data-grid">' + dataHtml + "</div>" +
+        "</div>";
+
+    const scrollArea = grid.querySelector(".status-temp-data-scroll");
+    if(scrollArea) requestAnimationFrame(()=>{ scrollArea.scrollLeft = scrollArea.scrollWidth; });
+}
+
+function initializeTenDaySummaryTables(){
+    buildTenDaySummaryCells("house", false);
+    buildTenDaySummaryCells("outside", true);
+    renderTenDaySummaryDateLabels();
+}
+
+function getTenDayJstDateKey(offsetDays){
+    const now = new Date();
+    const jstNow = new Date(now.getTime() + 9*60*60*1000);
+    const date = new Date(jstNow);
+    date.setUTCDate(jstNow.getUTCDate() - offsetDays);
+    return date.getUTCFullYear() + "-" +
+        String(date.getUTCMonth() + 1).padStart(2, "0") + "-" +
+        String(date.getUTCDate()).padStart(2, "0");
+}
+
+function getTenDayJstNowSqlDateTime(){
+    const now = new Date();
+    const jstNow = new Date(now.getTime() + 9*60*60*1000);
+    return jstNow.getUTCFullYear() + "-" +
+        String(jstNow.getUTCMonth() + 1).padStart(2, "0") + "-" +
+        String(jstNow.getUTCDate()).padStart(2, "0") + " " +
+        String(jstNow.getUTCHours()).padStart(2, "0") + ":" +
+        String(jstNow.getUTCMinutes()).padStart(2, "0") + ":" +
+        String(jstNow.getUTCSeconds()).padStart(2, "0");
+}
+
+function formatTenDaySummaryDateLabel(dateKey){
+    const parts = String(dateKey || "").split("-").map(Number);
+    if(parts.length !== 3 || parts.some(part=>!Number.isFinite(part))) return "-";
+    const monthDay = parts[1] + "/" + parts[2];
+    if(dateKey === getTenDayJstDateKey(0)) return "本日(" + monthDay + ")";
+    if(dateKey === getTenDayJstDateKey(1)) return "前日(" + monthDay + ")";
+    return monthDay;
+}
+
+function renderTenDaySummaryDateLabels(){
+    ["house", "outside"].forEach(prefix=>{
+        for(let i = 0; i < 10; i++){
+            const dateKey = getTenDayJstDateKey(9 - i);
+            const label = document.getElementById(prefix + "Day" + i + "Label");
+            if(label) label.textContent = formatTenDaySummaryDateLabel(dateKey);
+        }
+    });
+}
+
+function getSummaryRowDateKey(row){
+    const dateKey = String(row && row.recorded_at || "").slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateKey) ? dateKey : "";
+}
+
+function createDailyTemperatureMap(rows){
+    const dayMap = new Map();
+    (Array.isArray(rows) ? rows : []).forEach(row=>{
+        const dateKey = getSummaryRowDateKey(row);
+        if(!dateKey || row.temperature === null || row.temperature === undefined || row.temperature === "") return;
+        const temperature = Number(row.temperature);
+        if(!Number.isFinite(temperature)) return;
+        const day = dayMap.get(dateKey) || { max:temperature, min:temperature, total:0, count:0 };
+        day.max = Math.max(day.max, temperature);
+        day.min = Math.min(day.min, temperature);
+        day.total += temperature;
+        day.count++;
+        dayMap.set(dateKey, day);
+    });
+    return dayMap;
+}
+
+function renderTenDayTemperatureSummary(prefix, dayMap){
+    for(let i = 0; i < 10; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+        const values = {
+            Max:day && day.count ? day.max.toFixed(1) : "-",
+            Min:day && day.count ? day.min.toFixed(1) : "-",
+            Avg:day && day.count ? (day.total / day.count).toFixed(1) : "-"
+        };
+        Object.keys(values).forEach(key=>{
+            const cell = document.getElementById(prefix + "Day" + i + key);
+            if(cell) cell.textContent = values[key];
+        });
+    }
+}
+
+function createDailyRainfallMap(rows, mode, coefficient){
+    const dayMap = new Map();
+    (Array.isArray(rows) ? rows : []).forEach(row=>{
+        const dateKey = getSummaryRowDateKey(row);
+        const rawValue = mode === "tip" ? row.rainfall_tip_interval : row.rainfall_interval;
+        if(!dateKey || !isFiniteRainfallValue(rawValue)) return;
+        const rainfall = Number(rawValue) * (mode === "tip" ? coefficient : 1);
+        const hundredths = Math.round(rainfall * 100);
+        const day = dayMap.get(dateKey) || { hundredths:0, count:0 };
+        day.hundredths += hundredths;
+        day.count++;
+        dayMap.set(dateKey, day);
+    });
+    return dayMap;
+}
+
+function renderTenDayRainfallSummary(dayMap){
+    for(let i = 0; i < 10; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+        const cell = document.getElementById("outsideDay" + i + "Rain");
+        if(cell) cell.textContent = day && day.count
+            ? formatDailySummaryRainfallValue(day.hundredths / 100)
+            : "-";
+    }
+}
+
+let tenDayTemperatureRequestSequence = 0;
+let tenDayRainfallRequestSequence = 0;
+
+async function loadTenDayTemperatureSummaries(userId, outsideSource){
+    const requestId = ++tenDayTemperatureRequestSequence;
+    const range = {
+        start:getTenDayJstDateKey(9) + " 00:00:00",
+        end:getTenDayJstNowSqlDateTime()
+    };
+    const results = await Promise.all([
+        fetchDataSafe(userId, "P01", range),
+        fetchDataSafe(outsideSource.userId, outsideSource.pointId, range)
+    ]);
+    const currentOutsideSource = getOutsideSourceRequest(getMainUserIdInputValue());
+    if(
+        requestId !== tenDayTemperatureRequestSequence ||
+        getMainUserIdInputValue() !== userId ||
+        currentOutsideSource.userId !== outsideSource.userId ||
+        currentOutsideSource.pointId !== outsideSource.pointId
+    ) return;
+
+    renderTenDayTemperatureSummary("house", createDailyTemperatureMap(results[0].data));
+    renderTenDayTemperatureSummary("outside", createDailyTemperatureMap(results[1].data));
+    results.filter(result=>result.error).forEach(result=>console.error(result.error));
+}
+
+async function loadTenDayRainfallSummary(userId){
+    const requestId = ++tenDayRainfallRequestSequence;
+    const mode = getRainfallCalculationMode();
+    const coefficient = getRainfallTipCoefficient();
+    if(mode === "tip" && coefficient === null) return;
+    const range = {
+        start:getTenDayJstDateKey(9) + " 00:00:00",
+        end:getTenDayJstNowSqlDateTime()
+    };
+    const result = await fetchDataSafe(userId, "P41", range);
+    const currentUserId = getMainUserIdInputValue();
+    const currentRainfallSource = getRainfallSourceRequest(currentUserId);
+    if(
+        requestId !== tenDayRainfallRequestSequence ||
+        currentRainfallSource.userId !== userId ||
+        getRainfallCalculationMode() !== mode ||
+        (mode === "tip" && getRainfallTipCoefficient() !== coefficient)
+    ) return;
+
+    renderTenDayRainfallSummary(createDailyRainfallMap(result.data, mode, coefficient));
+    if(result.error) console.error(result.error);
+}
+
+function loadTenDayDailySummaries(userId, outsideSource, rainfallSource){
+    initializeTenDaySummaryTables();
+    void loadTenDayTemperatureSummaries(userId, outsideSource);
+    void loadTenDayRainfallSummary(rainfallSource.userId);
 }
 
 function calcVpdAverage(data, startHour, endHour, baseDate){
@@ -7024,8 +7993,8 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const tempHumChartIds = ["tempChartP01", "tempChartP11"];
-    const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
+    const tempHumChartGroups = [["tempChartP01", "tempChartP11"], ["humChartP01", "humChartP11"]];
+    const tempHumChartGroup = tempHumChartGroups.find(group=>group.includes(sourceChart.canvas.id));
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
     const co2DiffChartIds = ["co2DiffChart"];
@@ -7060,21 +8029,13 @@ function syncZoom(sourceChart){
                 chart.update("none");
             }
 
-            if(isTempHumSource && tempHumChartIds.includes(chart.canvas.id)){
+            if(tempHumChartGroup && tempHumChartGroup.includes(chart.canvas.id) && sourceChart.scales.y){
+                const yRange = { min:sourceChart.scales.y.min, max:sourceChart.scales.y.max };
                 if(chart.zoomScale){
-                    chart.zoomScale("yHum", {
-                        min:sourceChart.scales.yHum.min,
-                        max:sourceChart.scales.yHum.max
-                    }, "none");
-                    chart.zoomScale("yTemp", {
-                        min:sourceChart.scales.yTemp.min,
-                        max:sourceChart.scales.yTemp.max
-                    }, "none");
+                    chart.zoomScale("y", yRange, "none");
+                    if(chart.scales.yRight) chart.zoomScale("yRight", yRange, "none");
                 }else{
-                    chart.options.scales.yHum.min = sourceChart.scales.yHum.min;
-                    chart.options.scales.yHum.max = sourceChart.scales.yHum.max;
-                    chart.options.scales.yTemp.min = sourceChart.scales.yTemp.min;
-                    chart.options.scales.yTemp.max = sourceChart.scales.yTemp.max;
+                    setLinearYAxis(chart, yRange);
                     chart.update("none");
                 }
             }
@@ -7934,7 +8895,10 @@ function applyMobileChartRanges(minTime, maxTime){
     [
         tempChartP01,
         tempChartP11,
+        humChartP01,
+        humChartP11,
         outsideDiffChart,
+        mainVaporChart,
         solarChart,
         co2Chart,
         co2OutsideChart,
@@ -8697,10 +9661,7 @@ function resetRainfallDailyTotals(){
     [
         "rainDayBeforeYesterday",
         "rainYesterday",
-        "rainToday",
-        "outsideTwoDaysAgoRain",
-        "outsideYesterdayRain",
-        "outsideTodayRain"
+        "rainToday"
     ].forEach(id=>{
         const element = document.getElementById(id);
         if(element) element.innerText = "-";
@@ -8733,9 +9694,15 @@ function restoreRainfallCalculationSetting(){
 
     const savedCoefficientText = localStorage.getItem(RAINFALL_COEFFICIENT_STORAGE_KEY);
     const savedCoefficient = Number(savedCoefficientText);
-    const coefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0
+    const hasValidSavedCoefficient = Number.isFinite(savedCoefficient) && savedCoefficient > 0;
+    const usesLegacyDefault = hasValidSavedCoefficient &&
+        savedCoefficient === LEGACY_DEFAULT_RAINFALL_COEFFICIENT;
+    const coefficient = hasValidSavedCoefficient && !usesLegacyDefault
         ? savedCoefficientText
         : String(DEFAULT_RAINFALL_COEFFICIENT);
+    if(usesLegacyDefault){
+        localStorage.setItem(RAINFALL_COEFFICIENT_STORAGE_KEY, coefficient);
+    }
     const input = document.getElementById("rainfallTipCoefficient");
     if(input) input.value = coefficient;
     updateRainfallCoefficientInputState();
@@ -8760,6 +9727,7 @@ function reloadRainfallData(){
     const rainfallSource = getRainfallSourceRequest(userId);
     updateRainfallSourceNote(rainfallSource);
     void loadRainfallData(rainfallSource.userId, isMobileView() ? 48 : 72, requestId);
+    void loadTenDayRainfallSummary(rainfallSource.userId);
 }
 
 function handleRainfallCalculationModeChange(){
@@ -8828,16 +9796,6 @@ function renderRainfallDailyTotals(totals){
         if(element) element.innerText = formatRainfallValue(values[id]);
     });
 
-    const summaryValues = {
-        outsideTwoDaysAgoRain:totals ? totals.day_before_yesterday : null,
-        outsideYesterdayRain:totals ? totals.yesterday : null,
-        outsideTodayRain:totals ? totals.today : null
-    };
-
-    Object.keys(summaryValues).forEach(id=>{
-        const element = document.getElementById(id);
-        if(element) element.innerText = formatDailySummaryRainfallValue(summaryValues[id]);
-    });
 }
 
 function hideRainfallTooltip(){
@@ -9496,10 +10454,13 @@ function setTempHumYAxis(chart, axis){
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
         "tempChartP01",
+        "humChartP01",
         "tempChartP02",
         "tempChartP11",
+        "humChartP11",
         "tempChartP12",
         "outsideDiffChart",
+        "mainVaporChart",
         "solarChart",
         "solarChartP32",
         "solarDiffChartP31P32",
@@ -9666,6 +10627,24 @@ yTemp:{
 }            }
         }
     });
+}
+
+function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, measurement){
+    const canvas=getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+    destroyExistingChart(canvasId);
+    const axis=getTempHumAxis(pointId);
+    const isTemp=measurement==="temperature";
+    const key=isTemp ? "temp" : "hum";
+    const data=parsed.filter(d=>d[key]!==null && !isNaN(d[key])).map(d=>({x:d.xValue,y:d[key]}));
+    if(!data.length) return null;
+    const range=isTemp ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax};
+    const unit=isTemp ? "℃" : "%";
+    const yAxis={...range,ticks:{stepSize:isTemp ? 5 : 10,color:"#000"},title:{display:true,text:unit,color:"#000"}};
+    const options=baseOptions(getChartDisplayMinTime(canvasId,minTime,maxTime),maxTime);
+    options.scales={...options.scales,y:yAxis,yRight:createRightYAxis(yAxis)};
+    const color=isTemp ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
+    return new Chart(canvas,{type:"line",data:{datasets:[{label:(isTemp ? "温度" : "湿度")+" ("+unit+")",data:data,borderColor:color,backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",pointBackgroundColor:color,pointRadius:0,borderWidth:2,tension:0.2,fill:true}]},options:options});
 }
 
 function createVaporChart(canvasId, parsed, minTime, maxTime){
@@ -11424,6 +12403,7 @@ async function loadData(){
     document.getElementById("solarNow").innerText = "-";
     document.getElementById("co2Now").innerText = "-";
     resetDailyTempStats();
+    loadTenDayDailySummaries(userId, outsideSource, rainfallSource);
     document.getElementById("vpdEvalAm").innerText = "データなし";
     document.getElementById("vpdEvalPm").innerText = "データなし";
     renderEnvironmentScores([], [], []);
@@ -11503,22 +12483,6 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             document.getElementById("co2Now").innerText = validP21[validP21.length - 1].co2.toFixed(0);
         }
 
-        const today = new Date(now);
-
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-
-        const twoDaysAgo = new Date(today);
-        twoDaysAgo.setDate(today.getDate() - 2);
-
-        renderDailyTempStats("houseToday", calcDailyTempStats(p01, today, true));
-        renderDailyTempStats("houseYesterday", calcDailyTempStats(p01, yesterday, false));
-        renderDailyTempStats("houseTwoDaysAgo", calcDailyTempStats(p01, twoDaysAgo, false));
-        renderDailyTempStats("outsideToday", calcDailyTempStats(p11, today, true));
-        renderDailyTempStats("outsideYesterday", calcDailyTempStats(p11, yesterday, false));
-        renderDailyTempStats("outsideTwoDaysAgo", calcDailyTempStats(p11, twoDaysAgo, false));
-
-
         const errors = results
             .filter(r=>r.error)
             .map(r=>r.error);
@@ -11554,10 +12518,12 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             }
         }
 
-
-        tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
-        tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
+        tempChartP01 = createTempHumSingleChart("tempChartP01", p01, chartMinTime, now, "P01", "temperature");
+        tempChartP11 = createTempHumSingleChart("tempChartP11", p11, chartMinTime, now, "P11", "temperature");
+        humChartP01 = createTempHumSingleChart("humChartP01", p01, chartMinTime, now, "P01", "humidity");
+        humChartP11 = createTempHumSingleChart("humChartP11", p11, chartMinTime, now, "P11", "humidity");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
+        mainVaporChart = createVaporChart("mainVaporChart", p01, chartMinTime, now);
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
@@ -11565,9 +12531,12 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
         co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
 
         applyMainChartNoDataStates({
-            insideTempHumidity:tempChartP01,
-            outsideTempHumidity:tempChartP11,
+            insideTemperature:tempChartP01,
+            insideHumidity:humChartP01,
+            outsideTemperature:tempChartP11,
+            outsideHumidity:humChartP11,
             outsideDiff:outsideDiffChart,
+            mainVapor:mainVaporChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
             outsideCo2:co2OutsideChart,
@@ -11578,6 +12547,9 @@ const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
             tempChartP01,
             tempChartP11,
             outsideDiffChart,
+            mainVaporChart,
+            humChartP01,
+            humChartP11,
             solarChart,
             co2Chart,
             co2OutsideChart,
@@ -11607,7 +12579,10 @@ function destroyCharts(){
     allCharts = [];
     tempChartP01 = null;
     tempChartP11 = null;
+    humChartP01 = null;
+    humChartP11 = null;
     outsideDiffChart = null;
+    mainVaporChart = null;
     solarChart = null;
     co2Chart = null;
     co2OutsideChart = null;
@@ -11616,7 +12591,10 @@ function destroyCharts(){
     [
         "tempChartP01",
         "tempChartP11",
+        "humChartP01",
+        "humChartP11",
         "outsideDiffChart",
+        "mainVaporChart",
         "solarChart",
         "co2Chart",
         "co2OutsideChart",
@@ -11663,6 +12641,13 @@ function applyTempHumYAxis(chart, pointId){
     chart.update();
 }
 
+function applyTempHumSingleYAxis(chart, pointId, measurement){
+    if(!chart) return;
+    const axis=getTempHumAxis(pointId);
+    setLinearYAxis(chart,measurement==="temperature" ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax});
+    chart.update();
+}
+
 function applyCo2YAxis(chart){
     applySingleYAxis(chart, "co2");
 }
@@ -11677,6 +12662,31 @@ function applySingleYAxis(chart, key, axisOverride){
     const axis = axisOverride || getSingleAxis(key);
     setLinearYAxis(chart, axis);
 
+    chart.update();
+}
+
+function applyMainVaporYAxis(chart){
+    if(!chart) return;
+
+    const minInput = document.getElementById("mainVaporMin");
+    const maxInput = document.getElementById("mainVaporMax");
+    const minText = minInput ? String(minInput.value).trim() : "";
+    const maxText = maxInput ? String(maxInput.value).trim() : "";
+
+    if(minText === "" && maxText === ""){
+        setLinearYAxis(chart, { min:undefined, max:undefined });
+        chart.update();
+        return;
+    }
+
+    const min = getFiniteInputValue("mainVaporMin");
+    const max = getFiniteInputValue("mainVaporMax");
+    if(min === null || max === null || min >= max){
+        alert("飽差軸には有効な最小値と最大値を入力してください。");
+        return;
+    }
+
+    setLinearYAxis(chart, { min:min, max:max });
     chart.update();
 }
 
