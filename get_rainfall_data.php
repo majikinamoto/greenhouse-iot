@@ -43,8 +43,8 @@ function buildRainfallAggregation(
     DateTimeImmutable $displayStart,
     DateTimeImmutable $end,
     DateTimeZone $timezone,
-    string $mode = 'rainfall',
-    float $coefficient = 0.20
+    string $mode,
+    float $coefficient
 ): array {
     $currentHour = $end->setTime(
         (int)$end->format('H'),
@@ -207,7 +207,7 @@ function runRainfallApi(): void
     $displayHoursInput = $_GET['display_hours'] ?? '72';
     $modeInput = $_GET['mode'] ?? 'rainfall';
     $mode = is_string($modeInput) ? trim($modeInput) : '';
-    $coefficientInput = $_GET['coefficient'] ?? '0.20';
+    $coefficientInput = $_GET['coefficient'] ?? null;
 
     if (!preg_match('/\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/D', $userId)) {
         sendRainfallJson([
@@ -255,7 +255,7 @@ function runRainfallApi(): void
         ], 400);
     }
 
-    $coefficient = $coefficient === false ? 0.20 : (float)$coefficient;
+    $coefficient = $coefficient === false ? 0.0 : (float)$coefficient;
 
     $timezone = new DateTimeZone(RAINFALL_TIMEZONE);
     $end = new DateTimeImmutable('now', $timezone);
