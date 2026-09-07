@@ -4314,7 +4314,7 @@ let environmentScoreP21 = [];
 let environmentScoreP31 = [];
 
 const WBGT_PRESSURE_HPA = 1013.25;
-const WBGT_PAIR_TOLERANCE_MS = 6*60*1000;
+const WBGT_PAIR_TOLERANCE_MS = 8*60*1000;
 const WBGT_CURRENT_FRESHNESS_MS = 30*60*1000;
 const wbgtStorageKeys = {
     userId:"utech_wbgt_user_id",
@@ -6005,14 +6005,14 @@ async function loadWbgtData(){
             ? errors.join(" / ")
             : fiveDayWbgtData.length
                 ? ""
-                : "6分以内で対応できる有効なデータがありません";
+                : "8分以内で対応できる有効なデータがありません";
     }
     if(chartMessage){
         chartMessage.innerText = errors.length
             ? errors.join(" / ")
             : wbgtData.length
                 ? ""
-                : "6分以内で対応できる有効なデータがないため、WBGTグラフを表示できません";
+                : "8分以内で対応できる有効なデータがないため、WBGTグラフを表示できません";
     }
     wbgtLoadedKey = settings.userId + "|" + settings.tempHumPointId + "|" + settings.globePointId;
     wbgtLastLoadedAt = Date.now();
