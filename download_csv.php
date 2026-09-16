@@ -84,6 +84,9 @@ function appendPointHeader(array &$header, string $pointId): void {
         $header[] = 'P41_10分転倒ますカウント';
         $header[] = 'P41_累積雨量';
         $header[] = 'P41_10分雨量';
+    } elseif ($pointId === 'P61') {
+        $header[] = 'P61_10分平均風速';
+        $header[] = 'P61_10分最大風速';
     } elseif ($pointId === 'P91') {
         $header[] = 'P91_電圧';
     }
@@ -111,6 +114,9 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
         $line[] = $item['10分転倒ますカウント'] ?? '';
         $line[] = $item['累積雨量'] ?? '';
         $line[] = $item['10分雨量'] ?? '';
+    } elseif ($pointId === 'P61') {
+        $line[] = $item['10分平均風速'] ?? '';
+        $line[] = $item['10分最大風速'] ?? '';
     } elseif ($pointId === 'P91') {
         $line[] = $item['電圧'] ?? '';
     }
@@ -118,7 +124,7 @@ function appendPointValues(array &$line, string $pointId, ?array $item): void {
 
 $allowedPointIds = array_merge(
     array_map(static fn(int $number): string => sprintf('P%02d', $number), range(1, 40)),
-    ['P41', 'P91']
+    ['P41', 'P61', 'P91']
 );
 
 $userId = trim((string)($_GET['user_id'] ?? ''));
@@ -180,6 +186,8 @@ $sql = "SELECT
             point_id,
             temperature,
             humidity,
+            wind_speed_avg,
+            wind_speed_max,
             CO2,
             solar_radiation,
             rainfall_tip_count,
@@ -236,6 +244,8 @@ while ($row = $result->fetch_assoc()) {
         '10分転倒ますカウント' => '',
         '累積雨量' => '',
         '10分雨量' => '',
+        '10分平均風速' => '',
+        '10分最大風速' => '',
         '電圧' => ''
     ];
 
@@ -262,6 +272,9 @@ while ($row = $result->fetch_assoc()) {
         $item['10分転倒ますカウント'] = $row['rainfall_tip_interval'];
         $item['累積雨量'] = $row['rainfall_cumulative'];
         $item['10分雨量'] = $row['rainfall_interval'];
+    } elseif ($pointId === 'P61') {
+        $item['10分平均風速'] = $row['wind_speed_avg'];
+        $item['10分最大風速'] = $row['wind_speed_max'];
     } elseif ($pointId === 'P91') {
         $item['電圧'] = $row['voltage'];
     }

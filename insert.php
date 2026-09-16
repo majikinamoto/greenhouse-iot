@@ -45,6 +45,8 @@ $humidity    = isset($data["humidity"]) ? floatval($data["humidity"]) : null;
 $co2         = isset($data["co2"]) ? floatval($data["co2"]) : null;
 $solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radiation"]) : null;
 $voltage     = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
+$wind_speed_avg = isset($data["wind_speed_avg"]) ? floatval($data["wind_speed_avg"]) : null;
+$wind_speed_max = isset($data["wind_speed_max"]) ? floatval($data["wind_speed_max"]) : null;
 $has_rainfall = array_key_exists("rainfall_cumulative", $data);
 $has_rainfall_tip_count = array_key_exists("rainfall_tip_count", $data);
 
@@ -55,8 +57,8 @@ if (!$user_id) {
 // 雨量を含まない既存データは、従来どおりDB側のrecorded_at既定値で保存する。
 if (!$has_rainfall) {
     $sql = "INSERT INTO measurements
-    (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage)
-    VALUES (?, ?, ?, ?, ?, ?, ?)";
+    (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage, wind_speed_avg, wind_speed_max)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
@@ -66,14 +68,16 @@ if (!$has_rainfall) {
 
     // s=文字列, d=数値
     $stmt->bind_param(
-        "ssddddd",
+        "ssddddddd",
         $user_id,
         $point_id,
         $temperature,
         $humidity,
         $co2,
         $solar_radiation,
-        $voltage
+        $voltage,
+        $wind_speed_avg,
+        $wind_speed_max
     );
 
     if ($stmt->execute()) {
@@ -304,9 +308,10 @@ try {
     $insert_stmt = $conn->prepare(
         "INSERT INTO measurements
          (user_id, point_id, temperature, humidity, co2, solar_radiation, voltage,
+          wind_speed_avg, wind_speed_max,
           rainfall_cumulative, rainfall_interval, rainfall_tip_count, rainfall_tip_interval,
           recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$insert_stmt) {
@@ -314,7 +319,7 @@ try {
     }
 
     $insert_stmt->bind_param(
-        "ssdddddddiis",
+        "ssdddddddddiis",
         $user_id,
         $point_id,
         $temperature,
@@ -322,6 +327,8 @@ try {
         $co2,
         $solar_radiation,
         $voltage,
+        $wind_speed_avg,
+        $wind_speed_max,
         $rainfall_cumulative,
         $rainfall_interval,
         $rainfall_tip_count,
