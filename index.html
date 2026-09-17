@@ -11346,7 +11346,7 @@ function createWindChart(canvasId, parsed, minTime, maxTime){
         ...options.scales,
         y:{
             min:0,
-            ticks:{ color:"#000", callback:value=>Number(value).toFixed(2) },
+            ticks:{ color:"#000", callback:value=>Number(value).toFixed(1) },
             title:{ display:true, text:"風速（m/s）", color:"#000" }
         }
     };
