@@ -6751,11 +6751,12 @@ const pointLabelPlugin = {
             const axisUnitMatch = chart.canvas && chart.canvas.id === "rainChart" && typeof axisUnit === "string"
                 ? axisUnit.match(/(\s*\(.+\))$/)
                 : null;
-            const unit = labelMatch ? labelMatch[2] : axisUnitMatch ? axisUnitMatch[1] : axisUnit;
+            const isWindChart = chart.canvas && chart.canvas.id === "windChartP61";
+            const unit = isWindChart ? " (m/s)" : labelMatch ? labelMatch[2] : axisUnitMatch ? axisUnitMatch[1] : axisUnit;
             const isIntegerValue = unit === "ppm";
-            const displayValue = isIntegerValue
-                ? Number(value).toFixed(0)
-                : Number(value).toFixed(1);
+            const displayValue = isWindChart
+                ? Number(value).toFixed(2)
+                : isIntegerValue ? Number(value).toFixed(0) : Number(value).toFixed(1);
             const labelText = labelName + "_";
             const valueText = displayValue + unit;
 
@@ -11329,10 +11330,14 @@ function createWindChart(canvasId, parsed, minTime, maxTime){
             ...options.plugins.tooltip,
             callbacks:{
                 ...options.plugins.tooltip.callbacks,
-                label(context){
-                    const value = Number(context.parsed.y);
-                    if(!Number.isFinite(value)) return null;
-                    return context.dataset.label + "：" + value.toFixed(2) + " m/s";
+                // 日時欄は月日と時刻のみ。風速値は点のラベルに表示する。
+                title(items){
+                    if(!items.length) return "";
+                    const syncGroup = getChartSyncGroup(items[0].chart);
+                    const time = syncedCrosshairLatest[syncGroup] && syncedCrosshairValues[syncGroup] !== null
+                        ? syncedCrosshairValues[syncGroup]
+                        : items[0].parsed.x;
+                    return formatTime(time);
                 }
             }
         }
@@ -11340,7 +11345,8 @@ function createWindChart(canvasId, parsed, minTime, maxTime){
     options.scales = {
         ...options.scales,
         y:{
-            ticks:{ color:"#000" },
+            min:0,
+            ticks:{ color:"#000", callback:value=>Number(value).toFixed(2) },
             title:{ display:true, text:"風速（m/s）", color:"#000" }
         }
     };
