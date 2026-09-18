@@ -2891,6 +2891,15 @@ body.data-export-active .control-panel {
     }
 }
 
+
+/* メインタブのグラフ表示設定 */
+.main-graph-toolbar { display:flex; justify-content:flex-end; margin-bottom:8px; }
+.main-graph-settings { padding:10px; margin-bottom:10px; border:1px solid #b8c3cf; background:#fff; }
+.main-graph-settings-choices { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }
+.main-graph-settings-choices label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+.main-graph-settings-note { margin:6px 0; font-size:13px; }
+#tab-monitor [data-main-graph][hidden] { display:none; }
+
 </style>
 </head>
 
@@ -2986,6 +2995,16 @@ body.data-export-active .control-panel {
 </div>
 
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
+
+<div class="main-graph-toolbar">
+    <button id="mainGraphSettingsButton" type="button" aria-expanded="false" aria-controls="mainGraphSettings" onclick="toggleMainGraphSettings()">グラフ表示設定</button>
+</div>
+<div id="mainGraphSettings" class="main-graph-settings" hidden>
+    <p id="mainGraphSettingsUser" class="main-graph-settings-note"></p>
+    <div id="mainGraphSettingsChoices" class="main-graph-settings-choices" role="group" aria-label="表示するグラフ"></div>
+    <button id="mainGraphShowAll" type="button" onclick="showAllMainGraphs()">すべて表示</button>
+    <p id="mainGraphSettingsMessage" class="main-graph-settings-note" role="status"></p>
+</div>
 <div class="status-container">
 <div class="status-group status-group-temp-summary ten-day-summary">
 <div class="status-group-title">ハウス内（P01）・直近10日</div>
@@ -3074,7 +3093,7 @@ body.data-export-active .control-panel {
 
 <div class="grid">
 
-    <div>
+    <div data-main-graph="tempChartP01">
         <h4><span>ハウス内温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
@@ -3083,7 +3102,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="tempChartP11">
         <h4><span>外気温度（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
@@ -3092,7 +3111,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="outsideDiffChart">
         <h4><span>温度差_内外（P01-P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="outsideDiffMin" value="-1"> ～
@@ -3101,7 +3120,7 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="outsideDiffChart"></canvas></div>
     </div>
-    <div>
+    <div data-main-graph="mainVaporChart">
         <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="mainVaporMin"> ～
@@ -3110,7 +3129,7 @@ body.data-export-active .control-panel {
         </div>
         <div class="chart-container"><canvas id="mainVaporChart"></canvas></div>
     </div>
-    <div>
+    <div data-main-graph="humChartP01">
         <h4><span>ハウス内湿度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
@@ -3119,7 +3138,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="humChartP01"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="humChartP11">
         <h4><span>外気湿度（P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
@@ -3128,7 +3147,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="humChartP11"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="mainDewPointChart">
         <h4><span>ハウス内結露温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="mainDewPointMin"> ～
@@ -3138,7 +3157,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="mainDewPointChart"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="solarChart">
         <h4><span>ハウス内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-solar">日射軸：</span><input class="axis-input axis-input-wide" type="number" id="solarMin"> ～
@@ -3148,7 +3167,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="solarChart"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="co2Chart">
         <h4><span>CO2_ハウス内（P21）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2Min" value="200"> ～
@@ -3158,7 +3177,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="co2OutsideChart">
         <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="200"> ～
@@ -3168,7 +3187,7 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="co2OutsideChart"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="co2DiffChart">
         <h4><span>CO2差内外（P21-P26）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMin" value="-250"> ～
@@ -3178,12 +3197,12 @@ body.data-export-active .control-panel {
         <div class="chart-container"><canvas id="co2DiffChart"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="windChartP61">
         <h4><span>ハウス内風速（P61）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="chart-container"><canvas id="windChartP61"></canvas></div>
     </div>
 
-    <div>
+    <div data-main-graph="rainChart">
         <h4><span>雨量（P41）<span id="rainfallSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
@@ -4658,6 +4677,110 @@ function toggleMobileShareQr(){
     }
 }
 
+// 表示設定は入力途中のIDではなく、表示へ適用したIDに紐づける。
+const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "humChartP01", "humChartP11", "mainDewPointChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "windChartP61", "rainChart"];
+let mainGraphVisibilityUserId = "";
+let mainGraphVisibility = {};
+
+function getMainGraphVisibilityStorageKey(userId){
+    return "utechMainGraphVisibility_v1_" + userId;
+}
+
+function initializeMainGraphSettings(){
+    const choices = document.getElementById("mainGraphSettingsChoices");
+    mainGraphVisibilityIds.forEach(id=>{
+        const card = document.querySelector('[data-main-graph="' + id + '"]');
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.dataset.mainGraphChoice = id;
+        checkbox.addEventListener("change", ()=>{
+            if(!mainGraphVisibilityUserId) return;
+            mainGraphVisibility[id] = checkbox.checked;
+            clearSyncedTooltipGroup("main");
+            hideRainfallTooltip();
+            applyMainGraphVisibility();
+            saveMainGraphVisibility();
+        });
+        label.append(checkbox, document.createTextNode(card.querySelector("h4 > span").textContent));
+        choices.appendChild(label);
+    });
+    restoreMainGraphVisibility(getMainUserIdInputValue());
+}
+
+function restoreMainGraphVisibility(userId){
+    mainGraphVisibilityUserId = userId;
+    mainGraphVisibility = Object.fromEntries(mainGraphVisibilityIds.map(id=>[id, true]));
+    const message = document.getElementById("mainGraphSettingsMessage");
+    message.textContent = "";
+    if(userId){
+        try{
+            const stored = JSON.parse(localStorage.getItem(getMainGraphVisibilityStorageKey(userId)));
+            if(stored && typeof stored === "object" && !Array.isArray(stored)){
+                mainGraphVisibilityIds.forEach(id=>{
+                    if(typeof stored[id] === "boolean") mainGraphVisibility[id] = stored[id];
+                });
+            }
+        }catch(error){
+            message.textContent = "表示設定を読み込めなかったため、すべて表示しています。";
+        }
+    }
+    document.getElementById("mainGraphSettingsUser").textContent = userId
+        ? "設定対象のuser_id：" + userId
+        : "user_idを入力して「表示」を押すと、グラフ表示を設定できます。";
+    document.getElementById("mainGraphShowAll").disabled = !userId;
+    applyMainGraphVisibility();
+}
+
+function applyMainGraphVisibility(){
+    mainGraphVisibilityIds.forEach(id=>{
+        document.querySelector('[data-main-graph="' + id + '"]').hidden = mainGraphVisibility[id] === false;
+        const checkbox = document.querySelector('[data-main-graph-choice="' + id + '"]');
+        if(checkbox){
+            checkbox.checked = mainGraphVisibility[id] !== false;
+            checkbox.disabled = !mainGraphVisibilityUserId;
+        }
+    });
+    requestAnimationFrame(()=>{
+        if(typeof Chart === "undefined") return;
+        mainGraphVisibilityIds.forEach(id=>{
+            const canvas = document.getElementById(id);
+            if(!canvas.getClientRects().length) return;
+            const chart = Chart.getChart(canvas);
+            if(chart){
+                chart.resize();
+                chart.update("none");
+            }
+        });
+    });
+}
+
+function saveMainGraphVisibility(){
+    if(!mainGraphVisibilityUserId) return;
+    const message = document.getElementById("mainGraphSettingsMessage");
+    try{
+        localStorage.setItem(getMainGraphVisibilityStorageKey(mainGraphVisibilityUserId), JSON.stringify(mainGraphVisibility));
+        message.textContent = "";
+    }catch(error){
+        message.textContent = "表示は変更しましたが、設定を保存できませんでした。";
+    }
+}
+
+function toggleMainGraphSettings(){
+    const panel = document.getElementById("mainGraphSettings");
+    panel.hidden = !panel.hidden;
+    document.getElementById("mainGraphSettingsButton").setAttribute("aria-expanded", String(!panel.hidden));
+}
+
+function showAllMainGraphs(){
+    if(!mainGraphVisibilityUserId) return;
+    mainGraphVisibilityIds.forEach(id=>{ mainGraphVisibility[id] = true; });
+    clearSyncedTooltipGroup("main");
+    hideRainfallTooltip();
+    applyMainGraphVisibility();
+    saveMainGraphVisibility();
+}
+
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
@@ -4669,6 +4792,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
         loadActiveAlertSetting(restoredUserId);
     }
 
+    initializeMainGraphSettings();
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
     restoreRainfallSourceSetting();
@@ -12347,6 +12471,7 @@ async function loadData(){
     const msg = document.getElementById("message");
 
     clearAlertFormIfUserChanged();
+    restoreMainGraphVisibility(userId);
 
     if(!userId){
         msg.innerText = "user_id を入力してください";
