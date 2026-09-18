@@ -2898,6 +2898,8 @@ body.data-export-active .control-panel {
 .main-graph-settings-choices { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:8px; }
 .main-graph-settings-choices label { display:flex; align-items:center; gap:6px; cursor:pointer; }
 .main-graph-settings-category { margin:8px 0; font-size:13px; font-weight:600; color:#526273; }
+.main-graph-settings-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.main-graph-settings-actions button { min-height:44px; padding:8px 14px; }
 .main-graph-settings-note { margin:6px 0; font-size:13px; }
 #tab-monitor [data-main-graph][hidden],
 #tab-monitor [data-main-info][hidden],
@@ -3008,7 +3010,10 @@ body.data-export-active .control-panel {
     <div id="mainInfoSettingsChoices" class="main-graph-settings-choices" role="group" aria-labelledby="mainInfoSettingsTitle"></div>
     <div id="mainGraphSettingsTitle" class="main-graph-settings-category">グラフ</div>
     <div id="mainGraphSettingsChoices" class="main-graph-settings-choices" role="group" aria-labelledby="mainGraphSettingsTitle"></div>
-    <button id="mainGraphShowAll" type="button" onclick="showAllMainGraphs()">すべて表示</button>
+    <div class="main-graph-settings-actions">
+        <button id="mainGraphShowAll" type="button" onclick="showAllMainGraphs()">すべて表示</button>
+        <button id="mainGraphHideAll" type="button" onclick="hideAllMainGraphs()">すべて非表示</button>
+    </div>
     <p id="mainGraphSettingsMessage" class="main-graph-settings-note" role="status"></p>
 </div>
 <div class="status-container">
@@ -3059,7 +3064,7 @@ body.data-export-active .control-panel {
 15以上：乾燥ストレス
 </details>
 </div>
-<div class="status-group status-group-mobile-qr">
+<div class="status-group status-group-mobile-qr" data-main-info="mobileQrCard">
 <div class="status-group-title">スマホで開く</div>
 <div id="mobileQrImageHome" class="mobile-share-qr-image-home">
 <img id="mobileQrImage" class="mobile-qr-image" alt="スマホ用URL QRコード">
@@ -4685,7 +4690,7 @@ function toggleMobileShareQr(){
 
 // 表示設定は入力途中のIDではなく、表示へ適用したIDに紐づける。
 const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "humChartP01", "humChartP11", "mainDewPointChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "windChartP61", "rainChart"];
-const mainInfoVisibilityIds = ["houseTenDaySummary", "outsideTenDaySummary", "currentP01", "yesterdayVpdEvaluation"];
+const mainInfoVisibilityIds = ["mobileQrCard", "houseTenDaySummary", "outsideTenDaySummary", "currentP01", "yesterdayVpdEvaluation"];
 const mainDisplayVisibilityIds = [...mainInfoVisibilityIds, ...mainGraphVisibilityIds];
 let mainGraphVisibilityUserId = "";
 let mainGraphVisibility = {};
@@ -4738,6 +4743,7 @@ function restoreMainGraphVisibility(userId){
         ? "設定対象のuser_id：" + userId
         : "user_idを入力して「表示」を押すと、表示・非表示を設定できます。";
     document.getElementById("mainGraphShowAll").disabled = !userId;
+    document.getElementById("mainGraphHideAll").disabled = !userId;
     applyMainGraphVisibility();
 }
 
@@ -4784,6 +4790,15 @@ function toggleMainGraphSettings(){
 function showAllMainGraphs(){
     if(!mainGraphVisibilityUserId) return;
     mainDisplayVisibilityIds.forEach(id=>{ mainGraphVisibility[id] = true; });
+    clearSyncedTooltipGroup("main");
+    hideRainfallTooltip();
+    applyMainGraphVisibility();
+    saveMainGraphVisibility();
+}
+
+function hideAllMainGraphs(){
+    if(!mainGraphVisibilityUserId) return;
+    mainDisplayVisibilityIds.forEach(id=>{ mainGraphVisibility[id] = false; });
     clearSyncedTooltipGroup("main");
     hideRainfallTooltip();
     applyMainGraphVisibility();
