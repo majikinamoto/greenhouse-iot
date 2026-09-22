@@ -1,0 +1,41 @@
+name: 本番反映
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: さくらクラウドへ反映
+        env:
+          DEPLOY_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.PRODUCTION_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$DEPLOY_KEY" || -z "$KNOWN_HOSTS" ]]; then
+            echo '::error::PRODUCTION_SSH_KEY と PRODUCTION_KNOWN_HOSTS を登録してください。'
+            exit 1
+          fi
+          umask 077
+          deploy_dir=$(mktemp -d)
+          trap 'rm -rf -- "$deploy_dir"' EXIT
+          printf '%s\n' "$DEPLOY_KEY" > "$deploy_dir/key"
+          printf '%s\n' "$KNOWN_HOSTS" > "$deploy_dir/known_hosts"
+          ssh -T -i "$deploy_dir/key" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$deploy_dir/known_hosts" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=3 \
+            ubuntu@163.43.29.108 "deploy $GITHUB_SHA"
+          printf '### 本番反映完了\n\nコミット: `%s`\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
