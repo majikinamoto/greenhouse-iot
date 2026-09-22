@@ -3927,19 +3927,6 @@ body.data-export-active .control-panel {
     </div>
 
     <div>
-        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-range"><span class="axis-label-volt">飽差の目安範囲：</span>
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMin" value="5" step="0.1" oninput="handleVpdTargetRangeChange()">
-            ～
-            <input class="axis-input guide-range-input" type="number" id="vpdTargetMax" value="10" step="0.1" oninput="handleVpdTargetRangeChange()">
-            <span class="guide-range-unit">g/m³</span></span>
-            <button type="button" onclick="resetVpdTargetRange()">初期値に戻す</button>
-        </div>
-        <div class="chart-container"><canvas id="vaporChart"></canvas></div>
-    </div>
-
-    <div>
         <h4><span>露点温度（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMinP11"> ～
@@ -4272,7 +4259,7 @@ let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
 let humChartP01, humChartP11;
 let mainVaporChart;
 let mainDewPointChart;
-let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChart, vaporChartP11, dewChart, dewChartP11;
+let diffChart, diffChartP11P12, outsideDiffChart, solarChart, solarChartP32, solarDiffChartP31P32, voltChart, vaporChartP11, dewChart, dewChartP11;
 let rainChart = null;
 let windChartP61 = null;
 let rainfallRequestSequence = 0;
@@ -4435,13 +4422,6 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
-        key:"vapor",
-        canvasId:"vaporChart",
-        title:"飽和水蒸気量/水蒸気量/飽差",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
-    },
-    {
         key:"dewPoint",
         canvasId:"dewChart",
         title:"露点温度",
@@ -4573,7 +4553,6 @@ const maintenanceCanvasIds = [
     "tempChartP02",
     "diffChart",
     "vaporChartP11",
-    "vaporChart",
     "dewChartP11",
     "dewChart",
     "co2ChartP27",
@@ -4810,7 +4789,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
     if(savedUserId){
         document.getElementById("userId").value = savedUserId;
         const restoredUserId = getMainUserIdInputValue();
-        restoreVpdTargetRange(restoredUserId);
         saveUserIdHistory(restoredUserId);
         alertFormUserId = restoredUserId;
         loadActiveAlertSetting(restoredUserId);
@@ -4854,15 +4832,12 @@ window.addEventListener("DOMContentLoaded", ()=>{
         userIdInput.addEventListener("input", clearAlertFormIfUserChanged);
         userIdInput.addEventListener("change", ()=>{
             clearAlertFormIfUserChanged();
-            restoreVpdTargetRange(userIdInput.value.trim());
             handleMaintenanceUserIdChange();
         });
     }
 
     if(userIdHistorySelect){
         userIdHistorySelect.addEventListener("change", ()=>{
-            const selectedUserId = document.getElementById("userId").value.trim();
-            restoreVpdTargetRange(selectedUserId);
             setTimeout(clearAlertFormIfUserChanged, 0);
             handleMaintenanceUserIdChange();
         });
@@ -6974,37 +6949,6 @@ ctx.fillText(valueText, x + 5 + labelWidth, y - 5);
     }
 };
 
-const vpdTargetZonePlugin = {
-    id:"vpdTargetZonePlugin",
-    beforeDatasetsDraw(chart){
-        if(chart.canvas.id !== "vaporChart") return;
-
-        const yScale = chart.scales.y;
-        const chartArea = chart.chartArea;
-
-        if(!yScale || !chartArea) return;
-
-        const range = getGuideRange("vpdTargetMin", "vpdTargetMax", 5, 10);
-        const yTop = Math.max(chartArea.top, yScale.getPixelForValue(range.max));
-        const yBottom = Math.min(chartArea.bottom, yScale.getPixelForValue(range.min));
-
-        if(yBottom <= yTop) return;
-
-        const ctx = chart.ctx;
-        ctx.save();
-
-        ctx.fillStyle = "rgba(120, 200, 120, 0.18)";
-        ctx.fillRect(
-            chartArea.left,
-            yTop,
-            chartArea.right - chartArea.left,
-            yBottom - yTop
-        );
-
-        ctx.restore();
-    }
-};
-
 const voltTargetZonePlugin = {
     id:"voltTargetZonePlugin",
     beforeDatasetsDraw(chart){
@@ -7371,7 +7315,6 @@ Chart.register(
     chartBackgroundPlugin,
     midnightLinePlugin,
     rainfallTooltipPlugin,
-    vpdTargetZonePlugin,
     voltTargetZonePlugin,
     syncedCrosshairPlugin,
     pointLabelPlugin
@@ -9583,7 +9526,6 @@ function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime)
         ["tempChartP02", "tempP02", ["P02"]],
         ["diffChart", "diffP01P02", ["P01", "P02"]],
         ["vaporChartP11", "vaporP11", ["P11"]],
-        ["vaporChart", "vaporP01", ["P01"]],
         ["dewChartP11", "dewP11", ["P11"]],
         ["dewChart", "dewP01", ["P01"]],
         ["co2ChartP27", "co2P27", ["P27"]],
@@ -9677,9 +9619,6 @@ async function loadMaintenanceData(rangeOverride){
         vaporChartP11 = configureMaintenanceChart(
             createVaporChart("vaporChartP11", parsed.P11, range.startTime, range.endTime)
         );
-        vaporChart = configureMaintenanceChart(
-            createVaporChart("vaporChart", parsed.P01, range.startTime, range.endTime)
-        );
         dewChartP11 = configureMaintenanceChart(
             createSingleChart("dewChartP11", parsed.P11, "dew", "露点温度", "℃", range.startTime, range.endTime, getDewAxisP11())
         );
@@ -9735,7 +9674,6 @@ async function loadMaintenanceData(rangeOverride){
             tempP02:tempChartP02,
             diffP01P02:diffChart,
             vaporP11:vaporChartP11,
-            vaporP01:vaporChart,
             dewP11:dewChartP11,
             dewP01:dewChart,
             co2P27:co2ChartP27,
@@ -10324,11 +10262,6 @@ function saveGuideRangeSetting(userId, graphType, minId, maxId, defaultMin, defa
 
     const range = getGuideRange(minId, maxId, defaultMin, defaultMax);
     localStorage.setItem(getRangeStorageKey(userId, graphType), JSON.stringify(range));
-}
-
-function restoreVpdTargetRange(userId){
-    restoreGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
-    updateVpdTargetZone();
 }
 
 function getTempHumAxis(pointId){
@@ -11801,7 +11734,6 @@ function destroyMaintenanceCharts(){
     tempChartP12 = null;
     diffChartP11P12 = null;
     vaporChartP11 = null;
-    vaporChart = null;
     dewChartP11 = null;
     dewChart = null;
     co2ChartP22 = null;
@@ -12504,7 +12436,6 @@ async function loadData(){
 
     localStorage.setItem("usui_user_id", userId);
     saveUserIdHistory(userId);
-    restoreVpdTargetRange(userId);
     alertFormUserId = userId;
     loadActiveAlertSetting(userId);
 
@@ -12834,25 +12765,6 @@ function applyMainVaporYAxis(chart){
 
     setLinearYAxis(chart, { min:min, max:max });
     chart.update();
-}
-
-function updateVpdTargetZone(){
-    if(vaporChart){
-        vaporChart.update("none");
-    }
-}
-
-function handleVpdTargetRangeChange(){
-    const userIdInput = document.getElementById("userId");
-    const userId = userIdInput ? userIdInput.value.trim() : "";
-
-    saveGuideRangeSetting(userId, "vpd", "vpdTargetMin", "vpdTargetMax", 5, 10);
-    updateVpdTargetZone();
-}
-
-function resetVpdTargetRange(){
-    setGuideRangeInputs("vpdTargetMin", "vpdTargetMax", { min:5, max:10 });
-    handleVpdTargetRangeChange();
 }
 
 function applyDiffYAxis(chart){
