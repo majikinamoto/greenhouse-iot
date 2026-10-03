@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>U-Tech Next｜明日の環境を知る</title>
+  <link rel="stylesheet" href="assets/next.css">
+  <script src="assets/next.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div><p class="eyebrow">明日の環境を、次の判断へ</p><h1>U-Tech <span>Next</span></h1>
+      <p>沖縄県農業研究センターの気象予報</p></div>
+      <a class="back" href="../">U-Techへ</a>
+    </header>
+    <section class="toolbar" aria-label="予報の選択">
+      <form id="date-form"><label for="forecast-date">予報日 <small>JST</small></label>
+        <div class="date-controls"><input id="forecast-date" type="date" required><button type="submit">表示</button></div>
+      </form>
+      <div class="metadata"><p id="location-name">沖縄県農業研究センター</p><p>モデル：JMA MSM ／ 提供：Open-Meteo</p><p id="fetched-at">取得日時：—</p></div>
+    </section>
+    <p id="status" role="status" aria-live="polite">予報を読み込み中です。</p>
+    <div id="forecast-content" hidden>
+      <section aria-labelledby="summary-title"><h2 id="summary-title">1日の概要</h2>
+        <p class="caption">保存した時間別予報からU-Tech Nextが計算した値です。</p>
+        <div id="summary" class="summary-grid"></div>
+      </section>
+      <section aria-labelledby="charts-title"><h2 id="charts-title">24時間の気象変化</h2>
+        <p class="caption">00:00〜23:00 JST。日射は各時刻の直前1時間平均です。</p>
+        <div id="charts" class="chart-grid"></div>
+      </section>
+      <details class="hourly"><summary>保存した時間別データを見る（境界値を含む25時刻）</summary>
+        <p class="caption">横にスクロールして全項目を確認できます。— は欠損値です。</p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="時間別予報の表"><table id="hourly-table"></table></div>
+      </details>
+    </div>
+    <aside class="notes"><h2>予報の読み方</h2>
+      <p>気温・湿度・VPD・風速の概要は、予報日の00:00〜23:00の24値から計算します。最高・最低は時間別予報の中の最大・最小です。</p>
+      <p>日積算日射・ET0・降水量・日照時間は、01:00〜翌日00:00の直前1時間値を合計し、予報日の00:00〜24:00を対象にします。項目に欠損がある場合、その集計は表示しません。</p>
+      <p>気温・湿度・全天日射・降水量・雲量・海面更正気圧はJMA由来の値をOpen-Meteo経由で取得しています。露点・VPD・直達／散乱日射・ET0・風速／風向・地表面気圧・日照時間・天気コードは、JMAの予報を基にOpen-Meteoが算出した値です。</p>
+      <p>取得は毎日18:10 JSTに開始し、失敗時のみ再試行します。表示する取得日時は成功応答の受信日時です。</p>
+    </aside>
+    <footer>気象データ：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>（<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>）／ モデル：気象庁 JMA MSM<br>
+      <a href="https://open-meteo.com/en/docs/jma-api" target="_blank" rel="noopener noreferrer">変数・単位・算出方法</a> · 非商用研究利用
+    </footer>
+  </main>
+</body>
+</html>
