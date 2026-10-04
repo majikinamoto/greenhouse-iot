@@ -30,6 +30,7 @@ function format(value, digits = 1) {
 function renderSummary(summary) {
   const entries = [
     ['最高気温',summary.temperature_2m.max,'℃',1],['最低気温',summary.temperature_2m.min,'℃',1],
+    ['平均気温',summary.temperature_2m.mean,'℃',1],
     ['平均湿度',summary.relative_humidity_2m.mean,'%',1],['最大VPD',summary.vpd.max,'kPa',2],
     ['平均VPD',summary.vpd.mean,'kPa',2],['日積算日射',summary.shortwave_radiation.sum,'MJ/m²/day',2],
     ['日積算ET0',summary.et0.sum,'mm/day',2],['日降水量',summary.precipitation.sum,'mm/day',1],
@@ -38,7 +39,7 @@ function renderSummary(summary) {
   ];
   const container = document.getElementById('summary');
   container.replaceChildren();
-  const groups=['temperature','temperature','humidity','vpd','vpd','radiation','et0','precipitation','wind','wind','radiation'];
+  const groups=['temperature','temperature','temperature','humidity','vpd','vpd','radiation','et0','precipitation','wind','wind','radiation'];
   for (let offset=0;offset<entries.length;offset+=3) {
   const table = element('table','summary-table');
   table.setAttribute('aria-labelledby','summary-title');

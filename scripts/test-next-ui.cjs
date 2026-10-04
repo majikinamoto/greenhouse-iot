@@ -83,7 +83,9 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id_history')),JSON.stringify(['TEST_MAIN','TEST_OLD']));
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_outside_source_user_id')),'TEST_OUTSIDE');
     assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('utech_next_selection_v1'))),{user_id:'TEST_MAIN',point_id:'P_TEST'});
-    assert.equal(await page.locator('.summary-table tbody tr').count(),11);
+    assert.equal(await page.locator('.summary-table tbody tr').count(),12);
+    assert.equal(await page.locator('.summary-table').count(),4);
+    assert.equal(await page.locator('.summary-table tbody tr').filter({hasText:'平均気温'}).locator('.summary-value').textContent(),'26.0');
     assert.equal(await page.locator('.chart-card canvas').count(),6);
     await page.waitForFunction(()=>typeof Chart !== 'undefined' && Chart.getChart(document.querySelector('canvas')));
     await page.locator('canvas').first().scrollIntoViewIfNeeded();
