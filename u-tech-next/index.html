@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="assets/next.css">
   <link rel="stylesheet" href="assets/utech-style.css">
   <script src="assets/context.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
+  <script src="assets/charts.js" defer></script>
+  <script src="assets/csv.js" defer></script>
   <script src="assets/next.js" defer></script>
 </head>
 <body>
@@ -35,6 +40,11 @@
       <p class="caption">以下は沖縄県農業研究センターの代表地点の参考予報です。IDに対応する予報としてはまだ登録されていません。</p>
     </section>
     <p id="status" role="status" aria-live="polite">予報を読み込み中です。</p>
+    <div class="next-tabs" role="tablist" aria-label="Nextの表示">
+      <button id="tab-forecast" role="tab" aria-selected="true" aria-controls="forecast-panel">予報</button>
+      <button id="tab-export" role="tab" aria-selected="false" aria-controls="export-panel" tabindex="-1">データ出力</button>
+    </div>
+    <div id="forecast-panel" role="tabpanel" aria-labelledby="tab-forecast">
     <div id="forecast-content" hidden>
       <section aria-labelledby="summary-title"><h2 id="summary-title">1日の概要</h2>
         <p class="caption">保存した時間別予報からU-Tech Nextが計算した値です。</p>
@@ -42,6 +52,7 @@
       </section>
       <section aria-labelledby="charts-title"><h2 id="charts-title">24時間の気象変化</h2>
         <p class="caption">00:00〜23:00 JST。日射は各時刻の直前1時間平均です。</p>
+        <p class="caption">カーソル・タッチで全グラフの時刻が連動します。PCではドラッグで拡大、表示リセットで戻せます。</p>
         <div id="charts" class="chart-grid"></div>
       </section>
       <details class="hourly"><summary>保存した時間別データを見る（境界値を含む25時刻）</summary>
@@ -49,6 +60,17 @@
         <div class="table-scroll" tabindex="0" role="region" aria-label="時間別予報の表"><table id="hourly-table"></table></div>
       </details>
     </div>
+    </div>
+    <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
+      <h2>CSVダウンロード</h2>
+      <p id="export-date">保存済みの予報を選択してください。</p>
+      <p class="caption">上の予報日で表示したデータを出力します。予報対象日時・取得日時・地点・モデル・単位・由来は必ず含まれます。IDと地点の対応は未設定のため、user_id / point_idは出力しません。</p>
+      <div class="export-actions"><strong>出力項目</strong><button id="csv-all" type="button">すべて選択</button><button id="csv-none" type="button">すべて解除</button></div>
+      <div id="csv-fields" class="csv-groups"></div>
+      <p class="caption">00:00〜翌日00:00の25時刻をそのまま出力します。欠損値は空欄、0は0として出力します。日集計や独自推定値は含めません。</p>
+      <button id="csv-download" type="button" disabled>CSVダウンロード</button>
+      <p id="csv-message" role="status"></p>
+    </section>
     <aside class="notes"><h2>予報の読み方</h2>
       <p>気温・湿度・VPD・風速の概要は、予報日の00:00〜23:00の24値から計算します。最高・最低は時間別予報の中の最大・最小です。</p>
       <p>日積算日射・ET0・降水量・日照時間は、01:00〜翌日00:00の直前1時間値を合計し、予報日の00:00〜24:00を対象にします。項目に欠損がある場合、その集計は表示しません。</p>

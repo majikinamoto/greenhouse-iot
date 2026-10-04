@@ -26,3 +26,26 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .chart-card { border-color: #c7d0da; border-radius: 5px; padding: 14px; }.chart-card h3 { margin: -14px -14px 12px; padding: 9px 14px; border-bottom: 1px solid #c7d0da; background: #eef3f7; border-radius: 5px 5px 0 0; font-size: 14px; }
 .chart-card text { fill: #5b6c7f; }.chart-card .grid { stroke: #e1e7ee; }.hourly { border-color: #c7d0da; border-radius: 5px; }.notes { border-color: #c7d0da; color: #5b6c7f; }footer { color: #5b6c7f; }thead th { background: #dbe6f0; }tbody th { background: #f7f9fb; position: static; }
 @media(max-width:600px) { main { padding: 10px; }.hero { padding: 14px; align-items: center; gap: 10px; }.brand { gap: 12px; }.logo-mark { flex-basis: 40px; width: 40px; height: 40px; font-size: 25px; border-radius: 10px; }.hero h1 { font-size: 23px; }.eyebrow { font-size: 11px; }.hero .subtitle { font-size: 10px; }.back { padding: 6px 8px; font-size: 12px; }.toolbar { padding: 0 14px 14px; }.toolbar form { width: 100%; }.selection-controls { gap: 10px; }.metadata { width: 100%; }.metric { padding: 10px; }.metric-value { font-size: 23px; }.context-panel { padding: 10px; } }
+
+/* Match U-Tech's graph cards and export panel without changing the main app. */
+[hidden] { display: none !important; }
+.next-tabs { display:flex; gap:6px; margin:16px 0; border-bottom:2px solid #3f6388; }
+.next-tabs button { background:#e5edf5; border:1px solid #b7cddd; color:#25384d; border-radius:5px 5px 0 0; }
+.next-tabs button[aria-selected=true] { background:#3f6388; color:white; }
+.chart-grid { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-start; justify-content:flex-start; }
+.chart-card { width:400px; max-width:100%; border:2px solid #c4ccd6; background:#f7f9fb; padding:8px; border-radius:0; box-sizing:border-box; }
+.chart-card h3 { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 8px; padding:6px 8px; background:#dbe6f0; border:0; border-left:5px solid #3f6388; border-radius:0; }
+.chart-reset-button { margin:0; min-height:0; min-width:0; padding:3px 8px; font-size:12px; white-space:nowrap; }
+.chart-container { position:relative; width:100%; min-width:0; height:280px; }
+.chart-readout { color:#000; font-size:12px; min-height:18px; margin:4px 0 0; }
+#export-panel { max-width:1120px; margin:0 auto; padding:14px; border:2px solid #b7cddd; background:#fff; }
+.export-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:12px 0; }
+.csv-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:10px; }
+.csv-groups details { border:1px solid #b7cddd; border-radius:5px; background:#f8fbfd; }
+.csv-groups summary { padding:10px 12px; font-weight:700; color:#263b4d; cursor:pointer; }
+.csv-options { display:flex; flex-wrap:wrap; gap:8px 12px; padding:12px; }
+.csv-options label { display:inline-flex; align-items:center; gap:5px; font-size:13px; }
+.csv-options input { min-height:0; padding:0; width:auto; }
+#csv-message { color:#a23b38; }
+@media(max-width:600px) { .chart-container { height:min(350px,calc(100vw - 48px)); } .chart-card { width:100%; } }
+.chart-card { min-width:0; } .chart-container canvas { max-width:100%; }

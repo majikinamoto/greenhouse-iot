@@ -44,47 +44,6 @@ function renderSummary(summary) {
     container.append(card);
   }
 }
-function svgNode(tag, attrs, text) {
-  const node = document.createElementNS('http://www.w3.org/2000/svg',tag);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key,String(value));
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-function renderChart(rows, field, label, unit, color) {
-  const card = element('article','chart-card');
-  card.append(element('h3','',`${label} (${unit})`));
-  const svg = svgNode('svg',{viewBox:'0 0 520 220',role:'img','aria-label':`${label}の00時から23時までの変化。数値は時間別データ表で確認できます。`});
-  const values = rows.map(row => row[field]);
-  const valid = values.filter(value => typeof value === 'number' && Number.isFinite(value));
-  if (!valid.length) {
-    card.append(element('p','missing','すべての時間で欠損しています。'));
-    return card;
-  }
-  let min = Math.min(...valid), max = Math.max(...valid);
-  const margin = (max - min || Math.max(Math.abs(max) * .1, 1)) * .12;
-  min -= margin; max += margin;
-  if (field !== 'temperature_2m') min = Math.max(0,min);
-  const x = i => 52 + i / 23 * 450;
-  const y = value => 178 - (value - min) / (max - min) * 150;
-  for (let i = 0; i <= 3; i++) {
-    const value = min + (max - min) * i / 3;
-    svg.append(svgNode('line',{x1:52,x2:502,y1:y(value),y2:y(value),class:'grid'}),svgNode('text',{x:44,y:y(value)+4,'text-anchor':'end'},value.toFixed(field === 'shortwave_radiation' ? 0 : 1)));
-  }
-  for (const i of [0,6,12,18,23]) svg.append(svgNode('text',{x:x(i),y:202,'text-anchor':'middle'},`${String(i).padStart(2,'0')}:00`));
-  let segment = '';
-  values.forEach((value,i) => {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {segment = ''; return;}
-    const point = `${x(i)},${y(value)}`;
-    if (segment) svg.append(svgNode('line',{x1:x(i-1),y1:y(values[i-1]),x2:x(i),y2:y(value),class:'line',stroke:color}));
-    const dot = svgNode('circle',{cx:x(i),cy:y(value),r:3,fill:color});
-    dot.append(svgNode('title',{},`${rows[i].forecast_for}: ${value} ${unit}`));
-    svg.append(dot);
-    segment = point;
-  });
-  card.append(svg);
-  if (valid.length !== 24) card.append(element('p','caption','欠損した時間は線をつないでいません。'));
-  return card;
-}
 function renderRows(rows) {
   const table = document.getElementById('hourly-table');
   const head = element('thead'), header = element('tr');
@@ -104,6 +63,8 @@ async function loadForecast() {
   if (!dateInput.checkValidity()) {dateInput.reportValidity(); return;}
   if (activeRequest) activeRequest.abort();
   const controller = new AbortController(); activeRequest = controller;
+  NextCharts.destroy();
+  NextCsv.setForecast(null);
   document.getElementById('forecast-content').hidden = true;
   document.getElementById('fetched-at').textContent = '取得日時：—';
   statusElement.className = '';
@@ -122,14 +83,10 @@ async function loadForecast() {
     document.getElementById('fetched-at').textContent = `取得日時：${payload.fetched_at} JST`;
     statusElement.textContent = `${payload.forecast_date} の予報`;
     renderSummary(payload.summary);
-    const charts = document.getElementById('charts'); charts.replaceChildren();
-    for (const [field,label,unit,color] of [
-      ['shortwave_radiation','全天日射','W/m²','#bb8428'],['temperature_2m','気温','℃','#b76446'],
-      ['relative_humidity_2m','相対湿度','%','#477c9b'],['wind_speed_10m','風速','m/s','#37765c'],
-      ['vpd','VPD','kPa','#876495'],['et0','ET0（直前1時間）','mm','#417c76'],
-    ]) charts.append(renderChart(payload.rows.slice(0,24),field,label,unit,color));
     renderRows(payload.rows);
     document.getElementById('forecast-content').hidden = false;
+    NextCharts.render(document.getElementById('charts'),payload.rows.slice(0,24));
+    NextCsv.setForecast(payload);
   } catch (error) {
     if (error.name === 'AbortError') return;
     statusElement.className = 'error';
@@ -140,5 +97,16 @@ async function loadForecast() {
 }
 dateInput.value = japanDate(new Date(Date.now() + 86400000));
 NextContext.initialize();
+NextCsv.initialize(fields);
+const tabs = Array.from(document.querySelectorAll('.next-tabs [role=tab]'));
+function selectTab(tab) {
+  for (const item of tabs) {const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;document.getElementById(item.getAttribute('aria-controls')).hidden=!selected;}
+  NextCharts.sync(null);
+  if (tab.id==='tab-forecast') NextCharts.resize();
+}
+for (const tab of tabs) {
+  tab.addEventListener('click',()=>selectTab(tab));
+  tab.addEventListener('keydown',event=>{if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:tabs[(tabs.indexOf(tab)+1)%tabs.length];selectTab(target);target.focus();}});
+}
 document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); if (NextContext.prepare()) loadForecast();});
 loadForecast();
