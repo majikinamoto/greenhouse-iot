@@ -38,8 +38,8 @@ function renderSummary(summary) {
   ];
   const container = document.getElementById('summary');
   container.replaceChildren();
-  for (const [label, value, unit, digits] of cards) {
-    const card = element('div','metric');
+  for (const [index, [label, value, unit, digits]] of cards.entries()) {
+    const card = element('div',`metric metric-${index}`);
     card.append(element('div','metric-label',label),element('div',value === null ? 'metric-value missing' : 'metric-value',value === null ? '欠損あり' : format(value,digits)),element('div','metric-unit',unit));
     container.append(card);
   }
@@ -139,5 +139,6 @@ async function loadForecast() {
   }
 }
 dateInput.value = japanDate(new Date(Date.now() + 86400000));
-document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); loadForecast();});
+NextContext.initialize();
+document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); if (NextContext.prepare()) loadForecast();});
 loadForecast();

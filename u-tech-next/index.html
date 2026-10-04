@@ -5,20 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>U-Tech Next｜明日の環境を知る</title>
   <link rel="stylesheet" href="assets/next.css">
+  <link rel="stylesheet" href="assets/utech-style.css">
+  <script src="assets/context.js" defer></script>
   <script src="assets/next.js" defer></script>
 </head>
 <body>
   <main>
     <header class="hero">
-      <div><p class="eyebrow">明日の環境を、次の判断へ</p><h1>U-Tech <span>Next</span></h1>
-      <p>沖縄県農業研究センターの気象予報</p></div>
+      <div class="brand"><div class="logo-mark" aria-hidden="true">U</div><div><h1>U-Tech <span>Next</span></h1>
+      <p class="eyebrow">明日の環境を、次の判断へ</p><p class="subtitle">Weather Forecast</p></div></div>
       <a class="back" href="../">U-Techへ</a>
     </header>
     <section class="toolbar" aria-label="予報の選択">
-      <form id="date-form"><label for="forecast-date">予報日 <small>JST</small></label>
-        <div class="date-controls"><input id="forecast-date" type="date" required><button type="submit">表示</button></div>
+      <form id="date-form">
+        <div class="selection-controls">
+          <div class="control-field"><label for="next-user-id">user_id</label><div class="id-controls"><input id="next-user-id" type="text" maxlength="64" placeholder="例: T0001" autocomplete="off" spellcheck="false" aria-describedby="context-note"><select id="next-user-history" aria-label="user_idの履歴"><option value="">履歴</option></select></div></div>
+          <div class="control-field"><label for="next-point-id">point_id <small>任意</small></label><input id="next-point-id" type="text" maxlength="64" placeholder="実測の参照ID" autocomplete="off" spellcheck="false" aria-describedby="context-note"></div>
+          <div class="control-field"><label for="forecast-date">予報日 <small>JST</small></label><input id="forecast-date" type="date" required></div>
+          <button type="submit">表示</button>
+        </div>
+        <p id="context-note" class="caption">IDは比較対象の準備に使います。現在は実測データを取得しません。</p>
+        <p id="context-error" class="error" role="alert" hidden></p>
       </form>
       <div class="metadata"><p id="location-name">沖縄県農業研究センター</p><p>モデル：JMA MSM ／ 提供：Open-Meteo</p><p id="fetched-at">取得日時：—</p></div>
+    </section>
+    <section class="context-panel" aria-label="実測IDと予報地点の対応">
+      <p id="selected-context">実測ID：未選択</p>
+      <p id="mapping-status">予報地点との対応：未設定</p>
+      <p class="caption">以下は沖縄県農業研究センターの代表地点の参考予報です。IDに対応する予報としてはまだ登録されていません。</p>
     </section>
     <p id="status" role="status" aria-live="polite">予報を読み込み中です。</p>
     <div id="forecast-content" hidden>

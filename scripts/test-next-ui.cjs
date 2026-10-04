@@ -58,6 +58,13 @@ const server = http.createServer((req,res)=>{
     browser=await chromium.launch({channel:'msedge',headless:true});
     const context=await browser.newContext({viewport:{width:1280,height:1000}});
     const page=await context.newPage(); const errors=[]; page.on('pageerror',error=>errors.push(error.message));
+    await context.addInitScript(() => {
+      if (!localStorage.getItem('usui_user_id')) {
+        localStorage.setItem('usui_user_id','TEST_MAIN');
+        localStorage.setItem('usui_user_id_history',JSON.stringify(['TEST_MAIN','TEST_OLD']));
+        localStorage.setItem('usui_outside_source_user_id','TEST_OUTSIDE');
+      }
+    });
     await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
     const choose=async date=>{
       await page.locator('#forecast-date').fill(date);
@@ -65,7 +72,17 @@ const server = http.createServer((req,res)=>{
       await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     };
     await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
+    assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_MAIN');
+    assert.equal(await page.locator('#next-point-id').inputValue(),'');
+    assert.match(await page.locator('#mapping-status').textContent(),/未設定/);
+    assert.equal(await page.locator('#next-user-history option').count(),3);
+    await page.locator('#next-point-id').fill('P_TEST');
     await choose('2026-10-04');
+    assert.match(await page.locator('#selected-context').textContent(),/TEST_MAIN.*P_TEST/);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id_history')),JSON.stringify(['TEST_MAIN','TEST_OLD']));
+    assert.equal(await page.evaluate(()=>localStorage.getItem('usui_outside_source_user_id')),'TEST_OUTSIDE');
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('utech_next_selection_v1'))),{user_id:'TEST_MAIN',point_id:'P_TEST'});
     assert.equal(await page.locator('.metric').count(),11);
     assert.equal(await page.locator('.chart-card svg').count(),6);
     assert.match(await page.locator('#fetched-at').textContent(),/18:15:04 JST/);
@@ -90,8 +107,45 @@ const server = http.createServer((req,res)=>{
     await choose('2026-09-30');assert.match(await page.locator('#status').textContent(),/まだ保存/);
     await choose('2026-09-29');assert.match(await page.locator('#status').textContent(),/読み込めません/);
     await choose('2026-10-04');assert.equal(await page.locator('#forecast-content').isVisible(),true);
+    await page.locator('#next-user-id').fill('TEST_NEXT');
+    assert.equal(await page.locator('#next-point-id').inputValue(),'');
+    await choose('2026-10-04');
+    assert.match(await page.locator('#selected-context').textContent(),/TEST_NEXT/);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
+    await page.locator('#next-user-id').fill('<script>');
+    await page.locator('#date-form button').click();
+    assert.match(await page.locator('#context-error').textContent(),/半角英数字/);
+    assert.match(await page.locator('#selected-context').textContent(),/TEST_NEXT/);
+    await page.locator('#next-user-history').selectOption('TEST_MAIN');
+    assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_MAIN');
+    await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/?user_id=TEST_URL&point_id=P_URL`);
+    await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
+    assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_URL');
+    assert.equal(await page.locator('#next-point-id').inputValue(),'P_URL');
+    assert.match(await page.locator('#mapping-status').textContent(),/未設定/);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
+    await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
+    await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
+    assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_MAIN');
+    assert.equal(await page.locator('#next-point-id').inputValue(),'');
+    // Unavailable/corrupt browser storage must not prevent public forecasts.
+    const blocked = await browser.newContext({viewport:{width:390,height:844}});
+    await blocked.addInitScript(()=>{
+      Object.defineProperty(Storage.prototype,'getItem',{value:()=>{throw new Error('blocked');}});
+      Object.defineProperty(Storage.prototype,'setItem',{value:()=>{throw new Error('blocked');}});
+    });
+    const blockedPage=await blocked.newPage(); blockedPage.on('pageerror',error=>errors.push(error.message));
+    await blockedPage.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
+    await blockedPage.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
+    assert.equal(await blockedPage.locator('#forecast-content').isVisible(),true);
+    await blockedPage.locator('#next-user-id').fill('TEST_BLOCKED');
+    await blockedPage.locator('#date-form button').click();
+    await blockedPage.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
+    assert.match(await blockedPage.locator('#context-error').textContent(),/保存できません/);
+    assert.match(await blockedPage.locator('#selected-context').textContent(),/TEST_BLOCKED/);
+    await blocked.close();
     assert.deepEqual(errors,[]);
-    console.log('UI checks passed: desktop/mobile, 25-hour table, calendar ET0, null/zero, status transitions and no page errors.');
+    console.log('UI checks passed: desktop/mobile, forecast aggregates/statuses, ID handoff/history/URL/validation/storage fallback, U-Tech keys unchanged and no page errors.');
     console.log('Screenshots: '+path.join(os.tmpdir(),'utech-next-desktop.png')+' / '+path.join(os.tmpdir(),'utech-next-mobile.png'));
   } finally {
     if (browser) await browser.close();
