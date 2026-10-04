@@ -1,26 +1,37 @@
 'use strict';
 window.NextCsv = (() => {
   let fields = [];
+  const storageKey='utech_next_csv_selection_v1';
+  const metadata=[['forecast_date','予報日',true],['fetched_at_jst','取得日時（JST）',true],['location_id','地点ID',false],['location_name','地点名',false],['latitude','緯度',false],['longitude','経度',false],['model','モデル',false],['timezone','タイムゾーン',false],['is_boundary','境界値の印',false],['sources','データの由来（source列）',false]];
+  function settings() {return Object.fromEntries(Array.from(document.querySelectorAll('#csv-metadata input'),input=>[input.value,input.checked]));}
+  function saveSelection() {
+    try {localStorage.setItem(storageKey,JSON.stringify({version:1,fields:Array.from(document.querySelectorAll('#csv-fields input:checked'),input=>input.value),metadata:settings()}));} catch (_) {}
+    document.getElementById('csv-history-warning').hidden=settings().forecast_date || settings().fetched_at_jst;
+  }
   const raw = new Set(['temperature_2m','relative_humidity_2m','shortwave_radiation','precipitation','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','pressure_msl']);
   const intervals = new Set(['shortwave_radiation','direct_radiation','diffuse_radiation','et0','precipitation','sunshine_duration']);
   const source = key => (raw.has(key)?'JMA_MSM_via_OpenMeteo':'OpenMeteo_derived_from_JMA_MSM') + (intervals.has(key)?';preceding_hour':'');
   const quote = value => '"'+String(value ?? '').replace(/"/g,'""')+'"';
-  function build(payload, selected) {
+  function build(payload, selected, options=settings()) {
     const chosen=fields.filter(([key])=>selected.includes(key));
-    const header=['forecast_date','forecast_for_jst','fetched_at_jst','location_id','location_name','latitude','longitude','model','timezone','is_boundary'];
-    for (const [key,,unit] of chosen) header.push(`${key} (${unit})`,`${key}_source`);
+    const columns=['forecast_date','forecast_for_jst','fetched_at_jst','location_id','location_name','latitude','longitude','model','timezone','is_boundary'].filter(key=>key==='forecast_for_jst' || options[key]);
+    const header=[...columns];
+    for (const [key,,unit] of chosen) {header.push(`${key} (${unit})`);if(options.sources) header.push(`${key}_source`);}
     const lines=[header];
     for (const row of payload.rows) {
       const location=payload.location;
       const day=row.forecast_date ?? payload.forecast_date;
-      const line=[day,row.forecast_for,row.fetched_at ?? payload.fetched_at,location.id,location.name,location.latitude,location.longitude,payload.model,payload.timezone,row.forecast_for.slice(0,10)!==day?1:0];
-      for (const [key] of chosen) line.push(row[key],source(key));
+      const values={forecast_date:day,forecast_for_jst:row.forecast_for,fetched_at_jst:row.fetched_at ?? payload.fetched_at,location_id:location.id,location_name:location.name,latitude:location.latitude,longitude:location.longitude,model:payload.model,timezone:payload.timezone,is_boundary:row.forecast_for.slice(0,10)!==day?1:0};
+      const line=columns.map(key=>values[key]);
+      for (const [key] of chosen) {line.push(row[key]);if(options.sources) line.push(source(key));}
       lines.push(line);
     }
     return '\uFEFF'+lines.map(line=>line.map(quote).join(',')).join('\r\n')+'\r\n';
   }
   function initialize(definitions) {
     fields=definitions;
+    let saved=null;try {const parsed=JSON.parse(localStorage.getItem(storageKey));if(parsed?.version===1 && Array.isArray(parsed.fields) && parsed.metadata && typeof parsed.metadata==='object') saved=parsed;} catch (_) {}
+    for(const [key,label,checked] of metadata) {const option=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=key;input.checked=typeof saved?.metadata[key]==='boolean'?saved.metadata[key]:checked;option.append(input,document.createTextNode(label));document.getElementById('csv-metadata').append(option);}
     const groups=[['温度・湿度',['temperature_2m','relative_humidity_2m','dew_point_2m','vpd']],['日射・日照',['shortwave_radiation','direct_radiation','diffuse_radiation','sunshine_duration']],['ET0・降水',['et0','precipitation']],['風',['wind_speed_10m','wind_direction_10m']],['雲・気圧・天気',['cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','pressure_msl','surface_pressure','weather_code']]];
     for (const [name,keys] of groups) {
       const group=document.createElement('details');group.open=true;
@@ -29,9 +40,13 @@ window.NextCsv = (() => {
       for (const key of keys) {const [,label,unit]=fields.find(field=>field[0]===key);const option=document.createElement('label');const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=key;checkbox.checked=true;option.append(checkbox,document.createTextNode(`${label} (${unit})`));options.append(option);}
       group.append(options);document.getElementById('csv-fields').append(group);
     }
-    for (const [id,checked] of [['csv-all',true],['csv-none',false]]) document.getElementById(id).addEventListener('click',()=>document.querySelectorAll('#csv-fields input').forEach(input=>{input.checked=checked;}));
+    if(saved) document.querySelectorAll('#csv-fields input').forEach(input=>{input.checked=saved.fields.includes(input.value);});
+    for(const id of ['csv-fields','csv-metadata']) document.getElementById(id).addEventListener('change',saveSelection);
+    for (const [id,checked] of [['csv-all',true],['csv-none',false]]) document.getElementById(id).addEventListener('click',()=>{document.querySelectorAll('#csv-fields input').forEach(input=>{input.checked=checked;});saveSelection();});
+    document.getElementById('csv-history-warning').hidden=settings().forecast_date || settings().fetched_at_jst;
     document.getElementById('csv-download').addEventListener('click',async()=>{
       const selected=Array.from(document.querySelectorAll('#csv-fields input:checked'),input=>input.value);
+      const options=settings();
       if (!selected.length) {document.getElementById('csv-message').textContent='出力項目を1つ以上選択してください。';return;}
       const start=document.getElementById('csv-start'),end=document.getElementById('csv-end');
       if (!start.reportValidity() || !end.reportValidity()) return;
@@ -54,8 +69,10 @@ window.NextCsv = (() => {
         }
         if (!rows.length) {message.textContent='指定期間に保存済みの予報はありません。';return;}
         rows.sort((a,b)=>a.forecast_for.localeCompare(b.forecast_for)||a.forecast_date.localeCompare(b.forecast_date));
-        const url=URL.createObjectURL(new Blob([build({...payload,rows},selected)],{type:'text/csv;charset=utf-8'}));
-        const link=document.createElement('a');link.href=url;link.download=`utech-next_${first.replace(/[:T]/g,'-')}_${last.replace(/[:T]/g,'-')}_${payload.model}.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+        const url=URL.createObjectURL(new Blob([build({...payload,rows},selected,options)],{type:'text/csv;charset=utf-8'}));
+        const site=String(payload.location.name).replace(/[<>:"/\\|?*\x00-\x1F]/g,'_').slice(0,80);
+        const model=String(payload.model).replace(/[^A-Za-z0-9_-]/g,'_');
+        const link=document.createElement('a');link.href=url;link.download=`utech-next_${site}_${model}_${first.replace(/[:T]/g,'-')}_${last.replace(/[:T]/g,'-')}_JST.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
         message.textContent=`${selected.length}項目・${rows.length}レコードのCSVを出力しました。`+(missing.length?` 未保存：${missing.join('、')}`:'');
       } catch(error) {message.textContent=error.message || 'CSVを出力できません。';}
       finally {button.disabled=false;}
