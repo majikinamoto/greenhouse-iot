@@ -64,11 +64,12 @@
     <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
       <h2>CSVダウンロード</h2>
       <p id="export-date">保存済みの予報を選択してください。</p>
-      <p class="caption">上の予報日で表示したデータを出力します。予報対象日時・取得日時・地点・モデル・単位・由来は必ず含まれます。IDと地点の対応は未設定のため、user_id / point_idは出力しません。</p>
+      <div class="export-actions"><label>開始日時（JST）<input id="csv-start" type="datetime-local" step="60" required></label><label>終了日時（JST）<input id="csv-end" type="datetime-local" step="60" required></label></div>
+      <p class="caption">予報対象日時で絞り込み、開始・終了の時刻を含めます。指定期間の保存済み予報を出力します（1回につき最大366日）。予報対象日時・取得日時・地点・モデル・単位・由来は必ず含まれます。IDと地点の対応は未設定のため、user_id / point_idは出力しません。</p>
       <div class="export-actions"><strong>出力項目</strong><button id="csv-all" type="button">すべて選択</button><button id="csv-none" type="button">すべて解除</button></div>
       <div id="csv-fields" class="csv-groups"></div>
-      <p class="caption">00:00〜翌日00:00の25時刻をそのまま出力します。欠損値は空欄、0は0として出力します。日集計や独自推定値は含めません。</p>
-      <button id="csv-download" type="button" disabled>CSVダウンロード</button>
+      <p class="caption">開始日から終了日の各予報に含まれる境界値も、指定時刻内なら出力します。同じ対象日時でも予報日・取得日時が異なる値は両方残します。未保存の日は件数と日付を通知します。欠損値は空欄、0は0として出力します。</p>
+      <button id="csv-download" type="button">CSVダウンロード</button>
       <p id="csv-message" role="status"></p>
     </section>
     <aside class="notes"><h2>予報の読み方</h2>
