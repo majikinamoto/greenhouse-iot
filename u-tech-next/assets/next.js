@@ -28,7 +28,7 @@ function format(value, digits = 1) {
   return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '—';
 }
 function renderSummary(summary) {
-  const cards = [
+  const entries = [
     ['最高気温',summary.temperature_2m.max,'℃',1],['最低気温',summary.temperature_2m.min,'℃',1],
     ['平均湿度',summary.relative_humidity_2m.mean,'%',1],['最大VPD',summary.vpd.max,'kPa',2],
     ['平均VPD',summary.vpd.mean,'kPa',2],['日積算日射',summary.shortwave_radiation.sum,'MJ/m²/day',2],
@@ -37,12 +37,20 @@ function renderSummary(summary) {
     ['日照時間',summary.sunshine_duration.sum === null ? null : summary.sunshine_duration.sum / 3600,'時間/day',2],
   ];
   const container = document.getElementById('summary');
-  container.replaceChildren();
-  for (const [index, [label, value, unit, digits]] of cards.entries()) {
-    const card = element('div',`metric metric-${index}`);
-    card.append(element('div','metric-label',label),element('div',value === null ? 'metric-value missing' : 'metric-value',value === null ? '欠損あり' : format(value,digits)),element('div','metric-unit',unit));
-    container.append(card);
+  const table = element('table','summary-table');
+  table.setAttribute('aria-labelledby','summary-title');
+  const head = element('thead'), header = element('tr');
+  for (const label of ['項目','値','単位']) {const th=element('th','',label);th.scope='col';header.append(th);}
+  head.append(header);
+  const body = element('tbody');
+  const groups=['temperature','temperature','humidity','vpd','vpd','radiation','et0','precipitation','wind','wind','radiation'];
+  for (const [index, [label, value, unit, digits]] of entries.entries()) {
+    const row=element('tr',`summary-${groups[index]}`);
+    const name=element('th','',label);name.scope='row';
+    row.append(name,element('td',value === null ? 'summary-value missing' : 'summary-value',value === null ? '欠損あり' : format(value,digits)),element('td','summary-unit',unit));
+    body.append(row);
   }
+  table.append(head,body);container.replaceChildren(table);
 }
 function renderRows(rows) {
   const table = document.getElementById('hourly-table');

@@ -83,7 +83,7 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id_history')),JSON.stringify(['TEST_MAIN','TEST_OLD']));
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_outside_source_user_id')),'TEST_OUTSIDE');
     assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('utech_next_selection_v1'))),{user_id:'TEST_MAIN',point_id:'P_TEST'});
-    assert.equal(await page.locator('.metric').count(),11);
+    assert.equal(await page.locator('.summary-table tbody tr').count(),11);
     assert.equal(await page.locator('.chart-card canvas').count(),6);
     await page.waitForFunction(()=>typeof Chart !== 'undefined' && Chart.getChart(document.querySelector('canvas')));
     await page.locator('canvas').first().scrollIntoViewIfNeeded();
@@ -147,7 +147,7 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.locator('#csv-fields input:checked').count(),19);
     await page.locator('#tab-forecast').click();
     assert.match(await page.locator('#fetched-at').textContent(),/18:15:04 JST/);
-    const et0=page.locator('.metric').filter({hasText:'日積算ET0'});
+    const et0=page.locator('.summary-table tbody tr').filter({hasText:'日積算ET0'});
     assert.match(await et0.textContent(),/2\.40/);
     await page.locator('.hourly summary').click();
     assert.equal(await page.locator('#hourly-table tbody tr').count(),25);

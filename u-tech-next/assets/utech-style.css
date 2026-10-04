@@ -49,3 +49,18 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 #csv-message { color:#a23b38; }
 @media(max-width:600px) { .chart-container { height:min(350px,calc(100vw - 48px)); } .chart-card { width:100%; } }
 .chart-card { min-width:0; } .chart-container canvas { max-width:100%; }
+
+.summary-table-wrap { max-width:760px; border:1px solid #c7d0da; border-radius:5px; overflow:hidden; background:white; }
+.summary-table { width:100%; table-layout:fixed; white-space:normal; font-size:14px; }
+.summary-table th,.summary-table td { position:static; padding:8px 14px; border-bottom:1px solid #dce3eb; }
+.summary-table thead th { background:#dbe6f0; color:#25384d; }
+.summary-table th:first-child { width:42%; text-align:left; }
+.summary-table th:nth-child(2) { width:25%; text-align:right; }
+.summary-table th:nth-child(3),.summary-table .summary-unit { text-align:left; }
+.summary-table tbody th { background:transparent; font-weight:600; }
+.summary-table .summary-value { font-size:17px; font-weight:700; text-align:right; }
+.summary-table .summary-value.missing { font-size:13px; }
+.summary-table .summary-unit { color:#5b6c7f; font-size:12px; overflow-wrap:anywhere; }
+.summary-temperature { background:#fff0e5; }.summary-humidity { background:#eaf1ff; }.summary-vpd { background:#e7f6ee; }.summary-radiation { background:#fff5df; }.summary-et0 { background:#f0ecff; }.summary-precipitation { background:#eef7f8; }.summary-wind { background:#eef3f7; }
+.summary-table tbody tr:last-child th,.summary-table tbody tr:last-child td { border-bottom:0; }
+@media(max-width:600px) { .summary-table th,.summary-table td { padding:7px 9px; }.summary-table { font-size:13px; }.summary-table .summary-value { font-size:16px; } }
