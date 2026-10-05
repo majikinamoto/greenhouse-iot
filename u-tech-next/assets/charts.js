@@ -7,6 +7,8 @@ window.NextCharts = (() => {
     ['wind_speed_10m','風速','m/s','rgb(75,192,192)'],
     ['vpd','VPD','kPa','rgb(153,102,255)'],
     ['et0','ET0（直前1時間）','mm','rgb(153,102,255)'],
+    ['direct_radiation','直達日射','W/m²','rgb(255,159,64)'],
+    ['diffuse_radiation','散乱日射','W/m²','rgb(54,162,235)'],
   ];
   let charts = [], hour = null;
   const time = value => `${String(Math.round(value)).padStart(2,'0')}:00`;
@@ -17,7 +19,7 @@ window.NextCharts = (() => {
       chart.setActiveElements(active);
       chart.tooltip.setActiveElements(active, {x:value === null ? 0 : chart.scales.x.getPixelForValue(value),y:chart.chartArea.bottom});
       const number = value === null ? null : chart.data.datasets[0].data[value].y;
-      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : number.toFixed(2) + ' ' + chart.$unit}`;
+      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : chart.$radiation?`${chart.$raw[value].toFixed(2)} W/m² ／ ${(chart.$raw[value]*.0036).toFixed(3)} MJ/m²/h`:number.toFixed(2) + ' ' + chart.$unit}`;
       chart.draw();
     }
   }
@@ -60,6 +62,14 @@ window.NextCharts = (() => {
         scales:{x:{type:'linear',min:0,max:23,grid:{drawOnChartArea:false},ticks:{color:'#000',stepSize:3,maxTicksLimit:7,maxRotation:0,callback:time}},y:{ticks:{color:'#000'},title:{display:true,text:unit,color:'#000'}},yRight:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits:scale=>{const left=scale.chart.scales.y;scale.min=left.min;scale.max=left.max;}}},
       }});
       chart.$readout=readout;chart.$unit=unit; charts.push(chart);
+      chart.$radiation=NextValues.radiation.includes(field);chart.$raw=data.map(point=>point.y);
+      if(chart.$radiation) {
+        chart.options.plugins.tooltip.callbacks.label=item=>{const raw=chart.$raw[item.dataIndex];return [`${label}: ${raw.toFixed(2)} W/m²`,`${(raw*.0036).toFixed(3)} MJ/m²/h`];};
+        const select=document.createElement('select');select.setAttribute('aria-label',`${label}の単位`);
+        for(const text of ['W/m²','MJ/m²/h']) {const option=document.createElement('option');option.textContent=text;select.append(option);}
+        card.insertBefore(select,wrapper);
+        select.addEventListener('change',()=>{chart.$unit=select.value;chart.data.datasets[0].data=chart.$raw.map((value,i)=>({x:i,y:value===null?null:value*(select.value==='W/m²'?1:.0036)}));chart.options.scales.y.title.text=select.value;heading.firstChild.textContent=`${label} (${select.value})`;chart.update('none');sync(hour);});
+      }
       if (data.some(point=>point.y===null)) {const note=document.createElement('p');note.className='caption';note.textContent='欠損した時間は線をつないでいません。';card.append(note);}
     }
   }

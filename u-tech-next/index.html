@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="assets/next.css">
   <link rel="stylesheet" href="assets/utech-style.css">
   <script src="assets/context.js" defer></script>
+  <script src="assets/values.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
@@ -63,6 +64,7 @@
     </div>
     <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
       <h2>CSVダウンロード</h2>
+      <label>出力形式 <select id="csv-mode"><option value="hourly">時間別</option><option value="daily">日別（1日平均・積算など）</option></select></label>
       <p id="export-date">保存済みの予報を選択してください。</p>
       <div class="export-actions"><label>開始日時（JST）<input id="csv-start" type="datetime-local" step="60" required></label><label>終了日時（JST）<input id="csv-end" type="datetime-local" step="60" required></label></div>
       <p class="caption">予報対象日時で絞り込み、開始・終了の時刻を含めます（1回につき最大366日）。予報対象日時（JST）と気象項目の単位は必ず含まれます。ファイル名には地点・モデル・指定期間・JSTを含めます。IDと地点の対応は未設定のため、user_id / point_idは出力しません。</p>
@@ -70,7 +72,9 @@
       <p id="csv-history-warning" class="caption" hidden>予報日と取得日時を両方外すと、同じ対象日時にある異なる予報を区別しにくくなります。</p>
       <div class="export-actions"><strong>出力項目</strong><button id="csv-all" type="button">すべて選択</button><button id="csv-none" type="button">すべて解除</button></div>
       <div id="csv-fields" class="csv-groups"></div>
-      <p class="caption">開始日から終了日の各予報に含まれる境界値も、指定時刻内なら出力します。同じ対象日時でも予報日・取得日時が異なる値は両方残します。未保存の日は件数と日付を通知します。欠損値は空欄、0は0として出力します。</p>
+      <div id="csv-daily-fields" class="csv-options" hidden></div>
+      <p id="csv-daily-note" class="caption" hidden>日別は開始日から終了日の丸1日を集計します。平均などは00〜23時、積算は01時〜翌日00時の24値を使います。欠損がある項目は空欄です。日付は必ず含まれ、境界値の印は出力しません。</p>
+      <p id="csv-hourly-note" class="caption">開始日から終了日の各予報に含まれる境界値も、指定時刻内なら出力します。同じ対象日時でも予報日・取得日時が異なる値は両方残します。未保存の日は件数と日付を通知します。欠損値は空欄、0は0として出力します。</p>
       <button id="csv-download" type="button">CSVダウンロード</button>
       <p id="csv-message" role="status"></p>
     </section>

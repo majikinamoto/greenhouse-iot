@@ -58,16 +58,17 @@ function renderSummary(summary) {
   }
 }
 function renderRows(rows) {
+  const displayFields=[...fields,...NextValues.converted];
   const table = document.getElementById('hourly-table');
   const head = element('thead'), header = element('tr');
   const timeHeader = element('th','','予報対象日時 JST'); timeHeader.scope = 'col'; header.append(timeHeader);
-  for (const [,label,unit] of fields) {const th = element('th','',`${label} (${unit})`); th.scope = 'col'; header.append(th);}
+  for (const [,label,unit] of displayFields) {const th = element('th','',`${label} (${unit})`); th.scope = 'col'; header.append(th);}
   head.append(header);
   const body = element('tbody');
   rows.forEach(row => {
     const tr = element('tr');
     const time = element('th','',row.forecast_for.slice(0,16)); time.scope = 'row'; tr.append(time);
-    for (const [field] of fields) tr.append(element('td','',row[field] === null ? '—' : String(row[field])));
+    for (const [field] of displayFields) {const value=NextValues.hourly(row,field);tr.append(element('td','',value == null ? '—' : field.endsWith('_mj')?format(value,3):String(value)));}
     body.append(tr);
   });
   table.replaceChildren(head,body);
