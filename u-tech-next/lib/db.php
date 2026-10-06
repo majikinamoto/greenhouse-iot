@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace UTechNext;
 
 require_once __DIR__ . '/forecast.php';
+require_once __DIR__ . '/transpiration.php';
 
 function connect(): \PDO
 {
@@ -49,7 +50,7 @@ function savedRows(\PDO $db, int $locationId, string $date): array
     return $rows;
 }
 
-function saveForecast(\PDO $db, int $locationId, string $date, array $batch): void
+function saveForecast(\PDO $db, int $locationId, string $date, array $batch, ?array $settings = null): void
 {
     $columns = array_merge(['location_id', 'forecast_date', 'forecast_for', 'fetched_at', 'model'], array_keys(VARIABLES));
     $sql = 'INSERT INTO forecasts (' . implode(', ', $columns) . ') VALUES (' . implode(', ', array_fill(0, count($columns), '?')) . ')';
@@ -63,6 +64,7 @@ function saveForecast(\PDO $db, int $locationId, string $date, array $batch): vo
             }
             $stmt->execute($values);
         }
+        saveWaterSnapshot($db, $locationId, $date, $batch, $settings);
         $db->commit();
     } catch (\Throwable $error) {
         if ($db->inTransaction()) {

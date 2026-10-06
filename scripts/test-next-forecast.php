@@ -92,12 +92,15 @@ class NextTestDb extends PDO
 $batch = ['rows' => $rows, 'fetched_at' => '2026-12-30 18:15:04'];
 $db = new NextTestDb();
 UTechNext\saveForecast($db, 1, $date, $batch);
-check(count($db->statement->inserts) === 25 && $db->events === ['begin','commit'], 'Atomic batch success');
-check(count(array_unique(array_column($db->statement->inserts, 3))) === 1, 'Shared actual fetched time');
+check(count($db->statement->inserts) === 26 && $db->events === ['begin','commit'], 'Atomic forecast and water snapshot success');
+check(count(array_unique(array_column(array_slice($db->statement->inserts, 0, 25), 3))) === 1, 'Shared actual fetched time');
 check($db->statement->inserts[24][1] === $date, 'Boundary belongs to selected forecast date');
 $db = new NextTestDb(); $db->statement->failAt = 8;
 rejects(static function () use ($db, $date, $batch) { UTechNext\saveForecast($db, 1, $date, $batch); }, 'Insert failure propagated');
 check($db->events === ['begin','rollback'], 'Partial save rollback');
+$db = new NextTestDb(); $db->statement->failAt = 26;
+rejects(static function () use ($db, $date, $batch) { UTechNext\saveForecast($db, 1, $date, $batch); }, 'Snapshot failure propagated');
+check($db->events === ['begin','rollback'], 'Snapshot failure rolls back forecast');
 $db = new NextTestDb();
 $db->statement->results = array_map(static function ($row) use ($batch) { return $row + ['fetched_at' => $batch['fetched_at']]; }, $rows);
 check(count(UTechNext\savedRows($db, 1, $date)) === 25, 'Complete stored batch read');

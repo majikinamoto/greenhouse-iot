@@ -112,11 +112,13 @@ async function loadForecast() {
 dateInput.value = japanDate(new Date(Date.now() + 86400000));
 NextContext.initialize();
 NextCsv.initialize(fields);
+NextWater.initialize();
 const tabs = Array.from(document.querySelectorAll('.next-tabs [role=tab]'));
 function selectTab(tab) {
   for (const item of tabs) {const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;document.getElementById(item.getAttribute('aria-controls')).hidden=!selected;}
   NextCharts.sync(null);
   if (tab.id==='tab-forecast') NextCharts.resize();
+  NextWater.resize();
 }
 for (const tab of tabs) {
   tab.addEventListener('click',()=>selectTab(tab));

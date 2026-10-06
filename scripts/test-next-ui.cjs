@@ -57,6 +57,7 @@ const server = http.createServer((req,res)=>{
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     browser=await chromium.launch({channel:'msedge',headless:true});
     const context=await browser.newContext({viewport:{width:1280,height:1000}});
+    if (process.env.NEXT_TEST_ASSETS) await context.route('https://cdn.jsdelivr.net/**', route => route.fulfill({path:path.join(process.env.NEXT_TEST_ASSETS,new URL(route.request().url()).pathname.split('/').pop()),contentType:'application/javascript'}));
     const page=await context.newPage(); const errors=[]; page.on('pageerror',error=>errors.push(error.message));
     await context.addInitScript(() => {
       if (!localStorage.getItem('usui_user_id')) {
@@ -246,6 +247,7 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.locator('#next-point-id').inputValue(),'');
     // Unavailable/corrupt browser storage must not prevent public forecasts.
     const blocked = await browser.newContext({viewport:{width:390,height:844}});
+    if (process.env.NEXT_TEST_ASSETS) await blocked.route('https://cdn.jsdelivr.net/**', route => route.fulfill({path:path.join(process.env.NEXT_TEST_ASSETS,new URL(route.request().url()).pathname.split('/').pop()),contentType:'application/javascript'}));
     await blocked.addInitScript(()=>{
       Object.defineProperty(Storage.prototype,'getItem',{value:()=>{throw new Error('blocked');}});
       Object.defineProperty(Storage.prototype,'setItem',{value:()=>{throw new Error('blocked');}});

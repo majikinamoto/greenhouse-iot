@@ -22,6 +22,8 @@ function nextStatus(string $directory, string $date, string $status, int $attemp
 
 $date = (new DateTimeImmutable('tomorrow', UTechNext\tokyo()))->format('Y-m-d');
 $lock = null;
+$settingsCaptured = false;
+$settings = null;
 try {
     if ($argc !== 1) {
         throw new RuntimeException('This command takes no arguments; target is tomorrow in JST.');
@@ -31,12 +33,16 @@ try {
     if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
         throw new RuntimeException('Another forecast fetch is running, or lock is unavailable.');
     }
-    for ($attempt = 1; $attempt <= 7; $attempt++) {
+    for ($attempt = 1; $attempt <= 6; $attempt++) {
         $started = microtime(true);
         try {
             // Reconnect each attempt, including after ambiguous commit failures.
             $db = UTechNext\connect();
             $location = UTechNext\location($db);
+            if (!$settingsCaptured) {
+                $settings = UTechNext\waterSettings($db, (int)$location['id']);
+                $settingsCaptured = true;
+            }
             if (UTechNext\savedRows($db, (int)$location['id'], $date) !== []) {
                 nextStatus($directory, $date, 'saved', $attempt);
                 fwrite(STDOUT, "Forecast already saved for $date; no API request made.\n");
@@ -44,15 +50,15 @@ try {
             }
             nextStatus($directory, $date, 'fetching', $attempt);
             $batch = UTechNext\fetchForecast($date);
-            UTechNext\saveForecast($db, (int)$location['id'], $date, $batch);
+            UTechNext\saveForecast($db, (int)$location['id'], $date, $batch, $settings);
             nextStatus($directory, $date, 'saved', $attempt);
             fwrite(STDOUT, "Saved 25 rows for $date; fetched at {$batch['fetched_at']} JST.\n");
             exit(0);
         } catch (Throwable $error) {
             fwrite(STDERR, (new DateTimeImmutable('now', UTechNext\tokyo()))->format(DATE_ATOM) . " target=$date attempt=$attempt " . $error->getMessage() . "\n");
             $db = null;
-            nextStatus($directory, $date, $attempt < 7 ? 'retrying' : 'failed', $attempt);
-            if ($attempt < 7) {
+            nextStatus($directory, $date, $attempt < 6 ? 'retrying' : 'failed', $attempt);
+            if ($attempt < 6) {
                 // Five minutes between attempt starts, rather than adding request time.
                 usleep((int) max(0, (300 - (microtime(true) - $started)) * 1000000));
             }

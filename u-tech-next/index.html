@@ -13,6 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
   <script src="assets/charts.js" defer></script>
   <script src="assets/csv.js" defer></script>
+  <script src="assets/water.js" defer></script>
   <script src="assets/next.js" defer></script>
 </head>
 <body>
@@ -43,7 +44,9 @@
     <p id="status" role="status" aria-live="polite">予報を読み込み中です。</p>
     <div class="next-tabs" role="tablist" aria-label="Nextの表示">
       <button id="tab-forecast" role="tab" aria-selected="true" aria-controls="forecast-panel">予報</button>
+      <button id="tab-water" role="tab" aria-selected="false" aria-controls="water-panel" tabindex="-1">蒸散量</button>
       <button id="tab-export" role="tab" aria-selected="false" aria-controls="export-panel" tabindex="-1">データ出力</button>
+      <button id="tab-review" role="tab" aria-selected="false" aria-controls="water-review-panel" tabindex="-1">振り返り</button>
     </div>
     <div id="forecast-panel" role="tabpanel" aria-labelledby="tab-forecast">
     <div id="forecast-content" hidden>
@@ -62,6 +65,28 @@
       </details>
     </div>
     </div>
+    <section id="water-panel" role="tabpanel" aria-labelledby="tab-water" hidden>
+      <h2>マンゴーの推定蒸散量・必要かん水量</h2>
+      <p class="caption">外気温・湿度をハウス内の代用値とし、日射を透過率で補正します。資料のペンマン式を時間単位に換算した推定です。必要かん水量は推定蒸散量と同じ値です。</p>
+      <div id="water-settings">
+        <fieldset id="water-common"><legend>6本共通の設定</legend></fieldset>
+        <div id="water-trees" class="water-settings-grid"></div>
+      </div>
+      <p id="water-validation" class="error" role="status"></p>
+      <button id="water-save" type="button" disabled>設定を保存</button>
+      <p class="caption">保存した設定は全端末で共有します。入力中の値は最後の日のグラフに即時反映されます。履歴は予報取得時の設定で固定します。</p>
+      <p id="water-message" role="status" aria-live="polite"></p>
+      <p id="water-period" class="caption"></p>
+      <div id="water-charts" class="chart-grid"></div>
+    </section>
+    <section id="water-review-panel" role="tabpanel" aria-labelledby="tab-review" hidden>
+      <h2>蒸散量の振り返り</h2>
+      <label>真ん中に表示する日付（JST）<input id="water-history-date" type="date" required></label>
+      <button id="water-history-load" type="button">表示</button>
+      <button id="water-history-csv" type="button">この3日間の保存値をCSV出力</button>
+      <p id="water-history-note" class="caption"></p>
+      <div id="water-history-charts" class="chart-grid"></div>
+    </section>
     <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
       <h2>CSVダウンロード</h2>
       <label>出力形式 <select id="csv-mode"><option value="hourly">時間別</option><option value="daily">日別（1日平均・積算など）</option></select></label>
@@ -77,6 +102,10 @@
       <p id="csv-hourly-note" class="caption">開始日から終了日の各予報に含まれる境界値も、指定時刻内なら出力します。同じ対象日時でも予報日・取得日時が異なる値は両方残します。未保存の日は件数と日付を通知します。欠損値は空欄、0は0として出力します。</p>
       <button id="csv-download" type="button">CSVダウンロード</button>
       <p id="csv-message" role="status"></p>
+      <h3>蒸散量・かん水時間の保存履歴</h3>
+      <p class="caption">上の開始・終了日時（時間区間の開始日時）を使い、6本の保存値と当時の全パラメータを出力します。予報の採用日は対象日の前日です。未保存・欠測はゼロと区別します。</p>
+      <button id="water-export" type="button">蒸散量CSVダウンロード</button>
+      <p id="water-export-message" role="status"></p>
     </section>
     <aside class="notes"><h2>予報の読み方</h2>
       <p>気温・湿度・VPD・風速の概要は、予報日の00:00〜23:00の24値から計算します。最高・最低は時間別予報の中の最大・最小です。</p>
