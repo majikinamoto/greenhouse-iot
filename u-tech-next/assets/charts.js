@@ -40,7 +40,7 @@ window.NextCharts = (() => {
       else {
         readout.append(document.createTextNode(`${time(value)}　`));
         if(chart.$radiation)chart.data.datasets.forEach((dataset,index)=>{
-          if(index)readout.append(document.createTextNode(' ／ '));
+          if(index)readout.append(document.createTextNode('　'));
           readout.append(document.createTextNode(`${dataset.label.replace('日射','')}：`));
           const raw=chart.$rawSeries[index][value];appendValue(raw===null?null:raw*(chart.$unit==='W/m²'?1:.0036));
         });
