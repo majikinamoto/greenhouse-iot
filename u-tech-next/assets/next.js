@@ -87,6 +87,7 @@ function renderRows(rows) {
 }
 async function loadForecast() {
   if (!dateInput.checkValidity()) {dateInput.reportValidity(); return;}
+  NextWater.setDate(dateInput.value);
   if (activeRequest) activeRequest.abort();
   const controller = new AbortController(); activeRequest = controller;
   NextCharts.destroy();

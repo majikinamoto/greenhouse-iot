@@ -1,7 +1,7 @@
 'use strict';
 window.NextWater = (() => {
   const version='staff-penman-hourly-v1';
-  let livePayload=null, revision=0, token='', liveCharts=[], request=0;
+  let livePayload=null, revision=0, token='', liveCharts=[], request=0, selectedDate=null, settingsLoaded=false;
   const $=id=>document.getElementById(id);
   const number=id=>$(id).value.trim()===''?null:Number($(id).value);
   const finite=value=>typeof value==='number' && Number.isFinite(value);
@@ -125,7 +125,7 @@ window.NextWater = (() => {
         if(!livePayload || signature(livePayload)!==signature(data)){livePayload=data;preview();}
         return;
       }
-      token=data.token;if(initial){livePayload=data;revision=data.revision;fill(data.settings);}
+      token=data.token;livePayload=data;if(!settingsLoaded){revision=data.revision;fill(data.settings);settingsLoaded=true;}
       preview();
     }catch(error){$('water-message').textContent=error.message;}
   }
@@ -144,8 +144,9 @@ window.NextWater = (() => {
       if(start.value>end.value || !Number.isFinite(count) || count>366){$('water-export-message').textContent='期間は開始日時から366日以内にしてください。';return;}
       $('water-export').disabled=true;try{const days=[];for(let i=0;i<count;i++){const date=shift(start.value.slice(0,10),i);const response=await fetch('api/water.php?center='+date,{cache:'no-store'});const data=await response.json();if(!response.ok || !data.success)throw new Error(data.message);const day=data.days[1];days.push(day.snapshot??calculate(date,[],null));}const filtered=days.map(day=>({...day,trees:day.trees.map(tree=>({...tree,hours:tree.hours.filter(h=>{const stamp=h.time.replace(' ','T').slice(0,16);return stamp>=start.value && stamp<=end.value;})}))}));download(filtered,`utech-next-water_${start.value.slice(0,10)}_${end.value.slice(0,10)}.csv`);$('water-export-message').textContent='保存した蒸散量・かん水時間・当時のパラメータを出力しました。未計算・欠測は空欄と状態列で示します。';}catch(error){$('water-export-message').textContent=error.message;}finally{$('water-export').disabled=false;}
     });
-    validate();load(null,true);
-    setInterval(()=>{if(!document.hidden && livePayload)load(null,false,true);},60000);
+    validate();
+    setInterval(()=>{if(!document.hidden && livePayload)load(selectedDate?shift(selectedDate,-1):null,false,true);},60000);
   }
-  return {initialize,penman,calculate,csv,resize:()=>liveCharts.forEach(chart=>chart.resize())};
+  function setDate(date) {selectedDate=date;load(shift(date,-1));}
+  return {initialize,penman,calculate,csv,setDate,resize:()=>liveCharts.forEach(chart=>chart.resize())};
 })();
