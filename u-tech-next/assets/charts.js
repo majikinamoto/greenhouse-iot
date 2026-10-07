@@ -73,13 +73,13 @@ window.NextCharts = (() => {
         ctxMean.strokeStyle=chart.data.datasets[index].borderColor;
         ctxMean.beginPath();ctxMean.moveTo(meanArea.left,y);ctxMean.lineTo(meanArea.right,y);ctxMean.stroke();
         if(y<meanArea.top || y>meanArea.bottom)return;
-        ctxMean.font='bold 11px sans-serif';ctxMean.textBaseline='middle';ctxMean.textAlign='right';
-        const text=`${chart.$radiation?datasetName(chart,index)+' ':''}平均 ${mean.toFixed(displayDigits(chart))} ${chart.$unit || ''}`;
+        ctxMean.font='bold 11px sans-serif';ctxMean.textBaseline='middle';ctxMean.textAlign='left';
+        const text=`${mean.toFixed(displayDigits(chart))} ${chart.$unit || ''}`;
         let labelY=Math.max(meanArea.top+8,Math.min(meanArea.bottom-8,y-9));
         while(meanLabels.some(placed=>Math.abs(placed-labelY)<15) && labelY-16>=meanArea.top+8)labelY-=16;
         meanLabels.push(labelY);
         ctxMean.fillStyle=chart.data.datasets[index].borderColor;
-        ctxMean.fillText(text,meanArea.right-4,labelY);
+        ctxMean.fillText(text,meanArea.left+4,labelY);
       });
       ctxMean.restore();
       if(chart.$meanReadout)chart.$meanReadout.textContent='破線：24時間平均　'+chart.data.datasets.map((dataset,index)=>`${dataset.label.replace('日射','')} ${chart.$means[index]===null?'欠損のため未算出':chart.$means[index].toFixed(displayDigits(chart))+' '+chart.$unit}`).join('　');
@@ -109,7 +109,6 @@ window.NextCharts = (() => {
       ctx.restore();
     },
   };
-  function datasetName(chart,index) {return chart.data.datasets[index].label.replace('日射','');}
   function destroy() {for (const chart of charts) chart.destroy(); charts=[]; hour=null;}
   function render(container, rows) {
     destroy(); container.replaceChildren();
