@@ -10,6 +10,18 @@ window.NextCharts = (() => {
   ];
   let charts = [], hour = null;
   const time = value => `${String(Math.round(value)).padStart(2,'0')}:00`;
+  function resetViews() {
+    hour=null;
+    for(const chart of charts) {
+      if(chart.resetZoom)chart.resetZoom('none');
+      // Synchronized x ranges are assigned directly, so the zoom plugin can
+      // remember them as new originals. Restore our full view explicitly.
+      chart.options.scales.x.min=0;chart.options.scales.x.max=23;
+      for(const axis of ['y','yRight']){delete chart.options.scales[axis].min;delete chart.options.scales[axis].max;}
+      chart.update('none');
+    }
+    sync(null);
+  }
   function sync(value) {
     hour = value;
     for (const chart of charts) {
@@ -44,7 +56,7 @@ window.NextCharts = (() => {
       chart.data.datasets.forEach((dataset,index)=>{
         if(!chart.isDatasetVisible(index))return;
         const point=dataset.data[hour];if(!point || point.y===null)return;
-        const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip)return;
+        const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip || mark.y<area.top || mark.y>area.bottom)return;
         const digits=chart.$field==='relative_humidity_2m'?0:chart.$radiation || chart.$field==='temperature_2m'?1:2;
         const value=point.y.toFixed(digits),width=ctx.measureText(value).width;
         const labelX=x+8+width<=area.right?x+8:Math.max(area.left,x-8-width);
@@ -67,7 +79,7 @@ window.NextCharts = (() => {
       const card=document.createElement('article'); card.className='chart-card';
       const heading=document.createElement('h3'); heading.textContent=`${label} (${unit})`;
       const reset=document.createElement('button'); reset.type='button'; reset.className='chart-reset-button'; reset.textContent='表示リセット';
-      reset.addEventListener('click',()=>{for (const item of charts) {if (item.resetZoom) item.resetZoom();item.options.scales.x.min=0;item.options.scales.x.max=23;item.update('none');} sync(null);}); heading.append(reset);
+      reset.addEventListener('click',resetViews); heading.append(reset);
       const wrapper=document.createElement('div'); wrapper.className='chart-container';
       const canvas=document.createElement('canvas'); canvas.setAttribute('role','img'); canvas.setAttribute('aria-label',`${label}の時間別予報。値は下の時間別データ表でも確認できます。`); wrapper.append(canvas);
       const readout=document.createElement('p'); readout.className='chart-readout'; readout.textContent='グラフに触れると時刻と値を表示します。';
@@ -76,7 +88,7 @@ window.NextCharts = (() => {
       const chart=new Chart(canvas, {type:'line',data:{datasets:[{label,data,borderColor:color,backgroundColor:field==='shortwave_radiation'?'rgba(255,159,64,.15)':color,fill:field==='shortwave_radiation',pointRadius:3,pointHoverRadius:5,pointBackgroundColor:color,borderWidth:2,tension:0,spanGaps:false}]},plugins:[plugin],options:{
         animation:false,responsive:true,maintainAspectRatio:false,parsing:false,
         interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},zoom:{limits:{x:{min:0,max:23,minRange:1}},pan:{enabled:false},zoom:{wheel:{enabled:false},pinch:{enabled:!matchMedia('(max-width:600px)').matches},drag:{enabled:!matchMedia('(max-width:600px)').matches,backgroundColor:'rgba(30,120,255,.35)',borderColor:'rgba(30,120,255,.8)',borderWidth:1},mode:'x',onZoomComplete:({chart:changed})=>{for (const other of charts) {if (other===changed) continue;other.options.scales.x.min=changed.scales.x.min;other.options.scales.x.max=changed.scales.x.max;other.update('none');}sync(null);}}},tooltip:{enabled:false,backgroundColor:'rgba(255,255,255,.95)',borderColor:'#b7cddd',borderWidth:1,titleColor:'#000',bodyColor:'#000',callbacks:{title:items=>items.length?time(items[0].parsed.x)+' JST':'',label:item=>`${label}: ${item.parsed.y.toFixed(2)} ${unit}`}}},
+        plugins:{legend:{display:false},zoom:{limits:{x:{min:0,max:23,minRange:1}},pan:{enabled:false},zoom:{wheel:{enabled:false},pinch:{enabled:!matchMedia('(max-width:600px)').matches},drag:{enabled:!matchMedia('(max-width:600px)').matches,backgroundColor:'rgba(30,120,255,.35)',borderColor:'rgba(30,120,255,.8)',borderWidth:1},mode:'xy',onZoomComplete:({chart:changed})=>{for (const other of charts) {if (other===changed) continue;other.options.scales.x.min=changed.scales.x.min;other.options.scales.x.max=changed.scales.x.max;other.update('none');}sync(null);}}},tooltip:{enabled:false,backgroundColor:'rgba(255,255,255,.95)',borderColor:'#b7cddd',borderWidth:1,titleColor:'#000',bodyColor:'#000',callbacks:{title:items=>items.length?time(items[0].parsed.x)+' JST':'',label:item=>`${label}: ${item.parsed.y.toFixed(2)} ${unit}`}}},
         scales:{x:{type:'linear',min:0,max:23,grid:{drawOnChartArea:false},ticks:{color:'#000',stepSize:3,maxTicksLimit:7,maxRotation:0,callback:time}},y:{ticks:{color:'#000'},title:{display:true,text:unit,color:'#000'}},yRight:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits:scale=>{const left=scale.chart.scales.y;scale.min=left.min;scale.max=left.max;}}},
       }});
       chart.$readout=readout;chart.$unit=unit;chart.$field=field; charts.push(chart);
@@ -90,7 +102,7 @@ window.NextCharts = (() => {
         const select=document.createElement('select');select.setAttribute('aria-label',`${label}の単位`);
         for(const text of ['W/m²','MJ/m²/h']) {const option=document.createElement('option');option.textContent=text;select.append(option);}
         card.insertBefore(select,wrapper);
-        select.addEventListener('change',()=>{chart.$unit=select.value;chart.data.datasets.forEach((dataset,index)=>{dataset.data=chart.$rawSeries[index].map((value,i)=>({x:i,y:value===null?null:value*(select.value==='W/m²'?1:.0036)}));});chart.options.scales.y.title.text=select.value;heading.firstChild.textContent=`${label} (${select.value})`;chart.update('none');sync(hour);});
+        select.addEventListener('change',()=>{resetViews();chart.$unit=select.value;chart.data.datasets.forEach((dataset,index)=>{dataset.data=chart.$rawSeries[index].map((value,i)=>({x:i,y:value===null?null:value*(select.value==='W/m²'?1:.0036)}));});chart.options.scales.y.title.text=select.value;heading.firstChild.textContent=`${label} (${select.value})`;chart.update('none');sync(hour);});
         chart.update('none');
       }
       if (chart.data.datasets.some(dataset=>dataset.data.some(point=>point.y===null))) {const note=document.createElement('p');note.className='caption';note.textContent='欠損した時間は線をつないでいません。';card.append(note);}

@@ -102,13 +102,29 @@ const server = http.createServer((req,res)=>{
     await page.waitForFunction(()=>document.querySelector('.chart-readout').textContent.includes('12:00 JST'));
     assert.equal(await page.locator('.chart-readout').filter({hasText:'12:00 JST'}).count(),6);
     assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>Chart.getChart(canvas).tooltip.getActiveElements().map(item=>item.index))),[[12,12,12],...Array.from({length:5},()=>[12])]);
-    const drag=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas),rect=canvas.getBoundingClientRect();return {x1:rect.left+chart.scales.x.getPixelForValue(6),x2:rect.left+chart.scales.x.getPixelForValue(18),y:rect.top+chart.chartArea.top+40};});
-    await page.mouse.move(drag.x1,drag.y);await page.mouse.down();await page.mouse.move(drag.x2,drag.y,{steps:8});await page.mouse.up();
+    const originalY=await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.y.min,chart.scales.y.max];}));
+    const drag=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas),rect=canvas.getBoundingClientRect(),area=chart.chartArea;return {x1:rect.left+chart.scales.x.getPixelForValue(6),x2:rect.left+chart.scales.x.getPixelForValue(18),y1:rect.top+area.top+(area.bottom-area.top)*.2,y2:rect.top+area.top+(area.bottom-area.top)*.8};});
+    await page.mouse.move(drag.x1,drag.y1);await page.mouse.down();await page.mouse.move(drag.x2,drag.y2,{steps:8});await page.mouse.up();
     await page.waitForFunction(()=>Chart.getChart(document.querySelector('canvas')).scales.x.min>0);
     const ranges=await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];}));
     for (const range of ranges) assert.deepEqual(range,ranges[0]);
-    await page.locator('.chart-reset-button').first().click();
+    const zoomedY=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.y.min,chart.scales.y.max];});
+    assert.ok(zoomedY[1]-zoomedY[0]<originalY[0][1]-originalY[0][0]);
+    // Reset from a different graph also restores the selected graph's y axis.
+    await page.locator('.chart-reset-button').nth(1).click();
     assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];})),Array.from({length:6},()=>[0,23]));
+    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.y.min,chart.scales.y.max];})),originalY);
+    // Repeat rectangle zooms on a graph whose x bounds were synchronized.
+    const temperatureCanvas=page.locator('#charts canvas').nth(1);
+    await temperatureCanvas.scrollIntoViewIfNeeded();
+    for(let repeat=0;repeat<2;repeat++) {
+      const box=await temperatureCanvas.evaluate(canvas=>{const chart=Chart.getChart(canvas),rect=canvas.getBoundingClientRect(),a=chart.chartArea;return {x1:rect.left+chart.scales.x.getPixelForValue(7),x2:rect.left+chart.scales.x.getPixelForValue(17),y1:rect.top+a.top+(a.bottom-a.top)*.25,y2:rect.top+a.top+(a.bottom-a.top)*.75};});
+      await page.mouse.move(box.x1,box.y1);await page.mouse.down();await page.mouse.move(box.x2,box.y2,{steps:8});await page.mouse.up();
+      const limits=await temperatureCanvas.evaluate(canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.y.min,chart.scales.y.max,chart.scales.yRight.min,chart.scales.yRight.max];});
+      assert.ok(limits[0]>0);assert.ok(limits[2]-limits[1]<originalY[1][1]-originalY[1][0]);assert.deepEqual(limits.slice(1,3),limits.slice(3,5));
+      await page.locator('.chart-reset-button').nth(1).click();
+      assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max,chart.scales.y.min,chart.scales.y.max];})),originalY.map(y=>[0,23,...y]));
+    }
     await page.locator('#tab-export').click();
     assert.equal(await page.locator('#export-panel').isVisible(),true);
     assert.equal(await page.locator('#forecast-panel').isVisible(),false);
