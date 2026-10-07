@@ -126,3 +126,7 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .chart-card .chart-reset-button { min-height:20px; height:20px; min-width:0; padding:1px 4px; font-size:10px; line-height:1.2; }
 .chart-card > select { min-height:20px; height:20px; width:88px; padding:0 2px; font-size:10px; line-height:1.2; }
 #csv-all,#csv-none,#csv-download,#water-export { min-height:28px; min-width:0; padding:3px 8px; font-size:12px; }
+#hourly-table thead th { z-index:2; }
+#hourly-table th:first-child { position:sticky; left:0; z-index:3; }
+#hourly-table thead th:first-child { top:0; z-index:4; background:#dbe6f0; }
+#hourly-table tbody th:first-child { background:#f7f9fb; box-shadow:2px 0 0 #c7d0da; }
