@@ -38,6 +38,24 @@ window.NextCharts = (() => {
       if (x < area.left || x > area.right) return;
       chart.ctx.save(); chart.ctx.strokeStyle='rgba(0,0,0,.75)'; chart.ctx.lineWidth=1;
       chart.ctx.beginPath(); chart.ctx.moveTo(x,area.top); chart.ctx.lineTo(x,area.bottom); chart.ctx.stroke(); chart.ctx.restore();
+      // Numeric labels at the synchronized hour, without tooltip boxes.
+      const ctx=chart.ctx, placed=[];
+      ctx.save();ctx.font='bold 12px sans-serif';ctx.fillStyle='#111';ctx.textBaseline='middle';
+      chart.data.datasets.forEach((dataset,index)=>{
+        if(!chart.isDatasetVisible(index))return;
+        const point=dataset.data[hour];if(!point || point.y===null)return;
+        const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip)return;
+        const value=point.y.toFixed(chart.$unit==='MJ/m²/h'?3:2),width=ctx.measureText(value).width;
+        const labelX=x+8+width<=area.right?x+8:Math.max(area.left,x-8-width);
+        let labelY=Math.max(area.top+8,Math.min(area.bottom-8,mark.y-12));
+        // Separate labels when radiation curves meet or nearly overlap.
+        for(let attempt=0;attempt<placed.length+1;attempt++){
+          if(!placed.some(y=>Math.abs(y-labelY)<15))break;
+          labelY=labelY-16>=area.top+8?labelY-16:Math.min(area.bottom-8,labelY+16*(attempt+1));
+        }
+        placed.push(labelY);ctx.fillText(value,labelX,labelY);
+      });
+      ctx.restore();
     },
   };
   function destroy() {for (const chart of charts) chart.destroy(); charts=[]; hour=null;}
