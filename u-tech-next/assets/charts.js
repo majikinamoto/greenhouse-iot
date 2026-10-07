@@ -10,6 +10,7 @@ window.NextCharts = (() => {
   ];
   let charts = [], hour = null;
   const time = value => `${String(Math.round(value)).padStart(2,'0')}:00`;
+  const displayDigits=chart=>chart.$field==='relative_humidity_2m'?0:chart.$radiation || chart.$field==='temperature_2m'?1:2;
   function resetViews() {
     hour=null;
     for(const chart of charts) {
@@ -29,8 +30,8 @@ window.NextCharts = (() => {
       chart.setActiveElements(active);
       chart.tooltip.setActiveElements(active, {x:value === null ? 0 : chart.scales.x.getPixelForValue(value),y:chart.chartArea.bottom});
       const number = value === null ? null : chart.data.datasets[0].data[value].y;
-      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : chart.$radiation?`${chart.$raw[value].toFixed(2)} W/m² ／ ${(chart.$raw[value]*.0036).toFixed(3)} MJ/m²/h`:number.toFixed(2) + ' ' + chart.$unit}`;
-      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)} JST　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(chart.$unit==='W/m²'?2:3)+' '+chart.$unit}`;}).join(' ／ ');
+      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : number.toFixed(displayDigits(chart)) + ' ' + chart.$unit}`;
+      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)} JST　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(displayDigits(chart))+' '+chart.$unit}`;}).join(' ／ ');
       chart.draw();
     }
   }
@@ -57,7 +58,7 @@ window.NextCharts = (() => {
         if(!chart.isDatasetVisible(index))return;
         const point=dataset.data[hour];if(!point || point.y===null)return;
         const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip || mark.y<area.top || mark.y>area.bottom)return;
-        const digits=chart.$field==='relative_humidity_2m'?0:chart.$radiation || chart.$field==='temperature_2m'?1:2;
+        const digits=displayDigits(chart);
         const value=point.y.toFixed(digits),width=ctx.measureText(value).width;
         const labelX=x+8+width<=area.right?x+8:Math.max(area.left,x-8-width);
         let labelY=Math.max(area.top+8,Math.min(area.bottom-8,mark.y-12));
