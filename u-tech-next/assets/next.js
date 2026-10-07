@@ -12,6 +12,17 @@ const fields = [
 const dateInput = document.getElementById('forecast-date');
 const statusElement = document.getElementById('status');
 let activeRequest;
+let hourlyRows = [];
+const hourlyStorageKey = 'utech_next_hourly_columns_v1';
+let hourlySelected = null;
+function initializeHourlyColumns() {
+  const definitions=[...fields,...NextValues.converted];
+  try {const saved=JSON.parse(localStorage.getItem(hourlyStorageKey));if(Array.isArray(saved))hourlySelected=new Set(saved.filter(key=>definitions.some(field=>field[0]===key)));} catch {}
+  if(hourlySelected===null)hourlySelected=new Set(definitions.map(field=>field[0]));
+  const apply=()=>{hourlySelected=new Set(Array.from(document.querySelectorAll('#hourly-fields input:checked'),input=>input.value));try{localStorage.setItem(hourlyStorageKey,JSON.stringify([...hourlySelected]));}catch{}renderRows(hourlyRows);};
+  for(const [key,label,unit] of definitions){const option=element('label');const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=key;checkbox.checked=hourlySelected.has(key);checkbox.addEventListener('change',apply);option.append(checkbox,document.createTextNode(`${label} (${unit})`));document.getElementById('hourly-fields').append(option);}
+  for(const [id,checked] of [['hourly-all',true],['hourly-none',false]])document.getElementById(id).addEventListener('click',()=>{document.querySelectorAll('#hourly-fields input').forEach(input=>{input.checked=checked;});apply();});
+}
 
 function japanDate(date) {
   const parts = new Intl.DateTimeFormat('en-US', {timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
@@ -58,7 +69,8 @@ function renderSummary(summary) {
   }
 }
 function renderRows(rows) {
-  const displayFields=[...fields,...NextValues.converted];
+  hourlyRows=rows;
+  const displayFields=[...fields,...NextValues.converted].filter(([key])=>hourlySelected===null || hourlySelected.has(key));
   const table = document.getElementById('hourly-table');
   const head = element('thead'), header = element('tr');
   const timeHeader = element('th','','予報対象日時 JST'); timeHeader.scope = 'col'; header.append(timeHeader);
@@ -112,6 +124,7 @@ async function loadForecast() {
 dateInput.value = japanDate(new Date(Date.now() + 86400000));
 NextContext.initialize();
 NextCsv.initialize(fields);
+initializeHourlyColumns();
 NextWater.initialize();
 const tabs = Array.from(document.querySelectorAll('.next-tabs [role=tab]'));
 function selectTab(tab) {

@@ -130,3 +130,6 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 #hourly-table th:first-child { position:sticky; left:0; z-index:3; }
 #hourly-table thead th:first-child { top:0; z-index:4; background:#dbe6f0; }
 #hourly-table tbody th:first-child { background:#f7f9fb; box-shadow:2px 0 0 #c7d0da; }
+.hourly-columns { margin-bottom:10px; }
+.hourly-columns > summary { font-size:12px; }
+#hourly-all,#hourly-none { min-height:28px; min-width:0; padding:3px 8px; font-size:12px; }

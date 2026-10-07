@@ -60,7 +60,11 @@
         <div id="charts" class="chart-grid"></div>
       </section>
       <details class="hourly"><summary>保存した時間別データを見る（境界値を含む25時刻）</summary>
-        <p class="caption">横にスクロールして全項目を確認できます。— は欠損値です。</p>
+        <p class="caption">表示したい項目を選択できます。日時列は常に表示します。— は欠損値です。</p>
+        <details class="hourly-columns"><summary>表示項目を選ぶ</summary>
+          <div class="export-actions"><button id="hourly-all" type="button">すべて表示</button><button id="hourly-none" type="button">すべて非表示</button></div>
+          <div id="hourly-fields" class="csv-options"></div>
+        </details>
         <div class="table-scroll" tabindex="0" role="region" aria-label="時間別予報の表"><table id="hourly-table"></table></div>
       </details>
     </div>
