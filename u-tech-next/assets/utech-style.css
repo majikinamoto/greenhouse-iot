@@ -92,6 +92,8 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .water-settings-fold summary { cursor:pointer; font-weight:600; }
 .water-settings-fold[open] summary { margin-bottom:4px; }
 .water-common-fold { width:fit-content; max-width:100%; }
+#water-settings .water-common-fold { border:0; padding:0; }
+#water-common { border:1px solid #b7cddd; border-radius:5px; padding:5px 7px; }
 .water-trees-fold { margin-top:8px; }
 .water-trees-fold > summary { cursor:pointer; font-weight:600; }
 #water-common { display:flex; width:fit-content; max-width:100%; gap:10px; }
