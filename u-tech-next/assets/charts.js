@@ -66,11 +66,20 @@ window.NextCharts = (() => {
       chart.$means=chart.data.datasets.map(dataset=>dataset.data.length===24 && dataset.data.every(point=>Number.isFinite(point.y))?dataset.data.reduce((sum,point)=>sum+point.y,0)/24:null);
       ctxMean.save();ctxMean.beginPath();ctxMean.rect(meanArea.left,meanArea.top,meanArea.right-meanArea.left,meanArea.bottom-meanArea.top);ctxMean.clip();
       ctxMean.setLineDash([6,4]);ctxMean.lineWidth=1.5;
+      const meanLabels=[];
       chart.$means.forEach((mean,index)=>{
         if(mean===null || !chart.isDatasetVisible(index))return;
         const y=chart.scales.y.getPixelForValue(mean);
         ctxMean.strokeStyle=chart.data.datasets[index].borderColor;
         ctxMean.beginPath();ctxMean.moveTo(meanArea.left,y);ctxMean.lineTo(meanArea.right,y);ctxMean.stroke();
+        if(y<meanArea.top || y>meanArea.bottom)return;
+        ctxMean.font='bold 11px sans-serif';ctxMean.textBaseline='middle';ctxMean.textAlign='right';
+        const text=`${chart.$radiation?datasetName(chart,index)+' ':''}平均 ${mean.toFixed(displayDigits(chart))} ${chart.$unit || ''}`;
+        let labelY=Math.max(meanArea.top+8,Math.min(meanArea.bottom-8,y-9));
+        while(meanLabels.some(placed=>Math.abs(placed-labelY)<15) && labelY-16>=meanArea.top+8)labelY-=16;
+        meanLabels.push(labelY);
+        ctxMean.fillStyle=chart.data.datasets[index].borderColor;
+        ctxMean.fillText(text,meanArea.right-4,labelY);
       });
       ctxMean.restore();
       if(chart.$meanReadout)chart.$meanReadout.textContent='破線：24時間平均　'+chart.data.datasets.map((dataset,index)=>`${dataset.label.replace('日射','')} ${chart.$means[index]===null?'欠損のため未算出':chart.$means[index].toFixed(displayDigits(chart))+' '+chart.$unit}`).join('　');
@@ -100,6 +109,7 @@ window.NextCharts = (() => {
       ctx.restore();
     },
   };
+  function datasetName(chart,index) {return chart.data.datasets[index].label.replace('日射','');}
   function destroy() {for (const chart of charts) chart.destroy(); charts=[]; hour=null;}
   function render(container, rows) {
     destroy(); container.replaceChildren();
