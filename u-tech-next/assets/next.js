@@ -139,7 +139,7 @@ async function loadForecast() {
     if (activeRequest === controller) button.disabled = false;
   }
 }
-dateInput.value = japanDate(new Date(Date.now() + 86400000));
+dateInput.value = japanDate(new Date());
 NextContext.initialize();
 NextCsv.initialize(fields);
 initializeHourlyColumns();
