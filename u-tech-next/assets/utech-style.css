@@ -84,15 +84,15 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 #next-user-history { width:82px; }
 #forecast-date { width:128px; }
 #water-settings { font-size:12px; }
-#water-settings fieldset { padding:8px 10px; border-radius:5px; }
-#water-common { gap:12px; }
-.water-settings-grid { grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:8px; margin:10px 0; }
-.water-field { gap:2px; margin:4px 0; }
-.water-field input { width:96px; max-width:100%; min-height:30px; padding:3px 6px; font-size:12px; }
+#water-settings fieldset { padding:5px 7px; border-radius:5px; min-width:0; }
+#water-common { display:flex; width:fit-content; max-width:100%; gap:10px; }
+.water-settings-grid { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:6px; margin:8px 0; }
+.water-settings-grid fieldset { flex:0 0 116px; width:116px; max-width:100%; margin:0; }
+.water-field { gap:1px; margin:3px 0; }
+.water-field input { width:72px; max-width:100%; min-height:26px; height:26px; padding:2px 4px; font-size:12px; }
 .water-field .error { font-size:11px; min-height:0; }
 .water-field .error:empty { display:none; }
 #water-validation { font-size:12px; margin:6px 0; }
 @media(max-width:600px) {
-  .water-settings-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .selection-controls { gap:6px; }
 }
