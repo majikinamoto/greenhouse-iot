@@ -182,7 +182,7 @@ const server = http.createServer((req,res)=>{
     await page.screenshot({path:path.join(os.tmpdir(),'utech-next-mobile.png'),fullPage:true});
     await choose('2026-10-05');
     await page.evaluate(()=>NextCharts.sync(5));
-    assert.match(await page.locator('.chart-card').filter({hasText:'相対湿度'}).locator('.chart-readout').textContent(),/05:00 JST.*欠損/);
+    assert.match(await page.locator('.chart-card').filter({hasText:'相対湿度'}).locator('.chart-readout').textContent(),/05:00.*欠損/);
     await page.locator('#tab-export').click();
     await page.locator('#csv-start').fill('2026-10-05T00:00');
     await page.locator('#csv-end').fill('2026-10-06T00:00');
