@@ -6,6 +6,11 @@ a { color: #3f6388; }
 .brand { display: flex; align-items: center; gap: 28px; min-width: 0; }
 .brand-title-row { position:relative; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 28px; }
 .brand-title-info { display:inline-flex; align-items:center; gap:8px; }
+.forecast-term-notes { margin-top:16px; padding:12px 14px; border:1px solid #c7d0da; border-radius:5px; background:#eef3f7; font-size:13px; line-height:1.7; }
+.forecast-term-notes h3 { margin:12px 0 4px; font-size:14px; color:#25384d; }
+.forecast-term-notes h3:first-child { margin-top:0; }
+.forecast-term-notes p { margin:4px 0 8px; }
+.forecast-term-notes p:last-child { margin-bottom:0; }
 .hero .logo-info-button { flex-shrink:0; width:32px; height:32px; min-width:0; min-height:0; padding:0; border:1px solid #aeb9c5; border-radius:50%; background:#f7fbff; color:#25384d; font-size:16px; line-height:30px; cursor:pointer; }
 .hero .logo-info-button:hover { background:#eef3f7; }
 .hero .logo-info-popup { position:absolute; top:calc(100% + 6px); left:0; z-index:20; width:360px; max-width:calc(100vw - 100px); max-height:70vh; overflow-y:auto; padding:10px 12px; border:1px solid #aeb9c5; border-radius:6px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.16); color:#1f3038; font-size:13px; line-height:1.6; }
