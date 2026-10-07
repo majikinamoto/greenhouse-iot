@@ -45,7 +45,8 @@ window.NextCharts = (() => {
         if(!chart.isDatasetVisible(index))return;
         const point=dataset.data[hour];if(!point || point.y===null)return;
         const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip)return;
-        const value=point.y.toFixed(chart.$unit==='MJ/m²/h'?3:2),width=ctx.measureText(value).width;
+        const digits=chart.$field==='relative_humidity_2m'?0:chart.$radiation || chart.$field==='temperature_2m'?1:2;
+        const value=point.y.toFixed(digits),width=ctx.measureText(value).width;
         const labelX=x+8+width<=area.right?x+8:Math.max(area.left,x-8-width);
         let labelY=Math.max(area.top+8,Math.min(area.bottom-8,mark.y-12));
         // Separate labels when radiation curves meet or nearly overlap.
@@ -78,7 +79,7 @@ window.NextCharts = (() => {
         plugins:{legend:{display:false},zoom:{limits:{x:{min:0,max:23,minRange:1}},pan:{enabled:false},zoom:{wheel:{enabled:false},pinch:{enabled:!matchMedia('(max-width:600px)').matches},drag:{enabled:!matchMedia('(max-width:600px)').matches,backgroundColor:'rgba(30,120,255,.35)',borderColor:'rgba(30,120,255,.8)',borderWidth:1},mode:'x',onZoomComplete:({chart:changed})=>{for (const other of charts) {if (other===changed) continue;other.options.scales.x.min=changed.scales.x.min;other.options.scales.x.max=changed.scales.x.max;other.update('none');}sync(null);}}},tooltip:{enabled:false,backgroundColor:'rgba(255,255,255,.95)',borderColor:'#b7cddd',borderWidth:1,titleColor:'#000',bodyColor:'#000',callbacks:{title:items=>items.length?time(items[0].parsed.x)+' JST':'',label:item=>`${label}: ${item.parsed.y.toFixed(2)} ${unit}`}}},
         scales:{x:{type:'linear',min:0,max:23,grid:{drawOnChartArea:false},ticks:{color:'#000',stepSize:3,maxTicksLimit:7,maxRotation:0,callback:time}},y:{ticks:{color:'#000'},title:{display:true,text:unit,color:'#000'}},yRight:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits:scale=>{const left=scale.chart.scales.y;scale.min=left.min;scale.max=left.max;}}},
       }});
-      chart.$readout=readout;chart.$unit=unit; charts.push(chart);
+      chart.$readout=readout;chart.$unit=unit;chart.$field=field; charts.push(chart);
       chart.$radiation=NextValues.radiation.includes(field);chart.$raw=data.map(point=>point.y);
       if(chart.$radiation) {
         chart.data.datasets[0].label='全天日射';
