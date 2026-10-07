@@ -88,6 +88,8 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .water-settings-fold summary { cursor:pointer; font-weight:600; }
 .water-settings-fold[open] summary { margin-bottom:4px; }
 .water-common-fold { width:fit-content; max-width:100%; }
+.water-trees-fold { margin-top:8px; }
+.water-trees-fold > summary { cursor:pointer; font-weight:600; }
 #water-common { display:flex; width:fit-content; max-width:100%; gap:10px; }
 .water-settings-grid { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:flex-start; gap:6px; margin:8px 0; }
 .water-settings-grid .water-settings-fold { flex:0 0 150px; width:150px; max-width:100%; margin:0; }
