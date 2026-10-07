@@ -113,9 +113,15 @@ window.NextWater = (() => {
     validate();if(!livePayload)return;
     const settings=settingsFromInputs();
     const last=livePayload.days[livePayload.days.length-1].date;
-    const days=livePayload.days.map(day=>day.date===last?calculate(day.date,day.forecast,settings):(day.snapshot??calculate(day.date,[],null)));
+    const recalculated=[];
+    const days=livePayload.days.map(day=>{
+      if(day.date===last)return calculate(day.date,day.forecast,settings);
+      if(day.snapshot)return day.snapshot;
+      if(day.forecast.length)recalculated.push(day.date);
+      return calculate(day.date,day.forecast,settings);
+    });
     render($('water-charts'),days,'live');
-    $('water-period').textContent=`${days[0].date}〜${last} JST。最後の日のみ入力中の設定で再計算します。前の2日は保存値です。`;
+    $('water-period').textContent=`${days[0].date}〜${last} JST。選択日は入力中の設定で計算します。過去日は保存履歴を優先し、履歴がない日は現在の入力値で再計算します。`+(recalculated.length?` 現在の設定で再計算：${recalculated.join('、')}（当時の保存値ではありません）。`:'');
   }
   async function load(center,initial=false,refresh=false) {
     const sequence=++request;
