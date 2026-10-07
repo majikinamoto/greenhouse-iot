@@ -8,6 +8,7 @@ window.NextWater = (() => {
   const shift=(date,days)=>new Date(Date.parse(date+'T00:00:00Z')+days*86400000).toISOString().slice(0,10);
   const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;};
   const fmt=value=>finite(value)?value.toFixed(2):'未確定';
+  const hourLabel=value=>value.slice(5,10).replace('-','/')+' '+value.slice(11,16)+'～';
   function penman(t,rh,rs,wind,transmission) {
     if (![t,rh,rs,wind,transmission].every(finite) || t<=-237.3 || rh<0 || rh>100) return null;
     const es=6.1078*Math.exp(17.2694*t/(t+237.3));
@@ -58,7 +59,7 @@ window.NextWater = (() => {
       chart.setActiveElements(active);chart.tooltip.setActiveElements(active,{x:index===null?0:chart.scales.x.getPixelForValue(index+.5),y:chart.chartArea.bottom});
       chart.$hour=index;
       const row=index===null?null:chart.$hours[index];
-      chart.$readout.textContent=row?`${row.time.slice(0,16)}〜 JST：${row.litres===null?'欠測・未計算':fmt(row.litres)+' L'} ／ 日累積 ${fmt(row.cumulative)} L${row.cumulative_complete?'':'（欠測・未計算あり）'}`:'ポインタを合わせると6本の時刻が連動します。';chart.draw();
+      chart.$readout.textContent=row?`${hourLabel(row.time)}：${row.litres===null?'欠測・未計算':fmt(row.litres)+' L'} ／ 日累積 ${fmt(row.cumulative)} L${row.cumulative_complete?'':'（欠測・未計算あり）'}`:'ポインタを合わせると6本の時刻が連動します。';chart.draw();
     }
   }
   function render(container,days,mode) {
@@ -70,7 +71,7 @@ window.NextWater = (() => {
     for(let tree=0;tree<6;tree++) {
       const card=text('article','','chart-card');card.append(text('h3',`No.${tree+1}`));
       const summaryDays=mode==='live'?days.slice(-1):days;
-      for(const day of summaryDays) {const value=day.trees[tree];const seconds=value.cycle_seconds;card.append(text('p',`${day.date}：必要水量 ${fmt(value.daily_litres)} L ／ 総時間 ${fmt(value.daily_minutes)} 分 ／ 1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`,'caption'));}
+      for(const day of summaryDays) {const value=day.trees[tree];const seconds=value.cycle_seconds;card.append(text('p',`${mode==='live'?'':day.date+'：'}必要水量 ${fmt(value.daily_litres)} L ／ 総時間 ${fmt(value.daily_minutes)} 分 ／ 1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`,'caption'));}
       const wrapper=text('div','','chart-container'),canvas=document.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`No.${tree+1}の3日間の時間別蒸散量と日累積。詳細はCSVで確認できます。`);wrapper.append(canvas);
       const readout=text('p','ポインタを合わせると6本の時刻が連動します。','chart-readout');card.append(wrapper,readout);container.append(card);
       const hours=days.flatMap(day=>day.trees[tree].hours);
