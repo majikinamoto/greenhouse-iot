@@ -24,6 +24,15 @@ assert.equal(saved.trees.length,6);const canvas=page.locator('#water-charts canv
 assert.equal(await page.locator('#water-charts .chart-readout').filter({hasText:'12:00'}).count(),6);
 assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#water-charts canvas'),c=>Chart.getChart(c).tooltip.getActiveElements().map(e=>e.index))),Array.from({length:6},()=>[60,13]));
 const axes=await page.evaluate(()=>Array.from(document.querySelectorAll('#water-charts canvas'),c=>{const ch=Chart.getChart(c);return [ch.scales.y.max,ch.scales.total.max];}));axes.forEach(axis=>assert.deepEqual(axis,axes[0]));
+assert.equal(await page.locator('#water-charts .chart-readout strong').count(),12);
+assert.equal(await page.locator('#water-charts .caption > strong').count(),6);
+assert.equal(await canvas.evaluate(c=>Chart.getChart(c).options.plugins.tooltip.enabled),false);
+const drag=await canvas.evaluate(c=>{const ch=Chart.getChart(c),r=c.getBoundingClientRect(),a=ch.chartArea;return {x1:r.left+ch.scales.x.getPixelForValue(48),x2:r.left+ch.scales.x.getPixelForValue(68),y1:r.top+a.top+(a.bottom-a.top)*.2,y2:r.top+a.top+(a.bottom-a.top)*.8};});
+await page.mouse.move(drag.x1,drag.y1);await page.mouse.down();await page.mouse.move(drag.x2,drag.y2,{steps:8});await page.mouse.up();
+const zoom=await canvas.evaluate(c=>{const ch=Chart.getChart(c);return [ch.scales.x.min,ch.scales.x.max,ch.scales.y.min,ch.scales.y.max,ch.scales.total.min,ch.scales.total.max];});
+assert.ok(zoom[0]>0 && zoom[1]<72);assert.ok(zoom[3]-zoom[2]<axes[0][0]);assert.ok(zoom[5]-zoom[4]<axes[0][1]);
+await page.locator('#water-charts .chart-reset-button').first().click();
+assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#water-charts canvas'),c=>{const ch=Chart.getChart(c);return [ch.scales.x.min,ch.scales.x.max,ch.scales.y.min,ch.scales.y.max,ch.scales.total.min,ch.scales.total.max];})),axes.map(a=>[0,72,0,a[0],0,a[1]]));
 await page.screenshot({path:path.join(os.tmpdir(),'utech-next-water-desktop.png'),fullPage:true});
 await page.locator('#tab-review').click();await page.locator('#water-history-date').fill('2026-09-10');await page.locator('#water-history-load').click();await page.waitForFunction(()=>document.getElementById('water-history-note').textContent.includes('2026-09-09'));
 assert.match(await page.locator('#water-history-note').textContent(),/2026-09-11/);assert.match(await page.locator('#water-period').textContent(),/2026-10-05〜2026-10-07/);

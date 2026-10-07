@@ -59,7 +59,15 @@ window.NextWater = (() => {
       chart.setActiveElements(active);chart.tooltip.setActiveElements(active,{x:index===null?0:chart.scales.x.getPixelForValue(index+.5),y:chart.chartArea.bottom});
       chart.$hour=index;
       const row=index===null?null:chart.$hours[index];
-      chart.$readout.textContent=row?`${hourLabel(row.time)}：${row.litres===null?'欠測・未計算':fmt(row.litres)+' L'} ／ 日累積 ${fmt(row.cumulative)} L${row.cumulative_complete?'':'（欠測・未計算あり）'}`:'ポインタを合わせると6本の時刻が連動します。';chart.draw();
+      const readout=chart.$readout;readout.replaceChildren();
+      if(!row)readout.append(document.createTextNode('ポインタを合わせると6本の時刻が連動します。'));
+      else {
+        readout.append(document.createTextNode(`${hourLabel(row.time)}　`));
+        const appendNumber=value=>readout.append(value===null?document.createTextNode('欠測・未計算'):text('strong',fmt(value)));
+        appendNumber(row.litres);readout.append(document.createTextNode(' L　日累積 '));
+        appendNumber(row.cumulative);readout.append(document.createTextNode(` L${row.cumulative_complete?'':'（欠測・未計算あり）'}`));
+      }
+      chart.draw();
     }
   }
   function render(container,days,mode) {
@@ -71,14 +79,34 @@ window.NextWater = (() => {
     for(let tree=0;tree<6;tree++) {
       const card=text('article','','chart-card');card.append(text('h3',`No.${tree+1}`));
       const summaryDays=mode==='live'?days.slice(-1):days;
-      for(const day of summaryDays) {const value=day.trees[tree];const seconds=value.cycle_seconds;card.append(text('p',`${mode==='live'?'':day.date+'：'}必要水量 ${fmt(value.daily_litres)} L ／ 総時間 ${fmt(value.daily_minutes)} 分 ／ 1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`,'caption'));}
+      for(const day of summaryDays) {const value=day.trees[tree];const seconds=value.cycle_seconds;const summary=text('p','','caption');summary.append(text('strong',`${mode==='live'?'':day.date+'：'}必要水量 ${fmt(value.daily_litres)} L　総時間 ${fmt(value.daily_minutes)} 分　1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`));card.append(summary);}
       const wrapper=text('div','','chart-container'),canvas=document.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`No.${tree+1}の3日間の時間別蒸散量と日累積。詳細はCSVで確認できます。`);wrapper.append(canvas);
       const readout=text('p','ポインタを合わせると6本の時刻が連動します。','chart-readout');card.append(wrapper,readout);container.append(card);
       const hours=days.flatMap(day=>day.trees[tree].hours);
       const datasets=[{type:'bar',label:'1時間の推定蒸散量 (L)',data:hours.map((h,i)=>({x:i+.5,y:h.litres})),backgroundColor:'rgba(54,162,235,.65)',yAxisID:'y',barThickness:5}];
       days.forEach((day,d)=>datasets.push({type:'line',label:'日累積 (L)',data:[{x:d*24,y:0},...day.trees[tree].hours.map((h,i)=>({x:d*24+i+1,y:h.litres===null?null:h.cumulative}))],borderColor:'#ed8b24',pointRadius:0,borderWidth:2,yAxisID:'total',spanGaps:false}));
       const plugin={id:'waterCrosshair',afterEvent(chart,args){if(args.event.type==='mouseout'){sync(charts,null);return;}if(args.inChartArea && ['mousemove','click','touchstart','touchmove'].includes(args.event.type)){sync(charts,Math.max(0,Math.min(71,Math.floor(chart.scales.x.getValueForPixel(args.event.x)))));args.changed=true;}},afterDraw(chart){const ctx=chart.ctx,a=chart.chartArea;ctx.save();for(const boundary of [0,24,48,72]){const x=chart.scales.x.getPixelForValue(boundary);ctx.strokeStyle='rgba(80,100,120,.25)';ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();}if(chart.$hour!==null && chart.$hour!==undefined){const x=chart.scales.x.getPixelForValue(chart.$hour+.5);ctx.strokeStyle='rgba(0,0,0,.65)';ctx.beginPath();ctx.moveTo(x,a.top);ctx.lineTo(x,a.bottom);ctx.stroke();}ctx.restore();}};
-      const chart=new Chart(canvas,{type:'bar',data:{datasets},plugins:[plugin],options:{animation:false,responsive:true,maintainAspectRatio:false,parsing:false,plugins:{legend:{labels:{filter:item=>item.datasetIndex<2}},tooltip:{callbacks:{title:items=>items.length?hourLabel(hours[Math.min(71,Math.floor(items[0].parsed.x))].time):'',label:item=>`${item.dataset.label}：${fmt(item.parsed.y)}`}}},scales:{x:{type:'linear',min:0,max:72,grid:{display:false},ticks:{stepSize:12,maxRotation:0,callback:value=>{const i=Math.min(71,Math.floor(value));return value===72?'24:00':`${hours[i].time.slice(5,10)} ${hours[i].time.slice(11,16)}`;}}},y:{min:0,max:maxHourly*1.1,title:{display:true,text:'1時間の蒸散量 (L/樹)'}},total:{position:'right',min:0,max:maxDaily*1.1,grid:{drawOnChartArea:false},title:{display:true,text:'日累積 (L/樹)'}}}}});chart.$hours=hours;chart.$readout=readout;charts.push(chart);
+      const drawCrosshair=plugin.afterDraw;
+      plugin.afterDraw=chart=>{
+        const ctx=chart.ctx,a=chart.chartArea;ctx.save();ctx.beginPath();ctx.rect(a.left,a.top,a.right-a.left,a.bottom-a.top);ctx.clip();drawCrosshair(chart);ctx.restore();
+        if(chart.$hour===null || chart.$hour===undefined)return;
+        ctx.save();ctx.font='bold 12px sans-serif';ctx.fillStyle='#111';ctx.textBaseline='middle';const positions=[];
+        for(const [datasetIndex,index] of [[0,chart.$hour],[1+Math.floor(chart.$hour/24),chart.$hour%24+1]]){
+          if(!chart.isDatasetVisible(datasetIndex))continue;
+          const value=chart.data.datasets[datasetIndex].data[index].y,mark=chart.getDatasetMeta(datasetIndex).data[index];
+          if(value===null || !mark || mark.skip || mark.x<a.left || mark.x>a.right || mark.y<a.top || mark.y>a.bottom)continue;
+          const label=fmt(value)+' L',width=ctx.measureText(label).width;
+          let y=Math.max(a.top+8,Math.min(a.bottom-8,mark.y-12));
+          if(positions.some(other=>Math.abs(other-y)<15))y=y-16>=a.top+8?y-16:Math.min(a.bottom-8,y+16);
+          positions.push(y);ctx.fillText(label,mark.x+8+width<=a.right?mark.x+8:Math.max(a.left,mark.x-8-width),y);
+        }
+        ctx.restore();
+      };
+      const chart=new Chart(canvas,{type:'bar',data:{datasets},plugins:[plugin],options:{animation:false,responsive:true,maintainAspectRatio:false,parsing:false,plugins:{legend:{labels:{filter:item=>item.datasetIndex<2}},tooltip:{enabled:false,callbacks:{title:items=>items.length?hourLabel(hours[Math.min(71,Math.floor(items[0].parsed.x))].time):'',label:item=>`${item.dataset.label}：${fmt(item.parsed.y)}`}}},scales:{x:{type:'linear',min:0,max:72,grid:{display:false},ticks:{stepSize:12,maxRotation:0,callback:value=>{const i=Math.min(71,Math.floor(value));return value===72?'24:00':`${hours[i].time.slice(5,10)} ${hours[i].time.slice(11,16)}`;}}},y:{min:0,max:maxHourly*1.1,title:{display:true,text:'1時間の蒸散量 (L/樹)'}},total:{position:'right',min:0,max:maxDaily*1.1,grid:{drawOnChartArea:false},title:{display:true,text:'日累積 (L/樹)'}}}}});chart.$hours=hours;chart.$readout=readout;charts.push(chart);
+      chart.options.plugins.zoom={limits:{x:{min:0,max:72,minRange:1}},pan:{enabled:false},zoom:{wheel:{enabled:false},pinch:{enabled:!matchMedia('(max-width:600px)').matches},drag:{enabled:!matchMedia('(max-width:600px)').matches,backgroundColor:'rgba(30,120,255,.35)',borderColor:'rgba(30,120,255,.8)',borderWidth:1},mode:'xy',onZoomComplete:({chart:changed})=>{for(const other of charts){if(other===changed)continue;other.options.scales.x.min=changed.scales.x.min;other.options.scales.x.max=changed.scales.x.max;other.update('none');}sync(charts,null);}}};
+      const reset=text('button','表示リセット','chart-reset-button');reset.type='button';
+      reset.addEventListener('click',()=>{for(const item of charts){if(item.resetZoom)item.resetZoom('none');item.options.scales.x.min=0;item.options.scales.x.max=72;item.options.scales.y.min=0;item.options.scales.y.max=maxHourly*1.1;item.options.scales.total.min=0;item.options.scales.total.max=maxDaily*1.1;item.update('none');}sync(charts,null);});
+      card.querySelector('h3').append(reset);chart.update('none');
     }
   }
   function frozenDays() {return payload.days.map(day=>day.snapshot??calculate(day.date,[],null));}
