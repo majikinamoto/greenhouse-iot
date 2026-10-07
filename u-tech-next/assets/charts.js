@@ -30,8 +30,23 @@ window.NextCharts = (() => {
       chart.setActiveElements(active);
       chart.tooltip.setActiveElements(active, {x:value === null ? 0 : chart.scales.x.getPixelForValue(value),y:chart.chartArea.bottom});
       const number = value === null ? null : chart.data.datasets[0].data[value].y;
-      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)}　${number === null ? '欠損' : number.toFixed(displayDigits(chart)) + ' ' + chart.$unit}`;
-      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)}　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label.replace('日射','')}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(displayDigits(chart))}`;}).join(' ／ ')+` ${chart.$unit}`;
+      const readout=chart.$readout;
+      readout.replaceChildren();
+      const appendValue=number=>{
+        if(number===null){readout.append(document.createTextNode('欠損'));return;}
+        const strong=document.createElement('strong');strong.textContent=number.toFixed(displayDigits(chart));readout.append(strong);
+      };
+      if(value===null)readout.append(document.createTextNode('グラフに触れると時刻と値を表示します。'));
+      else {
+        readout.append(document.createTextNode(`${time(value)}　`));
+        if(chart.$radiation)chart.data.datasets.forEach((dataset,index)=>{
+          if(index)readout.append(document.createTextNode(' ／ '));
+          readout.append(document.createTextNode(`${dataset.label.replace('日射','')}：`));
+          const raw=chart.$rawSeries[index][value];appendValue(raw===null?null:raw*(chart.$unit==='W/m²'?1:.0036));
+        });
+        else appendValue(number);
+        readout.append(document.createTextNode(` ${chart.$unit}`));
+      }
       chart.draw();
     }
   }
@@ -59,7 +74,7 @@ window.NextCharts = (() => {
         const point=dataset.data[hour];if(!point || point.y===null)return;
         const mark=chart.getDatasetMeta(index).data[hour];if(!mark || mark.skip || mark.y<area.top || mark.y>area.bottom)return;
         const digits=displayDigits(chart);
-        const value=point.y.toFixed(digits),width=ctx.measureText(value).width;
+        const value=point.y.toFixed(digits)+' '+chart.$unit,width=ctx.measureText(value).width;
         const labelX=x+8+width<=area.right?x+8:Math.max(area.left,x-8-width);
         let labelY=Math.max(area.top+8,Math.min(area.bottom-8,mark.y-12));
         // Separate labels when radiation curves meet or nearly overlap.
