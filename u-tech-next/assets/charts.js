@@ -1,25 +1,24 @@
 'use strict';
 window.NextCharts = (() => {
   const definitions = [
-    ['shortwave_radiation','全天日射','W/m²','rgb(255,205,86)'],
+    ['shortwave_radiation','日射','W/m²','rgb(255,205,86)'],
     ['temperature_2m','気温','℃','rgb(255,99,132)'],
     ['relative_humidity_2m','相対湿度','%','rgb(54,162,235)'],
     ['wind_speed_10m','風速','m/s','rgb(75,192,192)'],
     ['vpd','VPD','kPa','rgb(153,102,255)'],
     ['et0','ET0（直前1時間）','mm','rgb(153,102,255)'],
-    ['direct_radiation','直達日射','W/m²','rgb(255,159,64)'],
-    ['diffuse_radiation','散乱日射','W/m²','rgb(54,162,235)'],
   ];
   let charts = [], hour = null;
   const time = value => `${String(Math.round(value)).padStart(2,'0')}:00`;
   function sync(value) {
     hour = value;
     for (const chart of charts) {
-      const active = value === null || chart.data.datasets[0].data[value].y === null ? [] : [{datasetIndex:0,index:value}];
+      const active = value === null ? [] : chart.data.datasets.flatMap((dataset,datasetIndex)=>!chart.isDatasetVisible(datasetIndex) || dataset.data[value].y===null?[]:[{datasetIndex,index:value}]);
       chart.setActiveElements(active);
       chart.tooltip.setActiveElements(active, {x:value === null ? 0 : chart.scales.x.getPixelForValue(value),y:chart.chartArea.bottom});
       const number = value === null ? null : chart.data.datasets[0].data[value].y;
       chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : chart.$radiation?`${chart.$raw[value].toFixed(2)} W/m² ／ ${(chart.$raw[value]*.0036).toFixed(3)} MJ/m²/h`:number.toFixed(2) + ' ' + chart.$unit}`;
+      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)} JST　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(chart.$unit==='W/m²'?2:3)+' '+chart.$unit}`;}).join(' ／ ');
       chart.draw();
     }
   }
@@ -64,13 +63,18 @@ window.NextCharts = (() => {
       chart.$readout=readout;chart.$unit=unit; charts.push(chart);
       chart.$radiation=NextValues.radiation.includes(field);chart.$raw=data.map(point=>point.y);
       if(chart.$radiation) {
-        chart.options.plugins.tooltip.callbacks.label=item=>{const raw=chart.$raw[item.dataIndex];return [`${label}: ${raw.toFixed(2)} W/m²`,`${(raw*.0036).toFixed(3)} MJ/m²/h`];};
+        chart.data.datasets[0].label='全天日射';
+        for(const [key,name,tint] of [['direct_radiation','直達日射','rgb(255,159,64)'],['diffuse_radiation','散乱日射','rgb(54,162,235)']])chart.data.datasets.push({...chart.data.datasets[0],label:name,data:rows.map((row,i)=>({x:i,y:typeof row[key]==='number' && Number.isFinite(row[key])?row[key]:null})),borderColor:tint,backgroundColor:tint,pointBackgroundColor:tint,fill:false});
+        chart.$rawSeries=chart.data.datasets.map(dataset=>dataset.data.map(point=>point.y));
+        chart.options.plugins.legend={display:true,labels:{boxWidth:12,font:{size:10}}};
+        chart.options.plugins.tooltip.callbacks.label=item=>{const raw=chart.$rawSeries[item.datasetIndex][item.dataIndex];return [`${item.dataset.label}: ${raw.toFixed(2)} W/m²`,`${(raw*.0036).toFixed(3)} MJ/m²/h`];};
         const select=document.createElement('select');select.setAttribute('aria-label',`${label}の単位`);
         for(const text of ['W/m²','MJ/m²/h']) {const option=document.createElement('option');option.textContent=text;select.append(option);}
         card.insertBefore(select,wrapper);
-        select.addEventListener('change',()=>{chart.$unit=select.value;chart.data.datasets[0].data=chart.$raw.map((value,i)=>({x:i,y:value===null?null:value*(select.value==='W/m²'?1:.0036)}));chart.options.scales.y.title.text=select.value;heading.firstChild.textContent=`${label} (${select.value})`;chart.update('none');sync(hour);});
+        select.addEventListener('change',()=>{chart.$unit=select.value;chart.data.datasets.forEach((dataset,index)=>{dataset.data=chart.$rawSeries[index].map((value,i)=>({x:i,y:value===null?null:value*(select.value==='W/m²'?1:.0036)}));});chart.options.scales.y.title.text=select.value;heading.firstChild.textContent=`${label} (${select.value})`;chart.update('none');sync(hour);});
+        chart.update('none');
       }
-      if (data.some(point=>point.y===null)) {const note=document.createElement('p');note.className='caption';note.textContent='欠損した時間は線をつないでいません。';card.append(note);}
+      if (chart.data.datasets.some(dataset=>dataset.data.some(point=>point.y===null))) {const note=document.createElement('p');note.className='caption';note.textContent='欠損した時間は線をつないでいません。';card.append(note);}
     }
   }
   return {render,destroy,resize:()=>charts.forEach(chart=>chart.resize()),sync};

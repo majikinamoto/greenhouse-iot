@@ -87,12 +87,12 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.locator('.summary-table tbody tr').count(),12);
     assert.equal(await page.locator('.summary-table').count(),4);
     assert.equal(await page.locator('.summary-table tbody tr').filter({hasText:'平均気温'}).locator('.summary-value').textContent(),'26.0');
-    assert.equal(await page.locator('.chart-card canvas').count(),8);
+    assert.equal(await page.locator('.chart-card canvas').count(),6);
     await page.waitForFunction(()=>typeof Chart !== 'undefined' && Chart.getChart(document.querySelector('canvas')));
-    await page.locator('select[aria-label="全天日射の単位"]').selectOption('MJ/m²/h');
+    await page.locator('select[aria-label="日射の単位"]').selectOption('MJ/m²/h');
     const radiationValue=await page.locator('canvas').first().evaluate(canvas=>Chart.getChart(canvas).data.datasets[0].data[12].y);
     assert.ok(Math.abs(radiationValue-2.52)<1e-10);
-    await page.locator('select[aria-label="全天日射の単位"]').selectOption('W/m²');
+    await page.locator('select[aria-label="日射の単位"]').selectOption('W/m²');
     await page.locator('canvas').first().scrollIntoViewIfNeeded();
     const hover = await page.locator('canvas').first().evaluate(canvas=>{
       const chart=Chart.getChart(canvas), rect=canvas.getBoundingClientRect();
@@ -100,15 +100,15 @@ const server = http.createServer((req,res)=>{
     });
     await page.mouse.move(hover.x,hover.y);
     await page.waitForFunction(()=>document.querySelector('.chart-readout').textContent.includes('12:00 JST'));
-    assert.equal(await page.locator('.chart-readout').filter({hasText:'12:00 JST'}).count(),8);
-    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>Chart.getChart(canvas).tooltip.getActiveElements().map(item=>item.index))),Array.from({length:8},()=>[12]));
+    assert.equal(await page.locator('.chart-readout').filter({hasText:'12:00 JST'}).count(),6);
+    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>Chart.getChart(canvas).tooltip.getActiveElements().map(item=>item.index))),[[12,12,12],...Array.from({length:5},()=>[12])]);
     const drag=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas),rect=canvas.getBoundingClientRect();return {x1:rect.left+chart.scales.x.getPixelForValue(6),x2:rect.left+chart.scales.x.getPixelForValue(18),y:rect.top+chart.chartArea.top+40};});
     await page.mouse.move(drag.x1,drag.y);await page.mouse.down();await page.mouse.move(drag.x2,drag.y,{steps:8});await page.mouse.up();
     await page.waitForFunction(()=>Chart.getChart(document.querySelector('canvas')).scales.x.min>0);
     const ranges=await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];}));
     for (const range of ranges) assert.deepEqual(range,ranges[0]);
     await page.locator('.chart-reset-button').first().click();
-    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];})),Array.from({length:8},()=>[0,23]));
+    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];})),Array.from({length:6},()=>[0,23]));
     await page.locator('#tab-export').click();
     assert.equal(await page.locator('#export-panel').isVisible(),true);
     assert.equal(await page.locator('#forecast-panel').isVisible(),false);
