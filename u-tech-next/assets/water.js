@@ -1,7 +1,7 @@
 'use strict';
 window.NextWater = (() => {
   const version='staff-penman-hourly-v1';
-  let payload=null, livePayload=null, revision=0, token='', liveCharts=[], historyCharts=[], request=0;
+  let livePayload=null, revision=0, token='', liveCharts=[], request=0;
   const $=id=>document.getElementById(id);
   const number=id=>$(id).value.trim()===''?null:Number($(id).value);
   const finite=value=>typeof value==='number' && Number.isFinite(value);
@@ -71,8 +71,8 @@ window.NextWater = (() => {
     }
   }
   function render(container,days,mode) {
-    const old=mode==='live'?liveCharts:historyCharts;old.forEach(chart=>chart.destroy());
-    const charts=[];if(mode==='live')liveCharts=charts;else historyCharts=charts;container.replaceChildren();
+    liveCharts.forEach(chart=>chart.destroy());
+    const charts=[];liveCharts=charts;container.replaceChildren();
     if(!window.Chart){container.append(text('p','グラフを読み込めません。保存値はCSVで確認できます。'));return;}
     const maxHourly=Math.max(1,...days.flatMap(day=>day.trees.flatMap(tree=>tree.hours.map(h=>h.litres??0))));
     const maxDaily=Math.max(1,...days.flatMap(day=>day.trees.map(tree=>tree.partial_litres)));
@@ -109,7 +109,6 @@ window.NextWater = (() => {
       card.querySelector('h3').append(reset);chart.update('none');
     }
   }
-  function frozenDays() {return payload.days.map(day=>day.snapshot??calculate(day.date,[],null));}
   function preview() {
     validate();if(!livePayload)return;
     const settings=settingsFromInputs();
@@ -126,9 +125,8 @@ window.NextWater = (() => {
         if(!livePayload || signature(livePayload)!==signature(data)){livePayload=data;preview();}
         return;
       }
-      payload=data;token=data.token;if(initial){livePayload=data;revision=data.revision;fill(data.settings);}
-      $('water-history-date').value=data.center;preview();render($('water-history-charts'),frozenDays(),'history');
-      $('water-history-note').textContent=`${shift(data.center,-1)}〜${shift(data.center,1)}。各日は前日18:10からの取得処理で採用した予報・当時の設定を使用します。履歴のない日は未計算です。`;
+      token=data.token;if(initial){livePayload=data;revision=data.revision;fill(data.settings);}
+      preview();
     }catch(error){$('water-message').textContent=error.message;}
   }
   function csv(days) {
@@ -141,8 +139,6 @@ window.NextWater = (() => {
     input('water-transmission','平均日射透過率 (%)',$('water-common'),{max:100});input('water-wind','ハウス内風速 (m/s)',$('water-common'));input('water-cycles','1日のかん水回数',$('water-common'),{min:1,integer:true});
     for(let i=0;i<6;i++){const group=text('fieldset','','water-settings-fold');group.append(text('legend',`No.${i+1}`));input(`water-area-${i}`,'葉面積 (m²)',group,{min:.000001});input(`water-kc-${i}`,'作物係数 Kc',group);input(`water-flow-${i}`,'ノズル吐出量 (L/分)',group,{min:.000001});$('water-trees').append(group);}
     $('water-save').addEventListener('click',async()=>{if(!validate())return;$('water-save').disabled=true;try{const response=await fetch('api/water.php',{method:'POST',headers:{'Content-Type':'application/json','X-Water-Token':token},body:JSON.stringify({revision,settings:settingsFromInputs()})});const data=await response.json();if(!response.ok || !data.success)throw new Error(data.message);revision=data.revision;$('water-message').textContent='共通設定を保存しました。次の予報取得から使用します。過去の履歴は変更しません。';}catch(error){$('water-message').textContent=error.message;}finally{validate();}});
-    $('water-history-load').addEventListener('click',()=>{if($('water-history-date').reportValidity())load($('water-history-date').value);});
-    $('water-history-csv').addEventListener('click',()=>{if(payload)download(frozenDays(),`utech-next-water_${payload.center}.csv`);});
     $('water-export').addEventListener('click',async()=>{
       const start=$('csv-start'),end=$('csv-end');if(!start.reportValidity() || !end.reportValidity())return;const count=(Date.parse(end.value.slice(0,10)+'T00:00:00Z')-Date.parse(start.value.slice(0,10)+'T00:00:00Z'))/86400000+1;
       if(start.value>end.value || !Number.isFinite(count) || count>366){$('water-export-message').textContent='期間は開始日時から366日以内にしてください。';return;}
@@ -151,5 +147,5 @@ window.NextWater = (() => {
     validate();load(null,true);
     setInterval(()=>{if(!document.hidden && livePayload)load(null,false,true);},60000);
   }
-  return {initialize,penman,calculate,csv,resize:()=>[...liveCharts,...historyCharts].forEach(chart=>chart.resize())};
+  return {initialize,penman,calculate,csv,resize:()=>liveCharts.forEach(chart=>chart.resize())};
 })();

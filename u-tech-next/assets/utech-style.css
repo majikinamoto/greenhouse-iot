@@ -39,9 +39,9 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .chart-container { position:relative; width:100%; min-width:0; height:250px; }
 .chart-readout { color:#000; font-size:12px; min-height:18px; margin:4px 0 0; }
 #export-panel { max-width:1120px; margin:0; padding:14px; border:2px solid #b7cddd; background:#fff; text-align:left; }
-#export-panel select,#export-panel input[type="datetime-local"] { min-height:28px; height:28px; padding:2px 5px; font-size:12px; }
-#csv-mode { width:205px; max-width:100%; }
-#csv-start,#csv-end { width:180px; max-width:100%; }
+#export-panel select,#export-panel input[type="datetime-local"] { min-height:24px; height:24px; padding:1px 4px; font-size:11px; }
+#csv-mode { width:185px; max-width:100%; }
+#csv-start,#csv-end { width:165px; max-width:100%; }
 #export-panel .export-actions > label,#export-panel > label { font-size:12px; }
 .export-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:12px 0; }
 .csv-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:10px; }
@@ -110,11 +110,9 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 
 /* Keep navigation, review controls and daily summary compact at every width. */
 .next-tabs { gap:4px; margin:12px 0; }
-.next-tabs button,#water-save,#water-history-load,#water-history-csv {
+.next-tabs button,#water-save {
   min-height:28px; min-width:0; padding:3px 8px; font-size:12px;
 }
-#water-history-date { width:128px; min-height:28px; height:28px; padding:2px 5px; font-size:12px; }
-#water-review-panel > label { font-size:12px; }
 .summary-table-wrap { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:8px; }
 .summary-table { flex:0 0 260px; width:260px; max-width:100%; font-size:12px; }
 .summary-table th,.summary-table td { padding:5px 6px; }
