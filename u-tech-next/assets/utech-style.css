@@ -4,7 +4,13 @@ main { max-width: 1650px; padding: 20px; }
 a { color: #3f6388; }
 .hero { gap: 16px; background: #dbe3ec; padding: 20px; border: 1px solid #c7d0da; border-radius: 6px 6px 0 0; }
 .brand { display: flex; align-items: center; gap: 28px; min-width: 0; }
-.brand-title-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 28px; }
+.brand-title-row { position:relative; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 28px; }
+.brand-title-info { display:inline-flex; align-items:center; gap:8px; }
+.hero .logo-info-button { flex-shrink:0; width:32px; height:32px; min-width:0; min-height:0; padding:0; border:1px solid #aeb9c5; border-radius:50%; background:#f7fbff; color:#25384d; font-size:16px; line-height:30px; cursor:pointer; }
+.hero .logo-info-button:hover { background:#eef3f7; }
+.hero .logo-info-popup { position:absolute; top:calc(100% + 6px); left:0; z-index:20; width:360px; max-width:calc(100vw - 100px); max-height:70vh; overflow-y:auto; padding:10px 12px; border:1px solid #aeb9c5; border-radius:6px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,.16); color:#1f3038; font-size:13px; line-height:1.6; }
+.hero .logo-info-popup p { margin:0 0 10px; color:inherit; }
+.hero .logo-info-popup p:last-child { margin-bottom:0; }
 .logo-mark { position: relative; flex: 0 0 52px; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px; border: 2px solid rgba(255,255,255,.75); background: linear-gradient(145deg,#2f4f6f,#5f7f9f); box-shadow: 0 4px 10px rgba(47,79,111,.25); color: #fff; font-size: 30px; font-weight: 800; }
 .logo-mark::after { content: ''; position: absolute; left: 9px; right: 9px; bottom: 7px; height: 3px; background: rgba(255,255,255,.75); border-radius: 3px; }
 .logo-letter-u { transform:translate(-3px,2px); line-height:1; text-shadow:0 1px 2px rgba(0,0,0,.18); }

@@ -1,5 +1,22 @@
 'use strict';
 
+const nextInfoButton = document.getElementById('next-info-button');
+const nextInfoPopup = document.getElementById('next-info-popup');
+function setNextInfoOpen(open) {
+  nextInfoPopup.hidden = !open;
+  nextInfoButton.setAttribute('aria-expanded', String(open));
+}
+nextInfoButton.addEventListener('click', () => setNextInfoOpen(nextInfoPopup.hidden));
+document.addEventListener('click', event => {
+  if (!nextInfoPopup.contains(event.target) && !nextInfoButton.contains(event.target)) setNextInfoOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !nextInfoPopup.hidden) {
+    setNextInfoOpen(false);
+    nextInfoButton.focus();
+  }
+});
+
 const fields = [
   ['temperature_2m','気温','℃'],['relative_humidity_2m','湿度','%'],['dew_point_2m','露点','℃'],
   ['vpd','VPD','kPa'],['shortwave_radiation','全天日射','W/m²'],['direct_radiation','直達日射','W/m²'],
