@@ -116,6 +116,10 @@
 .site-switch-link:hover {
     background:#eef3f7;
 }
+#siteSwitchDialog { width:300px; max-width:calc(100vw - 40px); padding:18px; border:1px solid #8fa0b3; border-radius:8px; color:#25384d; }
+#siteSwitchDialog::backdrop { background:rgba(0,0,0,0.3); }
+#siteSwitchDialog input { width:100%; box-sizing:border-box; margin:8px 0; }
+#siteSwitchError { color:#b00020; font-size:13px; }
 .logo-info-button {
     width:32px;
     height:32px;
@@ -2939,6 +2943,17 @@ body.data-export-active .control-panel {
 
 <body>
 
+<dialog id="siteSwitchDialog" aria-labelledby="siteSwitchTitle" onclose="resetSiteSwitchDialog()">
+    <form onsubmit="submitSiteSwitchPassword(event)">
+        <h3 id="siteSwitchTitle">移動先の確認</h3>
+        <label for="siteSwitchPassword">パスワード</label>
+        <input id="siteSwitchPassword" type="password" inputmode="numeric" autocomplete="off" required>
+        <p id="siteSwitchError" role="alert"></p>
+        <button type="submit">移動する</button>
+        <button type="button" onclick="document.getElementById('siteSwitchDialog').close()">キャンセル</button>
+    </form>
+</dialog>
+
 <div class="fixed-header">
 
 <header class="logo-header">
@@ -2949,8 +2964,8 @@ body.data-export-active .control-panel {
         <div class="logo-title-row">
             <div class="logo-title">U-Tech</div>
             <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
-            <a class="site-switch-link" href="u-tech-next/" aria-label="U-Tech Nextへ移動">U-Tech Nextへ移動</a>
-            <a class="site-switch-link" href="yui-tech/" aria-label="Yui-Techへ移動">Yui-Techへ移動</a>
+            <button type="button" class="site-switch-link" onclick="openSiteSwitchDialog('next')" aria-label="U-Tech Nextへ移動">U-Tech Nextへ移動</button>
+            <button type="button" class="site-switch-link" onclick="openSiteSwitchDialog('yui')" aria-label="Yui-Techへ移動">Yui-Techへ移動</button>
             <div id="logoInfoPopup" class="logo-info-popup">
                 <div>U-Techの「U」には、</div>
                 <div>User（利用者）</div>
@@ -4913,6 +4928,40 @@ window.addEventListener("DOMContentLoaded", ()=>{
     loadTomorrowForecast();
     setInterval(updateHeaderTimeInfo, 60*1000);
 });
+
+let pendingSiteSwitchUrl = "";
+
+function resetSiteSwitchDialog(){
+    pendingSiteSwitchUrl = "";
+    document.getElementById("siteSwitchPassword").value = "";
+    document.getElementById("siteSwitchError").textContent = "";
+}
+
+function openSiteSwitchDialog(destination){
+    const destinations = {
+        next:{ url:"u-tech-next/", title:"U-Tech Nextへ移動" },
+        yui:{ url:"yui-tech/", title:"Yui-Techへ移動" }
+    };
+    const target = destinations[destination];
+    if(!target) return;
+    resetSiteSwitchDialog();
+    pendingSiteSwitchUrl = target.url;
+    document.getElementById("siteSwitchTitle").textContent = target.title;
+    document.getElementById("siteSwitchDialog").showModal();
+    document.getElementById("siteSwitchPassword").focus();
+}
+
+function submitSiteSwitchPassword(event){
+    event.preventDefault();
+    const input = document.getElementById("siteSwitchPassword");
+    if(input.value !== "8515"){
+        document.getElementById("siteSwitchError").textContent = "パスワードが違います。";
+        input.value = "";
+        input.focus();
+        return;
+    }
+    if(pendingSiteSwitchUrl) window.location.assign(pendingSiteSwitchUrl);
+}
 
 function toggleLogoInfo(){
     const popup = document.getElementById("logoInfoPopup");
