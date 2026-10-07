@@ -3160,7 +3160,7 @@ body.data-export-active .control-panel {
     <div data-main-graph="mainVaporChart">
         <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="mainVaporMin"> ～
+            <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="mainVaporMin" value="0" readonly aria-label="縦軸最小値（0固定）"> ～
             <input class="axis-input" type="number" id="mainVaporMax">
             <button onclick="applyMainVaporYAxis(mainVaporChart)">縦軸反映</button>
         </div>
@@ -3672,7 +3672,7 @@ body.data-export-active .control-panel {
         <div>
             <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin"> ～
+                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin" value="0" readonly aria-label="縦軸最小値（0固定）"> ～
                 <input class="axis-input" type="number" id="reviewVaporMax">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
             </div>
@@ -4348,7 +4348,7 @@ let co2DiffMax = 250;
 const reviewAxisDefaults = {
     tempHum:{ humMin:40, humMax:100, tempMin:20, tempMax:40 },
     outsideDiff:{ min:-1, max:5 },
-    vapor:{ min:undefined, max:undefined },
+    vapor:{ min:0, max:undefined },
     solar:{ min:undefined, max:undefined },
     co2:{ min:200, max:500 },
     co2Outside:{ min:200, max:500 },
@@ -10672,6 +10672,31 @@ function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, m
     return new Chart(canvas,{type:"line",data:{datasets:[{label:(isTemp ? "温度" : "湿度")+" ("+unit+")",data:data,borderColor:color,backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",pointBackgroundColor:color,pointRadius:0,borderWidth:2,tension:0.2,fill:true}]},options:options});
 }
 
+const vaporTargetBandPlugin = {
+    id:"vaporTargetBand",
+    beforeUpdate(chart){
+        if(!["mainVaporChart", "reviewVaporChart"].includes(chart.canvas.id)) return;
+        chart.options.scales.y.min = 0;
+        chart.options.scales.yRight.min = 0;
+    },
+    beforeDatasetsDraw(chart){
+        if(!["mainVaporChart", "reviewVaporChart"].includes(chart.canvas.id)) return;
+        const area = chart.chartArea;
+        const scale = chart.scales.y;
+        if(!area || !scale) return;
+        const min = Math.max(5, scale.min);
+        const max = Math.min(10, scale.max);
+        if(max <= min) return;
+        const top = Math.max(area.top, scale.getPixelForValue(max));
+        const bottom = Math.min(area.bottom, scale.getPixelForValue(min));
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.fillStyle = "rgba(31, 143, 95, 0.12)";
+        ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
+        ctx.restore();
+    }
+};
+
 function createVaporChart(canvasId, parsed, minTime, maxTime){
 
     const canvas = getChartCanvas(canvasId);
@@ -10722,6 +10747,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
 
     return new Chart(canvas,{
         type:"line",
+        plugins:[vaporTargetBandPlugin],
         data:{
             datasets:[
 {
@@ -12793,21 +12819,19 @@ function applySingleYAxis(chart, key, axisOverride){
 function applyMainVaporYAxis(chart){
     if(!chart) return;
 
-    const minInput = document.getElementById("mainVaporMin");
     const maxInput = document.getElementById("mainVaporMax");
-    const minText = minInput ? String(minInput.value).trim() : "";
     const maxText = maxInput ? String(maxInput.value).trim() : "";
 
-    if(minText === "" && maxText === ""){
-        setLinearYAxis(chart, { min:undefined, max:undefined });
+    if(maxText === ""){
+        setLinearYAxis(chart, { min:0, max:undefined });
         chart.update();
         return;
     }
 
-    const min = getFiniteInputValue("mainVaporMin");
+    const min = 0;
     const max = getFiniteInputValue("mainVaporMax");
-    if(min === null || max === null || min >= max){
-        alert("飽差軸には有効な最小値と最大値を入力してください。");
+    if(max === null || min >= max){
+        alert("飽差軸の最大値には0より大きい値を入力してください。");
         return;
     }
 
