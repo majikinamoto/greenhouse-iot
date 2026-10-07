@@ -2084,21 +2084,22 @@ body.data-export-active .control-panel {
 [data-main-info] > .status-group-title {
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:8px;
+    justify-content:flex-start;
+    gap:4px;
 }
 
 .status-card-toggle {
     flex-shrink:0;
-    min-width:44px;
-    min-height:44px;
-    padding:4px 8px;
-    border:1px solid #60758a;
-    border-radius:6px;
-    background:#fff;
+    min-width:0;
+    min-height:0;
+    padding:2px;
+    border:0;
+    border-radius:0;
+    background:transparent;
     color:#1f3d33;
     cursor:pointer;
-    font-size:14px;
+    font-size:11px;
+    line-height:1;
 }
 
 [data-main-info].is-collapsed > :not(.status-group-title) {
@@ -2945,6 +2946,7 @@ body.data-export-active .control-panel {
             <div class="logo-title">U-Tech</div>
             <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
             <a class="site-switch-link" href="yui-tech/" aria-label="Yui-Techへ移動">Yui-Techへ移動</a>
+            <a class="site-switch-link" href="u-tech-next/" aria-label="U-Tech Nextへ移動">U-Tech Nextへ移動</a>
             <div id="logoInfoPopup" class="logo-info-popup">
                 <div>U-Techの「U」には、</div>
                 <div>User（利用者）</div>
@@ -4719,7 +4721,7 @@ function initializeMainInfoCollapse(){
             button.setAttribute("aria-expanded", String(!collapsed));
             button.setAttribute("aria-label", titleText + (collapsed ? "を開く" : "を折り畳む"));
         });
-        title.appendChild(button);
+        title.prepend(button);
     });
 }
 
