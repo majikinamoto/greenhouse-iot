@@ -156,10 +156,10 @@ const server = http.createServer((req,res)=>{
     assert.match(await page.locator('#fetched-at').textContent(),/18:15:04 JST/);
     const et0=page.locator('.summary-table tbody tr').filter({hasText:'日積算ET0'});
     assert.match(await et0.textContent(),/2\.40/);
-    await page.locator('.hourly summary').click();
+    await page.locator('.hourly > summary').click();
     assert.equal(await page.locator('#hourly-table tbody tr').count(),25);
     assert.match(await page.locator('#hourly-table tbody tr').last().textContent(),/2026-10-05 00:00/);
-    await page.locator('.hourly summary').click();
+    await page.locator('.hourly > summary').click();
     await page.screenshot({path:path.join(os.tmpdir(),'utech-next-desktop.png'),fullPage:true});
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth),true);
