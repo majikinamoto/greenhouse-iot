@@ -4,8 +4,12 @@ main { max-width: 1650px; padding: 20px; }
 a { color: #3f6388; }
 .hero { gap: 16px; background: #dbe3ec; padding: 20px; border: 1px solid #c7d0da; border-radius: 6px 6px 0 0; }
 .brand { display: flex; align-items: center; gap: 28px; min-width: 0; }
+.brand-title-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 28px; }
 .logo-mark { position: relative; flex: 0 0 52px; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px; border: 2px solid rgba(255,255,255,.75); background: linear-gradient(145deg,#2f4f6f,#5f7f9f); box-shadow: 0 4px 10px rgba(47,79,111,.25); color: #fff; font-size: 30px; font-weight: 800; }
 .logo-mark::after { content: ''; position: absolute; left: 9px; right: 9px; bottom: 7px; height: 3px; background: rgba(255,255,255,.75); border-radius: 3px; }
+.logo-letter-u { transform:translate(-3px,2px); line-height:1; text-shadow:0 1px 2px rgba(0,0,0,.18); }
+.logo-letter-n { position:absolute; top:4px; right:5px; color:#d9f2ff; font-size:13px; font-weight:800; line-height:1; text-shadow:0 1px 2px rgba(0,0,0,.25); }
+@media(max-width:600px) { .logo-letter-u { transform:translate(-2px,2px); }.logo-letter-n { top:3px; right:3px; font-size:10px; } }
 .hero h1 { margin: 0; font-size: 28px; line-height: 1.2; letter-spacing: .5px; font-weight: 800; }
 .hero h1 span { color: #3f6388; }.hero p { margin: 4px 0 0; color: #42566b; }
 .eyebrow { font-size: 13px; letter-spacing: 0; }.hero .subtitle { font-size: 12px; color: #5b6c7f; letter-spacing: 1px; }

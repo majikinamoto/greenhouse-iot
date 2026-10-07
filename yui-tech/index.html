@@ -2449,10 +2449,9 @@ body.data-export-active .control-panel {
 <section id="tab-monitor" class="tab-panel tab-panel-monitor active" role="tabpanel">
 <div class="status-container">
 <div class="status-group status-group-current yui-current-status">
-<div class="status-group-title">現在状況</div>
+<div class="status-group-title">現在状況　屋外（P11）</div>
 <div class="yui-current-status-grid">
 <div class="yui-current-status-section">
-<div class="yui-current-status-title">屋外（P11）</div>
 <div class="status-box">💧 湿度：<span id="humNowP11">-</span>%</div>
 <div class="status-box">🌡️ 温度：<span id="tempNowP11">-</span>℃</div>
 </div>
@@ -10166,10 +10165,31 @@ body.yui-tech-app .yui-current-status {
     gap:10px;
     align-self:flex-start;
 }
+body.yui-tech-app #tab-monitor .status-container > .status-group > .status-group-title {
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+body.yui-tech-app .status-card-toggle {
+    flex-shrink:0;
+    min-width:0;
+    min-height:0;
+    padding:2px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:#1f3d33;
+    cursor:pointer;
+    font-size:11px;
+    line-height:1;
+}
+body.yui-tech-app #tab-monitor .status-group.is-collapsed > :not(.status-group-title) {
+    display:none;
+}
 body.yui-tech-app .yui-current-status > .status-group-title {
-    font-size:18px;
-    line-height:1.3;
-    text-align:center;
+    font-size:13px;
+    line-height:1;
+    text-align:left;
 }
 body.yui-tech-app .yui-current-status-grid {
     display:grid;
@@ -10209,7 +10229,7 @@ body.yui-tech-app .yui-current-status .status-box {
         gap:8px;
     }
     body.yui-tech-app .yui-current-status > .status-group-title {
-        font-size:16px;
+        font-size:13px;
     }
     body.yui-tech-app .yui-current-status-grid {
         grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -10314,6 +10334,27 @@ body.yui-tech-app .yui-current-status .status-box {
         if(title) title.textContent = "地域こよみ";
     }
 
+    function initializeYuiInfoCollapse(){
+        document.querySelectorAll("#tab-monitor .status-container > .status-group").forEach(card=>{
+            const title = card.querySelector(".status-group-title");
+            if(!title || title.querySelector(".status-card-toggle")) return;
+            const titleText = title.textContent;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "status-card-toggle";
+            button.textContent = "▲";
+            button.setAttribute("aria-expanded", "true");
+            button.setAttribute("aria-label", titleText + "を折り畳む");
+            button.addEventListener("click", ()=>{
+                const collapsed = card.classList.toggle("is-collapsed");
+                button.textContent = collapsed ? "▼" : "▲";
+                button.setAttribute("aria-expanded", String(!collapsed));
+                button.setAttribute("aria-label", titleText + (collapsed ? "を開く" : "を折り畳む"));
+            });
+            title.prepend(button);
+        });
+    }
+
     function configureYuiLabels(){
         document.title = "Yui-Tech Monitor";
         const logoInfoPopup = document.getElementById("logoInfoPopup");
@@ -10330,7 +10371,7 @@ body.yui-tech-app .yui-current-status .status-box {
         text(".farm-calendar-title", "地域こよみ");
         normalizeYuiFarmCalendarTitle();
         document.querySelectorAll(".tab-button-maintenance").forEach(button=>button.textContent = "メンテナンス");
-        text(".status-group-current .status-group-title", "現在状況");
+        text(".status-group-current .status-group-title", "現在状況　屋外（P11）");
         const reviewDescription = document.querySelector("#tab-review .analysis-description");
         if(reviewDescription) reviewDescription.textContent = "過去の屋外環境データを、メインタブと同じ見やすいグラフで確認できます。P11の温湿度とP41の雨量を中心に振り返れます。";
         document.querySelectorAll("summary").forEach(summary=>{
@@ -10854,7 +10895,7 @@ body.yui-tech-app .yui-current-status .status-box {
     window.loadData = loadYuiTechMainDataOnly;
     window.loadReviewData = loadYuiTechReviewDataOnly;
     window.loadMaintenanceData = loadYuiTechMaintenanceDataOnly;
-    window.addEventListener("DOMContentLoaded", ()=>{ configureYuiLabels(); configureYuiTabs(); configureYuiCharts(); ensureDailyPanel(); configureCsvDefaults(); });
+    window.addEventListener("DOMContentLoaded", ()=>{ configureYuiLabels(); configureYuiTabs(); configureYuiCharts(); ensureDailyPanel(); configureCsvDefaults(); initializeYuiInfoCollapse(); });
 })();
 </script>
 </body>
