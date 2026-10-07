@@ -61,6 +61,19 @@ window.NextCharts = (() => {
       }
     },
     afterDraw(chart) {
+      // Use all 24 hours, including nighttime, independently of the zoom range.
+      const ctxMean=chart.ctx, meanArea=chart.chartArea;
+      chart.$means=chart.data.datasets.map(dataset=>dataset.data.length===24 && dataset.data.every(point=>Number.isFinite(point.y))?dataset.data.reduce((sum,point)=>sum+point.y,0)/24:null);
+      ctxMean.save();ctxMean.beginPath();ctxMean.rect(meanArea.left,meanArea.top,meanArea.right-meanArea.left,meanArea.bottom-meanArea.top);ctxMean.clip();
+      ctxMean.setLineDash([6,4]);ctxMean.lineWidth=1.5;
+      chart.$means.forEach((mean,index)=>{
+        if(mean===null || !chart.isDatasetVisible(index))return;
+        const y=chart.scales.y.getPixelForValue(mean);
+        ctxMean.strokeStyle=chart.data.datasets[index].borderColor;
+        ctxMean.beginPath();ctxMean.moveTo(meanArea.left,y);ctxMean.lineTo(meanArea.right,y);ctxMean.stroke();
+      });
+      ctxMean.restore();
+      if(chart.$meanReadout)chart.$meanReadout.textContent='破線：24時間平均　'+chart.data.datasets.map((dataset,index)=>`${dataset.label.replace('日射','')} ${chart.$means[index]===null?'欠損のため未算出':chart.$means[index].toFixed(displayDigits(chart))+' '+chart.$unit}`).join('　');
       if (hour === null) return;
       const x = chart.scales.x.getPixelForValue(hour), area = chart.chartArea;
       if (x < area.left || x > area.right) return;
@@ -108,6 +121,7 @@ window.NextCharts = (() => {
         scales:{x:{type:'linear',min:0,max:23,grid:{drawOnChartArea:false},ticks:{color:'#000',stepSize:3,maxTicksLimit:7,maxRotation:0,callback:time}},y:{ticks:{color:'#000'},title:{display:true,text:unit,color:'#000'}},yRight:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits:scale=>{const left=scale.chart.scales.y;scale.min=left.min;scale.max=left.max;}}},
       }});
       chart.$readout=readout;chart.$unit=unit;chart.$field=field; charts.push(chart);
+      const meanReadout=document.createElement('p');meanReadout.className='caption';card.append(meanReadout);chart.$meanReadout=meanReadout;
       chart.$radiation=NextValues.radiation.includes(field);chart.$raw=data.map(point=>point.y);
       if(chart.$radiation) {
         chart.data.datasets[0].label='全天日射';
@@ -122,6 +136,7 @@ window.NextCharts = (() => {
         chart.update('none');
       }
       if (chart.data.datasets.some(dataset=>dataset.data.some(point=>point.y===null))) {const note=document.createElement('p');note.className='caption';note.textContent='欠損した時間は線をつないでいません。';card.append(note);}
+      chart.draw();
     }
   }
   return {render,destroy,resize:()=>charts.forEach(chart=>chart.resize()),sync};

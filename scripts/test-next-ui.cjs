@@ -89,9 +89,15 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.locator('.summary-table tbody tr').filter({hasText:'平均気温'}).locator('.summary-value').textContent(),'26.0');
     assert.equal(await page.locator('.chart-card canvas').count(),6);
     await page.waitForFunction(()=>typeof Chart !== 'undefined' && Chart.getChart(document.querySelector('canvas')));
+    const means=await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>Chart.getChart(canvas).$means));
+    assert.deepEqual(means.map(values=>values.length),[3,1,1,1,1,1]);
+    assert.ok(Math.abs(means[1][0]-26)<1e-10);
+    assert.ok(Math.abs(means[2][0]-80)<1e-10);
+    assert.ok(means[0][0]>0 && means[0][0]<350);
     await page.locator('select[aria-label="日射の単位"]').selectOption('MJ/m²/h');
     const radiationValue=await page.locator('canvas').first().evaluate(canvas=>Chart.getChart(canvas).data.datasets[0].data[12].y);
     assert.ok(Math.abs(radiationValue-2.52)<1e-10);
+    assert.ok(Math.abs(await page.locator('canvas').first().evaluate(canvas=>Chart.getChart(canvas).$means[0])-means[0][0]*.0036)<1e-10);
     await page.locator('select[aria-label="日射の単位"]').selectOption('W/m²');
     await page.locator('canvas').first().scrollIntoViewIfNeeded();
     const hover = await page.locator('canvas').first().evaluate(canvas=>{
@@ -108,6 +114,7 @@ const server = http.createServer((req,res)=>{
     await page.waitForFunction(()=>Chart.getChart(document.querySelector('canvas')).scales.x.min>0);
     const ranges=await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.x.min,chart.scales.x.max];}));
     for (const range of ranges) assert.deepEqual(range,ranges[0]);
+    assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>Chart.getChart(canvas).$means)),means);
     const zoomedY=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.y.min,chart.scales.y.max];});
     assert.ok(zoomedY[1]-zoomedY[0]<originalY[0][1]-originalY[0][0]);
     // Reset from a different graph also restores the selected graph's y axis.
@@ -181,6 +188,7 @@ const server = http.createServer((req,res)=>{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth),true);
     await page.screenshot({path:path.join(os.tmpdir(),'utech-next-mobile.png'),fullPage:true});
     await choose('2026-10-05');
+    assert.equal(await page.locator('#charts canvas').nth(2).evaluate(canvas=>Chart.getChart(canvas).$means[0]),null);
     await page.evaluate(()=>NextCharts.sync(5));
     assert.match(await page.locator('.chart-card').filter({hasText:'相対湿度'}).locator('.chart-readout').textContent(),/05:00.*欠損/);
     await page.locator('#tab-export').click();
