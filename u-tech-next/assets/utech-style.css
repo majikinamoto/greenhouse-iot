@@ -38,7 +38,11 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .chart-reset-button { margin:0; min-height:0; min-width:0; padding:3px 8px; font-size:12px; white-space:nowrap; }
 .chart-container { position:relative; width:100%; min-width:0; height:280px; }
 .chart-readout { color:#000; font-size:12px; min-height:18px; margin:4px 0 0; }
-#export-panel { max-width:1120px; margin:0 auto; padding:14px; border:2px solid #b7cddd; background:#fff; }
+#export-panel { max-width:1120px; margin:0; padding:14px; border:2px solid #b7cddd; background:#fff; text-align:left; }
+#export-panel select,#export-panel input[type="datetime-local"] { min-height:28px; height:28px; padding:2px 5px; font-size:12px; }
+#csv-mode { width:205px; max-width:100%; }
+#csv-start,#csv-end { width:180px; max-width:100%; }
+#export-panel .export-actions > label,#export-panel > label { font-size:12px; }
 .export-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:12px 0; }
 .csv-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:10px; }
 .csv-groups details { border:1px solid #b7cddd; border-radius:5px; background:#f8fbfd; }
