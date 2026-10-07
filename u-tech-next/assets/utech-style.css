@@ -123,3 +123,5 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .summary-table th:nth-child(3) { width:82px; }
 .summary-table .summary-value { font-size:14px; }
 .summary-table .summary-unit { font-size:11px; }
+.chart-card .chart-reset-button { min-height:20px; height:20px; min-width:0; padding:1px 4px; font-size:10px; line-height:1.2; }
+.chart-card > select { min-height:20px; height:20px; width:88px; padding:0 2px; font-size:10px; line-height:1.2; }

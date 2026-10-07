@@ -69,7 +69,8 @@ window.NextWater = (() => {
     const maxDaily=Math.max(1,...days.flatMap(day=>day.trees.map(tree=>tree.partial_litres)));
     for(let tree=0;tree<6;tree++) {
       const card=text('article','','chart-card');card.append(text('h3',`No.${tree+1}`));
-      for(const day of days) {const value=day.trees[tree];const seconds=value.cycle_seconds;card.append(text('p',`${day.date}：必要水量 ${fmt(value.daily_litres)} L ／ 総時間 ${fmt(value.daily_minutes)} 分 ／ 1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`,'caption'));}
+      const summaryDays=mode==='live'?days.slice(-1):days;
+      for(const day of summaryDays) {const value=day.trees[tree];const seconds=value.cycle_seconds;card.append(text('p',`${day.date}：必要水量 ${fmt(value.daily_litres)} L ／ 総時間 ${fmt(value.daily_minutes)} 分 ／ 1回 ${seconds===null?'未確定':Math.floor(seconds/60)+'分'+seconds%60+'秒'}${value.complete?'':'（欠測・未計算あり）'}`,'caption'));}
       const wrapper=text('div','','chart-container'),canvas=document.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`No.${tree+1}の3日間の時間別蒸散量と日累積。詳細はCSVで確認できます。`);wrapper.append(canvas);
       const readout=text('p','ポインタを合わせると6本の時刻が連動します。','chart-readout');card.append(wrapper,readout);container.append(card);
       const hours=days.flatMap(day=>day.trees[tree].hours);
