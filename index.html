@@ -2081,6 +2081,30 @@ body.data-export-active .control-panel {
     height:0;
 }
 
+[data-main-info] > .status-group-title {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.status-card-toggle {
+    flex-shrink:0;
+    min-width:44px;
+    min-height:44px;
+    padding:4px 8px;
+    border:1px solid #60758a;
+    border-radius:6px;
+    background:#fff;
+    color:#1f3d33;
+    cursor:pointer;
+    font-size:14px;
+}
+
+[data-main-info].is-collapsed > :not(.status-group-title) {
+    display:none;
+}
+
 .status-group-vertical {
     width:155px;
 }
@@ -4678,6 +4702,27 @@ function getMainGraphVisibilityStorageKey(userId){
     return "utechMainGraphVisibility_v1_" + userId;
 }
 
+function initializeMainInfoCollapse(){
+    mainInfoVisibilityIds.forEach(id=>{
+        const card = document.querySelector('[data-main-info="' + id + '"]');
+        const title = card.querySelector(".status-group-title");
+        const titleText = title.textContent;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "status-card-toggle";
+        button.textContent = "▲";
+        button.setAttribute("aria-expanded", "true");
+        button.setAttribute("aria-label", titleText + "を折り畳む");
+        button.addEventListener("click", ()=>{
+            const collapsed = card.classList.toggle("is-collapsed");
+            button.textContent = collapsed ? "▼" : "▲";
+            button.setAttribute("aria-expanded", String(!collapsed));
+            button.setAttribute("aria-label", titleText + (collapsed ? "を開く" : "を折り畳む"));
+        });
+        title.appendChild(button);
+    });
+}
+
 function initializeMainGraphSettings(){
     mainDisplayVisibilityIds.forEach(id=>{
         const isInfo = mainInfoVisibilityIds.includes(id);
@@ -4795,6 +4840,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
 
     initializeMainGraphSettings();
+    initializeMainInfoCollapse();
     updateUserIdHistoryList();
     restoreOutsideSourceSetting();
     restoreRainfallSourceSetting();
