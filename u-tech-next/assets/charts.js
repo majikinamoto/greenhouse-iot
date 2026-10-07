@@ -30,8 +30,8 @@ window.NextCharts = (() => {
       chart.setActiveElements(active);
       chart.tooltip.setActiveElements(active, {x:value === null ? 0 : chart.scales.x.getPixelForValue(value),y:chart.chartArea.bottom});
       const number = value === null ? null : chart.data.datasets[0].data[value].y;
-      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)} JST　${number === null ? '欠損' : number.toFixed(displayDigits(chart)) + ' ' + chart.$unit}`;
-      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)} JST　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(displayDigits(chart))+' '+chart.$unit}`;}).join(' ／ ');
+      chart.$readout.textContent = value === null ? 'グラフに触れると時刻と値を表示します。' : `${time(value)}　${number === null ? '欠損' : number.toFixed(displayDigits(chart)) + ' ' + chart.$unit}`;
+      if(value!==null && chart.$radiation)chart.$readout.textContent=`${time(value)}　`+chart.data.datasets.map((dataset,index)=>{const raw=chart.$rawSeries[index][value];return `${dataset.label.replace('日射','')}：${raw===null?'欠損':(raw*(chart.$unit==='W/m²'?1:.0036)).toFixed(displayDigits(chart))}`;}).join(' ／ ')+` ${chart.$unit}`;
       chart.draw();
     }
   }

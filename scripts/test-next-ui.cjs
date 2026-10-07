@@ -99,8 +99,8 @@ const server = http.createServer((req,res)=>{
       return {x:rect.left+chart.scales.x.getPixelForValue(12),y:rect.top+chart.chartArea.top+20};
     });
     await page.mouse.move(hover.x,hover.y);
-    await page.waitForFunction(()=>document.querySelector('.chart-readout').textContent.includes('12:00 JST'));
-    assert.equal(await page.locator('.chart-readout').filter({hasText:'12:00 JST'}).count(),6);
+    await page.waitForFunction(()=>document.querySelector('.chart-readout').textContent.includes('12:00'));
+    assert.equal(await page.locator('.chart-readout').filter({hasText:'12:00'}).count(),6);
     assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('canvas'),canvas=>Chart.getChart(canvas).tooltip.getActiveElements().map(item=>item.index))),[[12,12,12],...Array.from({length:5},()=>[12])]);
     const originalY=await page.evaluate(()=>Array.from(document.querySelectorAll('#charts canvas'),canvas=>{const chart=Chart.getChart(canvas);return [chart.scales.y.min,chart.scales.y.max];}));
     const drag=await page.locator('canvas').first().evaluate(canvas=>{const chart=Chart.getChart(canvas),rect=canvas.getBoundingClientRect(),area=chart.chartArea;return {x1:rect.left+chart.scales.x.getPixelForValue(6),x2:rect.left+chart.scales.x.getPixelForValue(18),y1:rect.top+area.top+(area.bottom-area.top)*.2,y2:rect.top+area.top+(area.bottom-area.top)*.8};});
