@@ -71,3 +71,28 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .summary-table tbody th { overflow-wrap:anywhere; }
 @media(max-width:1000px) { .summary-table-wrap { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:480px) { .summary-table-wrap { grid-template-columns:1fr; } }
+
+/* Compact input panels; graph dimensions retain the existing U-Tech layout. */
+.toolbar { padding:0 14px 10px; gap:10px; }
+.selection-controls { gap:8px; }
+.control-field label { font-size:12px; margin-bottom:2px; }
+.selection-controls input,.selection-controls select,.selection-controls button {
+  min-height:30px; padding:3px 6px; font-size:12px;
+}
+#next-user-id { width:88px; }
+#next-point-id { width:110px; }
+#next-user-history { width:82px; }
+#forecast-date { width:128px; }
+#water-settings { font-size:12px; }
+#water-settings fieldset { padding:8px 10px; border-radius:5px; }
+#water-common { gap:12px; }
+.water-settings-grid { grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:8px; margin:10px 0; }
+.water-field { gap:2px; margin:4px 0; }
+.water-field input { width:96px; max-width:100%; min-height:30px; padding:3px 6px; font-size:12px; }
+.water-field .error { font-size:11px; min-height:0; }
+.water-field .error:empty { display:none; }
+#water-validation { font-size:12px; margin:6px 0; }
+@media(max-width:600px) {
+  .water-settings-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .selection-controls { gap:6px; }
+}
