@@ -107,3 +107,19 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 @media(max-width:600px) {
   .selection-controls { gap:6px; }
 }
+
+/* Keep navigation, review controls and daily summary compact at every width. */
+.next-tabs { gap:4px; margin:12px 0; }
+.next-tabs button,#water-save,#water-history-load,#water-history-csv {
+  min-height:28px; min-width:0; padding:3px 8px; font-size:12px;
+}
+#water-history-date { width:128px; min-height:28px; height:28px; padding:2px 5px; font-size:12px; }
+#water-review-panel > label { font-size:12px; }
+.summary-table-wrap { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:8px; }
+.summary-table { flex:0 0 260px; width:260px; max-width:100%; font-size:12px; }
+.summary-table th,.summary-table td { padding:5px 6px; }
+.summary-table th:first-child { width:116px; }
+.summary-table th:nth-child(2) { width:62px; }
+.summary-table th:nth-child(3) { width:82px; }
+.summary-table .summary-value { font-size:14px; }
+.summary-table .summary-unit { font-size:11px; }
