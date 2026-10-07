@@ -33,10 +33,10 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .next-tabs button { background:#e5edf5; border:1px solid #b7cddd; color:#25384d; border-radius:5px 5px 0 0; }
 .next-tabs button[aria-selected=true] { background:#3f6388; color:white; }
 .chart-grid { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:flex-start; justify-content:flex-start; }
-.chart-card { width:400px; max-width:100%; border:2px solid #c4ccd6; background:#f7f9fb; padding:8px; border-radius:0; box-sizing:border-box; }
+.chart-card { width:360px; max-width:100%; border:2px solid #c4ccd6; background:#f7f9fb; padding:8px; border-radius:0; box-sizing:border-box; }
 .chart-card h3 { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 8px; padding:6px 8px; background:#dbe6f0; border:0; border-left:5px solid #3f6388; border-radius:0; }
 .chart-reset-button { margin:0; min-height:0; min-width:0; padding:3px 8px; font-size:12px; white-space:nowrap; }
-.chart-container { position:relative; width:100%; min-width:0; height:280px; }
+.chart-container { position:relative; width:100%; min-width:0; height:250px; }
 .chart-readout { color:#000; font-size:12px; min-height:18px; margin:4px 0 0; }
 #export-panel { max-width:1120px; margin:0; padding:14px; border:2px solid #b7cddd; background:#fff; text-align:left; }
 #export-panel select,#export-panel input[type="datetime-local"] { min-height:28px; height:28px; padding:2px 5px; font-size:12px; }
@@ -51,7 +51,7 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .csv-options label { display:inline-flex; align-items:center; gap:5px; font-size:13px; }
 .csv-options input { min-height:0; padding:0; width:auto; }
 #csv-message { color:#a23b38; }
-@media(max-width:600px) { .chart-container { height:min(350px,calc(100vw - 48px)); } .chart-card { width:100%; } }
+@media(max-width:600px) { .chart-container { height:min(250px,calc(100vw - 48px)); } .chart-card { width:360px; max-width:100%; } }
 .chart-card { min-width:0; } .chart-container canvas { max-width:100%; }
 
 .summary-table-wrap { max-width:760px; border:1px solid #c7d0da; border-radius:5px; overflow:hidden; background:white; }
