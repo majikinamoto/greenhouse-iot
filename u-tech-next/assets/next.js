@@ -157,5 +157,5 @@ for (const tab of tabs) {
   tab.addEventListener('click',()=>selectTab(tab));
   tab.addEventListener('keydown',event=>{if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:tabs[(tabs.indexOf(tab)+1)%tabs.length];selectTab(target);target.focus();}});
 }
-document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); if (NextContext.prepare()) {NextMeasured.invalidate();loadForecast();}});
+document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); loadForecast();});
 loadForecast();

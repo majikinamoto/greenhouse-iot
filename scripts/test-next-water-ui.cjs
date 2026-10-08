@@ -36,13 +36,13 @@ assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('#
 await page.screenshot({path:path.join(os.tmpdir(),'utech-next-water-desktop.png'),fullPage:true});
 assert.equal(await page.locator('#tab-review').count(),0);assert.equal(await page.locator('#water-review-panel').count(),0);
 assert.match(await page.locator('#water-period').textContent(),/2026-10-05〜2026-10-07/);
-await page.locator('#forecast-date').fill('2026-09-10');await page.locator('#date-form button').click();await page.waitForFunction(()=>document.getElementById('water-period').textContent.includes('2026-09-08〜2026-09-10'));
-assert.equal(await page.locator('#water-area-0').inputValue(),'10');
+await page.locator('#tab-forecast').click();await page.locator('#forecast-date').fill('2026-09-10');await page.locator('#date-form button').click();await page.waitForFunction(()=>document.getElementById('water-period').textContent.includes('2026-09-08〜2026-09-10'));
+await page.locator('#tab-water').click();assert.equal(await page.locator('#water-area-0').inputValue(),'10');
 assert.deepEqual(await page.evaluate(()=>{const ch=Chart.getChart(document.querySelector('#water-charts canvas'));return [ch.$hours[0].time,ch.$hours[71].time];}),['2026-09-08 00:00:00','2026-09-10 23:00:00']);
-await page.locator('#forecast-date').fill('2026-08-10');await page.locator('#date-form button').click();await page.waitForFunction(()=>document.getElementById('water-period').textContent.includes('現在の設定で再計算：2026-08-08'));
+await page.locator('#tab-forecast').click();await page.locator('#forecast-date').fill('2026-08-10');await page.locator('#date-form button').click();await page.waitForFunction(()=>document.getElementById('water-period').textContent.includes('現在の設定で再計算：2026-08-08'));
 const historyValues=await page.evaluate(()=>{const ch=Chart.getChart(document.querySelector('#water-charts canvas'));return [ch.$hours[0].litres,ch.$hours[24].litres];});
 assert.ok(historyValues[0]>0 && historyValues[1]>0);
-await page.locator('#water-area-0').fill('20');
+await page.locator('#tab-water').click();await page.locator('#water-area-0').fill('20');
 const adjusted=await page.evaluate(()=>{const ch=Chart.getChart(document.querySelector('#water-charts canvas'));return [ch.$hours[0].litres,ch.$hours[24].litres];});
 assert.ok(Math.abs(adjusted[0]-historyValues[0]*2)<1e-12);assert.equal(adjusted[1],historyValues[1]);
 await page.locator('#water-area-0').fill('10');

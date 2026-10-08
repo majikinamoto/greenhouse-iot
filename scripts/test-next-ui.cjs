@@ -68,22 +68,23 @@ const server = http.createServer((req,res)=>{
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
     const choose=async date=>{
+      await page.locator('#tab-forecast').click();
       await page.locator('#forecast-date').fill(date);
       await Promise.all([page.waitForResponse(response=>response.url().includes('date='+date)),page.locator('#date-form button').click()]);
       await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     };
     await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_MAIN');
-    assert.equal(await page.locator('#next-point-id').inputValue(),'');
     assert.match(await page.locator('#mapping-status').textContent(),/未設定/);
     assert.equal(await page.locator('#next-user-history option').count(),3);
-    await page.locator('#next-point-id').fill('P_TEST');
+    await page.locator('#tab-measured').click();
+    await page.locator('#measured-form button').click();
     await choose('2026-10-04');
-    assert.match(await page.locator('#selected-context').textContent(),/TEST_MAIN.*P_TEST/);
+    assert.match(await page.locator('#selected-context').textContent(),/TEST_MAIN/);
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id_history')),JSON.stringify(['TEST_MAIN','TEST_OLD']));
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_outside_source_user_id')),'TEST_OUTSIDE');
-    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('utech_next_selection_v1'))),{user_id:'TEST_MAIN',point_id:'P_TEST'});
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('utech_next_selection_v1'))),{user_id:'TEST_MAIN'});
     assert.equal(await page.locator('.summary-table tbody tr').count(),12);
     assert.equal(await page.locator('.summary-table').count(),4);
     assert.equal(await page.locator('.summary-table tbody tr').filter({hasText:'平均気温'}).locator('.summary-value').textContent(),'26.0');
@@ -232,7 +233,9 @@ const server = http.createServer((req,res)=>{
     await page.locator('#csv-start').fill('2026-10-05T00:00');
     await page.locator('#csv-end').fill('2026-10-06T00:00');
     // A changed, unapplied date must not relabel the loaded CSV.
+    await page.locator('#tab-forecast').click();
     await page.locator('#forecast-date').fill('2026-10-06');
+    await page.locator('#tab-export').click();
     assert.match(await page.locator('#export-date').textContent(),/2026-10-05 の予報/);
     await page.screenshot({path:path.join(os.tmpdir(),'utech-next-export-mobile.png'),fullPage:true});
     await page.locator('#tab-forecast').click();
@@ -248,13 +251,14 @@ const server = http.createServer((req,res)=>{
     await choose('2026-09-30');assert.match(await page.locator('#status').textContent(),/まだ保存/);
     await choose('2026-09-29');assert.match(await page.locator('#status').textContent(),/読み込めません/);
     await choose('2026-10-04');assert.equal(await page.locator('#forecast-content').isVisible(),true);
+    await page.locator('#tab-measured').click();
     await page.locator('#next-user-id').fill('TEST_NEXT');
-    assert.equal(await page.locator('#next-point-id').inputValue(),'');
+    await page.locator('#measured-form button').click();
     await choose('2026-10-04');
     assert.match(await page.locator('#selected-context').textContent(),/TEST_NEXT/);
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
-    await page.locator('#next-user-id').fill('<script>');
-    await page.locator('#date-form button').click();
+    await page.locator('#tab-measured').click();await page.locator('#next-user-id').fill('<script>');
+    await page.locator('#measured-form button').click();
     assert.match(await page.locator('#context-error').textContent(),/半角英数字/);
     assert.match(await page.locator('#selected-context').textContent(),/TEST_NEXT/);
     await page.locator('#next-user-history').selectOption('TEST_MAIN');
@@ -262,13 +266,11 @@ const server = http.createServer((req,res)=>{
     await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/?user_id=TEST_URL&point_id=P_URL`);
     await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_URL');
-    assert.equal(await page.locator('#next-point-id').inputValue(),'P_URL');
     assert.match(await page.locator('#mapping-status').textContent(),/未設定/);
     assert.equal(await page.evaluate(()=>localStorage.getItem('usui_user_id')),'TEST_MAIN');
     await page.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
     await page.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     assert.equal(await page.locator('#next-user-id').inputValue(),'TEST_MAIN');
-    assert.equal(await page.locator('#next-point-id').inputValue(),'');
     // Unavailable/corrupt browser storage must not prevent public forecasts.
     const blocked = await browser.newContext({viewport:{width:390,height:844}});
     if (process.env.NEXT_TEST_ASSETS) await blocked.route('https://cdn.jsdelivr.net/**', route => route.fulfill({path:path.join(process.env.NEXT_TEST_ASSETS,new URL(route.request().url()).pathname.split('/').pop()),contentType:'application/javascript'}));
@@ -280,8 +282,8 @@ const server = http.createServer((req,res)=>{
     await blockedPage.goto(`http://127.0.0.1:${server.address().port}/u-tech-next/`);
     await blockedPage.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     assert.equal(await blockedPage.locator('#forecast-content').isVisible(),true);
-    await blockedPage.locator('#next-user-id').fill('TEST_BLOCKED');
-    await blockedPage.locator('#date-form button').click();
+    await blockedPage.locator('#tab-measured').click();await blockedPage.locator('#next-user-id').fill('TEST_BLOCKED');
+    await blockedPage.locator('#measured-form button').click();
     await blockedPage.waitForFunction(()=>!document.querySelector('#date-form button').disabled);
     assert.match(await blockedPage.locator('#context-error').textContent(),/保存できません/);
     assert.match(await blockedPage.locator('#selected-context').textContent(),/TEST_BLOCKED/);
