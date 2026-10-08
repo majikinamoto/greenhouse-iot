@@ -144,16 +144,18 @@ NextContext.initialize();
 NextCsv.initialize(fields);
 initializeHourlyColumns();
 NextWater.initialize();
+NextMeasured.initialize();
 const tabs = Array.from(document.querySelectorAll('.next-tabs [role=tab]'));
 function selectTab(tab) {
   for (const item of tabs) {const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;document.getElementById(item.getAttribute('aria-controls')).hidden=!selected;}
   NextCharts.sync(null);
   if (tab.id==='tab-forecast') NextCharts.resize();
+  if (tab.id==='tab-measured') NextMeasured.open();
   NextWater.resize();
 }
 for (const tab of tabs) {
   tab.addEventListener('click',()=>selectTab(tab));
   tab.addEventListener('keydown',event=>{if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:tabs[(tabs.indexOf(tab)+1)%tabs.length];selectTab(target);target.focus();}});
 }
-document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); if (NextContext.prepare()) loadForecast();});
+document.getElementById('date-form').addEventListener('submit', event => {event.preventDefault(); if (NextContext.prepare()) {NextMeasured.invalidate();loadForecast();}});
 loadForecast();

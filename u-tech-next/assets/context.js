@@ -57,5 +57,5 @@ window.NextContext = (() => {
     });
     user().addEventListener('input',()=>{if (user().value.trim() !== selected.user_id) point().value='';});
   }
-  return {initialize,prepare};
+  return {initialize,prepare,selection:()=>({...selected})};
 })();

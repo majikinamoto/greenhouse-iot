@@ -14,6 +14,7 @@
   <script src="assets/charts.js" defer></script>
   <script src="assets/csv.js" defer></script>
   <script src="assets/water.js" defer></script>
+  <script src="assets/measured.js" defer></script>
   <script src="assets/next.js" defer></script>
 </head>
 <body>
@@ -39,7 +40,7 @@
           <div class="control-field"><label for="forecast-date">予報日 <small>JST</small></label><input id="forecast-date" type="date" required></div>
           <button type="submit">表示</button>
         </div>
-        <p id="context-note" class="caption">IDは比較対象の準備に使います。現在は実測データを取得しません。</p>
+        <p id="context-note" class="caption">実測値はuser_idのP01・P21・P31・P61を使用します。point_idは実測値の取得先には影響しません。</p>
         <p id="context-error" class="error" role="alert" hidden></p>
       </form>
       <div class="metadata"><p id="location-name">沖縄県農業研究センター</p><p>モデル：JMA MSM ／ 提供：Open-Meteo</p><p id="fetched-at">取得日時：—</p></div>
@@ -52,6 +53,7 @@
     <p id="status" role="status" aria-live="polite">予報を読み込み中です。</p>
     <div class="next-tabs" role="tablist" aria-label="Nextの表示">
       <button id="tab-forecast" role="tab" aria-selected="true" aria-controls="forecast-panel">予報</button>
+      <button id="tab-measured" role="tab" aria-selected="false" aria-controls="measured-panel" tabindex="-1">実測値</button>
       <button id="tab-water" role="tab" aria-selected="false" aria-controls="water-panel" tabindex="-1">蒸散量</button>
       <button id="tab-export" role="tab" aria-selected="false" aria-controls="export-panel" tabindex="-1">データ出力</button>
     </div>
@@ -83,6 +85,13 @@
       </details>
     </div>
     </div>
+    <section id="measured-panel" role="tabpanel" aria-labelledby="tab-measured" hidden>
+      <h2>ハウス内の実測値</h2>
+      <button id="measured-refresh" type="button">表示・更新</button>
+      <p class="caption">現在から遡る72時間。カーソルの時刻から前後10分以内の測定値を表示します。右側の余白では現在から10分以内の最新値を表示します。飽差はP01の温度・湿度から計算します。</p>
+      <p id="measured-message" role="status"></p>
+      <div id="measured-charts" class="chart-grid"></div>
+    </section>
     <section id="water-panel" role="tabpanel" aria-labelledby="tab-water" hidden>
       <p class="water-parameter-notice">各パラメータのスイッチは研究担当者（國吉）以外で変更しないでください。</p>
       <h2>マンゴーの推定蒸散量・必要かん水量</h2>
@@ -117,6 +126,11 @@
       <p class="caption">上の開始・終了日時（時間区間の開始日時）を使い、6本の保存値と当時の全パラメータを出力します。予報の採用日は対象日の前日です。未保存・欠測はゼロと区別します。</p>
       <button id="water-export" type="button">蒸散量CSVダウンロード</button>
       <p id="water-export-message" role="status"></p>
+      <h3>実測値CSV</h3>
+      <div class="export-actions"><label>開始日時（JST）<input id="measured-start" type="datetime-local" step="60"></label><label>終了日時（JST）<input id="measured-end" type="datetime-local" step="60"></label></div>
+      <p class="caption">選択したuser_idのP01・P21・P31・P61を出力します（最大366日）。測定時刻ごとに1行、欠測・対象外項目は空欄です。飽差のg/m³とkPaも含みます。</p>
+      <button id="measured-export" type="button">実測値CSVダウンロード</button>
+      <p id="measured-export-message" role="status"></p>
     </section>
     <aside class="notes"><h2>予報の読み方</h2>
       <p>気温・湿度・VPD・風速の概要は、予報日の00:00〜23:00の24値から計算します。最高・最低は時間別予報の中の最大・最小です。</p>

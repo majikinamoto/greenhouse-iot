@@ -147,3 +147,8 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 .hourly-columns { margin-bottom:10px; }
 .hourly-columns > summary { font-size:12px; }
 #hourly-all,#hourly-none { min-height:28px; min-width:0; padding:3px 8px; font-size:12px; }
+#measured-charts { max-width:1470px; }
+.measured-axes { display:flex; flex-wrap:wrap; gap:4px; font-size:11px; margin-bottom:6px; }
+.measured-axes input { width:54px; height:23px; min-height:0; padding:2px; font-size:11px; }
+.measured-axes button, #measured-refresh, #measured-export { min-height:23px; padding:2px 6px; font-size:11px; }
+#measured-start, #measured-end { width:175px; min-height:25px; padding:2px 4px; font-size:11px; }
