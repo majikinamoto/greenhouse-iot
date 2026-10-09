@@ -8,6 +8,11 @@ if (PHP_SAPI !== 'cli') {
 
 require_once dirname(__DIR__) . '/u-tech-next/lib/db.php';
 require_once dirname(__DIR__) . '/u-tech-next/lib/open_meteo.php';
+require_once dirname(__DIR__) . '/u-tech-next/lib/correction.php';
+function runNextCorrection(PDO $db,int $id,string $date): void {
+    try { UTechNext\processCorrectionJob($db,$id,$date); }
+    catch (Throwable $error) { fwrite(STDERR, 'Correction job remains pending: '.$error->getMessage()."\n"); }
+}
 
 function nextStatus(string $directory, string $date, string $status, int $attempt): void
 {
@@ -22,8 +27,7 @@ function nextStatus(string $directory, string $date, string $status, int $attemp
 
 $date = (new DateTimeImmutable('tomorrow', UTechNext\tokyo()))->format('Y-m-d');
 $lock = null;
-$settingsCaptured = false;
-$settings = null;
+
 try {
     if ($argc !== 1) {
         throw new RuntimeException('This command takes no arguments; target is tomorrow in JST.');
@@ -39,20 +43,19 @@ try {
             // Reconnect each attempt, including after ambiguous commit failures.
             $db = UTechNext\connect();
             $location = UTechNext\location($db);
-            if (!$settingsCaptured) {
-                $settings = UTechNext\waterSettings($db, (int)$location['id']);
-                $settingsCaptured = true;
-            }
+
             if (UTechNext\savedRows($db, (int)$location['id'], $date) !== []) {
                 nextStatus($directory, $date, 'saved', $attempt);
                 fwrite(STDOUT, "Forecast already saved for $date; no API request made.\n");
+                runNextCorrection($db,(int)$location['id'],$date);
                 exit(0);
             }
             nextStatus($directory, $date, 'fetching', $attempt);
             $batch = UTechNext\fetchForecast($date);
-            UTechNext\saveForecast($db, (int)$location['id'], $date, $batch, $settings);
+            UTechNext\saveForecast($db, (int)$location['id'], $date, $batch, null, true);
             nextStatus($directory, $date, 'saved', $attempt);
             fwrite(STDOUT, "Saved 25 rows for $date; fetched at {$batch['fetched_at']} JST.\n");
+            runNextCorrection($db,(int)$location['id'],$date);
             exit(0);
         } catch (Throwable $error) {
             fwrite(STDERR, (new DateTimeImmutable('now', UTechNext\tokyo()))->format(DATE_ATOM) . " target=$date attempt=$attempt " . $error->getMessage() . "\n");

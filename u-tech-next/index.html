@@ -116,15 +116,15 @@
         <h3>時間帯ごとの実測値補正</h3>
         <form id="correction-form" class="tab-toolbar"><div class="selection-controls">
           <label>補正実測先 user_id <span class="id-controls"><input id="correction-user" type="text" maxlength="64" placeholder="未設定" autocomplete="off"><select id="correction-user-history" aria-label="補正用user_idの履歴"><option value="">履歴</option></select></span></label>
-          <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button type="submit">再計算</button>
-        </div><p id="correction-user-storage" class="caption">前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。</p><p class="caption">本日を含む選択日数を比較します。本日の実測がない時間帯は除外し、日数を補充しません。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
-        <p class="caption">葉面積・Kc・日射透過率・風速・かん水設定は「推定値」の設定を使用します。補正設定の共有保存・18:10の履歴固定はDB接続対応後に利用できます。</p></form>
+          <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button id="correction-recalculate" type="submit" disabled>翌日を試算</button>
+        </div><p id="correction-user-storage" class="caption">前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。</p><p class="caption">本日を含む選択日数を比較します。本日の実測がない時間帯・項目は、比較期間を1日前へずらして選択日数分を使います。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
+        <p class="caption">葉面積・Kc・日射透過率・風速・かん水設定は「推定値」の設定を使用します。保存値は予報採用時の設定で固定します。設定の保存は次回の予報採用から有効です。</p><button id="correction-save" type="button" disabled>補正設定を保存</button><button id="correction-restore" type="button" disabled>保存値に戻す</button><p id="correction-save-message" class="caption" role="status"></p></form>
         <p id="correction-message" role="status" aria-live="polite"></p>
         <div id="correction-differences" class="chart-grid"></div>
         <details><summary>時間帯ごとの比較表</summary><div class="table-scroll"><table id="correction-table"></table></div></details>
         <p id="correction-period" class="caption"></p>
         <button id="correction-csv" type="button" disabled>画面の試算CSV</button>
-        <button type="button" disabled>補正の保存履歴CSV</button>
+        <button id="correction-history-csv" type="button" disabled>補正の保存履歴CSV</button>
         <div id="correction-water-charts" class="chart-grid"></div>
       </div>
     </section>
@@ -148,9 +148,10 @@
       <button id="water-export" type="button">蒸散量CSVダウンロード</button>
       <p id="water-export-message" role="status"></p>
       <h3>実測値補正の試算CSV</h3>
-      <p class="caption">蒸散量の「実測値補正」で最後に計算した画面の3日分を出力します。保存履歴ではありません。</p>
+      <p class="caption">今回取得した翌日の試算だけを出力します。過去日は保存値のみで、試算しません。</p>
       <button id="correction-export-trial" type="button" disabled>補正の試算CSVダウンロード</button>
-      <p id="correction-export-note" class="caption">実測値補正タブで試算してください。補正の保存履歴CSVはDB対応後に利用できます。</p>
+      <p id="correction-export-note" class="caption">翌日の実測値補正を試算すると出力できます。</p>
+      <button id="correction-export-history" type="button">補正の保存履歴CSVダウンロード</button><p class="caption">上の開始・終了日時で当時の固定値を出力します。保存履歴がない日は再計算しません。</p><p id="correction-history-message" role="status"></p>
       <h3>実測値CSV</h3>
       <div class="export-actions"><label>開始日時（JST）<input id="measured-start" type="datetime-local" step="60"></label><label>終了日時（JST）<input id="measured-end" type="datetime-local" step="60"></label></div>
       <p class="caption">選択したuser_idのP01・P21・P31・P61・P62を出力します（最大366日）。測定時刻ごとに1行、欠測・対象外項目は空欄です。飽差のg/m³とkPaも含みます。</p>
