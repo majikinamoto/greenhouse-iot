@@ -62,7 +62,7 @@ window.NextCorrection=(()=>{
       renderComparison(comparisons[comparisons.length-1]);NextWater.render($('correction-water-charts'),result,'live');
       const current=comparisons[comparisons.length-1],clamped=result.flatMap(day=>day.rows).filter(row=>row.humidity_clamped).length;
       $('correction-message').textContent=(user?'補正実測先：'+user:'補正実測先が未設定')+`　試算中：${count}日。補正設定の共有保存は未接続です。`+(clamped?` 湿度を0〜100％に調整した時刻：${clamped}件。`:'');
-      $('correction-period').textContent=`${days[0].date}〜${last}の3日分を現在の設定で試算。選択日${last}の比較期間：${current.start}〜${current.end}。本日を含む${count}日間が対象です。本日の未測定時間帯は除外し、以前の日を追加しません。保存履歴ではありません。`;
+      $('correction-period').textContent=`予報日${last}の補正に使う比較期間：${current.start}〜${current.end}（本日を含む${count}日間）。`+(count===1?'本日の実測値がない時間帯・項目は、元の予報値を使います。':`本日の実測値がない時間帯・項目は、本日を除く${count-1}日間の有効な実測値で平均します。`)+ '欠測日は除外し、実際の使用日数を比較表に表示します。保存履歴ではなく、現在の設定による試算です。';
       $('correction-csv').disabled=false;$('correction-export-trial').disabled=false;
       $('correction-export-note').textContent=`試算：${days[0].date}〜${last}　実測先：${user||'未設定'}　比較${count}日。保存履歴ではありません。`;
     }catch(error){if(error.name!=='AbortError'&&runId===sequence){clear();$('correction-message').textContent=error.message+' 元の予報への切替で取得エラーを隠さず、試算を停止しています。';}}
