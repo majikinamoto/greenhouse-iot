@@ -4,14 +4,18 @@ vm.runInContext(fs.readFileSync('u-tech-next/assets/correction.js','utf8'),sandb
 const api=sandbox.window.NextCorrection,plain=value=>JSON.parse(JSON.stringify(value));
 const forecasts=['2026-10-06','2026-10-07','2026-10-08'].map(date=>({date,rows:[{forecast_for:date+' 13:00:00',temperature_2m:25,relative_humidity_2m:60}]}));
 const rows=[{point_id:'P01',recorded_at:'2026-10-06 13:00:00',temperature:27,humidity:70},{point_id:'P01',recorded_at:'2026-10-06 13:10:00',temperature:29,humidity:null},{point_id:'P01',recorded_at:'2026-10-08 13:59:59',temperature:26,humidity:80},{point_id:'P01',recorded_at:'2026-10-09 13:00:00',temperature:99,humidity:90}];
-const comparison=api.aggregate('2026-10-10',3,forecasts,rows),hour=comparison.hours[13];
+const comparison=api.aggregate('2026-10-10',3,forecasts,rows,'2026-10-08'),hour=comparison.hours[13];
 assert.equal(comparison.start,'2026-10-06');assert.equal(comparison.end,'2026-10-08');
 assert.equal(hour.temperature_2m.difference,2);assert.equal(hour.temperature_2m.count,3);assert.equal(hour.temperature_2m.days,2);
 assert.equal(hour.relative_humidity_2m.difference,15);assert.equal(hour.relative_humidity_2m.count,2);
 assert.equal(comparison.hours[14].temperature_2m.difference,null);
 const corrected=api.correctedRows([{forecast_for:'2026-10-10 13:00:00',temperature_2m:25,relative_humidity_2m:90}],comparison)[0];
 assert.equal(corrected.temperature_2m,27);assert.equal(corrected.relative_humidity_2m,100);assert.equal(corrected.humidity_clamped,true);
-const one=api.aggregate('2026-10-10',1,forecasts,rows);assert.equal(one.hours[13].temperature_2m.count,1);assert.equal(one.start,'2026-10-08');
-const independent=api.aggregate('2026-10-10',1,forecasts,[{point_id:'P01',recorded_at:'2026-10-08 13:00:00',temperature:27,humidity:null}]);
+const one=api.aggregate('2026-10-10',1,forecasts,rows,'2026-10-08');assert.equal(one.hours[13].temperature_2m.count,1);assert.equal(one.start,'2026-10-08');
+const independent=api.aggregate('2026-10-10',1,forecasts,[{point_id:'P01',recorded_at:'2026-10-08 13:00:00',temperature:27,humidity:null}],'2026-10-08');
 const independentRow=api.correctedRows([{forecast_for:'2026-10-10 13:00:00',temperature_2m:25,relative_humidity_2m:60}],independent)[0];assert.equal(independentRow.temperature_2m,27);assert.equal(independentRow.relative_humidity_2m,60);assert.ok(independentRow.corrected_vpd>0);
-console.log('Correction calculations passed: two-day lag, equal day weights, missing values, single measurement, independent fields, humidity limits.');
+console.log('Correction calculations passed: inclusive reference day, equal day weights, missing values, single measurement, independent fields, humidity limits.');
+
+const fiveForecasts=Array.from({length:6},(_,i)=>({date:'2026-10-0'+(4+i),rows:[13,20].map(hour=>({forecast_for:'2026-10-0'+(4+i)+' '+hour+':00:00',temperature_2m:25,relative_humidity_2m:60}))}));
+const fiveRows=fiveForecasts.flatMap(day=>[13,20].filter(hour=>day.date!=='2026-10-09'||hour===13).map(hour=>({point_id:'P01',recorded_at:day.date+' '+hour+':10:00',temperature:day.date==='2026-10-04'?99:27,humidity:70})));
+const inclusive=api.aggregate('2026-10-10',5,fiveForecasts,fiveRows,'2026-10-09');assert.equal(inclusive.start,'2026-10-05');assert.equal(inclusive.hours[13].temperature_2m.days,5);assert.equal(inclusive.hours[20].temperature_2m.days,4);assert.equal(inclusive.hours[20].temperature_2m.difference,2);const todayOnly=api.aggregate('2026-10-10',1,fiveForecasts,fiveRows,'2026-10-09');assert.equal(todayOnly.hours[20].temperature_2m.days,0);assert.equal(todayOnly.hours[20].temperature_2m.difference,null);

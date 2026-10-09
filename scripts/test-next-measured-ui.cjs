@@ -4,6 +4,7 @@ const root=path.resolve(__dirname,'../u-tech-next');
 const server=http.createServer((req,res)=>{const file=path.resolve(root,new URL(req.url,'http://localhost').pathname.slice(1)||'index.html');if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.statusCode=404;res.end();return;}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync(file));});
 (async()=>{let browser;try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1800,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/chart-axis-enter.js',r=>r.fulfill({path:path.resolve(__dirname,'../chart-axis-enter.js'),contentType:'application/javascript'}));
  await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({path:path.join(process.env.NEXT_TEST_ASSETS,new URL(r.request().url()).pathname.split('/').pop()),contentType:'application/javascript'}));
  await page.route('**/api/get_forecasts.php?*',r=>r.fulfill({json:{success:true,status:'not_available',rows:[],location:{name:'test'}}}));
  await page.route('**/api/water.php*',r=>r.fulfill({json:{success:false,message:'fixture'}}));
@@ -19,13 +20,13 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,new URL(
  assert.deepEqual(await page.evaluate(()=>[NextMeasured.nearest([{x:0,y:1}],600000,false)?.y,NextMeasured.nearest([{x:0,y:1}],600001,false),NextMeasured.nearest([{x:600001,y:1}],600000,true)]),[1,null,null]);
  assert.equal(await page.locator('#measured-charts h3').filter({hasText:'風速（P61・作物上部）'}).count(),1);assert.equal(await page.locator('#measured-charts h3').filter({hasText:'風速（P62・作物中部）'}).count(),1);const windData=await page.locator('#measured-charts canvas').evaluateAll(list=>list.map(c=>Chart.getChart(c)).filter(ch=>ch.$name==='風速'||ch.$name==='風速・作物中部').map(ch=>ch.data.datasets[0].data[0].y));assert.deepEqual(windData,[.1,.3]);
  assert.equal(await page.evaluate(()=>NextMeasured.nearest([{x:500,y:.62},{x:100,y:.11}],600,true).y),.62);
- const axes=page.locator('input[aria-label="温度 y min"]');await axes.fill('10');await page.locator('#measured-charts .measured-axes button').first().click();assert.equal(await page.locator('#measured-charts canvas').first().evaluate(c=>Chart.getChart(c).scales.y.min),10);
+ const axes=page.locator('input[aria-label="温度 y min"]');await axes.fill('10');await axes.press('Enter');assert.equal(await page.locator('#measured-charts canvas').first().evaluate(c=>Chart.getChart(c).scales.y.min),10);
  await page.locator('#measured-charts .chart-reset-button').first().click();assert.equal(await page.locator('#measured-charts canvas').first().evaluate(c=>Chart.getChart(c).scales.y.min),10);
  const wind61=page.locator('#measured-charts article').filter({has:page.locator('h3',{hasText:'風速（P61'})}),wind62=page.locator('#measured-charts article').filter({has:page.locator('h3',{hasText:'風速（P62'})});
  const bounds=()=>page.locator('#measured-charts canvas').evaluateAll(list=>list.map(c=>Chart.getChart(c)).filter(ch=>ch.$name==='風速'||ch.$name==='風速・作物中部').map(ch=>[ch.scales.y.min,ch.scales.y.max]));
  await wind62.locator('input[aria-label="風速・作物中部 y max"]').fill('0.8');await wind62.locator('.measured-axes button').click();
  const link=wind62.locator('input[type=checkbox]');await link.check();assert.deepEqual((await bounds())[1],(await bounds())[0]);assert.equal(await wind62.locator('.measured-axes button').isDisabled(),true);
- await wind61.locator('input[aria-label="風速 y max"]').fill('0.6');await wind61.locator('.measured-axes button').click();assert.deepEqual(await bounds(),[[0,.6],[0,.6]]);
+ await wind61.locator('input[aria-label="風速 y max"]').fill('0.6');await wind61.locator('input[aria-label="風速 y max"]').press('Enter');assert.deepEqual(await bounds(),[[0,.6],[0,.6]]);
  await wind62.locator('.chart-reset-button').click();assert.deepEqual(await bounds(),[[0,.6],[0,.6]]);await link.uncheck();assert.deepEqual(await bounds(),[[0,.6],[0,.8]]);await link.check();
  const canvas=page.locator('#measured-charts canvas').first();await canvas.scrollIntoViewIfNeeded();const pos=await canvas.evaluate(c=>{const ch=Chart.getChart(c),r=c.getBoundingClientRect();return {x:r.left+ch.scales.x.getPixelForValue(ch.data.datasets[0].data[100].x),y:r.top+ch.chartArea.top+25};});await page.mouse.move(pos.x,pos.y);await page.waitForFunction(()=>Array.from(document.querySelectorAll('#measured-charts .chart-readout')).every(p=>p.textContent.includes('（')));
  await page.evaluate(()=>{const actualNow=Date.now;Date.now=()=>actualNow()+15*60000;});

@@ -2,6 +2,7 @@
 window.NextCorrection=(()=>{
   const $=id=>document.getElementById(id),finite=v=>typeof v==='number'&&Number.isFinite(v);
   const shift=(day,n)=>new Date(Date.parse(day+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
+  const japanStamp=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date());
   const definitions=[['temperature_2m','temperature','温度','℃'],['relative_humidity_2m','humidity','湿度','％ポイント']];
   const fmt=v=>finite(v)?v.toFixed(1):'—';
   const node=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;};
@@ -16,8 +17,8 @@ window.NextCorrection=(()=>{
     try{localStorage.setItem(userStorageKey,user);localStorage.setItem(historyStorageKey,JSON.stringify(userHistory));$('correction-user-storage').textContent='前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。';}
     catch{$('correction-user-storage').textContent='ブラウザーへID履歴を保存できません。この画面内では選択できます。';}
   }
-  function aggregate(target,count,forecastDays,measurements){
-    const end=shift(target,-2),start=shift(end,1-count),buckets=new Map();
+  function aggregate(target,count,forecastDays,measurements,end=japanStamp().slice(0,10)){
+    const start=shift(end,1-count),buckets=new Map();
     for(const row of measurements){if(row.point_id!=='P01'||typeof row.recorded_at!=='string')continue;const key=row.recorded_at.slice(0,13);if(key.slice(0,10)<start||key.slice(0,10)>end)continue;
       if(!buckets.has(key))buckets.set(key,{temperature:[],humidity:[]});
       for(const [,field] of definitions)if(finite(row[field])&&(field!=='humidity'||row[field]>=0&&row[field]<=100)&&(field!=='temperature'||row[field]>-237.3))buckets.get(key)[field].push(row[field]);
@@ -52,16 +53,16 @@ window.NextCorrection=(()=>{
     const user=$('correction-user').value.trim(),count=Number($('correction-days').value);if(user&&!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(user)){$('correction-message').textContent='user_idは64文字以内の半角英数字・ハイフン・アンダースコアで入力してください。';return;}
     $('correction-user').value=user;rememberUser(user);
     $('correction-message').textContent='補正の試算を計算中です。';
-    try{const days=payload.days,last=days[days.length-1].date,start=shift(days[0].date,-count-1),end=shift(last,-2),key=JSON.stringify([user,count,days.map(day=>[day.date,day.forecast])]);
-      if(cache?.key!==key){let measured=[],forecastDays=[];if(user){const [data,forecasts]=await Promise.all([json('api/measurements.php?'+new URLSearchParams({user_id:user,start:start+' 00:00:00',end:end+' 23:59:59'}),signal),Promise.all(Array.from({length:Math.round((Date.parse(end)-Date.parse(start))/86400000)+1},(_,i)=>{const date=shift(start,i);return json('api/water.php?center='+date,signal).then(data=>({date,rows:data.days.find(day=>day.date===date)?.forecast||[]}));}))]);measured=data.rows;forecastDays=forecasts;}
+    try{const days=payload.days,last=days[days.length-1].date,now=japanStamp(),end=now.slice(0,10),start=shift(end,1-count),key=JSON.stringify([user,count,now.slice(0,16),days.map(day=>[day.date,day.forecast])]);
+      if(cache?.key!==key){let measured=[],forecastDays=[];if(user){const [data,forecasts]=await Promise.all([json('api/measurements.php?'+new URLSearchParams({user_id:user,start:start+' 00:00:00',end:now}),signal),Promise.all(Array.from({length:Math.round((Date.parse(end)-Date.parse(start))/86400000)+1},(_,i)=>{const date=shift(start,i);return json('api/water.php?center='+date,signal).then(data=>({date,rows:data.days.find(day=>day.date===date)?.forecast||[]}));}))]);measured=data.rows;forecastDays=forecasts;}
         if(runId!==sequence)return;cache={key,measured,forecastDays};}
       if(runId!==sequence)return;
-      comparisons=days.map(day=>aggregate(day.date,count,cache.forecastDays,cache.measured));
+      comparisons=days.map(day=>aggregate(day.date,count,cache.forecastDays,cache.measured,end));
       result=days.map((day,i)=>{const rows=correctedRows(day.forecast,comparisons[i]),calculated=NextWater.calculate(day.date,rows,settings);return {...calculated,fetched_at:day.forecast[0]?.fetched_at,comparison:comparisons[i],rows,source_user_id:user};});
       renderComparison(comparisons[comparisons.length-1]);NextWater.render($('correction-water-charts'),result,'live');
       const current=comparisons[comparisons.length-1],clamped=result.flatMap(day=>day.rows).filter(row=>row.humidity_clamped).length;
       $('correction-message').textContent=(user?'補正実測先：'+user:'補正実測先が未設定')+`　試算中：${count}日。補正設定の共有保存は未接続です。`+(clamped?` 湿度を0〜100％に調整した時刻：${clamped}件。`:'');
-      $('correction-period').textContent=`${days[0].date}〜${last}の3日分を現在の設定で試算。選択日${last}の比較期間：${current.start}〜${current.end}。各対象日の2日前までを使用します。保存履歴ではありません。`;
+      $('correction-period').textContent=`${days[0].date}〜${last}の3日分を現在の設定で試算。選択日${last}の比較期間：${current.start}〜${current.end}。本日を含む${count}日間が対象です。本日の未測定時間帯は除外し、以前の日を追加しません。保存履歴ではありません。`;
       $('correction-csv').disabled=false;$('correction-export-trial').disabled=false;
       $('correction-export-note').textContent=`試算：${days[0].date}〜${last}　実測先：${user||'未設定'}　比較${count}日。保存履歴ではありません。`;
     }catch(error){if(error.name!=='AbortError'&&runId===sequence){clear();$('correction-message').textContent=error.message+' 元の予報への切替で取得エラーを隠さず、試算を停止しています。';}}
