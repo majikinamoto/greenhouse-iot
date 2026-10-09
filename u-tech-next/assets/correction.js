@@ -6,6 +6,16 @@ window.NextCorrection=(()=>{
   const fmt=v=>finite(v)?v.toFixed(1):'—';
   const node=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;};
   let payload=null,settings=null,active=false,sequence=0,controller=null,charts=[],result=[],comparisons=[],cache=null;
+  const userStorageKey='utech_next_correction_user_v1',historyStorageKey='utech_next_correction_user_history_v1';
+  const validUser=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value);
+  let userHistory=[];
+  function renderUserHistory(){const select=$('correction-user-history');select.replaceChildren(new Option('履歴',''));for(const user of userHistory)select.append(new Option(user,user));}
+  function rememberUser(user){
+    if(user)userHistory=[user,...userHistory.filter(value=>value!==user)].slice(0,10);
+    renderUserHistory();
+    try{localStorage.setItem(userStorageKey,user);localStorage.setItem(historyStorageKey,JSON.stringify(userHistory));$('correction-user-storage').textContent='前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。';}
+    catch{$('correction-user-storage').textContent='ブラウザーへID履歴を保存できません。この画面内では選択できます。';}
+  }
   function aggregate(target,count,forecastDays,measurements){
     const end=shift(target,-2),start=shift(end,1-count),buckets=new Map();
     for(const row of measurements){if(row.point_id!=='P01'||typeof row.recorded_at!=='string')continue;const key=row.recorded_at.slice(0,13);if(key.slice(0,10)<start||key.slice(0,10)>end)continue;
@@ -40,6 +50,7 @@ window.NextCorrection=(()=>{
   function clear(){charts.forEach(chart=>chart.destroy());charts=[];for(const chart of $('correction-water-charts').$waterCharts||[])chart.destroy();$('correction-water-charts').$waterCharts=[];for(const id of ['correction-water-charts','correction-differences','correction-table'])$(id).replaceChildren();result=[];comparisons=[];$('correction-csv').disabled=true;$('correction-export-trial').disabled=true;$('correction-period').textContent='';$('correction-export-note').textContent='実測値補正タブで試算してください。補正の保存履歴CSVはDB対応後に利用できます。';}
   async function run(){if(!payload||!active)return;const runId=++sequence;if(controller)controller.abort();controller=new AbortController();const signal=controller.signal;clear();
     const user=$('correction-user').value.trim(),count=Number($('correction-days').value);if(user&&!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(user)){$('correction-message').textContent='user_idは64文字以内の半角英数字・ハイフン・アンダースコアで入力してください。';return;}
+    $('correction-user').value=user;rememberUser(user);
     $('correction-message').textContent='補正の試算を計算中です。';
     try{const days=payload.days,last=days[days.length-1].date,start=shift(days[0].date,-count-1),end=shift(last,-2),key=JSON.stringify([user,count,days.map(day=>[day.date,day.forecast])]);
       if(cache?.key!==key){let measured=[],forecastDays=[];if(user){const [data,forecasts]=await Promise.all([json('api/measurements.php?'+new URLSearchParams({user_id:user,start:start+' 00:00:00',end:end+' 23:59:59'}),signal),Promise.all(Array.from({length:Math.round((Date.parse(end)-Date.parse(start))/86400000)+1},(_,i)=>{const date=shift(start,i);return json('api/water.php?center='+date,signal).then(data=>({date,rows:data.days.find(day=>day.date===date)?.forecast||[]}));}))]);measured=data.rows;forecastDays=forecasts;}
@@ -74,6 +85,8 @@ window.NextCorrection=(()=>{
     return '\uFEFF'+lines.map(line=>line.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n')+'\r\n';
   }
   function initialize(){for(let i=1;i<=10;i++)$('correction-days').append(new Option(i+'日間',String(i),false,i===5));
+    try{const saved=localStorage.getItem(userStorageKey),history=JSON.parse(localStorage.getItem(historyStorageKey)||'[]');userHistory=Array.isArray(history)?[...new Set(history.filter(validUser))].slice(0,10):[];if(validUser(saved))$('correction-user').value=saved;}catch{}
+    renderUserHistory();$('correction-user-history').onchange=event=>{if(event.target.value){$('correction-user').value=event.target.value;run();}};
     $('correction-form').onsubmit=event=>{event.preventDefault();run();};$('correction-days').onchange=run;$('correction-user').onchange=run;
     const tabs=[$('water-estimate-tab'),$('water-correction-tab')];function select(tab){active=tab===tabs[1];for(const item of tabs){const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;$(item.getAttribute('aria-controls')).hidden=!selected;}if(active)run();else NextWater.resize();}
     for(const tab of tabs){tab.onclick=()=>select(tab);tab.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[1]:tabs[1-tabs.indexOf(tab)];select(target);target.focus();}};}

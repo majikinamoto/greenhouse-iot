@@ -115,9 +115,9 @@
       <div id="water-correction-panel" role="tabpanel" aria-labelledby="water-correction-tab" hidden>
         <h3>時間帯ごとの実測値補正</h3>
         <form id="correction-form" class="tab-toolbar"><div class="selection-controls">
-          <label>補正実測先 user_id <input id="correction-user" type="text" maxlength="64" placeholder="未設定" autocomplete="off"></label>
+          <label>補正実測先 user_id <span class="id-controls"><input id="correction-user" type="text" maxlength="64" placeholder="未設定" autocomplete="off"><select id="correction-user-history" aria-label="補正用user_idの履歴"><option value="">履歴</option></select></span></label>
           <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button type="submit">再計算</button>
-        </div><p class="caption">予報対象日の2日前までを比較します。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
+        </div><p id="correction-user-storage" class="caption">前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。</p><p class="caption">予報対象日の2日前までを比較します。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
         <p class="caption">葉面積・Kc・日射透過率・風速・かん水設定は「推定値」の設定を使用します。補正設定の共有保存・18:10の履歴固定はDB接続対応後に利用できます。</p></form>
         <p id="correction-message" role="status" aria-live="polite"></p>
         <div id="correction-differences" class="chart-grid"></div>
