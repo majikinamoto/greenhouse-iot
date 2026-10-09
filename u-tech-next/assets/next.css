@@ -12,3 +12,8 @@
 .next-tabs {flex-wrap:wrap;}
 #water-charts, #water-history-charts {grid-template-columns:repeat(2,minmax(0,1fr));}
 @media(max-width:700px) {#water-charts, #water-history-charts {grid-template-columns:1fr;}}
+#water-rules-panel { max-width: 960px; }
+#water-rules-panel details { margin: 12px 0; padding: 8px 10px; border: 1px solid #b9cadd; border-radius: 4px; }
+#water-rules-panel summary { cursor: pointer; font-weight: bold; }
+#water-rules-panel p, #water-rules-panel li { line-height: 1.7; }
+#water-rules-panel pre { max-width: 100%; overflow-x: auto; font-size: 12px; line-height: 1.6; }

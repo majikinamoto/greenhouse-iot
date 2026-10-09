@@ -97,6 +97,7 @@
       <div class="water-subtabs next-tabs" role="tablist" aria-label="蒸散量の計算方法">
         <button id="water-estimate-tab" role="tab" aria-selected="true" aria-controls="water-estimate-panel">推定値</button>
         <button id="water-correction-tab" role="tab" aria-selected="false" tabindex="-1" aria-controls="water-correction-panel">実測値補正</button>
+        <button id="water-rules-tab" role="tab" aria-selected="false" tabindex="-1" aria-controls="water-rules-panel">計算方法・ルール</button>
       </div>
       <div id="water-estimate-panel" role="tabpanel" aria-labelledby="water-estimate-tab">
       <p class="water-parameter-notice">各パラメータのスイッチは研究担当者（國吉）以外で変更しないでください。</p>
@@ -116,7 +117,7 @@
         <h3>時間帯ごとの実測値補正</h3>
         <form id="correction-form" class="tab-toolbar"><div class="selection-controls">
           <label>補正実測先 user_id <span class="id-controls"><input id="correction-user" type="text" maxlength="64" placeholder="未設定" autocomplete="off"><select id="correction-user-history" aria-label="補正用user_idの履歴"><option value="">履歴</option></select></span></label>
-          <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button id="correction-recalculate" type="submit" disabled>翌日を試算</button>
+          <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button id="correction-recalculate" type="submit" disabled>再計算して表示</button>
         </div><p id="correction-user-storage" class="caption">前回のIDと履歴はこのブラウザーに保存します。補正の共有設定とは別です。</p><p class="caption">本日を含む選択日数を比較します。本日の実測がない時間帯・項目は、比較期間を1日前へずらして選択日数分を使います。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
         <p class="caption">葉面積・Kc・日射透過率・風速・かん水設定は「推定値」の設定を使用します。保存値は予報採用時の設定で固定します。設定の保存は次回の予報採用から有効です。</p><button id="correction-save" type="button" disabled>補正設定を保存</button><button id="correction-restore" type="button" disabled>保存値に戻す</button><p id="correction-save-message" class="caption" role="status"></p></form>
         <p id="correction-message" role="status" aria-live="polite"></p>
@@ -126,6 +127,57 @@
         <button id="correction-csv" type="button" disabled>画面の試算CSV</button>
         <button id="correction-history-csv" type="button" disabled>補正の保存履歴CSV</button>
         <div id="correction-water-charts" class="chart-grid"></div>
+      </div>
+      <div id="water-rules-panel" role="tabpanel" aria-labelledby="water-rules-tab" hidden>
+        <h3>計算方法・ルール</h3>
+        <p>保存した予報と葉面積から、6本それぞれの蒸散量・必要かん水量・かん水時間を求めます。「実測値補正」では、過去の予報とハウス内実測値の差を時間帯ごとに求め、予報の温度・湿度を補正します。</p>
+        <p class="caption">最終更新：2026年10月9日　計算式：staff-penman-hourly-v1　補正ルール：hourly-equal-day-shift-v2。ルールを変更するときは、この説明も更新します。</p>
+        <details open><summary>① 入力値と計算の流れ</summary>
+          <p>予報 → 温度・湿度の補正（実測値補正のみ） → 時間別ペンマン式 → 各樹の蒸散量 → 日積算 → かん水時間、の順に計算します。Open-Meteoから届くET0をそのまま使うのではなく、スタッフ資料の式を時間単位に換算して計算します。</p>
+          <ul><li>6本共通：平均日射透過率（0～100％）、ハウス内風速（0以上のm/s）、1日のかん水回数（1以上の整数）。</li><li>各樹：葉面積（0より大きいm²）、作物係数Kc（0以上）、ノズル吐出量（0より大きいL/分）。基準株を設けず、各樹の葉面積を直接使います。</li><li>植物・共通設定は初期値なし。必要項目が未入力・無効なら保存できず、理由を表示します。実測値補正は「推定値」の入力を共用します。</li><li>補正設定：実測先user_id、比較日数1～10日（初回5日）。実測値タブの閲覧IDとは独立しています。</li></ul>
+        </details>
+        <details><summary>② 比較する日付と実測値の平均</summary>
+          <p>10月10日の予報は、10月9日18:10に開始する取得で採用した値を使います。成功応答の受信日時を採用日時として保存します。比較5日なら、基本の比較期間は採用日を含む10月5～9日です。</p>
+          <p>13時台は13:00～13:59の実測を平均します。ただし採用日時を過ぎた測定は含めません。たとえば18:10採用なら、18時台の平均は締切までの測定値から求めます。</p>
+          <p>本日の20時台がまだ未測定なら、20時台の比較期間を1日前へずらし、10月4～8日の5日間を使います。比較1日で本日が未測定なら前日を使います。温度と湿度は別々に判断します。</p>
+          <p>各日について「実測1時間平均 − その日の前日に採用した予報値」を求め、使えた日の差を同じ重みで平均します。測定件数が多い日に重みを付けません。測定1件でも使用し、使用日数と測定件数を表示します。</p>
+          <p>比較5日でも、期間内に実測または比較予報の欠測があれば有効日数は5日未満になります。本日未測定による1日前への切替以外は、さらに古い日を補充しません。比較表で温度・湿度それぞれの実際の期間と根拠を確認できます。</p>
+        </details>
+        <details><summary>③ 温湿度の補正と欠測の扱い</summary>
+          <p>予報温度に平均温度差（℃）、予報湿度に平均湿度差（％ポイント）を足します。たとえば平均温度差が＋2℃なら、25℃の予報を27℃に補正します。湿度は0～100％に制限し、範囲調整したことを記録します。</p>
+          <p>補正にはP01の温度・湿度を使います。日射の実測補正はまだ行わず、予報日射×日射透過率を使います。風速は手入力で、P61は作物上部の参照値です。P62（作物中部）とCO2は蒸散計算に取り込みません。</p>
+          <p>ある時間帯で差を求められない項目は、元の予報値を使います。元の予報自体が欠測なら、その時間の蒸散量は欠測です。補正後の温湿度から飽差（g/m³、kPa）を計算し、飽差を独立して補正することはありません。</p>
+          <p>マイナスのペンマン計算結果は0にします。欠測・未入力は0にしません。欠測がある日の積算線は得られた値の部分積算ですが、1日の必要水量・総時間・1回時間は未確定とします。</p>
+        </details>
+        <details><summary>④ 時間別の式・単位・かん水時間</summary>
+          <p>T＝気温（℃）、RH＝湿度（％）、u＝手入力のハウス内風速（m/s）、τ＝日射透過率÷100、S＝屋外全天日射（W/m²）。時間区間の開始時刻の温湿度と、終了時刻に記録された直前1時間の日射を組み合わせます。23～24時には翌日0時の日射を使います。</p>
+          <pre>施設内の1時間日射量 Rs = S × 0.0036 × τ（MJ/m²/時）
+es = 6.1078 × exp(17.2694 × T / (T + 237.3))
+Δ = 0.4495 + 0.0002721T + 0.0009873T²
+    + 0.000002907T³ + 0.0000002538T⁴
+L = 2.5 − 0.0024T
+時間別ペンマン値 = max(0,
+    Δ / (Δ + 0.66) × Rs / L
+    + 0.66 / (Δ + 0.66) × 0.26 × (1 + 0.54u)
+      × es × (1 − RH / 100) / 24)
+1時間の蒸散量（L）= 時間別ペンマン値（mm）× Kc × 葉面積（m²）
+1日の必要かん水量（L）= 24時間の蒸散量の合計
+1日の総時間（分）= 必要かん水量 ÷ ノズル吐出量
+1回の時間（秒）= round(総時間 ÷ かん水回数 × 60)</pre>
+          <p>日単位の風による項を24で割って時間単位にしています。屋外風速の測定高さ補正は使いません。必要かん水量は推定蒸散量と同じ値で、別の増減係数を加えません。Kcは実測試験に基づく調整値で、各樹・生育段階に応じて設定します。</p>
+          <p>途中の計算は表示用に丸めず、1回の時間だけ最後に秒へ丸めます。グラフの水量と総時間は小数第2位、1回時間は分・秒で表示します。CSVは計算値を出力するため、画面より桁数が多い場合があります。</p>
+        </details>
+        <details><summary>⑤ 保存値・再計算・試算とCSV</summary>
+          <p>保存値は、予報取得成功時の予報・植物設定・補正設定・実測締切・比較根拠・計算結果を固定したものです。後から設定や測定値が変わっても上書きしません。設定保存は全端末で共有し、次回の予報採用に使います。同時に別端末が変更した場合は保存を止め、再読込みを案内します。</p>
+          <p>保存履歴がない日は、保存済みの予報と実測値を使い、現在の植物設定・補正設定で「再計算」して表示します。比較期間と実測締切は、その日の予報採用日時に合わせます。当時の設定による結果ではなく、DBの履歴に書き込みません。予報が保存されていない日は再計算できません。</p>
+          <p>設定を変えて再計算すると、選択日は現在の設定による試算になります。前2日に保存履歴があればその値を使い、なければ再計算します。今回取得した翌日の試算は、試算時点までの実測値を使います。「保存値に戻す」は当時の固定履歴表示へ戻す操作です。</p>
+          <p>「画面の試算CSV」は画面にある再計算・試算だけを出力し、種別を記録します。「補正の保存履歴CSV」は当時の固定値だけを出力します。欠測は空欄と状態列で区別し、項目別の実際の比較期間・有効日数・件数・締切・日別根拠も記録します。</p>
+        </details>
+        <details><summary>⑥ 取得失敗・再試行・グラフ</summary>
+          <p>毎日18:10に予報取得を開始し、失敗時は5分間隔で最大5回再試行します。補正用実測の取得にも、最初の1回＋5分間隔の最大5回を設けます。実測の再試行中も採用時の締切・設定は固定します。</p>
+          <p>正常に取得できた結果が空ならデータ不足として確定します。全6回の取得に失敗したら取得失敗を記録し、元の予報で計算します。実測先が未設定なら補正なし。植物設定が未入力なら比較根拠を残し、水量・時間は未計算です。</p>
+          <p>6本のグラフは選択日と前2日の3日分を表示します。棒は1時間の蒸散量、線はその日の積算です。積算は毎日0時にリセットし、薄い縦線で日替わりを示します。6本のポインタは連動します。比較差グラフは平均差を太線、各日の差を薄線で表示します。</p>
+        </details>
       </div>
     </section>
     <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
@@ -148,7 +200,7 @@
       <button id="water-export" type="button">蒸散量CSVダウンロード</button>
       <p id="water-export-message" role="status"></p>
       <h3>実測値補正の試算CSV</h3>
-      <p class="caption">今回取得した翌日の試算だけを出力します。過去日は保存値のみで、試算しません。</p>
+      <p class="caption">実測値補正の画面で表示した再計算・試算を出力します。当時の保存履歴とは区別します。</p>
       <button id="correction-export-trial" type="button" disabled>補正の試算CSVダウンロード</button>
       <p id="correction-export-note" class="caption">翌日の実測値補正を試算すると出力できます。</p>
       <button id="correction-export-history" type="button">補正の保存履歴CSVダウンロード</button><p class="caption">上の開始・終了日時で当時の固定値を出力します。保存履歴がない日は再計算しません。</p><p id="correction-history-message" role="status"></p>

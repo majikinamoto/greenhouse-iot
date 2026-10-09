@@ -19,12 +19,20 @@ try{
             else{$stmt=$db->prepare('UPDATE next_water_correction_settings SET source_user_id=?,comparison_days=?,revision=revision+1,updated_at=? WHERE location_id=? AND revision=?');$stmt->execute([$config['source_user_id'],$config['comparison_days'],$now,$id,$revision]);if($stmt->rowCount()!==1)correctionReply(['success'=>false,'message'=>'別の端末で設定が変更されました。再読み込みして確認してください。'],409);}
             correctionReply(['success'=>true,'settings'=>$config+['revision'=>$revision+1,'updated_at'=>$now]]);
         }
-        if($body['action']!=='trial')throw new InvalidArgumentException('操作を確認してください。');
-        $date=$body['date']??null;if(!is_string($date)||$date!==$trialDate)throw new InvalidArgumentException('試算は今回取得した翌日の予報のみ利用できます。');
+        if(!in_array($body['action'],['trial','reconstruct'],true))throw new InvalidArgumentException('操作を確認してください。');
+        $date=$body['date']??null;if(!is_string($date)||$date>$tomorrow)throw new InvalidArgumentException('保存済み予報の対象日を選択してください。');$selected=UTechNext\forecastDate($date);
         $water=$body['water_settings']??null;if($water!==null)$water=UTechNext\validateWaterSettings($water);
-        $rows=UTechNext\savedRows($db,$id,$date);$context=['date'=>$date,'location_id'=>$id,'forecast_fetched_at'=>$rows[0]['fetched_at'],'measurement_cutoff'=>$now,'forecast_rows'=>$rows,'correction_settings'=>$config+['revision'=>null],'water_settings'=>$water,'water_revision'=>null];
-        [$forecasts,$measurements]=UTechNext\correctionEvidence($db,$id,$config,$now);$result=UTechNext\correctionResult($context,$forecasts,$measurements,$config['source_user_id']===null?'source_unset':'success');$result['output_type']='試算';
-        correctionReply(['success'=>true,'result'=>$result]);
+        $days=[];
+        for($offset=-2;$offset<=0;$offset++){
+            $day=$selected->modify("$offset days")->format('Y-m-d');$snapshot=correctionHistory($db,$id,$day);
+            if($snapshot!==null&&($offset!==0||$body['action']==='reconstruct')){$days[]=['date'=>$day,'result'=>$snapshot];continue;}
+            $rows=UTechNext\savedRows($db,$id,$day);if($rows===[]){$days[]=['date'=>$day,'result'=>null];continue;}
+            // Historical reconstruction uses the original adoption cutoff, never later measurements.
+            $cutoff=$day===$trialDate&&$body['action']==='trial'?$now:$rows[0]['fetched_at'];
+            $context=['date'=>$day,'location_id'=>$id,'forecast_fetched_at'=>$rows[0]['fetched_at'],'measurement_cutoff'=>$cutoff,'forecast_rows'=>$rows,'correction_settings'=>$config+['revision'=>null],'water_settings'=>$water,'water_revision'=>null];
+            [$forecasts,$measurements]=UTechNext\correctionEvidence($db,$id,$config,$cutoff);$result=UTechNext\correctionResult($context,$forecasts,$measurements,$config['source_user_id']===null?'source_unset':'success');$result['output_type']=$snapshot===null?'再計算':'試算';$days[]=['date'=>$day,'result'=>$result];
+        }
+        correctionReply(['success'=>true,'days'=>$days,'result'=>$days[2]['result']]);
     }
     if(isset($_GET['start'])||isset($_GET['end'])){
         $start=$_GET['start']??null;$end=$_GET['end']??null;if(!is_string($start)||!is_string($end))throw new InvalidArgumentException('開始日と終了日を指定してください。');$from=UTechNext\forecastDate($start);$to=UTechNext\forecastDate($end);$count=(int)$from->diff($to)->format('%r%a')+1;if($count<1||$count>366)throw new InvalidArgumentException('期間は366日以内で指定してください。');

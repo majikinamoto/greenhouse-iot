@@ -9,10 +9,10 @@ window.NextCorrection=(()=>{
   let payload=null,settings=null,active=false,sequence=0,controller=null,charts=[],result=[],comparisons=[],cache=null;
   const userStorageKey='utech_next_correction_user_v1',historyStorageKey='utech_next_correction_user_history_v1';
   const validUser=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value);
-  let userHistory=[],stored=null,token='',revision=0,shared=null,trial=false,loadedDate=null,sharedLoaded=false,conflict=false;
+  let userHistory=[],stored=null,token='',revision=0,shared=null,trial=false,automaticPreview=false,loadedDate=null,sharedLoaded=false,conflict=false;
   const selectedDate=()=>payload?.days[payload.days.length-1]?.date;
   const config=()=>({source_user_id:$('correction-user').value.trim()||null,comparison_days:Number($('correction-days').value)});
-  const canTrial=()=>stored?.trial_date===selectedDate();
+  const canTrial=()=>Boolean(stored);
   function renderUserHistory(){const select=$('correction-user-history');select.replaceChildren(new Option('履歴',''));for(const user of userHistory)select.append(new Option(user,user));}
   function rememberUser(user){
     if(user)userHistory=[user,...userHistory.filter(value=>value!==user)].slice(0,10);
@@ -55,27 +55,28 @@ window.NextCorrection=(()=>{
   function controls(){const valid=!config().source_user_id||validUser(config().source_user_id);$('correction-save').disabled=!token||!valid||conflict;$('correction-recalculate').disabled=!token||!canTrial()||!valid;$('correction-restore').disabled=!stored||!trial;}
   function fillConfig(value){$('correction-user').value=value?.source_user_id||'';$('correction-days').value=String(value?.comparison_days||5);}
   function display(days,current,isTrial){clear();result=days;comparisons=days.filter(day=>day.comparison).map(day=>day.comparison);NextWater.render($('correction-water-charts'),days,'live');
-    if(current?.comparison){renderComparison(current.comparison);const comp=current.comparison;$('correction-period').textContent='比較期間：'+comp.start+'〜'+comp.end+'（'+comp.count+'日間）。本日の実測がない時間帯・項目は1日前へずらします。実際の期間・有効日数は比較表に表示します。'+(isTrial?'現在の設定による翌日の試算です。':'予報採用時に固定した保存値です。');}
+    if(current?.comparison){renderComparison(current.comparison);const comp=current.comparison;$('correction-period').textContent='比較期間：'+comp.start+'〜'+comp.end+'（'+comp.count+'日間）。比較最終日の実測がない時間帯・項目は1日前へずらします。実際の期間・有効日数は比較表に表示します。'+(current.output_type==='保存履歴'?'予報採用時に固定した保存値です。':'現在の設定による'+current.output_type+'です。履歴には保存しません。');}
     const missing=stored.days.filter(day=>!day.snapshot).map(day=>day.date),job=stored.days[stored.days.length-1].job;
-    $('correction-message').textContent=(isTrial?'試算中：'+config().comparison_days+'日':'保存値')+'　補正実測先：'+(current?.source_user_id||'未設定')+(current?.acquisition_status==='source_unset'?'（実測先未設定・補正なし）':current?.acquisition_status==='measurement_fetch_failed'?'（実測取得失敗・補正なし）':'')+(!isTrial&&missing.length?'　保存履歴なし：'+missing.join('、'):'')+(!current&&job&&job.status!=='complete'?'　補正結果の保存待ち（取得試行'+job.attempts+'回）':'');
-    if(isTrial){$('correction-csv').disabled=false;$('correction-export-trial').disabled=false;$('correction-export-note').textContent='試算：'+current.date+'　実測先：'+(current.source_user_id||'未設定')+'　比較'+current.comparison.count+'日。翌日のみ出力します。';}
+    const reconstructed=days.filter(day=>day.output_type==='再計算').map(day=>day.date),unavailable=days.filter(day=>day.missing_history).map(day=>day.date);
+    $('correction-message').textContent=(isTrial&&current?.output_type!=='保存履歴'?(current?.output_type==='再計算'?'再計算中：':'試算中：')+config().comparison_days+'日':'保存値')+'　補正実測先：'+(current?.source_user_id||config().source_user_id||'未設定')+(current?.acquisition_status==='source_unset'?'（実測先未設定・補正なし）':current?.acquisition_status==='measurement_fetch_failed'?'（実測取得失敗・補正なし）':'')+(reconstructed.length?'　現在の設定で再計算：'+reconstructed.join('、'):'')+(unavailable.length?'　保存履歴・予報データなし：'+unavailable.join('、'):'')+(!isTrial&&missing.length?'　保存履歴なし：'+missing.join('、'):'')+(!current&&job&&job.status!=='complete'?'　補正結果の保存待ち（取得試行'+job.attempts+'回）':'');
+    if(isTrial){const available=days.filter(day=>day.comparison&&day.output_type!=='保存履歴');$('correction-csv').disabled=!available.length;$('correction-export-trial').disabled=!available.length;$('correction-export-note').textContent='画面の再計算・試算を出力します。当時の保存履歴とは別です。';}
     $('correction-history-csv').disabled=!stored.days.some(day=>day.snapshot);controls();
   }
   function savedDays(){return stored.days.map(day=>day.snapshot||{...NextWater.calculate(day.date,[],null),output_type:'保存履歴なし',missing_history:true});}
-  function restore(){if(!stored)return;trial=false;fillConfig(shared);display(savedDays(),stored.days[stored.days.length-1].snapshot,false);}
+  function restore(){if(!stored)return;trial=false;automaticPreview=false;fillConfig(shared);display(savedDays(),stored.days[stored.days.length-1].snapshot,false);}
   async function run(){if(!payload||!active)return;const runId=++sequence;if(controller)controller.abort();controller=new AbortController();const signal=controller.signal;clear();controls();$('correction-message').textContent='保存した補正結果を読み込み中です。';
     try{const data=await json('api/correction.php?date='+selectedDate(),signal);if(runId!==sequence)return;stored=data;token=data.token;loadedDate=selectedDate();
-      if(!sharedLoaded||conflict){shared=data.settings;revision=data.settings.revision;sharedLoaded=true;conflict=false;fillConfig(shared);}restore();
+      if(!sharedLoaded||conflict){shared=data.settings;revision=data.settings.revision;sharedLoaded=true;conflict=false;fillConfig(shared);}restore();if(data.days.some(day=>!day.snapshot))await runTrial(true);
     }catch(error){if(error.name!=='AbortError'&&runId===sequence){stored=null;token='';controls();$('correction-message').textContent=error.message;}}
   }
   function validWater(){if(!settings)return null;const common=finite(settings.transmission_percent)&&settings.transmission_percent>=0&&settings.transmission_percent<=100&&finite(settings.wind_speed)&&settings.wind_speed>=0&&Number.isInteger(settings.cycles)&&settings.cycles>=1;return common&&settings.trees.length===6&&settings.trees.every(tree=>finite(tree.leaf_area)&&tree.leaf_area>0&&finite(tree.kc)&&tree.kc>=0&&finite(tree.flow)&&tree.flow>0)?settings:null;}
   async function post(body){return jsonPost('api/correction.php',body,controller?.signal);}
   async function jsonPost(url,body,signal){const response=await fetch(url,{method:'POST',cache:'no-store',signal,headers:{'Content-Type':'application/json','X-Correction-Token':token},body:JSON.stringify(body)});const data=await response.json();if(!response.ok||!data.success){if(response.status===409)conflict=true;throw new Error(data.message||'補正設定を保存できません。');}return data;}
-  async function runTrial(){if(!stored||!canTrial()){controls();$('correction-save-message').textContent='過去日は保存値のみ表示します。設定の保存は次回の予報採用に使用できます。';return;}
+  async function runTrial(reconstruct=false){if(!stored||!canTrial())return;
     const value=config();if(value.source_user_id&&!validUser(value.source_user_id)){$('correction-message').textContent='user_idを確認してください。';controls();return;}
-    const runId=++sequence;if(controller)controller.abort();controller=new AbortController();clear();$('correction-message').textContent='翌日の補正を試算中です。';trial=true;controls();rememberUser(value.source_user_id||'');
-    try{const data=await post({action:'trial',date:selectedDate(),settings:value,water_settings:validWater()});if(runId!==sequence)return;const days=savedDays();days[days.length-1]=data.result;display(days,data.result,true);}
-    catch(error){if(error.name!=='AbortError'&&runId===sequence){$('correction-message').textContent=error.message;controls();}}
+    const runId=++sequence;if(controller)controller.abort();controller=new AbortController();clear();$('correction-message').textContent='保存済み予報と実測値から計算中です。';trial=true;automaticPreview=reconstruct===true;controls();rememberUser(value.source_user_id||'');
+    try{const data=await post({action:reconstruct===true?'reconstruct':'trial',date:selectedDate(),settings:value,water_settings:validWater()});if(runId!==sequence)return;const fallback=savedDays(),days=data.days?data.days.map((day,i)=>day.result||fallback[i]):fallback;if(!data.days&&data.result)days[days.length-1]=data.result;display(days,data.result,true);}
+    catch(error){if(error.name!=='AbortError'&&runId===sequence){if(reconstruct===true)restore();$('correction-message').textContent=error.message;controls();}}
   }
   async function save(){const value=config();if(value.source_user_id&&!validUser(value.source_user_id))return;$('correction-save').disabled=true;
     try{const data=await jsonPost('api/correction.php',{action:'save',revision,settings:value});shared=data.settings;revision=shared.revision;rememberUser(value.source_user_id||'');$('correction-save-message').textContent='補正設定を保存しました。次回の予報採用から使用します。過去の履歴と今回の保存値は変更しません。';}
@@ -108,11 +109,11 @@ window.NextCorrection=(()=>{
     try{const saved=localStorage.getItem(userStorageKey),history=JSON.parse(localStorage.getItem(historyStorageKey)||'[]');userHistory=Array.isArray(history)?[...new Set(history.filter(validUser))].slice(0,10):[];if(validUser(saved))$('correction-user').value=saved;}catch{}
     renderUserHistory();$('correction-user-history').onchange=event=>{if(event.target.value){$('correction-user').value=event.target.value;runTrial();}};
     $('correction-form').onsubmit=event=>{event.preventDefault();runTrial();};$('correction-days').onchange=runTrial;$('correction-user').onchange=runTrial;$('correction-save').onclick=save;$('correction-restore').onclick=()=>{sequence++;controller?.abort();restore();};
-    const tabs=[$('water-estimate-tab'),$('water-correction-tab')];function select(tab){active=tab===tabs[1];for(const item of tabs){const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;$(item.getAttribute('aria-controls')).hidden=!selected;}if(active){if(stored&&loadedDate===selectedDate())resize();else run();}else NextWater.resize();}
-    for(const tab of tabs){tab.onclick=()=>select(tab);tab.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[1]:tabs[1-tabs.indexOf(tab)];select(target);target.focus();}};}
-    $('correction-csv').onclick=()=>{if(trial&&result.length)download([result[result.length-1]],'trial');};$('correction-export-trial').onclick=$('correction-csv').onclick;
+    const tabs=[$('water-estimate-tab'),$('water-correction-tab'),$('water-rules-tab')];function select(tab){active=tab===tabs[1];for(const item of tabs){const selected=item===tab;item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;$(item.getAttribute('aria-controls')).hidden=!selected;}if(active){if(stored&&loadedDate===selectedDate())resize();else run();}else if(tab===tabs[0])NextWater.resize();}
+    for(const tab of tabs){tab.onclick=()=>select(tab);tab.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[2]:tabs[(tabs.indexOf(tab)+(event.key==='ArrowLeft'?2:1))%3];select(target);target.focus();}};}
+    $('correction-csv').onclick=()=>{if(trial&&result.length)download(result.filter(day=>day.comparison&&day.output_type!=='保存履歴'),'preview');};$('correction-export-trial').onclick=$('correction-csv').onclick;
     $('correction-history-csv').onclick=()=>download(stored.days.filter(day=>day.snapshot).map(day=>day.snapshot),'history');$('correction-export-history').onclick=exportHistory;controls();
-    setInterval(()=>{if(active&&!trial&&config().source_user_id===(shared?.source_user_id||null)&&config().comparison_days===shared?.comparison_days&&stored?.days.some(day=>day.job&&day.job.status!=='complete'))run();},60000);
+    setInterval(()=>{if(active&&(!trial||automaticPreview)&&config().source_user_id===(shared?.source_user_id||null)&&config().comparison_days===shared?.comparison_days&&stored?.days.some(day=>day.job&&day.job.status!=='complete'))run();},60000);
   }
   function resize(){[...charts,...($('correction-water-charts').$waterCharts||[])].forEach(chart=>chart.resize());}
   function refresh(data,parameters){const old=selectedDate(),changed=JSON.stringify(settings)!==JSON.stringify(parameters);payload=data;settings=parameters;if(old!==selectedDate()){sequence++;controller?.abort();stored=null;trial=false;loadedDate=null;clear();if(active)run();}else if(active&&changed&&canTrial())runTrial();}
