@@ -15,6 +15,7 @@
   <script src="assets/csv.js" defer></script>
   <script src="assets/water.js" defer></script>
   <script src="assets/measured.js" defer></script>
+  <script src="assets/correction.js" defer></script>
   <script src="assets/next.js" defer></script>
 </head>
 <body>
@@ -93,6 +94,10 @@
       <div id="measured-charts" class="chart-grid"></div>
     </section>
     <section id="water-panel" role="tabpanel" aria-labelledby="tab-water" hidden>
+      <div class="water-subtabs next-tabs" role="tablist" aria-label="蒸散量の計算方法">
+        <button id="water-estimate-tab" role="tab" aria-selected="true" aria-controls="water-estimate-panel">推定値</button>
+        <button id="water-correction-tab" role="tab" aria-selected="false" tabindex="-1" aria-controls="water-correction-panel">実測値補正</button>
+      </div>
       <p class="water-parameter-notice">各パラメータのスイッチは研究担当者（國吉）以外で変更しないでください。</p>
       <h2>マンゴーの推定蒸散量・必要かん水量</h2>
       <p class="caption">外気温・湿度をハウス内の代用値とし、日射を透過率で補正します。資料のペンマン式を時間単位に換算した推定です。必要かん水量は推定蒸散量と同じ値です。</p>
@@ -104,8 +109,23 @@
       <button id="water-save" type="button" disabled>設定を保存</button>
       <p class="caption">保存した設定は全端末で共有します。入力中の値は最後の日のグラフに即時反映されます。履歴は予報取得時の設定で固定します。</p>
       <p id="water-message" role="status" aria-live="polite"></p>
-      <p id="water-period" class="caption"></p>
-      <div id="water-charts" class="chart-grid"></div>
+
+      <div id="water-estimate-panel" role="tabpanel" aria-labelledby="water-estimate-tab"><p id="water-period" class="caption"></p><div id="water-charts" class="chart-grid"></div></div>
+      <div id="water-correction-panel" role="tabpanel" aria-labelledby="water-correction-tab" hidden>
+        <h3>時間帯ごとの実測値補正</h3>
+        <form id="correction-form" class="tab-toolbar"><div class="selection-controls">
+          <label>補正実測先 user_id <input id="correction-user" type="text" maxlength="64" placeholder="未設定" autocomplete="off"></label>
+          <label>比較日数 <select id="correction-days" aria-label="比較日数"></select></label><button type="submit">再計算</button>
+        </div><p class="caption">予報対象日の2日前までを比較します。各日の1時間平均から求めた差を、日ごとに同じ重みで平均します。</p>
+        <button type="button" disabled>設定を保存</button><span class="caption"> 補正設定の共有保存・18:10の履歴固定はDB接続対応後に利用できます。</span></form>
+        <p id="correction-message" role="status" aria-live="polite"></p>
+        <div id="correction-differences" class="chart-grid"></div>
+        <details><summary>時間帯ごとの比較表</summary><div class="table-scroll"><table id="correction-table"></table></div></details>
+        <p id="correction-period" class="caption"></p>
+        <button id="correction-csv" type="button" disabled>画面の試算CSV</button>
+        <button type="button" disabled>補正の保存履歴CSV</button>
+        <div id="correction-water-charts" class="chart-grid"></div>
+      </div>
     </section>
     <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
       <h2>CSVダウンロード</h2>
@@ -126,6 +146,10 @@
       <p class="caption">上の開始・終了日時（時間区間の開始日時）を使い、6本の保存値と当時の全パラメータを出力します。予報の採用日は対象日の前日です。未保存・欠測はゼロと区別します。</p>
       <button id="water-export" type="button">蒸散量CSVダウンロード</button>
       <p id="water-export-message" role="status"></p>
+      <h3>実測値補正の試算CSV</h3>
+      <p class="caption">蒸散量の「実測値補正」で最後に計算した画面の3日分を出力します。保存履歴ではありません。</p>
+      <button id="correction-export-trial" type="button" disabled>補正の試算CSVダウンロード</button>
+      <p id="correction-export-note" class="caption">実測値補正タブで試算してください。補正の保存履歴CSVはDB対応後に利用できます。</p>
       <h3>実測値CSV</h3>
       <div class="export-actions"><label>開始日時（JST）<input id="measured-start" type="datetime-local" step="60"></label><label>終了日時（JST）<input id="measured-end" type="datetime-local" step="60"></label></div>
       <p class="caption">選択したuser_idのP01・P21・P31・P61を出力します（最大366日）。測定時刻ごとに1行、欠測・対象外項目は空欄です。飽差のg/m³とkPaも含みます。</p>

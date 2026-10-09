@@ -154,3 +154,12 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 #measured-start, #measured-end { width:175px; min-height:25px; padding:2px 4px; font-size:11px; }
 .tab-toolbar { margin:12px 0; padding:8px 10px; border:1px solid #c7d0da; border-radius:4px; }
 .tab-toolbar input, .tab-toolbar select, .tab-toolbar button { min-height:25px; height:25px; padding:2px 5px; font-size:11px; }
+
+.water-subtabs { margin-top:12px; }
+#correction-form label { display:flex; flex-direction:column; gap:3px; font-size:11px; }
+#correction-user { width:110px; }
+#correction-days { width:65px; }
+#correction-table { font-size:11px; min-width:680px; }
+#correction-table th,#correction-table td { padding:5px 7px; text-align:left; }
+#correction-water-charts { margin-top:12px; }
+#correction-csv,#water-correction-panel > button { font-size:11px; padding:3px 6px; min-height:0; }

@@ -1,0 +1,17 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const sandbox={window:{},Date,Number,Math,Map};vm.createContext(sandbox);
+vm.runInContext(fs.readFileSync('u-tech-next/assets/correction.js','utf8'),sandbox);
+const api=sandbox.window.NextCorrection,plain=value=>JSON.parse(JSON.stringify(value));
+const forecasts=['2026-10-06','2026-10-07','2026-10-08'].map(date=>({date,rows:[{forecast_for:date+' 13:00:00',temperature_2m:25,relative_humidity_2m:60}]}));
+const rows=[{point_id:'P01',recorded_at:'2026-10-06 13:00:00',temperature:27,humidity:70},{point_id:'P01',recorded_at:'2026-10-06 13:10:00',temperature:29,humidity:null},{point_id:'P01',recorded_at:'2026-10-08 13:59:59',temperature:26,humidity:80},{point_id:'P01',recorded_at:'2026-10-09 13:00:00',temperature:99,humidity:90}];
+const comparison=api.aggregate('2026-10-10',3,forecasts,rows),hour=comparison.hours[13];
+assert.equal(comparison.start,'2026-10-06');assert.equal(comparison.end,'2026-10-08');
+assert.equal(hour.temperature_2m.difference,2);assert.equal(hour.temperature_2m.count,3);assert.equal(hour.temperature_2m.days,2);
+assert.equal(hour.relative_humidity_2m.difference,15);assert.equal(hour.relative_humidity_2m.count,2);
+assert.equal(comparison.hours[14].temperature_2m.difference,null);
+const corrected=api.correctedRows([{forecast_for:'2026-10-10 13:00:00',temperature_2m:25,relative_humidity_2m:90}],comparison)[0];
+assert.equal(corrected.temperature_2m,27);assert.equal(corrected.relative_humidity_2m,100);assert.equal(corrected.humidity_clamped,true);
+const one=api.aggregate('2026-10-10',1,forecasts,rows);assert.equal(one.hours[13].temperature_2m.count,1);assert.equal(one.start,'2026-10-08');
+const independent=api.aggregate('2026-10-10',1,forecasts,[{point_id:'P01',recorded_at:'2026-10-08 13:00:00',temperature:27,humidity:null}]);
+const independentRow=api.correctedRows([{forecast_for:'2026-10-10 13:00:00',temperature_2m:25,relative_humidity_2m:60}],independent)[0];assert.equal(independentRow.temperature_2m,27);assert.equal(independentRow.relative_humidity_2m,60);assert.ok(independentRow.corrected_vpd>0);
+console.log('Correction calculations passed: two-day lag, equal day weights, missing values, single measurement, independent fields, humidity limits.');

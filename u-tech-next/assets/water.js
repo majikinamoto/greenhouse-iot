@@ -71,8 +71,9 @@ window.NextWater = (() => {
     }
   }
   function render(container,days,mode) {
-    liveCharts.forEach(chart=>chart.destroy());
-    const charts=[];liveCharts=charts;container.replaceChildren();
+    (container.$waterCharts||[]).forEach(chart=>chart.destroy());
+    container.$waterCharts=[];
+    const charts=container.$waterCharts;if(container.id==='water-charts')liveCharts=charts;container.replaceChildren();
     if(!window.Chart){container.append(text('p','グラフを読み込めません。保存値はCSVで確認できます。'));return;}
     const maxHourly=Math.max(1,...days.flatMap(day=>day.trees.flatMap(tree=>tree.hours.map(h=>h.litres??0))));
     const maxDaily=Math.max(1,...days.flatMap(day=>day.trees.map(tree=>tree.partial_litres)));
@@ -121,6 +122,7 @@ window.NextWater = (() => {
       return calculate(day.date,day.forecast,settings);
     });
     render($('water-charts'),days,'live');
+    window.NextCorrection?.refresh(livePayload,settings);
     $('water-period').textContent=`${days[0].date}〜${last} JST。選択日は入力中の設定で計算します。過去日は保存履歴を優先し、履歴がない日は現在の入力値で再計算します。`+(recalculated.length?` 現在の設定で再計算：${recalculated.join('、')}（当時の保存値ではありません）。`:'');
   }
   async function load(center,initial=false,refresh=false) {
@@ -154,5 +156,5 @@ window.NextWater = (() => {
     setInterval(()=>{if(!document.hidden && livePayload)load(selectedDate?shift(selectedDate,-1):null,false,true);},60000);
   }
   function setDate(date) {selectedDate=date;load(shift(date,-1));}
-  return {initialize,penman,calculate,csv,setDate,resize:()=>liveCharts.forEach(chart=>chart.resize())};
+  return {initialize,penman,calculate,csv,render,setDate,resize:()=>liveCharts.forEach(chart=>chart.resize())};
 })();
