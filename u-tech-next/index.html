@@ -85,7 +85,7 @@
           <div class="control-field"><label for="next-user-id">user_id</label><div class="id-controls"><input id="next-user-id" type="text" maxlength="64" placeholder="例: T0001" autocomplete="off" spellcheck="false" aria-describedby="context-note"><select id="next-user-history" aria-label="user_idの履歴"><option value="">履歴</option></select></div></div>
           <button id="measured-refresh" type="submit">表示</button>
         </div>
-        <p id="context-note" class="caption">同じuser_idのP01・P21・P31・P61を表示します。</p>
+        <p id="context-note" class="caption">同じuser_idのP01・P21・P31・P61・P62を表示します。</p>
         <p id="context-error" class="error" role="alert" hidden></p>
       </form>
       <p id="selected-context" class="caption">実測ID：未選択</p>
@@ -153,7 +153,7 @@
       <p id="correction-export-note" class="caption">実測値補正タブで試算してください。補正の保存履歴CSVはDB対応後に利用できます。</p>
       <h3>実測値CSV</h3>
       <div class="export-actions"><label>開始日時（JST）<input id="measured-start" type="datetime-local" step="60"></label><label>終了日時（JST）<input id="measured-end" type="datetime-local" step="60"></label></div>
-      <p class="caption">選択したuser_idのP01・P21・P31・P61を出力します（最大366日）。測定時刻ごとに1行、欠測・対象外項目は空欄です。飽差のg/m³とkPaも含みます。</p>
+      <p class="caption">選択したuser_idのP01・P21・P31・P61・P62を出力します（最大366日）。測定時刻ごとに1行、欠測・対象外項目は空欄です。飽差のg/m³とkPaも含みます。</p>
       <button id="measured-export" type="button">実測値CSVダウンロード</button>
       <p id="measured-export-message" role="status"></p>
     </section>

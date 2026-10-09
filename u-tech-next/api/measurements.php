@@ -29,7 +29,7 @@ try {
 }
 try {
     $db = UTechNext\connect();
-    $stmt = $db->prepare("SELECT point_id, recorded_at, temperature, humidity, co2, solar_radiation, wind_speed_avg, wind_speed_max FROM measurements WHERE user_id=? AND point_id IN ('P01','P21','P31','P61') AND recorded_at>=? AND recorded_at<=? ORDER BY recorded_at, point_id");
+    $stmt = $db->prepare("SELECT point_id, recorded_at, temperature, humidity, co2, solar_radiation, wind_speed_avg, wind_speed_max FROM measurements WHERE user_id=? AND point_id IN ('P01','P21','P31','P61','P62') AND recorded_at>=? AND recorded_at<=? ORDER BY recorded_at, point_id");
     $stmt->execute([$user,$dates['start']->format('Y-m-d H:i:s'),$dates['end']->format('Y-m-d H:i:s')]);
     $rows=$stmt->fetchAll();
     foreach ($rows as &$row) foreach (['temperature','humidity','co2','solar_radiation','wind_speed_avg','wind_speed_max'] as $key) $row[$key]=$row[$key]===null?null:(float)$row[$key];
