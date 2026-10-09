@@ -407,6 +407,16 @@ button { margin:5px; }
     margin-right:0;
 }
 
+.chart-axis-control label:has(input[type="checkbox"]) {
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+}
+
+.temp-hum-axis-control:has(input[type="checkbox"]) {
+    flex-wrap:wrap;
+}
+
 .temp-hum-axis-apply-button {
     padding-left:2px;
     padding-right:2px;
@@ -3163,6 +3173,7 @@ body.data-export-active .control-panel {
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
             <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP11,'P11','temperature')">縦軸反映</button>
+            <label><input type="checkbox" id="mainTempAxisLink" onchange="changeMainAxisLink('temperature')">P01と同じ縦軸</label>
         </div>
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
@@ -3199,6 +3210,7 @@ body.data-export-active .control-panel {
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
             <button onclick="applyTempHumSingleYAxis(humChartP11,'P11','humidity')">縦軸反映</button>
+            <label><input type="checkbox" id="mainHumAxisLink" onchange="changeMainAxisLink('humidity')">P01と同じ縦軸</label>
         </div>
         <div class="chart-container"><canvas id="humChartP11"></canvas></div>
     </div>
@@ -3239,6 +3251,7 @@ body.data-export-active .control-panel {
             <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="200"> ～
             <input class="axis-input axis-input-wide" type="number" id="co2OutsideMax" value="500">
             <button onclick="applyCo2OutsideYAxis(co2OutsideChart)">縦軸反映</button>
+            <label><input type="checkbox" id="mainCo2AxisLink" onchange="changeMainAxisLink('co2')">P21と同じ縦軸</label>
         </div>
         <div class="chart-container"><canvas id="co2OutsideChart"></canvas></div>
     </div>
@@ -8249,7 +8262,7 @@ function syncZoom(sourceChart){
                 chart.update("none");
             }
 
-            if(tempHumChartGroup && tempHumChartGroup.includes(chart.canvas.id) && sourceChart.scales.y){
+            if(tempHumChartGroup && sourceChart.canvas.id === tempHumChartGroup[0] && isMainAxisLinked(sourceChart.canvas.id === 'tempChartP01' ? 'temperature' : 'humidity') && tempHumChartGroup.includes(chart.canvas.id) && sourceChart.scales.y){
                 const yRange = { min:sourceChart.scales.y.min, max:sourceChart.scales.y.max };
                 if(chart.zoomScale){
                     chart.zoomScale("y", yRange, "none");
@@ -8260,7 +8273,7 @@ function syncZoom(sourceChart){
                 }
             }
 
-            if(isCo2Source && co2ChartIds.includes(chart.canvas.id) && sourceChart.scales.y){
+            if(isCo2Source && sourceChart.canvas.id === 'co2Chart' && isMainAxisLinked('co2') && co2ChartIds.includes(chart.canvas.id) && sourceChart.scales.y){
                 const co2YRange = {
                     min:sourceChart.scales.y.min,
                     max:sourceChart.scales.y.max
@@ -8304,6 +8317,7 @@ function syncZoom(sourceChart){
         }
     });
 
+    matchMainAxisLinks();
     syncingZoom = false;
 }
 
@@ -12555,6 +12569,7 @@ async function loadData(){
 
     clearAlertFormIfUserChanged();
     restoreMainGraphVisibility(userId);
+    restoreMainAxisLinks(userId);
 
     if(!userId){
         msg.innerText = "user_id を入力してください";
@@ -12761,6 +12776,8 @@ async function loadData(){
         applyMobileChartRanges(chartMinTime, now);
         refreshVisibleCharts();
 
+        matchMainAxisLinks();
+
         msg.innerText = errors.length ? errors.join(" / ") : "";
 
     }catch(e){
@@ -12831,6 +12848,7 @@ function resetZoom(){
                 redrawChart(c);
             });
 
+            matchMainAxisLinks();
             syncingZoom = false;
         });
     });
@@ -12845,15 +12863,71 @@ function applyTempHumYAxis(chart, pointId){
     chart.update();
 }
 
+function getMainAxisLinkPairs(){
+    return [
+        {key:'temperature', checkbox:'mainTempAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['tempMinP11','tempMaxP11']},
+        {key:'humidity', checkbox:'mainHumAxisLink', inside:humChartP01, outside:humChartP11, inputs:['humMinP11','humMaxP11']},
+        {key:'co2', checkbox:'mainCo2AxisLink', inside:co2Chart, outside:co2OutsideChart, inputs:['co2OutsideMin','co2OutsideMax']}
+    ];
+}
+
+function isMainAxisLinked(key){
+    const pair=getMainAxisLinkPairs().find(pair=>pair.key===key);
+    return !!document.getElementById(pair.checkbox)?.checked;
+}
+
+function updateMainAxisLinkControls(pair){
+    const checkbox=document.getElementById(pair.checkbox);
+    checkbox.disabled=!mainGraphVisibilityUserId;
+    pair.inputs.forEach(id=>{document.getElementById(id).disabled=checkbox.checked;});
+    checkbox.closest('.chart-axis-control').querySelector('button').disabled=checkbox.checked;
+}
+
+function restoreMainAxisLinks(userId){
+    let saved={};
+    try{saved=JSON.parse(localStorage.getItem('utechMainAxisLinks_v1_'+userId)) || {};}catch(e){}
+    getMainAxisLinkPairs().forEach(pair=>{
+        document.getElementById(pair.checkbox).checked=saved[pair.key]===true;
+        updateMainAxisLinkControls(pair);
+    });
+}
+
+function matchMainAxisLinks(){
+    getMainAxisLinkPairs().forEach(pair=>{
+        if(!isMainAxisLinked(pair.key) || !pair.inside?.scales.y || !pair.outside) return;
+        setLinearYAxis(pair.outside,{min:pair.inside.scales.y.min,max:pair.inside.scales.y.max});
+        pair.outside.update('none');
+    });
+}
+
+function changeMainAxisLink(key){
+    const pairs=getMainAxisLinkPairs();
+    const pair=pairs.find(pair=>pair.key===key);
+    updateMainAxisLinkControls(pair);
+    if(mainGraphVisibilityUserId){
+        const saved=Object.fromEntries(pairs.map(pair=>[pair.key,isMainAxisLinked(pair.key)]));
+        try{localStorage.setItem('utechMainAxisLinks_v1_'+mainGraphVisibilityUserId,JSON.stringify(saved));}
+        catch(e){document.getElementById('message').innerText='縦軸の連動設定を端末へ保存できません。';}
+    }
+    if(isMainAxisLinked(key)){
+        matchMainAxisLinks();
+    }else if(pair.outside){
+        if(key==='co2') applyCo2OutsideYAxis(pair.outside);
+        else applyTempHumSingleYAxis(pair.outside,'P11',key);
+    }
+}
+
 function applyTempHumSingleYAxis(chart, pointId, measurement){
     if(!chart) return;
     const axis=getTempHumAxis(pointId);
     setLinearYAxis(chart,measurement==="temperature" ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax});
     chart.update();
+    matchMainAxisLinks();
 }
 
 function applyCo2YAxis(chart){
     applySingleYAxis(chart, "co2");
+    matchMainAxisLinks();
 }
 
 function applyCo2OutsideYAxis(chart){
