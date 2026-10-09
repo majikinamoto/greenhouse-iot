@@ -165,3 +165,5 @@ h2 { font-size: 17px; border-left: 4px solid #3f6388; padding-left: 10px; margin
 #correction-csv,#water-correction-panel > button { font-size:11px; padding:3px 6px; min-height:0; }
 
 #correction-user-history { width:90px; }
+
+.measured-axes input[type="checkbox"] { width:13px; height:13px; padding:0; vertical-align:middle; }
