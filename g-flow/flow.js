@@ -8,6 +8,14 @@ const numeric=value=>value===null || value===undefined || value==='' || !Number.
 const stamp=value=>Date.parse(value.replace(' ','T')+'+09:00');
 function recent(){const now=Date.now();$('end').value=jst(now);$('start').value=jst(now-72*3600000);}
 function status(message){$('status').textContent=message;}
+function emptyGraphs(message){
+ charts.forEach(c=>c.destroy());charts=[];$('charts').replaceChildren();
+ points.forEach((point,index)=>{const card=document.createElement('section');card.className='chart-card';const title=document.createElement('h3');title.textContent=`No.${index+1} · ${point}`;const wrap=document.createElement('div');wrap.className='chart-container';const canvas=document.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`No.${index+1}の風速グラフ`);wrap.append(canvas);const note=document.createElement('p');note.className='chart-readout';note.textContent=message;card.append(title,wrap,note);$('charts').append(card);});
+}
+function history(){try{const values=JSON.parse(localStorage.getItem('g_flow_user_id_history')||'[]');return Array.isArray(values)?values.filter(v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(v)).slice(0,10):[];}catch{return [];}}
+function updateHistory(){const select=$('user-history');select.replaceChildren();const prompt=document.createElement('option');prompt.value='';prompt.textContent='履歴';select.append(prompt);for(const user of history()){const option=document.createElement('option');option.value=user;option.textContent=user;select.append(option);}}
+function remember(user){try{localStorage.setItem('g_flow_user_id',user);localStorage.setItem('g_flow_user_id_history',JSON.stringify([user,...history().filter(v=>v!==user)].slice(0,10)));}catch{status('user_idの履歴を端末へ保存できません。');}updateHistory();}
+function switchTab(name){for(const tab of ['main','export']){const selected=tab===name;$('tab-'+tab).setAttribute('aria-selected',String(selected));$('tab-'+tab).tabIndex=selected?0:-1;$(tab+'-panel').hidden=!selected;}if(name==='main')requestAnimationFrame(()=>charts.forEach(c=>{c.resize();c.update('none');}));}
 function syncZoom({chart}){if(syncing)return;syncing=true;for(const c of charts){c.options.scales.x.min=chart.scales.x.min;c.options.scales.x.max=chart.scales.x.max;c.update('none');}matchWindAxes();syncing=false;}
 function axisKey(){return 'g_flow_axes_v1_'+loaded.user;}
 function readAxes(){try{return JSON.parse(localStorage.getItem(axisKey()))||{};}catch{return {};}}
@@ -52,12 +60,19 @@ async function load(event){event?.preventDefault();if(!$('data-form').reportVali
     const user=$('user-id').value.trim(),start=$('start').value,end=$('end').value;
     const startMs=stamp(start.replace('T',' ')+':00'),endMs=stamp(end.replace('T',' ')+':00');
     if(endMs<startMs||endMs-startMs>366*86400000){status('開始・終了日時を確認してください（最大366日）。');return;}
-    const id=++requestId;loaded=null;$('csv').disabled=true;charts.forEach(c=>c.destroy());charts=[];$('charts').replaceChildren();status('風速データを読み込み中です。');
-    try{const query=new URLSearchParams({user_id:user,start:start.replace('T',' ')+':00',end:end.replace('T',' ')+':00'});const response=await fetch('data.php?'+query,{cache:'no-store'});const body=await response.json();if(id!==requestId)return;if(!response.ok)throw new Error(body.message||'取得できませんでした。');if(!Array.isArray(body.rows))throw new Error('データの形式を確認してください。');loaded={user,start,end,startMs,endMs,rows:body.rows};render();localStorage.setItem('g_flow_user_id',user);$('csv').disabled=false;status(`${user} ｜ ${start.replace('T',' ')}〜${end.replace('T',' ')} JST ｜ ${body.rows.length}件`);
-    }catch(error){if(id!==requestId)return;loaded=null;$('csv').disabled=true;status(error.message);}
+    const id=++requestId;loaded=null;$('csv').disabled=true;$('export-context').textContent='出力対象：読み込み中';emptyGraphs('風速データを読み込み中です。');status('風速データを読み込み中です。');
+    try{const query=new URLSearchParams({user_id:user,start:start.replace('T',' ')+':00',end:end.replace('T',' ')+':00'});const response=await fetch('data.php?'+query,{cache:'no-store'});const body=await response.json();if(id!==requestId)return;if(!response.ok)throw new Error(body.message||'取得できませんでした。');if(!Array.isArray(body.rows))throw new Error('データの形式を確認してください。');loaded={user,start,end,startMs,endMs,rows:body.rows};render();remember(user);$('export-context').textContent=`出力対象：${user} ｜ ${start.replace('T',' ')}〜${end.replace('T',' ')} JST ｜ ${body.rows.length}件`;$('csv').disabled=false;status(`${user} ｜ ${start.replace('T',' ')}〜${end.replace('T',' ')} JST ｜ ${body.rows.length}件`);
+    }catch(error){if(id!==requestId)return;loaded=null;$('csv').disabled=true;$('export-context').textContent='出力対象：未選択';emptyGraphs('データを取得できませんでした。再度「表示」を押してください。');status(error.message);}
 }
 function csvCell(value){const text=String(value??'');return '"'+(/^[=+\-@\t\r]/.test(text)?"'"+text:text).replaceAll('"','""')+'"';}
 function download(){if(!loaded)return;const lines=[['user_id','ハウス名','point_id','測定日時（JST）','10分平均風速（m/s）','10分最大風速（m/s）'],...loaded.rows.map(r=>[loaded.user,`No.${points.indexOf(r.point_id)+1}`,r.point_id,r.recorded_at,r.wind_speed_avg,r.wind_speed_max])];const blob=new Blob(['\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`G-Flow_${loaded.user}_${loaded.start.replace(/\D/g,'')}_${loaded.end.replace(/\D/g,'')}_JST.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 recent();$('user-id').value=localStorage.getItem('g_flow_user_id')||localStorage.getItem('usui_user_id')||'';
 $('data-form').addEventListener('submit',load);$('last72').addEventListener('click',()=>{recent();load();});
 $('csv').addEventListener('click',download);
+
+updateHistory();
+$('user-history').addEventListener('change',()=>{if($('user-history').value)$('user-id').value=$('user-history').value;});
+for(const name of ['main','export']){
+ $('tab-'+name).addEventListener('click',()=>switchTab(name));
+ $('tab-'+name).addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const target=event.key==='Home'?'main':event.key==='End'?'export':name==='main'?'export':'main';switchTab(target);$('tab-'+target).focus();});
+}
