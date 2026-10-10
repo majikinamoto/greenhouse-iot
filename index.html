@@ -2974,6 +2974,7 @@ body.data-export-active .control-panel {
         <div class="logo-title-row">
             <div class="logo-title">U-Tech</div>
             <button class="logo-info-button" type="button" aria-label="U-Techの名前の由来" onclick="toggleLogoInfo()">ℹ️</button>
+            <button type="button" class="site-switch-link" onclick="openSiteSwitchDialog('flow')" aria-label="G-Flowへ移動">G-Flowへ移動</button>
             <button type="button" class="site-switch-link" onclick="openSiteSwitchDialog('next')" aria-label="U-Tech Nextへ移動">U-Tech Nextへ移動</button>
             <button type="button" class="site-switch-link" onclick="openSiteSwitchDialog('yui')" aria-label="Yui-Techへ移動">Yui-Techへ移動</button>
             <div id="logoInfoPopup" class="logo-info-popup">
@@ -4952,6 +4953,7 @@ function resetSiteSwitchDialog(){
 
 function openSiteSwitchDialog(destination){
     const destinations = {
+        flow:{ url:"g-flow/", title:"G-Flowへ移動" },
         next:{ url:"u-tech-next/", title:"U-Tech Nextへ移動" },
         yui:{ url:"yui-tech/", title:"Yui-Techへ移動" }
     };
@@ -4971,6 +4973,19 @@ function submitSiteSwitchPassword(event){
         document.getElementById("siteSwitchError").textContent = "パスワードが違います。";
         input.value = "";
         input.focus();
+        return;
+    }
+    if(pendingSiteSwitchUrl === "g-flow/"){
+        const form = document.createElement("form");
+        form.method = "post";
+        form.action = pendingSiteSwitchUrl;
+        const password = document.createElement("input");
+        password.type = "hidden";
+        password.name = "password";
+        password.value = input.value;
+        form.appendChild(password);
+        document.body.appendChild(form);
+        form.submit();
         return;
     }
     if(pendingSiteSwitchUrl) window.location.assign(pendingSiteSwitchUrl);
