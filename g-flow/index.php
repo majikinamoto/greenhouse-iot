@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if (!flowAuthorized()): ?>
 <section class="tab-toolbar"><h2>G-Flowへ入る</h2><form method="post"><label for="password">パスワード</label><input id="password" name="password" type="password" inputmode="numeric" required autofocus autocomplete="current-password"><button type="submit">入る</button></form><p class="error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p></section>
 <?php else: ?>
-<form id="data-form" class="tab-toolbar"><div class="selection-controls"><label>user_id <input id="user-id" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}" required placeholder="例: T0001" autocomplete="off"></label><label>履歴<select id="user-history" aria-label="user_idの履歴"><option value="">履歴</option></select></label><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button type="submit">表示</button><button id="last72" type="button">直近72時間</button></div></form>
+<form id="data-form" class="tab-toolbar"><div class="selection-controls"><label>user_id <input id="user-id" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}" required placeholder="例: T0001" autocomplete="off"></label><label>履歴<select id="user-history" aria-label="user_idの履歴"><option value="">履歴</option></select></label><button type="submit">表示</button></div></form>
 <div class="next-tabs" role="tablist" aria-label="G-Flowの表示">
 <button id="tab-main" type="button" role="tab" aria-selected="true" aria-controls="main-panel">メイン</button>
 <button id="tab-export" type="button" role="tab" aria-selected="false" aria-controls="export-panel" tabindex="-1">データ出力</button>
@@ -32,12 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <section class="chart-card"><h3>No.<?= $index+1 ?> · <?= $point ?></h3><div class="chart-container"><canvas aria-label="No.<?= $index+1 ?>の風速グラフ" role="img"></canvas></div><p class="chart-readout">user_idを入力して「表示」を押してください。</p></section>
 <?php endforeach; ?>
 </div>
-<p class="caption">ドラッグで時間を拡大できます。表示時間は4棟で連動します。No.2〜No.4は「P61と同じ縦軸」で連動・個別調整を選べます。</p>
+<p class="caption">マウスでドラッグした範囲を縦横に拡大できます。「表示リセット」で元に戻せます。表示時間は4棟で連動します。No.2〜No.4は「P61と同じ縦軸」で連動・個別調整を選べます。</p>
 </section>
 <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
-<h2>データ出力</h2><p class="caption">「表示」で読み込んだ4棟の風速データをCSVに出力します。出力対象を変更するときは、上部のuser_id・期間を指定して「表示」を押してください。</p>
+<h2>データ出力</h2><p class="caption">上部で選んだuser_idと、ここで指定した期間の4棟の風速データをCSVに出力します。メインのグラフは直近72時間を表示します。</p>
 <p id="export-context" role="status" aria-live="polite">出力対象：未選択</p>
-<div class="export-actions"><button id="csv" type="button" disabled>CSVダウンロード</button></div>
+<form id="export-form"><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="last72" type="button">直近72時間</button><button id="csv" type="submit">CSVダウンロード</button></div></form>
 <p class="caption">user_id・ハウス名・point_id・測定日時（JST）・10分平均風速・10分最大風速（m/s）。欠測値は空欄です。</p>
 </section>
 <?php endif; ?><footer>G-Flow · Gima / Goya</footer></main></body></html>
