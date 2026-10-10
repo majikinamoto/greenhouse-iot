@@ -73,7 +73,7 @@ function download(loaded){if(!loaded)return;const groups=points.map(point=>loade
 const fields=['user_id','point_id','ハウス名','測定日時（JST）','10分最大風速（m/s）','10分平均風速（m/s）'];
 const lines=[points.flatMap((point,index)=>index?[ '',...fields]:fields)];
 for(let rowIndex=0;rowIndex<Math.max(0,...groups.map(group=>group.length));rowIndex++){
- lines.push(groups.flatMap((group,index)=>{const row=group[rowIndex];const cells=row?[loaded.user,points[index],`No.${index+1}`,row.recorded_at,row.wind_speed_max,row.wind_speed_avg]:Array(6).fill('');return index?['',...cells]:cells;}));
+ lines.push(groups.flatMap((group,index)=>{const row=group[rowIndex];const cells=row?[rowIndex===0?loaded.user:'',rowIndex===0?points[index]:'',`No.${index+1}`,row.recorded_at,row.wind_speed_max,row.wind_speed_avg]:Array(6).fill('');return index?['',...cells]:cells;}));
 }const blob=new Blob(['\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`G-Flow_${loaded.user}_${loaded.start.replace(/\D/g,'')}_${loaded.end.replace(/\D/g,'')}_JST.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 recent();$('user-id').value=localStorage.getItem('g_flow_user_id')||localStorage.getItem('usui_user_id')||'';
 $('data-form').addEventListener('submit',load);

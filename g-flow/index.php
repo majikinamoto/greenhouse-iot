@@ -37,6 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
 <p id="export-context" role="status" aria-live="polite">出力対象：未選択</p>
 <form id="export-form"><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="csv" type="submit">CSVダウンロード</button></div></form>
-<p class="caption">各棟はuser_id・point_id・ハウス名・測定日時（JST）・10分最大風速・10分平均風速（m/s）の順です。No.1〜No.4を空列1つで区切って横に並べ、各棟のデータは日時順に出力します。欠測値は空欄です。</p>
+<p class="caption">各棟はuser_id・point_id・ハウス名・測定日時（JST）・10分最大風速・10分平均風速（m/s）の順です。No.1〜No.4を空列1つで区切って横に並べ、各棟のデータは日時順に出力します。user_id・point_idは各棟の最初のデータ行だけに表示します。欠測値は空欄です。</p>
 </section>
 <?php endif; ?><footer>G-Flow · Gima / Goya</footer></main></body></html>
