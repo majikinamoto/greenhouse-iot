@@ -1,1 +1,6 @@
-.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-card{width:100%;max-width:none}.chart-container{height:280px}.selection-controls label{display:flex;flex-direction:column;gap:4px}#axis-min,#axis-max{width:100px}.hero{justify-content:space-between}.chart-readout{min-height:36px}@media(max-width:700px){.chart-grid{grid-template-columns:1fr}.selection-controls{align-items:flex-start}.hero{flex-wrap:wrap}}
+.selection-controls label{display:flex;flex-direction:column;gap:4px}
+.measured-axes{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:6px 0;font-size:11px}
+.measured-axes input[type=number]{width:65px;min-height:24px;padding:2px 4px;font-size:11px}
+.measured-axes button{min-height:24px;padding:3px 8px;font-size:11px}
+.measured-axes label{display:flex;align-items:center;gap:4px}
+.measured-axes input[type=checkbox]{min-height:0}
