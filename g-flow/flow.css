@@ -4,3 +4,5 @@
 .measured-axes button{min-height:24px;padding:3px 8px;font-size:11px}
 .measured-axes label{display:flex;align-items:center;gap:4px}
 .measured-axes input[type=checkbox]{min-height:0}
+
+#export-panel #csv{min-height:24px;padding:3px 8px;font-size:11px;border-radius:5px}

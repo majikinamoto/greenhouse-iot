@@ -35,9 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <p class="caption">マウスでドラッグした範囲を縦横に拡大できます。「表示リセット」で元に戻せます。表示時間は4棟で連動します。No.2〜No.4は「P61と同じ縦軸」で連動・個別調整を選べます。</p>
 </section>
 <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
-<h2>データ出力</h2><p class="caption">上部で選んだuser_idと、ここで指定した期間の4棟の風速データをCSVに出力します。メインのグラフは直近72時間を表示します。</p>
 <p id="export-context" role="status" aria-live="polite">出力対象：未選択</p>
-<form id="export-form"><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="last72" type="button">直近72時間</button><button id="csv" type="submit">CSVダウンロード</button></div></form>
-<p class="caption">user_id・ハウス名・point_id・測定日時（JST）・10分平均風速・10分最大風速（m/s）。欠測値は空欄です。</p>
+<form id="export-form"><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="csv" type="submit">CSVダウンロード</button></div></form>
+<p class="caption">各棟はuser_id・point_id・ハウス名・測定日時（JST）・10分最大風速・10分平均風速（m/s）の順です。No.1〜No.4を空列1つで区切って横に並べ、各棟のデータは日時順に出力します。欠測値は空欄です。</p>
 </section>
 <?php endif; ?><footer>G-Flow · Gima / Goya</footer></main></body></html>
