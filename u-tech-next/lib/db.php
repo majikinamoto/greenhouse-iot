@@ -60,6 +60,8 @@ function saveForecast(\PDO $db, int $locationId, string $date, array $batch, ?ar
             require_once __DIR__ . '/correction.php';
             $query=$db->prepare('SELECT settings_json FROM next_water_settings WHERE location_id=? FOR UPDATE');$query->execute([$locationId]);$raw=$query->fetchColumn();
             $settings=$raw===false?null:validateWaterSettings(json_decode($raw,true,512,JSON_THROW_ON_ERROR));
+            // Legacy settings remain readable, but do not invent new irrigation inputs for future adoptions.
+            if($settings!==null&&($settings['schema_version']??1)!==2)$settings=null;
         }
         $stmt = $db->prepare($sql);
         foreach ($batch['rows'] as $row) {

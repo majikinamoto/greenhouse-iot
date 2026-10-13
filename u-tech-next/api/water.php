@@ -19,7 +19,9 @@ try {
         if (!hash_equals($_SESSION['water_token'], $_SERVER['HTTP_X_WATER_TOKEN'] ?? '')) waterJson(['success'=>false,'message'=>'画面を再読み込みしてください。'],403);
         $body = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
         if (!is_array($body)) throw new InvalidArgumentException('設定の形式が正しくありません。');
-        $settings = UTechNext\validateWaterSettings($body['settings'] ?? []);
+        $input=$body['settings']??[];
+        if(($input['schema_version']??null)!==2)throw new InvalidArgumentException('新しい設定画面を再読み込みして入力してください。');
+        $settings = UTechNext\validateWaterSettings($input);
         $revision = $body['revision'] ?? null;
         if (!is_int($revision) || $revision < 0) throw new InvalidArgumentException('設定の版が正しくありません。');
         $now = (new DateTimeImmutable('now', UTechNext\tokyo()))->format('Y-m-d H:i:s');

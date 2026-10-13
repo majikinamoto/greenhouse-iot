@@ -1,11 +1,14 @@
 <?php
 declare(strict_types=1);
 namespace UTechNext;
+require_once __DIR__.'/irrigation.php';
 
 const TRANSPIRATION_VERSION = 'staff-penman-hourly-v1';
 
 function validateWaterSettings(array $settings): array
 {
+    $modern=($settings['schema_version']??1)===2;
+    if($modern)$settings=validateIrrigationSettings($settings);
     $errors = [];
     $check = static function ($value, string $label, float $min, ?float $max = null, bool $integer = false) use (&$errors): void {
         if ((!is_int($value) && !is_float($value)) || !is_finite((float)$value) || $value < $min || ($max !== null && $value > $max) || ($integer && floor($value) !== (float)$value)) {
@@ -26,7 +29,9 @@ function validateWaterSettings(array $settings): array
         }
     }
     if ($errors !== []) throw new \InvalidArgumentException(implode("\n", $errors));
-    return ['transmission_percent' => $settings['transmission_percent'], 'wind_speed' => $settings['wind_speed'], 'cycles' => $settings['cycles'], 'trees' => array_map(static function ($tree) { return array_intersect_key($tree, array_flip(['leaf_area', 'kc', 'flow'])); }, $settings['trees'])];
+    $out=['transmission_percent'=>$settings['transmission_percent'],'wind_speed'=>$settings['wind_speed'],'cycles'=>$settings['cycles'],'trees'=>array_map(static function($tree)use($modern){return array_intersect_key($tree,array_flip($modern?['leaf_area','kc','flow','nozzles','a','b','irrigation_mode']:['leaf_area','kc','flow']));},$settings['trees'])];
+    if($modern)$out+=array_intersect_key($settings,array_flip(['schema_version','stage','kc','stage_kc']));
+    return $out;
 }
 
 // The staff workbook uses a radiation term in MJ/m²/day and an aerodynamic
@@ -60,11 +65,11 @@ function calculateWaterDay(string $date, array $rows, ?array $settings): array
             $litres = $et === null ? null : $et * $settings['trees'][$tree]['kc'] * $settings['trees'][$tree]['leaf_area'];
             if ($litres !== null && !is_finite($litres)) $litres = null;
             if ($litres === null) $complete = false; else $sum += $litres;
-            $hours[] = ['time' => $start->format('Y-m-d H:i:s'), 'litres' => $litres, 'cumulative' => $sum, 'cumulative_complete' => $complete];
+            $hours[] = ['time' => $start->format('Y-m-d H:i:s'), 'et0'=>$et, 'litres' => $litres, 'cumulative' => $sum, 'cumulative_complete' => $complete];
         }
         $minutes = $complete ? $sum / $settings['trees'][$tree]['flow'] : null;
         $seconds = $minutes === null ? null : (int)round($minutes / $settings['cycles'] * 60);
-        $trees[] = ['number' => $tree + 1, 'hours' => $hours, 'complete' => $complete, 'partial_litres' => $sum, 'daily_litres' => $complete ? $sum : null, 'daily_minutes' => $minutes, 'cycle_seconds' => $seconds];
+        $trees[] = applyDailyIrrigation(['number' => $tree + 1, 'hours' => $hours, 'complete' => $complete, 'partial_litres' => $sum, 'daily_litres' => $complete ? $sum : null, 'daily_minutes' => $minutes, 'cycle_seconds' => $seconds],$settings,$tree);
     }
     return ['date' => $date, 'version' => TRANSPIRATION_VERSION, 'settings' => $settings, 'trees' => $trees];
 }

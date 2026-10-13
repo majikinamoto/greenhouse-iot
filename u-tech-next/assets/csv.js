@@ -31,6 +31,7 @@ window.NextCsv = (() => {
     return '\uFEFF'+lines.map(line=>line.map(quote).join(',')).join('\r\n')+'\r\n';
   }
   function initialize(definitions) {
+    if(window.NextExport){NextExport.initialize();return;}
     fields=[...definitions,...NextValues.converted];
     let saved=null;try {const parsed=JSON.parse(localStorage.getItem(storageKey));if(parsed?.version===1 && Array.isArray(parsed.fields) && parsed.metadata && typeof parsed.metadata==='object') saved=parsed;} catch (_) {}
     for(const [key,label,checked] of metadata) {const option=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=key;input.checked=typeof saved?.metadata[key]==='boolean'?saved.metadata[key]:checked;option.append(input,document.createTextNode(label));document.getElementById('csv-metadata').append(option);}
@@ -92,6 +93,7 @@ window.NextCsv = (() => {
     });
   }
   function setForecast(payload) {
+    if(window.NextExport){NextExport.setForecast(payload);return;}
     if (payload && !document.getElementById('csv-start').value) {document.getElementById('csv-start').value=payload.forecast_date+'T00:00';document.getElementById('csv-end').value=payload.forecast_date+'T23:00';}
     document.getElementById('export-date').textContent=payload?`${payload.forecast_date} の予報 ／ 取得：${payload.fetched_at} JST ／ ${payload.location.name}`:'保存済みの予報を選択してください。';
     document.getElementById('csv-message').textContent='';
