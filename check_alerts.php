@@ -313,6 +313,7 @@ function buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $c
 }
 
 function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType) {
+    $confirmedAt = (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d H:i:s');
     $userId = $setting["user_id"];
     $pointId = $setting["point_id"] ?: "P01";
     $temperatureText = number_format($temperature, 1, ".", "") . "℃";
@@ -323,6 +324,7 @@ function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType
 
     return "【U-Tech復帰通知】\n" .
         "ハウス環境が通常範囲に戻りました。\n\n" .
+        "復帰確認日時：" . $confirmedAt . "（日本時間）\n" .
         "対象：" . $userId . " / " . $pointId . "\n" .
         "項目：温度\n" .
         "現在値：" . $temperatureText . "\n" .
