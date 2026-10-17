@@ -284,7 +284,12 @@ function buildAlertDetail($setting, $currentValue, $matchStatus, $extra = []) {
     ], $extra);
 }
 
+function alertNotificationDateTime() {
+    return (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d H:i:s') . '（日本時間）';
+}
+
 function buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $conditionType, $isRecovery) {
+    $dateTime = alertNotificationDateTime();
     $temperatureText = number_format($temperature, 1, ".", "") . "℃";
     $thresholdText = number_format($threshold, 1, ".", "") . "℃";
 
@@ -294,6 +299,7 @@ function buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $c
             : $thresholdText . "超過";
 
         return "🟢 正常値に戻りました\n" .
+            "確認日時：" . $dateTime . "\n" .
             "対象：" . $userId . " / " . $pointId . "\n" .
             "現在値：" . $temperatureText . "\n" .
             "設定値：" . $settingText;
@@ -307,13 +313,14 @@ function buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $c
         : $thresholdText . "以下";
 
     return $title . "\n" .
+        "確認日時：" . $dateTime . "\n" .
         "対象：" . $userId . " / " . $pointId . "\n" .
         "現在値：" . $temperatureText . "\n" .
         "設定値：" . $settingText;
 }
 
 function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType) {
-    $confirmedAt = (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d H:i:s');
+    $dateTime = alertNotificationDateTime();
     $userId = $setting["user_id"];
     $pointId = $setting["point_id"] ?: "P01";
     $temperatureText = number_format($temperature, 1, ".", "") . "℃";
@@ -324,7 +331,7 @@ function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType
 
     return "【U-Tech復帰通知】\n" .
         "ハウス環境が通常範囲に戻りました。\n\n" .
-        "復帰確認日時：" . $confirmedAt . "（日本時間）\n" .
+        "確認日時：" . $dateTime . "\n" .
         "対象：" . $userId . " / " . $pointId . "\n" .
         "項目：温度\n" .
         "現在値：" . $temperatureText . "\n" .
