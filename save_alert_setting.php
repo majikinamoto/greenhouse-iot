@@ -70,8 +70,8 @@ try {
         send_error("condition_typeはaboveまたはbelowで指定してください");
     }
 
-    if (!in_array($notify_target, ["discord", "email", "line"], true)) {
-        send_error("notify_targetはdiscord、emailまたはlineで指定してください");
+    if (!in_array($notify_target, ["discord", "email"], true)) {
+        send_error("現在利用できる通知先はDiscordまたはメールです。LINE通知には対応していません。");
     }
 
     if (!is_numeric($cooldown_minutes)) {

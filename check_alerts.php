@@ -10,9 +10,20 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
+// Dispatch before loading credentials or entering the notification runner.
+if (count($argv) > 1) {
+    if ($argv === [$argv[0], '--diagnose']) {
+        require __DIR__ . '/scripts/diagnose-alerts.php';
+        exit;
+    }
+    fwrite(STDERR, "Usage: php check_alerts.php [--diagnose]\n");
+    exit(2);
+}
+
 header('Content-Type: application/json; charset=UTF-8');
 
 require_once __DIR__ . '/db_config.php';
+require_once __DIR__ . '/scripts/lib/alert-rules.php';
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
 
@@ -130,7 +141,7 @@ function encodeSmtpHeader($value) {
         return mb_encode_mimeheader($value, "UTF-8");
     }
 
-    return $value;
+    return '=?UTF-8?B?' . base64_encode($value) . '?=';
 }
 
 function sendEmailAlert($to, $message) {
@@ -219,8 +230,7 @@ function sendEmailAlert($to, $message) {
         "Content-Type: text/plain; charset=UTF-8"
     ];
     $body = implode("\r\n", $headers) . "\r\n\r\n" . $message;
-    $body = str_replace(["\r\n", "\r", "\n"], "\r\n", $body);
-    $body = preg_replace('/^\./m', '..', $body);
+    $body = alertSmtpData($body);
 
     foreach ([
         ["MAIL FROM:<" . $fromEmail . ">", [250], "mail_from"],
@@ -308,8 +318,8 @@ function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType
     $temperatureText = number_format($temperature, 1, ".", "") . "℃";
     $thresholdText = number_format($threshold, 1, ".", "") . "℃";
     $basisText = $conditionType === "above"
-        ? $thresholdText . "以下"
-        : $thresholdText . "以上";
+        ? $thresholdText . "未満"
+        : $thresholdText . "超過";
 
     return "【U-Tech復帰通知】\n" .
         "ハウス環境が通常範囲に戻りました。\n\n" .
@@ -423,10 +433,10 @@ while ($setting = $settingsResult->fetch_assoc()) {
     $shouldNotify = false;
     $alertType = "";
 
-    if ($conditionType === "above" && $temperature > $threshold) {
+    if ($conditionType === "above" && alertTemperatureMatches($conditionType, $temperature, $threshold)) {
         $shouldNotify = true;
         $alertType = "temperature_high";
-    } elseif ($conditionType === "below" && $temperature < $threshold) {
+    } elseif ($conditionType === "below" && alertTemperatureMatches($conditionType, $temperature, $threshold)) {
         $shouldNotify = true;
         $alertType = "temperature_low";
     }
@@ -438,9 +448,6 @@ while ($setting = $settingsResult->fetch_assoc()) {
                 : "temperature_low_recovery";
             $message = buildRecoveryMessage($setting, $temperature, $threshold, $conditionType);
 
-            $normalStmt->bind_param("i", $id);
-            $normalStmt->execute();
-
             $postResult = sendAlertNotification($setting, $message);
             $logLine = "recovered: id=" . $id .
                 " user_id=" . $userId .
@@ -449,6 +456,9 @@ while ($setting = $settingsResult->fetch_assoc()) {
                 " threshold=" . number_format($threshold, 1, ".", "");
 
             if ($postResult["success"]) {
+                // Preserve alert status on delivery failure so the next run retries.
+                $normalStmt->bind_param("i", $id);
+                $normalStmt->execute();
                 $historyMessage = $setting["notify_target"] === "email"
                     ? $message . " email_send_result=success email_to=" . maskEmail($setting["webhook_url"])
                     : $message;
@@ -485,7 +495,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
                     "status" => "recovery_notify_failed",
                     "temperature" => $temperature,
                     "last_status" => $lastStatus,
-                    "new_status" => "normal",
+                    "new_status" => $lastStatus,
                     "alert_type" => $alertType,
                     "http_code" => $postResult["http_code"],
                     "error" => $postResult["error"],
@@ -581,7 +591,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
 }
 
 echo json_encode([
-    "success" => true,
+    "success" => $failed === 0,
     "checked" => $checked,
     "notified" => $notified,
     "failed" => $failed,
@@ -594,5 +604,4 @@ $updateStmt->close();
 $normalStmt->close();
 $historyStmt->close();
 $conn->close();
-
-?>
+exit($failed > 0 ? 1 : 0);
