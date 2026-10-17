@@ -284,7 +284,7 @@ function buildAlertDetail($setting, $currentValue, $matchStatus, $extra = []) {
     ], $extra);
 }
 
-function buildTemperatureMessage($pointId, $temperature, $threshold, $conditionType, $isRecovery) {
+function buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $conditionType, $isRecovery) {
     $temperatureText = number_format($temperature, 1, ".", "") . "℃";
     $thresholdText = number_format($threshold, 1, ".", "") . "℃";
 
@@ -294,7 +294,7 @@ function buildTemperatureMessage($pointId, $temperature, $threshold, $conditionT
             : $thresholdText . "超過";
 
         return "🟢 正常値に戻りました\n" .
-            "対象：" . $pointId . "\n" .
+            "対象：" . $userId . " / " . $pointId . "\n" .
             "現在値：" . $temperatureText . "\n" .
             "設定値：" . $settingText;
     }
@@ -307,7 +307,7 @@ function buildTemperatureMessage($pointId, $temperature, $threshold, $conditionT
         : $thresholdText . "以下";
 
     return $title . "\n" .
-        "対象：" . $pointId . "\n" .
+        "対象：" . $userId . " / " . $pointId . "\n" .
         "現在値：" . $temperatureText . "\n" .
         "設定値：" . $settingText;
 }
@@ -538,7 +538,7 @@ while ($setting = $settingsResult->fetch_assoc()) {
         }
     }
 
-    $message = buildTemperatureMessage($pointId, $temperature, $threshold, $conditionType, false);
+    $message = buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $conditionType, false);
     $postResult = sendAlertNotification($setting, $message);
 
     if ($postResult["success"]) {
