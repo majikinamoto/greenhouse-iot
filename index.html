@@ -6364,6 +6364,7 @@ function renderActiveAlertSettingEmpty(message){
 
     container.innerHTML =
         '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
+        '<div>user_id：' + escapeHtml(document.getElementById("userId").value.trim() || "-") + '</div>' +
         '<div class="active-alert-setting-empty">' + (message || "有効なアラート設定はありません。") + '</div>';
 }
 
@@ -6491,6 +6492,7 @@ function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
 
     card.innerHTML =
         '<div class="alert-status-title">現在のアラート状態</div>' +
+        '<div>user_id：' + escapeHtml(setting?.user_id || document.getElementById("userId").value.trim() || "-") + '</div>' +
         '<div class="alert-status-current">現在の状態：' + escapeHtml(statusText) + '</div>' +
         '<div>ハウス内温度（P01）：' + escapeHtml(formatAlertTemperature(p01Temp)) + '</div>' +
         '<div>外気温度（P11）：' + escapeHtml(formatAlertTemperature(p11Temp)) + '</div>' +
@@ -6536,6 +6538,7 @@ function renderAlertHistory(history){
     container.innerHTML =
         '<div class="alert-history-title">直近3日間のアラート履歴</div>' +
         history.map(item=>{
+            const userId = escapeHtml(item.user_id || "-");
             const pointId = escapeHtml(item.point_id || "-");
             const alertType = escapeHtml(getAlertTypeLabel(item.alert_type));
             const value = formatAlertValue(item.value);
@@ -6544,6 +6547,7 @@ function renderAlertHistory(history){
 
             return '<div class="alert-history-item">' +
                 '<div class="alert-history-time">' + notifiedAt + '</div>' +
+                '<div>user_id：' + userId + '</div>' +
                 '<div class="alert-history-type">' + pointId + ' ' + alertType + '</div>' +
                 '<div>' + value + '℃（しきい値 ' + threshold + '℃）</div>' +
             '</div>';
@@ -6579,6 +6583,7 @@ function renderActiveAlertSetting(setting){
 
     container.innerHTML =
         '<div class="active-alert-setting-title">現在有効なアラート設定</div>' +
+        '<div>user_id：' + escapeHtml(setting.user_id || document.getElementById("userId").value.trim() || "-") + '</div>' +
         '<div>対象：' + pointLabel + ' 温度</div>' +
         '<div>条件：' + (isNaN(threshold) ? "-" : threshold.toFixed(1)) + '℃ ' + condition + '</div>' +
         '<div>通知先：' + notifyTarget + '</div>' +

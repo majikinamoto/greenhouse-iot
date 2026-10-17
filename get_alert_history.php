@@ -30,7 +30,7 @@ try {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
     $conn->set_charset("utf8mb4");
 
-    $sql = "SELECT point_id, alert_type, value, threshold_value, message, notified_at
+    $sql = "SELECT user_id, point_id, alert_type, value, threshold_value, message, notified_at
             FROM alert_history
             WHERE user_id = ?
               AND notified_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
