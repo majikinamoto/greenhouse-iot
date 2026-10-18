@@ -3913,8 +3913,8 @@ body.data-export-active .control-panel {
         </label>
 
         <button type="button" id="alertSaveButton" onclick="saveAlertSetting()">保存</button>
-        <button type="button" id="alertDisableAllButton" class="alert-disable-all-button" onclick="disableAllAlerts()">すべてのアラートを解除</button>
-        <p class="alert-disable-all-note">一括解除は、全user_id・全測定地点のアラートが対象です。設定内容と過去の通知履歴は残ります。</p>
+        <button type="button" id="alertDisableAllButton" class="alert-disable-all-button" onclick="disableAllAlerts()">対象user_idのアラートを解除</button>
+        <p class="alert-disable-all-note">一括解除は、選択中のuser_idの全測定地点が対象です。他のuser_idの設定には影響しません。設定内容と過去の通知履歴は残ります。</p>
         <div id="alertMessage" class="alert-message"></div>
     </div>
     <div id="activeAlertSetting" class="active-alert-setting">
@@ -13195,25 +13195,33 @@ function setAlertSettingsBusy(busy){
 
 async function disableAllAlerts(){
     if(alertSettingsBusy) return;
-    if(!window.confirm("全user_id・全測定地点のアラートをすべて解除します。\n選択中のuser_id以外も対象です。\n設定内容と通知履歴は残ります。解除しますか？")) return;
-
+    const userId = document.getElementById("userId").value.trim();
     const message = document.getElementById("alertMessage");
+    if(!userId){
+        message.innerText = "解除するuser_idを入力してください";
+        return;
+    }
+    if(!window.confirm("user_id：" + userId + " の全測定地点のアラートを解除します。\n他のuser_idの設定には影響しません。\n設定内容と通知履歴は残ります。解除しますか？")) return;
+
     setAlertSettingsBusy(true);
-    message.innerText = "すべてのアラートを解除中...";
+    message.innerText = userId + " のアラートを解除中...";
     try{
         const response = await fetch("disable_all_alerts.php", {
             method:"POST",
             headers:{ "Content-Type":"application/json" },
-            body:JSON.stringify({ scope:"all", confirmed:true })
+            body:JSON.stringify({ scope:"user", user_id:userId, confirmed:true })
         });
         const result = await response.json();
         if(!response.ok || !result.success){
             throw new Error(result.error || "アラートの一括解除に失敗しました");
         }
-        await loadActiveAlertSetting(document.getElementById("userId").value.trim());
+        if(document.getElementById("userId").value.trim() !== userId) return;
+        await loadActiveAlertSetting(userId);
+        if(document.getElementById("userId").value.trim() !== userId) return;
         if(!activeAlertSettingExists) document.getElementById("alertEnabled").checked = false;
-        message.innerText = "すべてのアラートを解除しました（" + Number(result.disabled_count) + "件）。";
+        message.innerText = userId + " のアラートを解除しました（" + Number(result.disabled_count) + "件）。";
     }catch(error){
+        if(document.getElementById("userId").value.trim() !== userId) return;
         message.innerText = "一括解除失敗：" + error.message;
     }finally{
         setAlertSettingsBusy(false);

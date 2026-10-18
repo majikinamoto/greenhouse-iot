@@ -114,7 +114,7 @@ function fixture() {
     f=fixture();
     f.context.fetch=async(url,options)=>{
         assert.equal(url,'disable_all_alerts.php');
-        assert.deepEqual(JSON.parse(options.body),{scope:'all',confirmed:true});
+        assert.deepEqual(JSON.parse(options.body),{scope:'user',user_id:'NS001',confirmed:true});
         return {ok:true,json:async()=>({success:true,disabled_count:3})};
     };
     f.context.loadActiveAlertSetting=async()=>{ vm.runInContext('activeAlertSettingExists=false',f.context); };
@@ -139,5 +139,27 @@ function fixture() {
     assert.equal(f.elements.alertDisableAllButton.disabled,false);
     assert.equal(f.elements.alertEnabled.checked,true);
     console.log('PASS alert user_id input, bidirectional sync, credential clearing, initial restore, save target, stale setting/save/history responses; all inline scripts compile.');
-    console.log('PASS disable-all confirmation, global scope, refresh, duplicate/save exclusion, failure recovery.');
+    f=fixture();
+    f.elements.userId.value='   ';
+    f.context.fetch=async()=>{ throw new Error('Blank user must not send a request'); };
+    f.context.window.confirm=()=>{ throw new Error('Blank user must not ask for confirmation'); };
+    await f.context.disableAllAlerts();
+    assert.match(f.elements.alertMessage.innerText,/user_idを入力/);
+
+    f=fixture();
+    let confirmation;
+    f.context.window.confirm=text=>{ confirmation=text; return true; };
+    const staleDisable=deferred();
+    f.context.fetch=()=>staleDisable.promise;
+    const staleDisabling=f.context.disableAllAlerts();
+    assert.match(confirmation,/NS001/);
+    f.elements.userId.value='NS002';
+    f.elements.alertMessage.innerText='NS002の設定';
+    staleDisable.resolve({ok:true,json:async()=>({success:true,disabled_count:2})});
+    await staleDisabling;
+    assert.equal(f.calls.load.length,0);
+    assert.equal(f.elements.alertEnabled.checked,true);
+    assert.equal(f.elements.alertMessage.innerText,'NS002の設定');
+    assert.equal(f.elements.alertDisableAllButton.disabled,false);
+    console.log('PASS disable confirmation, user scope, blank user, stale response, refresh, duplicate/save exclusion, failure recovery.');
 })().catch(error => { console.error(error); process.exitCode=1; });

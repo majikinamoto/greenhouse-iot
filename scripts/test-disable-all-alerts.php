@@ -21,12 +21,24 @@ class mysqli {
     public int $affected_rows = 0;
     function __construct(...$args) {}
     function set_charset($charset) {}
-    function query($sql) {
-        if ($sql !== 'UPDATE alert_settings SET enabled = 0 WHERE enabled = 1') throw new RuntimeException('Unexpected SQL');
+    function prepare($sql) {
+        if ($sql !== 'UPDATE alert_settings SET enabled = 0 WHERE user_id = ? AND enabled = 1') throw new RuntimeException('Unexpected SQL');
+        return new DisableStatement();
+    }
+    function close() {}
+}
+class DisableStatement {
+    public int $affected_rows = 0;
+    private string $userId;
+    function bind_param($types, &$userId) {
+        if ($types !== 's') throw new RuntimeException('Unexpected parameter type');
+        $this->userId = $userId;
+    }
+    function execute() {
         if (is_file(__DIR__ . '/fail')) throw new RuntimeException('SECRET database failure');
         $rows = json_decode(file_get_contents(__DIR__ . '/rows.json'), true);
         foreach ($rows as &$row) {
-            if ($row['enabled'] === 1) { $row['enabled'] = 0; $this->affected_rows++; }
+            if ($row['user_id'] === $this->userId && $row['enabled'] === 1) { $row['enabled'] = 0; $this->affected_rows++; }
         }
         file_put_contents(__DIR__ . '/rows.json', json_encode($rows));
     }
@@ -37,6 +49,7 @@ PHP);
         ['user_id'=>'NS001','point_id'=>'P01','enabled'=>1,'threshold'=>28,'webhook'=>'keep-a'],
         ['user_id'=>'NS002','point_id'=>'P11','enabled'=>1,'threshold'=>29.7,'webhook'=>'keep-b'],
         ['user_id'=>'TEST001','point_id'=>'P01','enabled'=>0,'threshold'=>35,'webhook'=>'keep-c'],
+        ['user_id'=>'NS001','point_id'=>'P11','enabled'=>1,'threshold'=>32,'webhook'=>'keep-d'],
     ];
     file_put_contents($temp . '/rows.json', json_encode($rows));
     $socket = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
@@ -61,11 +74,17 @@ PHP);
         preg_match('/\s(\d{3})\s/', $headers[0] ?? '', $match);
         return [(int)($match[1] ?? 0),json_decode($text, true,512,JSON_THROW_ON_ERROR)];
     };
-    $valid = '{"scope":"all","confirmed":true}';
+    $valid = '{"scope":"user","user_id":" NS001 ","confirmed":true}';
     foreach ([['GET',$valid,'application/json',null,405],
         ['POST',$valid,'text/plain',null,415],
         ['POST','{}','application/json',null,400],
         ['POST','{"scope":"all","confirmed":"true"}','application/json',null,400],
+        ['POST','{"scope":"all","confirmed":true}','application/json',null,400],
+        ['POST','{"scope":"all","user_id":"NS001","confirmed":true}','application/json',null,400],
+        ['POST','{"scope":"user","confirmed":true}','application/json',null,400],
+        ['POST','{"scope":"user","user_id":"  ","confirmed":true}','application/json',null,400],
+        ['POST','{"scope":"user","user_id":[],"confirmed":true}','application/json',null,400],
+        ['POST','{"scope":"user","user_id":"NS001","confirmed":"true"}','application/json',null,400],
         ['POST','invalid json','application/json',null,400],
         ['POST',$valid,'application/json','https://other.invalid',403]] as [$method,$body,$type,$origin,$expected]) {
         [$status,$result] = $request($method,$body,$type,$origin);
@@ -82,11 +101,15 @@ PHP);
     echo "PASS cron lock conflict leaves rules unchanged\n";
     [$status,$result] = $request('POST',$valid);
     checkDisable($status===200 && $result['success']===true && $result['disabled_count']===2,'Incorrect disable result');
-    $expected = array_map(static function($row){$row['enabled']=0; return $row;},$rows);
-    checkDisable(json_decode(file_get_contents($temp . '/rows.json'),true)===$expected,'Not all users/points were disabled or existing settings changed');
+    checkDisable($result['user_id']==='NS001','Response target differs from request');
+    $expected = array_map(static function($row){if ($row['user_id']==='NS001') $row['enabled']=0; return $row;},$rows);
+    checkDisable(json_decode(file_get_contents($temp . '/rows.json'),true)===$expected,'Other users or existing settings changed, or a target point was not disabled');
+    [$status,$result] = $request('POST','{"scope":"user","user_id":"unknown","confirmed":true}');
+    checkDisable($status===200 && $result['disabled_count']===0,'Unknown user affected settings');
+    checkDisable(json_decode(file_get_contents($temp . '/rows.json'),true)===$expected,'Unknown user changed settings');
     [$status,$result] = $request('POST',$valid);
     checkDisable($status===200 && $result['disabled_count']===0,'Repeated disable was not idempotent');
-    echo "PASS all users/points disabled, settings retained, repeated request returns zero\n";
+    echo "PASS target user points disabled, other users and settings retained, unknown/repeated request returns zero\n";
     file_put_contents($temp . '/fail','1');
     [$status,$result] = $request('POST',$valid);
     checkDisable($status===500 && $result['success']===false && !str_contains(json_encode($result),'SECRET'),'DB failure was hidden or leaked details');
