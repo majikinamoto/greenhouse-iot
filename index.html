@@ -1844,6 +1844,23 @@ body.data-export-active .control-panel {
     width:90px;
 }
 
+.alert-user-input {
+    width:160px;
+    max-width:100%;
+}
+
+.alert-disable-all-button {
+    background:#fff4f2;
+    color:#9c251b;
+    border:1px solid #b94a40;
+}
+
+.alert-disable-all-note {
+    width:100%;
+    margin:0;
+    font-size:13px;
+}
+
 .alert-webhook-input {
     width:320px;
     max-width:100%;
@@ -3836,6 +3853,13 @@ body.data-export-active .control-panel {
     </div>
     <div class="alert-setting-form">
         <label>
+            user_id：
+            <input class="alert-user-input" type="text" id="alertUserId"
+                   placeholder="例：NS001" autocomplete="off" autocapitalize="none" spellcheck="false"
+                   oninput="handleAlertUserIdInput()" onchange="handleMaintenanceUserIdChange()">
+        </label>
+
+        <label>
             point_id：
             <select id="alertPointId" onchange="handleAlertPointChange()">
                 <option value="P01">P01 ハウス内</option>
@@ -3888,7 +3912,9 @@ body.data-export-active .control-panel {
             有効
         </label>
 
-        <button type="button" onclick="saveAlertSetting()">保存</button>
+        <button type="button" id="alertSaveButton" onclick="saveAlertSetting()">保存</button>
+        <button type="button" id="alertDisableAllButton" class="alert-disable-all-button" onclick="disableAllAlerts()">すべてのアラートを解除</button>
+        <p class="alert-disable-all-note">一括解除は、全user_id・全測定地点のアラートが対象です。設定内容と過去の通知履歴は残ります。</p>
         <div id="alertMessage" class="alert-message"></div>
     </div>
     <div id="activeAlertSetting" class="active-alert-setting">
@@ -4399,6 +4425,7 @@ let solarAxisMax = undefined;
 let voltAxisMin = 11;
 let voltAxisMax = 14;
 let alertFormUserId = "";
+let alertSettingsBusy = false;
 let activeAlertSettingExists = false;
 let tideCalendarText = "満潮・干潮：読み込み中...";
 let environmentScoreP01 = [];
@@ -6328,12 +6355,24 @@ function clearAlertForm(){
 function clearAlertFormIfUserChanged(){
     const userIdInput = document.getElementById("userId");
     const currentUserId = userIdInput ? userIdInput.value.trim() : "";
+    const alertUserIdInput = document.getElementById("alertUserId");
+    if(alertUserIdInput && alertUserIdInput.value.trim() !== currentUserId){
+        alertUserIdInput.value = currentUserId;
+    }
 
     if(currentUserId !== alertFormUserId){
         clearAlertForm();
         alertFormUserId = currentUserId;
         loadActiveAlertSetting(currentUserId);
     }
+}
+
+function handleAlertUserIdInput(){
+    const alertUserIdInput = document.getElementById("alertUserId");
+    const userIdInput = document.getElementById("userId");
+    if(!alertUserIdInput || !userIdInput) return;
+    userIdInput.value = alertUserIdInput.value.trim();
+    clearAlertFormIfUserChanged();
 }
 
 function getSelectedAlertPointId(){
@@ -6593,6 +6632,10 @@ function renderActiveAlertSetting(setting){
 }
 
 async function loadActiveAlertSetting(userId, pointId){
+    const alertUserIdInput = document.getElementById("alertUserId");
+    if(alertUserIdInput && document.getElementById("userId").value.trim() === (userId || "")){
+        alertUserIdInput.value = userId || "";
+    }
     if(!userId){
         clearAlertForm();
         renderActiveAlertSettingEmpty();
@@ -6641,7 +6684,7 @@ async function loadActiveAlertSetting(userId, pointId){
 
     }catch(e){
         const currentUserId = document.getElementById("userId").value.trim();
-        if(currentUserId === requestedUserId){
+        if(currentUserId === requestedUserId && getSelectedAlertPointId() === requestedPointId){
             clearAlertForm();
             renderActiveAlertSettingEmpty("有効なアラート設定はありません。");
             loadAlertStatusCard(requestedUserId, null, requestedPointId);
@@ -6668,6 +6711,7 @@ async function loadAlertHistory(userId){
         }
 
         const result = JSON.parse(text);
+        if(document.getElementById("userId").value.trim() !== userId) return;
 
         if(!res.ok || !result.success){
             renderAlertHistory([]);
@@ -6677,7 +6721,9 @@ async function loadAlertHistory(userId){
         renderAlertHistory(result.history || []);
 
     }catch(e){
-        renderAlertHistory([]);
+        if(document.getElementById("userId").value.trim() === userId){
+            renderAlertHistory([]);
+        }
     }
 }
 
@@ -13139,7 +13185,43 @@ function downloadCSV(event){
     window.open("download_csv.php?" + params.toString(), "_blank", "noopener");
 }
 
+function setAlertSettingsBusy(busy){
+    alertSettingsBusy = busy;
+    for(const id of ["alertSaveButton", "alertDisableAllButton"]){
+        const button = document.getElementById(id);
+        if(button) button.disabled = busy;
+    }
+}
+
+async function disableAllAlerts(){
+    if(alertSettingsBusy) return;
+    if(!window.confirm("全user_id・全測定地点のアラートをすべて解除します。\n選択中のuser_id以外も対象です。\n設定内容と通知履歴は残ります。解除しますか？")) return;
+
+    const message = document.getElementById("alertMessage");
+    setAlertSettingsBusy(true);
+    message.innerText = "すべてのアラートを解除中...";
+    try{
+        const response = await fetch("disable_all_alerts.php", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body:JSON.stringify({ scope:"all", confirmed:true })
+        });
+        const result = await response.json();
+        if(!response.ok || !result.success){
+            throw new Error(result.error || "アラートの一括解除に失敗しました");
+        }
+        await loadActiveAlertSetting(document.getElementById("userId").value.trim());
+        if(!activeAlertSettingExists) document.getElementById("alertEnabled").checked = false;
+        message.innerText = "すべてのアラートを解除しました（" + Number(result.disabled_count) + "件）。";
+    }catch(error){
+        message.innerText = "一括解除失敗：" + error.message;
+    }finally{
+        setAlertSettingsBusy(false);
+    }
+}
+
 async function saveAlertSetting(){
+    if(alertSettingsBusy) return;
 
     const userId = document.getElementById("userId").value.trim();
     const pointId = getSelectedAlertPointId();
@@ -13172,6 +13254,7 @@ async function saveAlertSetting(){
     }
 
     alertMessage.innerText = "保存中...";
+    setAlertSettingsBusy(true);
 
     try{
         const res = await fetch("save_alert_setting.php", {
@@ -13206,6 +13289,8 @@ async function saveAlertSetting(){
             throw new Error("JSONではないレスポンスです：" + text);
         }
 
+        if(document.getElementById("userId").value.trim() !== userId || getSelectedAlertPointId() !== pointId) return;
+
         if(!res.ok || !result.success){
             alertMessage.innerText = "保存失敗：" + (result.error || result.message || "アラート設定の保存に失敗しました");
             return;
@@ -13214,10 +13299,14 @@ async function saveAlertSetting(){
         document.getElementById("alertWebhookUrl").value = "";
         alertMessage.innerText = "保存しました";
         alertFormUserId = userId;
-        loadActiveAlertSetting(userId);
+        await loadActiveAlertSetting(userId);
 
     }catch(e){
-        alertMessage.innerText = "保存失敗：" + e.message;
+        if(document.getElementById("userId").value.trim() === userId && getSelectedAlertPointId() === pointId){
+            alertMessage.innerText = "保存失敗：" + e.message;
+        }
+    }finally{
+        setAlertSettingsBusy(false);
     }
 }
 

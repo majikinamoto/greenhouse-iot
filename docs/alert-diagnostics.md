@@ -29,7 +29,21 @@ SMTP設定ファイルの存在、cURL・OpenSSLの有無は確認しますが�
 
 ```sh
 php scripts/test-alert-diagnostics.php
+php -n scripts/test-alert-runner.php
+php -n scripts/test-alert-runner-matrix.php
+php -n scripts/test-disable-all-alerts.php
+node scripts/test-alert-user-id.cjs
 ```
+
+実ランナーのテストは `-n` で拡張を無効にして実行します。一時ディレクトリの模擬DB・模擬cURLを利用するため、実際のDB参照・通知送信は行いません。追加の20ケースでは、しきい値の同値、再通知待ち、復帰、送信失敗、ユーザーごとの分離と無効設定の除外を確認します。本番のcronやWebhookが正常に動くことは、これらのテストだけでは保証できません。
+
+## 画面からの一括解除
+
+アラートタブの「すべてのアラートを解除」は、全user_id・全測定地点・全通知先の有効な設定を無効にします。選択中のuser_idだけに限定しません。確認ダイアログを取り消すとリクエストは送られません。設定内容・通知履歴は削除せず、解除件数を表示します。ボタンを設置しただけでは本番設定は変更されません。
+
+`disable_all_alerts.php` はJSONのPOSTで `scope: "all"` と真偽値の `confirmed: true` を必須とし、単一のUPDATEで有効な全設定を無効にします。保存・解除の処理中は両ボタンを無効にします。既存cronの `/tmp/utech-alerts.lock` に合わせて一時ディレクトリの同名ファイルをロックし、通知処理中なら409で再実行を案内します。Web実行環境で独立した一時ディレクトリやPrivateTmpを使っている場合、このロックはcronと共有されないため、配置時に実行環境を照合してください。
+
+一括解除のテストはローカルHTTPサーバーと模擬DBで、確認なし・不正リクエストの拒否、全ユーザー・地点の解除、設定維持、繰り返し実行、cronロック競合、DB失敗を検証します。本番の一括解除APIには接続しません。
 
 本番通知を行う既存cronの引数は変更せず、診断は別途手動実行してください。
 
