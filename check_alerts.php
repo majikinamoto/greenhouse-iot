@@ -329,7 +329,7 @@ function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType
         ? $thresholdText . "未満"
         : $thresholdText . "超過";
 
-    return "【U-Tech復帰通知】\n" .
+    return "🟢 【U-Tech復帰通知】\n" .
         "ハウス環境が通常範囲に戻りました。\n\n" .
         "確認日時：" . $dateTime . "\n" .
         "対象：" . $userId . " / " . $pointId . "\n" .
