@@ -3256,8 +3256,8 @@ body.data-export-active .control-panel {
     <div data-main-graph="co2Chart">
         <h4><span>CO2_ハウス内（P21）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2Min" value="200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2Max" value="500">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2Min" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2Max" value="700">
             <button onclick="applyCo2YAxis(co2Chart)">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
@@ -3266,8 +3266,8 @@ body.data-export-active .control-panel {
     <div data-main-graph="co2OutsideChart">
         <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2OutsideMax" value="500">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2OutsideMax" value="700">
             <button onclick="applyCo2OutsideYAxis(co2OutsideChart)">縦軸反映</button>
             <label><input type="checkbox" id="mainCo2AxisLink" onchange="changeMainAxisLink('co2')">P21と同じ縦軸</label>
         </div>
@@ -3742,8 +3742,8 @@ body.data-export-active .control-panel {
         <div>
             <h4><span>ハウス内CO2（P21）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2Min" value="200"> ～
-                <input class="axis-input axis-input-wide" type="number" id="reviewCo2Max" value="500">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2Min" value="300"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewCo2Max" value="700">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[5], 'co2')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewCo2Chart"></canvas></div>
@@ -3752,8 +3752,8 @@ body.data-export-active .control-panel {
         <div>
             <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
             <div class="control-group axis-control-group chart-axis-control">
-                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMin" value="200"> ～
-                <input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMax" value="500">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMin" value="300"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMax" value="700">
                 <button onclick="applyReviewSingleYAxis(reviewCharts[6], 'co2Outside')">縦軸反映</button>
             </div>
             <div class="chart-container"><canvas id="reviewCo2OutsideChart"></canvas></div>
@@ -4034,8 +4034,8 @@ body.data-export-active .control-panel {
     <div>
         <h4><span>CO2_ハウス内（P22）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP22" value="200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2MaxP22" value="500">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP22" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2MaxP22" value="700">
             <button onclick="applySingleYAxis(co2ChartP22,'co2',getCo2ComparisonAxis('P22'))">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2ChartP22"></canvas></div>
@@ -4054,8 +4054,8 @@ body.data-export-active .control-panel {
     <div>
         <h4><span>CO2_外気（P27）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP27" value="200"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2MaxP27" value="500">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP27" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2MaxP27" value="700">
             <button onclick="applySingleYAxis(co2ChartP27,'co2Outside',getCo2ComparisonAxis('P27'))">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="co2ChartP27"></canvas></div>
@@ -4397,10 +4397,10 @@ let tempMax = 40;
 let humMin = 40;
 let humMax = 100;
 
-let co2Min = 200;
-let co2Max = 500;
-let co2OutsideMin = 200;
-let co2OutsideMax = 500;
+let co2Min = 300;
+let co2Max = 700;
+let co2OutsideMin = 300;
+let co2OutsideMax = 700;
 let co2DiffMin = -250;
 let co2DiffMax = 250;
 
@@ -4409,8 +4409,8 @@ const reviewAxisDefaults = {
     outsideDiff:{ min:-1, max:5 },
     vapor:{ min:0, max:undefined },
     solar:{ min:undefined, max:undefined },
-    co2:{ min:200, max:500 },
-    co2Outside:{ min:200, max:500 },
+    co2:{ min:300, max:700 },
+    co2Outside:{ min:300, max:700 },
     co2Diff:{ min:-250, max:250 }
 };
 
