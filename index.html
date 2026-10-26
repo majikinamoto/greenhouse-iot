@@ -1,3 +1,10 @@
+<!--
+U-Tech Monitor：計測データの表示・分析と利用者設定を扱う画面。
+このファイルの配置：外部ライブラリ → CSS → HTML → JavaScript → 補助スクリプト。
+読み始める入口：DOMContentLoaded（初期設定）、switchTab（タブ切替）、loadData（メイン表示）。
+測定値の取得：fetchDataSafe → get_data.php、内部形式への変換：parseData。
+雨量・CSV・通知などは関連PHPと連携する。各機能の見出しは「===」で検索できる。
+-->
 <!-- U-Tech Monitor http://163.43.29.108/ -->
 
 <!DOCTYPE html>
@@ -12,6 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0" crossorigin="anonymous"></script>
 
+<!-- === デザイン・レイアウト（CSS） === -->
 <style>
 
 .fixed-header {
@@ -2968,6 +2976,7 @@ body.data-export-active .control-panel {
 </style>
 </head>
 
+<!-- === 画面の構成（HTML）：ヘッダー・各タブ・設定欄 === -->
 <body>
 
 <dialog id="siteSwitchDialog" aria-labelledby="siteSwitchTitle" onclose="resetSiteSwitchDialog()">
@@ -4280,6 +4289,7 @@ body.data-export-active .control-panel {
 
 <script>
 
+// === JavaScript：エラー表示と外部ライブラリの確認 ===
 function formatScriptErrorDetails(details){
     const lines = [
         "JavaScriptエラー：" + (details.message || "不明なエラー")
@@ -4340,6 +4350,7 @@ function validateExternalLibraries(){
     }
 };
 
+// === 共有する状態・定数・グラフ設定 ===
 let tempChartP01, tempChartP02, tempChartP11, tempChartP12;
 let humChartP01, humChartP11;
 let mainVaporChart;
@@ -4435,6 +4446,11 @@ let environmentScoreP31 = [];
 const WBGT_PRESSURE_HPA = 1013.25;
 const WBGT_PAIR_TOLERANCE_MS = 8*60*1000;
 const WBGT_CURRENT_FRESHNESS_MS = 30*60*1000;
+// === ブラウザへの設定保存：保存範囲の案内 ===
+// localStorageは同じブラウザの同じオリジン（スキーム・ホスト・ポート）内の保存領域。
+// 以下の固定キーは画面で利用者IDを切り替えても共通。サーバーへの設定保存ではない。
+// 利用者別なのは、キーにuserIdを含める表示・非表示、縦軸リンク、ガイド範囲の設定。
+// 通知設定は別途PHP経由で保存するため、このlocalStorage設定とは分けて読む。
 const wbgtStorageKeys = {
     userId:"utech_wbgt_user_id",
     tempHumPointId:"utech_wbgt_temp_hum_point_id",
@@ -4808,6 +4824,8 @@ function initializeMainGraphSettings(){
     restoreMainGraphVisibility(getMainUserIdInputValue());
 }
 
+// 利用者別の表示設定を復元し、このuserIdを以後の保存対象として保持する。
+// 初期値は全表示。保存値がbooleanの項目だけ上書きし、読取・JSON解析失敗時も全表示を使う。
 function restoreMainGraphVisibility(userId){
     mainGraphVisibilityUserId = userId;
     mainGraphVisibility = Object.fromEntries(mainDisplayVisibilityIds.map(id=>[id, true]));
@@ -4856,6 +4874,8 @@ function applyMainGraphVisibility(){
     });
 }
 
+// 入力途中のIDではなく、復元時に保持したmainGraphVisibilityUserIdのキーへ保存する。
+// ID未適用時は保存しない。保存できなくても画面の表示変更は維持し、メッセージを出す。
 function saveMainGraphVisibility(){
     if(!mainGraphVisibilityUserId) return;
     const message = document.getElementById("mainGraphSettingsMessage");
@@ -4891,6 +4911,9 @@ function hideAllMainGraphs(){
     saveMainGraphVisibility();
 }
 
+// === 初期設定：保存値の復元・イベント登録・ヘッダー情報の取得 ===
+// メインの測定値取得は「表示」ボタンからloadDataを呼び出す。
+// ここでは利用者IDや設定を復元し、通知設定・天気・潮汐などを読み込む。
 window.addEventListener("DOMContentLoaded", ()=>{
     const savedUserId = localStorage.getItem("usui_user_id");
     if(savedUserId){
@@ -5031,6 +5054,9 @@ function closeLogoInfoOnOutsideClick(event){
     popup.classList.remove("active");
 }
 
+// === 外気・雨量の取得元設定 ===
+// 外気の取得元はブラウザ共通。未保存時は無効・利用者ID空欄・Point IDはP11。
+// saveOutsideSourceSettingも同じ固定キーへ保存する。
 function restoreOutsideSourceSetting(){
     const enabled = document.getElementById("outsideSourceEnabled");
     const userId = document.getElementById("outsideSourceUserId");
@@ -5121,6 +5147,8 @@ function updateOutsideSourceNote(source){
         : "";
 }
 
+// 雨量の取得元もブラウザ共通。未保存時は無効・利用者ID空欄。
+// saveRainfallSourceSettingで保存し、メインの利用者IDごとには分けない。
 function restoreRainfallSourceSetting(){
     const enabled = document.getElementById("rainfallSourceEnabled");
     const userId = document.getElementById("rainfallSourceUserId");
@@ -5198,11 +5226,14 @@ function updateRainfallSourceNote(source){
         : "";
 }
 
+// === 分析用の比較設定・グラフ・差分 ===
 function getMainUserIdInputValue(){
     const input = document.getElementById("userId");
     return input ? input.value.trim() : "";
 }
 
+// 分析の比較元はグラフIDと項目名で区別する。メインの利用者IDはキーに含まない。
+// restore/saveAnalysisCompareSetting系が使用し、未保存の入力値は空欄として復元する。
 function getAnalysisCompareStorageKey(graphId, field){
     return "usui_analysis_" + graphId + "_" + field;
 }
@@ -5729,6 +5760,9 @@ async function loadAnalysisCompareChart(graphId){
     }
 }
 
+// === WBGT：設定・計算・表示・データ取得 ===
+// WBGTの取得元はブラウザ共通。未保存の利用者IDは直近のusui_user_id、なければ空欄。
+// Point IDの既定値は温湿度P11・黒球P51。applyWbgtSettingsで同じ固定キーへ保存する。
 function restoreWbgtSettings(){
     const userId = document.getElementById("wbgtUserId");
     const tempHumPointId = document.getElementById("wbgtTempHumPointId");
@@ -6321,6 +6355,7 @@ async function loadWbgtData(){
     refreshVisibleCharts();
 }
 
+// === 通知：設定フォーム・状態表示・履歴取得 ===
 function handleAlertNotifyTargetChange(){
     const notifyTarget = document.getElementById("alertNotifyTarget");
     const destinationLabel = document.getElementById("alertDestinationLabel");
@@ -6727,6 +6762,8 @@ async function loadAlertHistory(userId){
     }
 }
 
+// 利用者ID履歴はブラウザ共通。読取・JSON解析失敗時は空配列へ戻す。
+// saveUserIdHistoryは同じIDを除いて先頭へ追加し、最新10件を保存する。
 function getUserIdHistory(){
     try{
         return JSON.parse(localStorage.getItem("usui_user_id_history")) || [];
@@ -6774,6 +6811,7 @@ function refreshVisibleCharts(){
     });
 }
 
+// === 画面のタブ切替と必要なデータの読み込み ===
 function switchTab(tabName){
     const targetId = "tab-" + tabName;
     const previousPanel = document.querySelector(".tab-panel.active");
@@ -6819,6 +6857,7 @@ function switchTab(tabName){
     }
 }
 
+// === グラフの描画プラグイン・ツールチップ同期 ===
 const chartBackgroundPlugin = {
     id: 'chartBackgroundPlugin',
     beforeDraw(chart) {
@@ -7527,12 +7566,27 @@ function formatTimeTick(value){
     return [h + "時", m + "分"];
 }
 
+// === 水蒸気量・露点の計算と日別集計 ===
+/**
+ * 気温temp（℃）と相対湿度hum（%）から、水蒸気量（g/㎥）を返す。
+ * hum=100で飽和水蒸気量となり、実際の水蒸気量との差をこの画面の「飽差」として使う。
+ * ここでの飽差の単位はg/㎥。変数名vpdだけから圧力の単位と解釈しないこと。
+ * この関数自身は欠損・入力範囲を検証しない。呼び出し側の条件も確認する。
+ * 同じ式がdownload_csv.phpにもあるため、将来式を変更する際は両方を確認する。
+ * 要確認：この式と係数を採用した出典・適用範囲。
+ */
 function calcVapor(temp, hum){
     const es = 6.1078 * Math.pow(10, (7.5 * temp) / (237.3 + temp));
     const ea = es * hum / 100;
     return 216.7 * (ea / (temp + 273.15));
 }
 
+/**
+ * 気温temp（℃）と相対湿度hum（%）から、露点温度（℃）を返す。
+ * log(hum/100)を含み、この関数内では湿度0以下や欠損を除外しない。
+ * parseData側では温湿度のnull・NaNと湿度が正であることを確認し、不成立ならdewをnullにする。
+ * 要確認：係数17.27・237.7を採用した出典・適用範囲。
+ */
 function calcDewPoint(temp, hum){
     const a = 17.27;
     const b = 237.7;
@@ -7762,6 +7816,13 @@ function loadTenDayDailySummaries(userId, outsideSource, rainfallSource){
     void loadTenDayRainfallSummary(rainfallSource.userId);
 }
 
+// === 飽差の時間帯平均と環境スコア ===
+/**
+ * baseDateの日付に対する[startHour, endHour)内の飽差（g/㎥）を件数で単純平均する。
+ * 時間はDateのsetHoursによるブラウザのローカル時刻。開始を含み、終了を含まない。
+ * 温湿度がnull・NaNの行を除き、対象行がなければnull。時間間隔による重み付けはしない。
+ * メイン表示では前日の6〜12時と12〜18時を渡す。湿度の範囲検証はここでは行わない。
+ */
 function calcVpdAverage(data, startHour, endHour, baseDate){
     const start = new Date(baseDate);
     start.setHours(startHour,0,0,0);
@@ -7778,6 +7839,8 @@ function calcVpdAverage(data, startHour, endHour, baseDate){
     return values.reduce((sum, value)=>sum + value, 0) / values.length;
 }
 
+// 環境スコアの初期範囲。vpdはg/㎥、tempは℃、humは%、co2はppm。
+// 値は利用者が変更できる画面の既定値。採用理由・出典は別途確認が必要。
 const environmentScoreRangeDefaults = {
     vpd:{ min:5, max:10 },
     temp:{ min:22, max:28 },
@@ -7794,6 +7857,7 @@ const environmentScoreItems = [
     { key:"solar", label:"日射" }
 ];
 
+// スコアの判定範囲は項目別の固定キー。利用者IDごとではなくブラウザ共通。
 function getEnvironmentScoreStorageKey(key){
     return "utechEnvironmentScoreRange_" + key;
 }
@@ -7810,6 +7874,8 @@ function getEnvironmentScoreInputId(key, side){
     return "scoreRange" + idMap[key] + side;
 }
 
+// 保存JSONのmin/maxを数値化し、NaNの側は既定値を使う。例外時は項目全体を既定値に戻す。
+// 復元処理は有限数・大小関係の検証とは別。実際に使う範囲はgetEnvironmentScoreRangesで得る。
 function restoreEnvironmentScoreRanges(){
     environmentScoreItems.forEach(item=>{
         const defaults = environmentScoreRangeDefaults[item.key];
@@ -7853,6 +7919,8 @@ function getEnvironmentScoreRanges(){
     return ranges;
 }
 
+// 画面の範囲をgetGuideRange経由で上下順にそろえ、全項目をJSON保存する。
+// handleEnvironmentScoreRangeChangeは保存後、保持中の測定データで表示を再計算する。
 function saveEnvironmentScoreRanges(){
     const ranges = getEnvironmentScoreRanges();
 
@@ -7875,6 +7943,8 @@ function formatScoreDate(date){
     return m + "/" + d;
 }
 
+// 当日を除く過去30日が対象。総合点のある日を点数降順、同点は新しい日順に並べる。
+// 上位3日を表示する。日付の境界はブラウザのローカル時刻を使う。
 function renderBest30DayScore(todayStart){
     const bestEl = document.getElementById("scoreBest30Days");
     if(!bestEl) return null;
@@ -7937,11 +8007,15 @@ function renderBestGap(todayScore, bestScore){
     }
 }
 
+// スコア用の昼間はブラウザのローカル時刻で6時以上18時未満。日の出・日没では区切らない。
 function isDaytimeScoreData(d){
     const hour = d.x.getHours();
     return hour >= 6 && hour < 18;
 }
 
+// 共通の対象期間は[start, end)。飽差とCO2だけ昼間（6〜18時）に絞る。
+// 温度・湿度・日射は指定期間全体を使い、項目ごとにnull・NaNの値を除く。
+// 温湿度・飽差はP01、CO2はP21、日射はP31の配列から作る。
 function getScoreRowsForPeriod(start, end, p01, p21, p31){
     const sourceP01 = (p01 || []).filter(d=>d.x >= start && d.x < end);
     const sourceP21 = (p21 || []).filter(d=>d.x >= start && d.x < end);
@@ -7968,6 +8042,8 @@ function getScoreRowsForPeriod(start, end, p01, p21, p31){
     };
 }
 
+// 範囲内（下限・上限を含む）の件数 ÷ 有効件数 × 100を四捨五入した点数。
+// null・undefined・NaNを除き、有効件数が0ならnull。時間の長さではなく測定件数で評価する。
 function calcEnvironmentScore(values, range){
     const validValues = values.filter(value=>value !== null && value !== undefined && !isNaN(value));
     if(!validValues.length) return null;
@@ -7976,6 +8052,8 @@ function calcEnvironmentScore(values, range){
     return Math.round((inRangeCount / validValues.length) * 100);
 }
 
+// 総合点は、値のある項目の点数を同じ重みで平均して四捨五入する。
+// 欠損項目を0点としては扱わず、全項目欠損なら総合点もnullになる。
 function calcEnvironmentScoreRow(start, end, p01, p21, p31){
     const ranges = getEnvironmentScoreRanges();
     const values = getScoreRowsForPeriod(start, end, p01, p21, p31);
@@ -8055,6 +8133,9 @@ function renderEnvironmentScoreTableRow(label, scores, diffText, dayDiffText){
     "</tr>";
 }
 
+// 今日の途中経過は当日0時から現在まで、履歴は直前5日分の日単位で集計する。
+// 今日と前日は同じ経過時刻で切りそろえず、前日は1日全体と比較する。
+// 入力配列は範囲変更時の再計算にも使うため共有変数に保持する。
 function renderEnvironmentScores(p01, p21, p31){
     environmentScoreP01 = p01 || [];
     environmentScoreP21 = p21 || [];
@@ -8109,6 +8190,8 @@ function renderEnvironmentScores(p01, p21, p31){
     }
 }
 
+// nullは「データなし」。午前(am)とそれ以外で異なる閾値を使い、平均値と評価文を返す。
+// 要確認：各評価閾値を採用した理由・出典。現在の境界条件は下の分岐を参照する。
 function evaluateVpdAverage(value, period){
     if(value === null) return "データなし";
 
@@ -8127,6 +8210,7 @@ function evaluateVpdAverage(value, period){
     return "平均 " + value.toFixed(1) + " g/㎥　乾燥ストレス";
 }
 
+// === グラフの共通設定・ズーム・初期範囲 ===
 function createRightYAxis(leftAxisOptions){
     return {
         ...leftAxisOptions,
@@ -8422,6 +8506,7 @@ function redrawChart(chart){
     chart.draw();
 }
 
+// === 地域・日時・日の出日の入り・暦・天気 ===
 function formatDateInputValue(date){
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -8470,6 +8555,8 @@ function getSelectedUtechArea(){
     return UTECH_AREAS[selectedUtechAreaKey] || UTECH_AREAS.naha;
 }
 
+// 地域はブラウザ共通の固定キー。未保存・未登録のキーならnahaを使う。
+// handleUtechAreaChangeで保存し、天気・潮汐・暦や関連集計を更新する。
 function restoreUtechAreaSelection(){
     const select = document.getElementById("utechAreaSelect");
     const savedKey = localStorage.getItem(UTECH_AREA_STORAGE_KEY);
@@ -9210,6 +9297,15 @@ function applyMobileChartRanges(minTime, maxTime){
     });
 }
 
+// === 測定値APIとの通信 ===
+/**
+ * 指定した利用者・Point IDの測定値をget_data.phpから取得する。
+ * rangeは任意の{start, end}。両方ある場合だけ期間を送り、省略時はAPI既定の直近72時間。
+ * 戻り値は{pointId, data, error}。成功時はdataが配列、errorはnull。
+ * HTTP・応答形式・通信の失敗はdata:[]と説明文にまとめ、呼び出し元で表示できる形にする。
+ * タイマーは10秒後に通信を中断するが、fetchの応答取得時点で解除する（本文読取完了までの制限ではない）。
+ * 配列内の各測定値の変換は、呼び出し元からparseDataへ渡して行う。
+ */
 async function fetchDataSafe(userId, pointId, range){
 
     const controller = new AbortController();
@@ -9281,6 +9377,7 @@ async function fetchDataSafe(userId, pointId, range){
     }
 }
 
+// === グラフ別の取得条件とデータなし表示の補助 ===
 function formatNoDataFetchConditions(requests, startTime, endTime){
     const requestText = requests
         .map(request=>
@@ -9394,6 +9491,7 @@ function applyReviewChartNoDataStates(charts, userId, startTime, endTime){
     });
 }
 
+// === メンテナンス：期間設定・日時変換・データ取得 ===
 function formatJapanDateTimeLocal(timestamp){
     const jstDate = new Date(timestamp + 9*60*60*1000);
     const y = jstDate.getUTCFullYear();
@@ -9933,6 +10031,16 @@ function clearChartNoDataState(canvasId){
     if(notice) notice.remove();
 }
 
+// === APIの測定値をグラフ・計算用の内部形式へ変換 ===
+/**
+ * dataはAPIから取得した配列、minTimeは採用する日時の下限（この日時を含む）。
+ * recorded_atをDateのxとミリ秒のxValueへ変換し、無効な日時・下限より前の行は除外する。
+ * 日時の解釈にはnew Dateを使い、この関数では日本時間への明示的な補正を行わない。
+ * temperature/humidity/voltageをtemp/hum/voltへ、風速なども内部項目へ対応付ける。
+ * CO2・日射はAPI項目名の別表記にも対応する（優先順は下の分岐を参照）。
+ * null・undefinedはnullを維持し、それ以外はNumberで変換する。数値変換後のNaNはここでは除外しない。
+ * 温湿度が数値で湿度が正の場合はdew（露点）も計算する。並び順は入力のまま維持する。
+ */
 function parseData(data, minTime){
 
     return data.map(d=>{
@@ -9967,6 +10075,7 @@ function parseData(data, minTime){
     );
 }
 
+// === 雨量：計算設定・グラフ・データ取得 ===
 function getRainfallCalculationMode(){
     const selected = document.querySelector('input[name="rainfallCalculationMode"]:checked');
     return selected && selected.value === "tip" ? "tip" : "rainfall";
@@ -10008,6 +10117,8 @@ function updateRainfallCalculationDisplay(){
         : "1転倒あたり：" + coefficient.toFixed(4) + " mm";
 }
 
+// 雨量計算設定はブラウザ共通。保存モードがtip以外ならrainfall、面積・容量は未保存なら空欄。
+// saveRainfallCalculationSettingは面積・容量が正の有限数のときだけ保存し、それ以外はキーを削除する。
 function restoreRainfallCalculationSetting(){
     const savedMode = localStorage.getItem(RAINFALL_MODE_STORAGE_KEY);
     const mode = savedMode === "tip" ? "tip" : "rainfall";
@@ -10387,6 +10498,7 @@ async function loadRainfallData(userId, displayHours, requestId){
     }
 }
 
+// === 縦軸の設定・保存とグラフの作成 ===
 function getAxisValue(id, fallback){
     const el = document.getElementById(id);
     if(!el || el.value === "") return fallback;
@@ -10411,6 +10523,8 @@ function getGuideRange(minId, maxId, defaultMin, defaultMax){
     };
 }
 
+// ガイド範囲の保存キーは利用者IDとグラフ種別で区別する。
+// 以下は保存・復元の補助関数群。利用箇所は関数名でも検索し、全グラフの軸保存と混同しない。
 function getRangeStorageKey(userId, graphType){
     return "utechRange_" + userId + "_" + graphType;
 }
@@ -10423,6 +10537,8 @@ function setGuideRangeInputs(minId, maxId, range){
     if(maxInput) maxInput.value = range.max;
 }
 
+// IDなし・読取やJSON解析の失敗・数値化した上下限のNaNでは既定範囲を返す。
+// 保存値を使う場合、ここでは上下限の並べ替えや有限数の検証は行わない。
 function loadStoredGuideRange(userId, graphType, defaultMin, defaultMax){
     if(!userId){
         return { min:defaultMin, max:defaultMax };
@@ -11681,6 +11797,7 @@ function createWindChart(canvasId, parsed, minTime, maxTime){
         options:options
     });
 }
+// === 振り返り・メンテナンスのグラフ操作とDIF集計 ===
 function configureReviewChart(chart){
     if(!chart) return chart;
 
@@ -12637,6 +12754,7 @@ async function loadReviewData(){
     }
 }
 
+// === メイン画面：取得・計算・現在値表示・グラフ描画 ===
 async function loadData(){
     clearAllSyncedTooltips();
     const rainfallRequestId = ++rainfallRequestSequence;
@@ -12865,6 +12983,7 @@ async function loadData(){
     }
 }
 
+// === メインのグラフ破棄・ズーム解除・縦軸反映 ===
 function destroyCharts(){
     clearSyncedTooltipGroup("main");
     destroyRainChart();
@@ -12962,6 +13081,9 @@ function updateMainAxisLinkControls(pair){
     checkbox.closest('.chart-axis-control').querySelector('button').disabled=checkbox.checked;
 }
 
+// 縦軸リンクは利用者別に復元し、保存値がtrueの項目だけ有効にする。
+// changeMainAxisLinkは入力中IDではなくmainGraphVisibilityUserIdへ保存する。
+// 読取・JSON解析の例外時は空設定を使い、リンクを解除した状態で復元する。
 function restoreMainAxisLinks(userId){
     let saved={};
     try{saved=JSON.parse(localStorage.getItem('utechMainAxisLinks_v1_'+userId)) || {};}catch(e){}
@@ -13094,6 +13216,7 @@ function applyOutsideDiffYAxis(chart){
 }
 
 //
+// === CSV：日時・Point IDの確認とダウンロード要求 ===
 function parseCsvDateInput(value){
     const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if(!match) return null;
@@ -13198,6 +13321,7 @@ function downloadCSV(event){
     window.open("download_csv.php?" + params.toString(), "_blank", "noopener");
 }
 
+// === 通知：保存・一括停止の実行と操作中の表示 ===
 function setAlertSettingsBusy(busy){
     alertSettingsBusy = busy;
     for(const id of ["alertSaveButton", "alertDisableAllButton"]){
