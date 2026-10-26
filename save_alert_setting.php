@@ -128,7 +128,8 @@ try {
                            notify_target = ?,
                            webhook_url = ?,
                            cooldown_minutes = ?,
-                           enabled = ?
+                           enabled = ?,
+                           setting_updated_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 9 HOUR)
                        WHERE id = ?";
         $update_stmt = $conn->prepare($update_sql);
         $update_stmt->bind_param(
@@ -145,8 +146,8 @@ try {
         $update_stmt->close();
     } else {
         $insert_sql = "INSERT INTO alert_settings
-                       (user_id, point_id, sensor_type, temperature_threshold, condition_type, notify_target, webhook_url, cooldown_minutes, enabled)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                       (user_id, point_id, sensor_type, temperature_threshold, condition_type, notify_target, webhook_url, cooldown_minutes, enabled, setting_updated_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 9 HOUR))";
         $insert_stmt = $conn->prepare($insert_sql);
         $insert_stmt->bind_param(
             "sssdsssii",

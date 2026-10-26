@@ -6622,6 +6622,14 @@ function getAlertStatusText(setting, p01Temp, p11Temp){
     return currentTemp >= threshold ? "🔴 高温になりました" : "🟢 正常値に戻りました";
 }
 
+// 設定専用の日本時間DATETIMEを表示する。通知でも変わるupdated_atにはフォールバックしない。
+function formatAlertSettingUpdatedAt(value){
+    if(typeof value !== "string" || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) return "記録なし";
+    const parsed = new Date(value.replace(" ", "T") + "+09:00");
+    if(!Number.isFinite(parsed.getTime())) return "記録なし";
+    return value.slice(0, 16).replace(/-/g, "/") + "（日本時間）";
+}
+
 function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
     const card = document.getElementById("alertStatusCard");
     if(!card) return;
@@ -6632,6 +6640,7 @@ function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
     card.innerHTML =
         '<div class="alert-status-title">現在のアラート状態</div>' +
         '<div>user_id：' + escapeHtml(setting?.user_id || document.getElementById("userId").value.trim() || "-") + '</div>' +
+        '<div>最終更新：' + escapeHtml(formatAlertSettingUpdatedAt(setting?.setting_updated_at)) + '</div>' +
         '<div class="alert-status-current">現在の状態：' + escapeHtml(statusText) + '</div>' +
         '<div>ハウス内温度（P01）：' + escapeHtml(formatAlertTemperature(p01Temp)) + '</div>' +
         '<div>外気温度（P11）：' + escapeHtml(formatAlertTemperature(p11Temp)) + '</div>' +
@@ -6728,7 +6737,8 @@ function renderActiveAlertSetting(setting){
         '<div>通知先：' + notifyTarget + '</div>' +
         '<div>' + destinationLabel + '：' + escapeHtml(webhook) + '</div>' +
         '<div>再通知間隔：' + (isNaN(cooldownMinutes) ? "-" : cooldownMinutes) + '分</div>' +
-        '<div>状態：有効</div>';
+        '<div>状態：有効</div>' +
+        '<div>最終更新：' + escapeHtml(formatAlertSettingUpdatedAt(setting.setting_updated_at)) + '</div>';
 }
 
 async function loadActiveAlertSetting(userId, pointId){

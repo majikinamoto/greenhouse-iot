@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS alert_settings (
     last_notified_at DATETIME DEFAULT NULL,
     cooldown_minutes INT NOT NULL DEFAULT 180,
     last_status ENUM('normal','alert') NOT NULL DEFAULT 'normal',
+    setting_updated_at DATETIME DEFAULT NULL COMMENT 'Last settings edit in Asia/Tokyo - notifications do not update this',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_alert_enabled (enabled),

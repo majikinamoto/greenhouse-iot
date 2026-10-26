@@ -19,6 +19,7 @@ try {
     }
     $columns = array_column($db->query('SHOW COLUMNS FROM alert_settings')->fetch_all(MYSQLI_ASSOC), 'Field');
     foreach ([
+        'setting_updated_at' => 'DATETIME DEFAULT NULL',
         'sensor_type' => "VARCHAR(32) NOT NULL DEFAULT 'temperature'",
         'cooldown_minutes' => 'INT NOT NULL DEFAULT 180',
         'last_status' => "ENUM('normal','alert') NOT NULL DEFAULT 'normal'",

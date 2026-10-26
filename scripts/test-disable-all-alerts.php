@@ -22,7 +22,7 @@ class mysqli {
     function __construct(...$args) {}
     function set_charset($charset) {}
     function prepare($sql) {
-        if ($sql !== 'UPDATE alert_settings SET enabled = 0 WHERE user_id = ? AND enabled = 1') throw new RuntimeException('Unexpected SQL');
+        if ($sql !== 'UPDATE alert_settings SET enabled = 0, setting_updated_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 9 HOUR) WHERE user_id = ? AND enabled = 1') throw new RuntimeException('Unexpected SQL');
         return new DisableStatement();
     }
     function close() {}

@@ -50,7 +50,7 @@ try {
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
     $conn->set_charset('utf8mb4');
-    $stmt = $conn->prepare('UPDATE alert_settings SET enabled = 0 WHERE user_id = ? AND enabled = 1');
+    $stmt = $conn->prepare('UPDATE alert_settings SET enabled = 0, setting_updated_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 9 HOUR) WHERE user_id = ? AND enabled = 1');
     $stmt->bind_param('s', $user_id);
     $stmt->execute();
     $count = $stmt->affected_rows;
