@@ -8,6 +8,7 @@ function failCsvDownload(string $message, int $status = 400): void {
     exit($message);
 }
 
+// 日時は日本時間として検証する。秒省略時は開始00秒・終了59秒を呼び出し側から指定する。
 function normalizeCsvDateTime(string $value, string $defaultSeconds): ?array {
     $normalized = str_replace('T', ' ', trim($value));
 
@@ -37,6 +38,7 @@ function normalizeCsvDateTime(string $value, string $defaultSeconds): ?array {
     return ['sql' => $normalized, 'date' => $date];
 }
 
+// 気温（℃）・相対湿度（%）から水蒸気量（g/㎥）を計算する。index.htmlにも同じ式がある。
 function calcVapor(float $temp, float $hum): float {
     $es = 6.1078 * pow(10, (7.5 * $temp) / (237.3 + $temp));
     $ea = $es * $hum / 100;
@@ -62,6 +64,7 @@ function isSolarPoint(string $pointId): bool {
     return $number >= 31 && $number <= 40;
 }
 
+// 各Pointブロックは空列＋日時＋測定項目。P01だけ水蒸気量・飽差も含む。列変更時は値側も合わせる。
 function appendPointHeader(array &$header, string $pointId): void {
     $header[] = '';
     $header[] = $pointId . '_日時';
@@ -92,6 +95,7 @@ function appendPointHeader(array &$header, string $pointId): void {
     }
 }
 
+// ヘッダーと同じ列順で出力する。対象行なし・null項目は空欄にし、数値0は残す。
 function appendPointValues(array &$line, string $pointId, ?array $item): void {
     $line[] = '';
     $line[] = $item['日時'] ?? '';
@@ -152,6 +156,7 @@ foreach ($requestedPointIds as $pointId) {
     $requestedPointIdSet[$pointId] = true;
 }
 
+// 重複指定を除き、要求順ではなくallowedPointIdsの順（P01〜P41、P61、P91）で列を並べる。
 $selectedPointIds = array_values(array_filter(
     $allowedPointIds,
     static fn(string $pointId): bool => isset($requestedPointIdSet[$pointId])
@@ -180,6 +185,7 @@ if ($conn->connect_error) {
 
 $conn->set_charset('utf8mb4');
 
+// SQLのBETWEENは開始・終了の両端を含む。Pointごとに時刻昇順の配列へ振り分ける。
 $pointPlaceholders = implode(',', array_fill(0, count($selectedPointIds), '?'));
 $sql = "SELECT
             DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at,
@@ -256,6 +262,7 @@ while ($row = $result->fetch_assoc()) {
         if ($pointId === 'P01' && $row['temperature'] !== null && $row['humidity'] !== null) {
             $temperature = (float)$row['temperature'];
             $humidity = (float)$row['humidity'];
+            // P01の温湿度が両方非nullの場合だけ算出し、3桁に丸める。画面の表示丸めとは別。
             $saturatedVapor = calcVapor($temperature, 100);
             $vapor = calcVapor($temperature, $humidity);
 
@@ -293,6 +300,7 @@ header('Content-Type: text/csv; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
+// UTF-8 BOM付きで出力する。該当データが0件でも選択Pointのヘッダーは出す。
 echo "\xEF\xBB\xBF";
 
 $output = fopen('php://output', 'w');
@@ -309,6 +317,9 @@ foreach ($selectedPointIds as $pointId) {
     $maxRows = max($maxRows, count($data[$pointId]));
 }
 
+// 各Pointの「時刻順で何番目の行か」で横並びにする。同じCSV行が同一時刻とは限らない。
+// 最大件数のPointまで出力し、他のPointで行が尽きた部分は空欄にする。
+// P41の「10分」列は保存済み区間値であり、ここで10分単位に再集計・再換算はしない。
 for ($index = 0; $index < $maxRows; $index++) {
     $line = [];
 

@@ -30,6 +30,7 @@ try {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_GREENHOUSE);
     $conn->set_charset("utf8mb4");
 
+    // 利用者単位で直近3日・最大50件を新しい順に返す。ここは送信失敗ログの一覧ではない。
     $sql = "SELECT user_id, point_id, alert_type, value, threshold_value, message, notified_at
             FROM alert_history
             WHERE user_id = ?

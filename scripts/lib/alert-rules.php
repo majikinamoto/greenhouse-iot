@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+// aboveは閾値以上、belowは閾値以下（等値を含む）。復帰はそれぞれ未満・超過になる。
 function alertTemperatureMatches(string $condition, float $temperature, float $threshold): bool
 {
     return ($condition === 'above' && $temperature >= $threshold)

@@ -13355,6 +13355,7 @@ function parseCsvDateInput(value){
     return { value:value, wallClockMs:wallClockMs };
 }
 
+// 画面は日付で指定し、開始日00:00:00〜終了日23:59:59をCSV APIへ渡す。
 function getCsvDownloadRange(startValue, endValue){
     if(!startValue) return { error:"CSVの開始日を入力してください。" };
     if(!endValue) return { error:"CSVの終了日を入力してください。" };
@@ -13395,6 +13396,7 @@ function showCsvDownloadError(message, focusTarget){
     if(focusTarget && focusTarget.focus) focusTarget.focus();
 }
 
+// 入力確認後、選択Pointと期間を別タブのdownload_csv.phpへ送る。列構成・計算・出力はPHP側。
 function downloadCSV(event){
     if(event) event.preventDefault();
 

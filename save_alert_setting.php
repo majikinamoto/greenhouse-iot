@@ -42,6 +42,7 @@ try {
 
     $user_id = trim((string)($data["user_id"] ?? ""));
     $point_id = trim((string)($data["point_id"] ?? ""));
+    // 保存対象はP01/P11の温度。閾値は小数1桁、待ち時間は整数分で、0は待ちなし。
     $sensor_type = "temperature";
     $temperature_threshold = $data["temperature_threshold"] ?? null;
     $condition_type = (string)($data["condition_type"] ?? "");
@@ -101,6 +102,8 @@ try {
     $existing = $result->fetch_assoc();
     $select_stmt->close();
 
+    // 既存の利用者・Point・センサー設定を更新する。宛先欄が空なら同じ通知方式の宛先を維持する。
+    // 通知方式を変更する場合は新しい宛先が必要。
     if ($existing && $webhook_url === "") {
         if ((string)$existing["notify_target"] !== $notify_target) {
             send_error("通知先を変更する場合は、新しいWebhook URLまたはメールアドレスを入力してください");
@@ -116,6 +119,7 @@ try {
         send_error("メールアドレスを正しく入力してください");
     }
 
+    // 設定保存だけでは通知を送らない。更新時はlast_status・last_notified_atをリセットしない。
     if ($existing) {
         $id = (int)$existing["id"];
         $update_sql = "UPDATE alert_settings

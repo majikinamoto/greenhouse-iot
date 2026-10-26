@@ -1,5 +1,7 @@
 <?php
 
+// === 通知の実行入口 ===
+// CLI専用。引数なしは実送信・DB更新を伴う。--diagnoseは別の読み取り診断へ分岐する。
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
     header('Content-Type: application/json; charset=UTF-8');
@@ -339,6 +341,7 @@ function buildRecoveryMessage($setting, $temperature, $threshold, $conditionType
         "引き続き、状況を確認してください。";
 }
 
+// emailではwebhook_url列をメールアドレスとして使用し、それ以外はWebhookへ送る。
 function sendAlertNotification($setting, $message) {
     if ($setting["notify_target"] === "email") {
         $result = sendEmailAlert($setting["webhook_url"], $message);
@@ -353,6 +356,7 @@ function sendAlertNotification($setting, $message) {
     return $result;
 }
 
+// 通常の通知対象は有効なDiscord・メール設定。LINEや無効設定はこの取得に含めない。
 $settingsSql = "SELECT *
                 FROM alert_settings
                 WHERE enabled = 1
@@ -371,6 +375,7 @@ if (!$settingsResult) {
     exit;
 }
 
+// 同じ利用者・Pointの非null温度を最新時刻から1件取得する。通常処理に測定値の鮮度制限はない。
 $latestStmt = $conn->prepare(
     "SELECT temperature
      FROM measurements
@@ -450,6 +455,8 @@ while ($setting = $settingsResult->fetch_assoc()) {
         $alertType = "temperature_low";
     }
 
+    // 条件外で前回alertなら復帰通知へ進む。復帰は下の再通知待ち時間の判定より先に処理する。
+    // 復帰の送信成功後だけnormalへ更新して履歴を追加する。失敗ならalertを維持し次回再試行する。
     if (!$shouldNotify) {
         if ($lastStatus === "alert") {
             $alertType = $conditionType === "above"
@@ -527,6 +534,8 @@ while ($setting = $settingsResult->fetch_assoc()) {
         continue;
     }
 
+    // 待ち時間は前回alertかつ通知日時がある場合のみ適用する。設定が数値でなければ180分。
+    // 保存APIの省略時既定30分とは別のフォールバック値。復帰後の再異常にはこの待ちを適用しない。
     $cooldownMinutes = isset($setting["cooldown_minutes"]) && is_numeric($setting["cooldown_minutes"])
         ? (int)$setting["cooldown_minutes"]
         : 180;
@@ -547,6 +556,8 @@ while ($setting = $settingsResult->fetch_assoc()) {
         }
     }
 
+    // 異常通知は配送成功後に通知日時・alert状態を更新し履歴へ追加する。配送失敗では更新しない。
+    // 配送とDB更新を一体のトランザクションにする実装ではない。
     $message = buildTemperatureMessage($userId, $pointId, $temperature, $threshold, $conditionType, false);
     $postResult = sendAlertNotification($setting, $message);
 
