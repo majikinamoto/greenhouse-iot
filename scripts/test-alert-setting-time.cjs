@@ -21,13 +21,14 @@ for(const value of [null, undefined, '', '<img src=x>', 'invalid']){
 context.setting = {enabled:1, user_id:'TEST', point_id:'P01', temperature_threshold:30, cooldown_minutes:30,
     setting_updated_at:'2026-10-26 14:30:59', updated_at:'2026-10-27 20:00:00'};
 vm.runInContext('renderAlertStatusCard(setting, null, null); renderActiveAlertSetting(setting);', context);
-for(const id of ['alertStatusCard','activeAlertSetting']){
+assert.ok(!elements.alertStatusCard.innerHTML.includes('最終更新：'));
+for(const id of ['activeAlertSetting']){
     assert.ok(elements[id].innerHTML.includes('最終更新：2026/10/26 14:30（日本時間）'));
     assert.ok(!elements[id].innerHTML.includes('2026/10/27'));
 }
 context.setting.setting_updated_at = null;
 vm.runInContext('renderAlertStatusCard(setting, null, null); renderActiveAlertSetting(setting);', context);
-assert.ok(elements.alertStatusCard.innerHTML.includes('最終更新：記録なし'));
+assert.ok(!elements.alertStatusCard.innerHTML.includes('最終更新：'));
 assert.ok(elements.activeAlertSetting.innerHTML.includes('最終更新：記録なし'));
 // Both insert and update explicitly stamp JST; notification state changes never touch the dedicated column.
 const save = fs.readFileSync(path.join(root,'save_alert_setting.php'),'utf8');

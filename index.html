@@ -6640,7 +6640,6 @@ function renderAlertStatusCard(setting, p01Temp, p11Temp, statusOverride){
     card.innerHTML =
         '<div class="alert-status-title">現在のアラート状態</div>' +
         '<div>user_id：' + escapeHtml(setting?.user_id || document.getElementById("userId").value.trim() || "-") + '</div>' +
-        '<div>最終更新：' + escapeHtml(formatAlertSettingUpdatedAt(setting?.setting_updated_at)) + '</div>' +
         '<div class="alert-status-current">現在の状態：' + escapeHtml(statusText) + '</div>' +
         '<div>ハウス内温度（P01）：' + escapeHtml(formatAlertTemperature(p01Temp)) + '</div>' +
         '<div>外気温度（P11）：' + escapeHtml(formatAlertTemperature(p11Temp)) + '</div>' +
