@@ -4443,6 +4443,9 @@ let environmentScoreP01 = [];
 let environmentScoreP21 = [];
 let environmentScoreP31 = [];
 
+// WBGT計算では観測気圧の代わりに1013.25 hPaを固定使用する。
+// 時刻の対応は8分以内。現在値では各センサーの時刻が現在の前後30分以内であることも要求する。
+// 要確認：固定気圧・時刻差・鮮度の条件を採用した理由。
 const WBGT_PRESSURE_HPA = 1013.25;
 const WBGT_PAIR_TOLERANCE_MS = 8*60*1000;
 const WBGT_CURRENT_FRESHNESS_MS = 30*60*1000;
@@ -5790,6 +5793,8 @@ function getWbgtSettings(){
     };
 }
 
+// 取得元を保存し、前回取得条件を無効化して即時に読み直す。
+// タブ切替時の再取得条件（条件変更または前回から5分経過）はswitchTabも参照する。
 function applyWbgtSettings(){
     const settings = getWbgtSettings();
     localStorage.setItem(wbgtStorageKeys.userId, settings.userId);
@@ -5799,10 +5804,18 @@ function applyWbgtSettings(){
     loadWbgtData();
 }
 
+// null・undefined・空文字を欠損として除き、数値化した値が有限かを確認する。
+// 湿度の範囲判定（0より大きく100以下）は計算側で別途行う。
 function isFiniteWbgtValue(value){
     return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
 }
 
+/**
+ * WBGT計算用の露点（℃）。入力は気温（℃）と相対湿度（%）。
+ * 気温0℃以上と未満で係数を切り替える。一般表示用のcalcDewPointとは式・係数が異なる。
+ * 数値化後の非有限値、湿度が0以下・100超、非有限の計算結果はnull。
+ * 要確認：係数と0℃を境にした切替の出典・適用範囲。
+ */
 function calculateWbgtDewPoint(temperature, relativeHumidity){
     const ta = Number(temperature);
     const rh = Number(relativeHumidity);
@@ -5816,6 +5829,9 @@ function calculateWbgtDewPoint(temperature, relativeHumidity){
     return Number.isFinite(dewPoint) ? dewPoint : null;
 }
 
+// 湿球温度の反復計算で使う飽和水蒸気圧。引数は絶対温度（K）。
+// 気圧hPaと組み合わせる式の内部関数。入力の検証は呼び出し側に依存する。
+// 要確認：式の出典、係数・返り値の圧力単位の定義。
 function calculateWbgtSaturationPressure(kelvin){
     const c0 = 26.66082;
     const c1 = 0.0091379024;
@@ -5823,6 +5839,14 @@ function calculateWbgtSaturationPressure(kelvin){
     return Math.exp(c0 - c1 * kelvin - c2 / kelvin);
 }
 
+/**
+ * 気温（℃）・相対湿度（%）・気圧（hPa）から湿球温度（℃）を推定する。
+ * 気圧省略時は固定値を使う。数値化後の非有限値、湿度範囲外、気圧0以下はnull。
+ * 湿度100%は気温をそのまま返す。それ以外は露点を求め、Kに変換して反復計算する。
+ * 最大50回、更新差が0.1 K未満なら終了。50回到達だけでは失敗扱いにせず最終値を使う。
+ * 導関数が非有限・0、更新値が非有限ならnull。結果は露点と気温の間へ収める。
+ * 要確認：計算方式の出典、近似精度と適用範囲。
+ */
 function calculateWetBulbTemperature(temperature, relativeHumidity, pressureHpa){
     const ta = Number(temperature);
     const rh = Number(relativeHumidity);
@@ -5864,6 +5888,14 @@ function calculateWetBulbTemperature(temperature, relativeHumidity, pressureHpa)
     return Number.isFinite(wetBulb) ? Math.min(upper, Math.max(lower, wetBulb)) : null;
 }
 
+/**
+ * 気温ta（℃）・相対湿度rh（%）・黒球温度tg（℃）からWBGTを求める。
+ * 黒球温度は専用Point IDのtemperatureを使う。湿球温度twは固定気圧で推定する。
+ * 実装式は0.7*tw + 0.2*tg + 0.1*ta。結果と使用値を{wbgt, tw, ta, rh, tg}で返す。
+ * 欠損・非有限値、湿度範囲外、湿球温度や結果を算出できない場合はnull。
+ * 時刻の鮮度・対応付けはこの関数では確認せず、現在値・系列の処理側が担当する。
+ * 要確認：この式を採用した根拠と設置環境への適用条件。
+ */
 function calculateWbgt(temperature, relativeHumidity, globeTemperature){
     if(
         !isFiniteWbgtValue(temperature) ||
@@ -5884,6 +5916,8 @@ function calculateWbgt(temperature, relativeHumidity, globeTemperature){
     return { wbgt:wbgt, tw:tw, ta:ta, rh:rh, tg:tg };
 }
 
+// 現在の表示区分：31以上=危険、28以上31未満=厳重警戒、25以上28未満=警戒、25未満=注意。
+// 有効なWBGTの計算後に使う。閾値の出典・適用条件は別途確認が必要。
 function getWbgtLevel(value){
     const wbgt = Number(value);
     if(!Number.isFinite(wbgt)) return null;
@@ -5957,6 +5991,8 @@ function resetWbgtCurrentDisplay(){
     renderWbgtGauge(null);
 }
 
+// ゲージのマーカー位置だけ20〜36に収め、数値ラベルには元のWBGTを表示する。
+// 算出不可の場合はマーカーを隠し、代わりの表示に切り替える。
 function renderWbgtGauge(value){
     const gauge = document.getElementById("wbgtGauge");
     const marker = document.getElementById("wbgtGaugeMarker");
@@ -5982,6 +6018,13 @@ function renderWbgtGauge(value){
     valueLabel.textContent = wbgt.toFixed(1);
     if(gauge) gauge.setAttribute("aria-label", "現在WBGT " + wbgt.toFixed(1));
 }
+/**
+ * 現在値は各配列の末尾を最新として採用する（入力が時刻昇順である前提）。
+ * 過去の有効値や最近傍ペアへ戻らず、最新の温湿度と最新の黒球温度だけを検証する。
+ * 両時刻が現在の前後30分以内、相互の差が8分以内の場合にWBGTを表示する。
+ * 条件不成立時は理由を表示する。先に表示した気温・湿度・黒球温度・湿球温度は残る場合がある。
+ * この現在値の鮮度条件と、buildWbgtSeriesの履歴の対応付け条件は異なる。
+ */
 function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     resetWbgtCurrentDisplay();
     const latestTempHum = tempHumData.length ? tempHumData[tempHumData.length - 1] : null;
@@ -6069,6 +6112,12 @@ function renderWbgtCurrent(tempHumData, globeData, nowTime, settings){
     setWbgtText("wbgtTwNow", result.tw.toFixed(1) + " ℃");
 }
 
+/**
+ * 温湿度の各時刻を基準に、時刻差が最小の黒球データを選ぶ。差が8分超ならその点を除外する。
+ * 同じ時刻差なら配列で先に見つかった黒球を使う。同じ黒球を複数の基準点に使うこともある。
+ * 最近傍の黒球が欠損でも別候補を探し直さず、計算できない組は系列へ追加しない。
+ * 出力xは温湿度の時刻、globeXは対応する黒球の時刻。現在値用の30分鮮度条件は適用しない。
+ */
 function buildWbgtSeries(tempHumData, globeData){
     const wbgtData = [];
     tempHumData.forEach(tempHum=>{
@@ -6097,6 +6146,8 @@ function buildWbgtSeries(tempHumData, globeData){
     return wbgtData;
 }
 
+// 関数名のFiveDayは既存名。現在の取得範囲は「6日前の0時から現在まで」で、当日を含む7日分。
+// 日付境界はブラウザのローカル時刻。表示グラフ用の直近72時間とは別の範囲を取得する。
 function getWbgtFiveDayRange(nowTime){
     const endTime = nowTime instanceof Date ? new Date(nowTime) : new Date(nowTime || Date.now());
     const startTime = new Date(endTime);
@@ -6105,6 +6156,8 @@ function getWbgtFiveDayRange(nowTime){
     return { startTime:startTime, endTime:endTime };
 }
 
+// [startTime, endTime)のWBGTを件数で単純平均する。時間間隔の重み付けや欠測の補間はしない。
+// 有効な系列点（buildWbgtSeriesが作る数値のy）を渡す前提で、対象点がなければnull。
 function calculateWbgtPeriodAverage(data, startTime, endTime){
     const values = data
         .filter(point=>point.x >= startTime && point.x < endTime && Number.isFinite(Number(point.y)))
@@ -6113,6 +6166,9 @@ function calculateWbgtPeriodAverage(data, startTime, endTime){
     return values.reduce((total, value)=>total + value, 0) / values.length;
 }
 
+// 現在は当日を含む7日分を古い順に集計する。最高値は取得できた日内データの最大値。
+// 時間帯平均は9〜12時、12〜15時、15〜17時。当日は各時間帯の終了後にだけ平均を出す。
+// 過去日でもデータの充足率は判定しない。欠測・未終了はnullとなり、表示側で「—」にする。
 function calculateWbgtFiveDayRows(wbgtData, nowTime){
     const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
     const today = new Date(currentTime);
@@ -6219,6 +6275,8 @@ function renderWbgtFiveDaySummary(wbgtData, nowTime){
     });
 }
 
+// WBGT専用グラフ。縦軸の初期範囲は20〜36、他グループへのズーム同期は行わない。
+// 警戒帯はwbgtAlertBandsPluginで描画する。縦軸反映・ズーム解除は下の専用関数群を参照。
 function createWbgtChart(wbgtData, minTime, maxTime){
     const canvas = getChartCanvas("wbgtChart");
     if(!canvas || !wbgtData.length) return null;
@@ -6286,6 +6344,13 @@ function resetWbgtZoom(){
     redrawChart(wbgtChart);
 }
 
+/**
+ * 温湿度・黒球の2つの取得を並行実行し、現在値・7日集計・直近72時間のグラフを更新する。
+ * 取得には7日集計用の範囲を使い、グラフに渡す系列だけ直近72時間へ絞る。
+ * 取得開始時に連番を進め、後から開始した取得があれば古い応答の画面反映を中止する。
+ * 設定不足時は現在値・集計・グラフをリセットする。通信エラーは集計・グラフの欄にも表示する。
+ * 取得完了時に条件キー・時刻を記録する（データなし・APIエラーを含む）。再取得条件はswitchTabを参照。
+ */
 async function loadWbgtData(){
     const settings = getWbgtSettings();
     setWbgtText("wbgtCurrentPointLabel", settings.tempHumPointId || "－");
