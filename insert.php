@@ -47,6 +47,9 @@ $solar_radiation = isset($data["solar_radiation"]) ? floatval($data["solar_radia
 $voltage     = isset($data["voltage"]) ? floatval($data["voltage"]) : null;
 $wind_speed_avg = isset($data["wind_speed_avg"]) ? floatval($data["wind_speed_avg"]) : null;
 $wind_speed_max = isset($data["wind_speed_max"]) ? floatval($data["wind_speed_max"]) : null;
+// === 雨量受信の分岐条件 ===
+// rainfall_cumulativeキーの有無で専用保存へ進む。rainfall_tip_countだけの送信では雨量経路に入らない。
+// 雨量経路は送信されたpoint_idを使う。表示用雨量APIはP41専用である点に注意する。
 $has_rainfall = array_key_exists("rainfall_cumulative", $data);
 $has_rainfall_tip_count = array_key_exists("rainfall_tip_count", $data);
 
@@ -91,6 +94,9 @@ if (!$has_rainfall) {
     exit;
 }
 
+// === 雨量・カウント・測定時刻の検証 ===
+// 累積雨量は数値・有限性を確認して小数2桁に丸める。この処理では負値を拒否していない。
+// 任意の累積転倒数は0〜4294967295の整数。省略と0は区別する。
 if (!is_numeric($data["rainfall_cumulative"])) {
     http_response_code(400);
     $conn->close();
@@ -151,6 +157,8 @@ if (array_key_exists("recorded_at", $data)) {
     }
 }
 
+// 雨量の重複確認・前回値取得・保存は同一トランザクションで実施し、失敗時はロールバックする。
+// 送信時刻は書式検証のみで明示的なタイムゾーン変換はしない。省略時はDBの現在時刻を使う。
 $transaction_started = false;
 
 try {
@@ -228,9 +236,13 @@ try {
     $has_newer_measurement = $newer_stmt->num_rows > 0;
     $newer_stmt->close();
 
+    // 遅れて届いた過去データ（同じ利用者・Pointにもっと新しい行がある）は両区間値をnullのまま保存する。
+    // 既存の後続行の差分を再計算する処理はない。重複時刻の行は上で既存値を変えず終了する。
     $rainfall_interval = null;
     $rainfall_tip_interval = null;
 
+    // 前回値は同じ利用者・Pointの過去行から、対象の累積項目が非nullの最新行を個別に探す。
+    // 前回との時間間隔による上限判定はない。計測間隔が空いても差分を今回時刻の行へ保存する。
     if (!$has_newer_measurement) {
         $previous_stmt = $conn->prepare(
             "SELECT rainfall_cumulative
@@ -258,10 +270,12 @@ try {
 
         if ($previous_stmt->fetch()) {
             $previous_rainfall_cumulative = (float)$previous_rainfall_cumulative;
+            // 累積雨量が増加・同値なら差分、減少ならリセットとみなして今回の累積量を採用する。
             $rainfall_interval = $rainfall_cumulative >= $previous_rainfall_cumulative
                 ? round($rainfall_cumulative - $previous_rainfall_cumulative, 2)
                 : $rainfall_cumulative;
         } else {
+            // 雨量の初回は累積値そのものを加算せず、区間雨量0を保存する。
             $rainfall_interval = 0.00;
         }
 
@@ -296,6 +310,8 @@ try {
 
             if ($previous_tip_stmt->fetch()) {
                 $previous_rainfall_tip_count = (int)$previous_rainfall_tip_count;
+                // 転倒数は減少時に0を採用する。雨量の減少時の扱いとは異なる。
+                // 前回転倒数がない初回、または今回カウント省略時は区間カウントをnullに保つ。
                 $rainfall_tip_interval = $rainfall_tip_count >= $previous_rainfall_tip_count
                     ? $rainfall_tip_count - $previous_rainfall_tip_count
                     : 0;

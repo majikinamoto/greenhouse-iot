@@ -6,6 +6,9 @@ date_default_timezone_set('Asia/Tokyo');
 
 require_once __DIR__ . '/db_config.php';
 
+// === P41雨量API：区間値の時間別・日別集計 ===
+// rainfall方式は保存済み区間雨量（mm）、tip方式は区間転倒数×画面からの係数（mm/転倒）。
+// 累積値の差分計算はここでは行わず、insert.phpで保存した区間値を使う。
 const RAINFALL_TIMEZONE = 'Asia/Tokyo';
 const RAINFALL_POINT_ID = 'P41';
 const RAINFALL_ALLOWED_DISPLAY_HOURS = [48, 72];
@@ -23,6 +26,8 @@ function rainfallEpochMilliseconds(DateTimeInterface $date): int
     return ((int)$date->format('U')) * 1000;
 }
 
+// 区間ごとに0.01 mmへ丸め、整数で合算して小数の加算誤差を抑える。
+// null・数値でない値は欠損としてnullを返す。
 function rainfallValueToHundredths($value): ?int
 {
     if ($value === null || !is_numeric($value)) {
@@ -37,6 +42,13 @@ function rainfallHundredthsToNumber(?int $value): ?float
     return $value === null ? null : $value / 100;
 }
 
+/**
+ * 日本時間の毎時00分を境に、recorded_atの属する時間・日へ区間値の全量を加算する。
+ * 区間の開始時刻や長さによる按分はしない。引数rowsはAPIの期間内・時刻昇順の取得結果。
+ * 有効値が1件もない時間はmissing=true、雨量と日積算はnull。有効な0は欠測と区別する。
+ * 一部だけ欠損している時間は残る有効値を合算し、充足率による欠測判定は行わない。
+ * 日積算は日付変更時に0へ戻す。欠測時間に積算は加えず、次の有効時間では既知の合計を再開する。
+ */
 function buildRainfallAggregation(
     array $rows,
     DateTimeImmutable $queryStart,
@@ -168,6 +180,8 @@ function buildRainfallAggregation(
     $yesterday = $today->modify('-1 day');
     $dayBeforeYesterday = $today->modify('-2 days');
 
+    // 日別合計も既知の区間値だけを合算する。有効値がなければnullで、欠測日の補間はしない。
+    // 今日・現在の時間帯は取得時点までの途中経過。
     $getDailyTotal = static function (string $dateKey) use ($dailyTotals): ?float {
         if (
             !isset($dailyTotals[$dateKey]) ||
@@ -195,6 +209,8 @@ function buildRainfallAggregation(
     ];
 }
 
+// user_id、P41、48/72時間、rainfall/tipを検証し、tip時は正の有限な換算係数も要求する。
+// PHPとDB接続の時刻を日本時間にそろえる。取得・集計の失敗はsuccess=falseとHTTP 500で返す。
 function runRainfallApi(): void
 {
     ini_set('display_errors', '0');
@@ -260,6 +276,8 @@ function runRainfallApi(): void
     $timezone = new DateTimeZone(RAINFALL_TIMEZONE);
     $end = new DateTimeImmutable('now', $timezone);
     $displayStart = $end->modify('-' . $displayHours . ' hours');
+    // 表示開始時刻より前の同日0時から取得し、表示窓の先頭でも日積算を計算できるようにする。
+    // 表示窓の開始日ではdisplayStart以下の区間値も合計し、線グラフの先頭補助点として返す。
     $queryStart = $displayStart->setTime(0, 0, 0);
 
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -320,6 +338,7 @@ function runRainfallApi(): void
             'display_start_date_key' => $aggregation['display_start_date_key'],
             'display_start_daily_cumulative' => $aggregation['display_start_daily_cumulative'],
             'record_count' => $aggregation['record_count'],
+            // has_dataは対象時刻の行が1件以上あること。区間値が全欠損でもtrueになり得る。
             'has_data' => $aggregation['has_data'],
             'hourly' => $aggregation['hourly'],
             'daily_totals' => $aggregation['daily_totals'],

@@ -7790,6 +7790,8 @@ function renderTenDayTemperatureSummary(prefix, dayMap){
     }
 }
 
+// 10日表示用の日別集計。区間雨量（tipなら区間カウント×係数）を各行で0.01 mmに丸めて合算する。
+// 日付はgetSummaryRowDateKeyで取得し、有効な区間値がない日はMapに作らない。欠損を0で補間しない。
 function createDailyRainfallMap(rows, mode, coefficient){
     const dayMap = new Map();
     (Array.isArray(rows) ? rows : []).forEach(row=>{
@@ -7851,6 +7853,8 @@ async function loadTenDayTemperatureSummaries(userId, outsideSource){
     results.filter(result=>result.error).forEach(result=>console.error(result.error));
 }
 
+// 日本時間で9日前の0時〜現在のP41をget_data.phpから取得し、画面側で日別集計する。
+// 雨量グラフ用APIとは別経路。応答時に連番・取得元・方式・係数を再確認して古い結果を除く。
 async function loadTenDayRainfallSummary(userId){
     const requestId = ++tenDayRainfallRequestSequence;
     resetTenDayRainfallSummary();
@@ -10141,11 +10145,15 @@ function parseData(data, minTime){
 }
 
 // === 雨量：計算設定・グラフ・データ取得 ===
+// 雨量の2方式：rainfallは保存済みrainfall_interval（mm）、tipはrainfall_tip_intervalを係数で換算する。
+// 累積値から区間差分を作る処理はinsert.php、時間別集計はget_rainfall_data.phpが担当する。
 function getRainfallCalculationMode(){
     const selected = document.querySelector('input[name="rainfallCalculationMode"]:checked');
     return selected && selected.value === "tip" ? "tip" : "rainfall";
 }
 
+// 1転倒の雨量（mm）= 1転倒水量（mL）×10 ÷ 受水面積（cm²）。1 mL=1 cm³のため深さをmmへ換算する。
+// 空欄・非有限値・0以下はnull。係数はtip方式のAPIへ送り、保存済み雨量そのものは書き換えない。
 function getRainfallTipCoefficient(){
     const areaInput = document.getElementById("rainfallCollectorArea");
     const volumeInput = document.getElementById("rainfallTipVolume");
@@ -10215,6 +10223,8 @@ function saveRainfallCalculationSetting(){
     });
 }
 
+// 方式・換算条件の変更時に旧グラフと日別表示を破棄し、別々に読み直す。
+// 連番を進めることで、変更前の通信が後から完了しても古い条件で表示しない。
 function reloadRainfallData(){
     const requestId = ++rainfallRequestSequence;
     destroyRainChart();
@@ -10253,6 +10263,7 @@ function handleRainfallCalculationInputChange(){
     }
 }
 
+// 日別表示は合計値を整数mmに四捨五入する。欠損は「-」。グラフの詳細表示は小数2桁。
 function formatDailySummaryRainfallValue(value){
     if(value === null || value === undefined || value === "") return "-";
     const number = Number(value);
@@ -10366,6 +10377,9 @@ function destroyRainChart(){
     clearRainfallNoDataState();
 }
 
+// API集計済みの1時間雨量を棒、日積算を日付別の線で表示する（両方mm）。
+// 欠測はnull、日付ごとに線を分けて日跨ぎの積算値をつながない。欠測区間の線も補間しない。
+// 表示開始位置の日積算を補助点として追加し、X軸はdisplay_start〜endに設定する。
 function createRainfallChart(response){
     const canvas = getChartCanvas("rainChart");
     const hourly = Array.isArray(response.hourly) ? response.hourly : [];
@@ -10505,6 +10519,10 @@ function resetRainZoom(){
     rainChart.resize();
 }
 
+// P41専用APIから48/72時間表示用の集計を取得する。tip方式で係数未確定なら取得しない。
+// 応答・エラー反映時に呼び出し元の連番と比較し、条件変更前の結果を捨てる。
+// has_dataは取得行の存在であり、有効な雨量値の存在とは別。欠測の扱いはAPIのmissingを参照する。
+// 10秒の中断タイマーは本文読取を含むtry全体の終了時にfinallyで解除する。
 async function loadRainfallData(userId, displayHours, requestId){
     const controller = new AbortController();
     const timeoutId = setTimeout(()=>controller.abort(), 10000);
