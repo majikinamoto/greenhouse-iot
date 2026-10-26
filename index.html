@@ -12227,6 +12227,13 @@ function resetReviewZoom(){
     });
 }
 
+// === DIF：地域の日の出・日没による昼夜の区切り ===
+/**
+ * 対象日と地域から、当日日の出・当日日没・翌日日の出の境界をミリ秒で返す。
+ * 昼は[当日日の出, 当日日没)、夜は[当日日没, 翌日日の出)。夜は対象日の行に属する。
+ * calculateSunTimeの時刻文字列をDate.setHoursで組み立てるため、日時はブラウザのローカル時刻に依存する。
+ * 実在しない日付や日の出・日没の時刻を求められない場合はnull。
+ */
 function createReviewDifBoundaries(dateValue, area){
     const dateParts = String(dateValue || "").split("-").map(Number);
     if(dateParts.length !== 3 || dateParts.some(part=>!Number.isInteger(part))) return null;
@@ -12289,6 +12296,14 @@ function createReviewDifBoundaries(dateValue, area){
     };
 }
 
+/**
+ * P01の気温（℃）を昼・夜それぞれ件数で単純平均し、DIF=昼平均−夜平均（℃）とする。
+ * null・undefined・空文字・非有限の気温、無効な時刻を除く。欠測の補間や時間による重み付けはしない。
+ * 各区間に有効値がなければ平均はnull。最低件数や測定間隔・充足率の条件は設けていない。
+ * nowTimeは状態判定に使い、データを現在時刻で切り落とす処理はない。取得範囲にも注意する。
+ * 翌日日の出に達するまではdif=null。到達後、昼夜両方に平均があれば丸め前の平均同士を引く。
+ * 単日の「確定」は時間帯が終了した意味で、データの充足を保証しない。7日表の状態判定とは区別する。
+ */
 function calculateReviewDif(p01, boundaries, nowTime){
     const result = {
         dayAverage:null,
@@ -12355,6 +12370,7 @@ function formatReviewDifTemperature(value){
     return value === null ? "－（データなし）" : value.toFixed(1) + "℃";
 }
 
+// DIFは小数1桁で表示し、正の値には+を付ける。計算内部の値はここでは変更しない。
 function formatReviewDifValue(value){
     if(value === null) return "－（算出不可）";
     const rounded = Number(value.toFixed(1));
@@ -12366,6 +12382,7 @@ function setReviewDifText(id, text){
     if(element) element.textContent = text;
 }
 
+// データ取得中・取得エラーでも、選択日と地域の昼夜の時間帯を示して数値欄を置き換える。
 function renderReviewDifRequestState(dateValue, status){
     const panel = document.getElementById("reviewDifPanel");
     const area = getSelectedUtechArea();
@@ -12398,6 +12415,8 @@ function renderReviewDifRequestState(dateValue, status){
     panel.hidden = false;
 }
 
+// 単日パネル：集計中の平均には途中経過を付け、DIFは翌日日の出まで「未確定」と表示する。
+// 日の出前は平均も「計算前」。時間帯終了後に昼夜のどちらかが欠損ならDIFは「算出不可」。
 function renderReviewDif(){
     const panel = document.getElementById("reviewDifPanel");
     if(!panel || !reviewDifDateValue) return;
@@ -12459,6 +12478,8 @@ function renderReviewDif(){
     panel.hidden = false;
 }
 
+// 終了日を含む日付一覧を古い順に作る。件数が正の整数でなければ7日を使う。
+// 日付の計算・整形はブラウザのローカル時刻に依存する。
 function createReviewDifPeriodDateValues(endDateValue, dayCount){
     const parts = String(endDateValue || "").split("-").map(Number);
     if(parts.length !== 3 || parts.some(part=>!Number.isInteger(part))) return [];
@@ -12482,6 +12503,8 @@ function createReviewDifPeriodDateValues(endDateValue, dayCount){
     return dateValues;
 }
 
+// 参考の日平均は対象日の[0時, 翌日0時)で算出し、DIF用の昼夜合計期間とは異なる。
+// 有効な気温の件数平均で、0件ならaverage=null。時刻・気温の除外条件はDIFと同様。
 function calculateReviewDailyAverage(p01, targetDate){
     const result = { average:null, count:0 };
     if(!(targetDate instanceof Date) || isNaN(targetDate.getTime())) return result;
@@ -12519,6 +12542,8 @@ function calculateReviewDailyAverage(p01, targetDate){
     return result;
 }
 
+// 7日表の状態は時間帯の進行を優先する。終了後に両区間0件なら「データなし」、片方0件なら「データ不足」。
+// 両区間に1件以上あれば「確定」。単日のcalculateReviewDif.statusより欠損の区別が細かい。
 function getReviewDifPeriodStatus(boundaries, difResult, nowTime){
     const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
     if(!boundaries || !difResult) return "データなし";
@@ -12532,6 +12557,8 @@ function getReviewDifPeriodStatus(boundaries, difResult, nowTime){
     return "確定";
 }
 
+// 終了日を含む7日について昼夜平均・DIF・暦日平均を作り、表示用に新しい日順へ反転する。
+// 各日の夜は翌朝まで含むため、取得データには終了日の翌日分も必要。
 function calculateReviewDifPeriodRows(p01, endDateValue, area, nowTime){
     const currentTime = Number.isFinite(nowTime) ? nowTime : Date.now();
     return createReviewDifPeriodDateValues(endDateValue, 7).map(dateValue=>{
@@ -12628,6 +12655,8 @@ function renderReviewDifPeriod(){
     });
 }
 
+// 取得済みのP01を使い、現在の地域と時刻で境界・状態を再計算する。ここでは再取得しない。
+// 取得中・エラー時は計算せず状態表示を更新する。
 function recalculateReviewDifPeriodRows(){
     if(!reviewDifPeriodEndDateValue) return;
     if(reviewDifPeriodDisplayState !== "ready"){
@@ -12644,6 +12673,12 @@ function recalculateReviewDifPeriodRows(){
     renderReviewDifPeriod();
 }
 
+/**
+ * 7日表用のP01を取得する。期間は最初の日の0時〜終了日の翌日23:59:59まで。
+ * 翌朝までの夜間データを含むため、表の対象7日より取得範囲を広くしている。
+ * 同じ条件の取得中は重複を省き、応答時には連番・現在の利用者ID・選択日を確認する。
+ * 通信エラー時は保持データを空にしてエラー表示。正常な0件はreadyとなり集計側で欠損を示す。
+ */
 async function loadReviewDifPeriodData(userId, endDateValue){
     const requestKey = userId + "\n" + endDateValue + "\n7";
     if(reviewDifPeriodLoadingKey === requestKey) return;
@@ -12719,6 +12754,8 @@ async function loadReviewDifPeriodData(userId, endDateValue){
     }
 }
 
+// 単日DIFは過去グラフと共通のP01を使う（選択日の前日0時〜翌日23:59:59を取得）。
+// 7日DIFはloadReviewDifPeriodDataで別に取得する。単日パネルの成否はP01の応答で判断する。
 async function loadReviewData(){
     clearSyncedTooltipGroup("review");
     const userId = document.getElementById("userId").value.trim();
