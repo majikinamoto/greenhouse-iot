@@ -42,6 +42,9 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('.tab-button').count(),5);
  assert.equal(await page.locator('.tab-panel.active').getAttribute('id'),'tab-maintenance');
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAIN01');
+ assert.equal(await page.locator('.header-detail-area, #utechAreaSelect, #headerSunInfo, #farmCalendarInfo, #tomorrowForecastInfo').count(),0);
+ assert.match(await page.locator('#headerTimeInfo').textContent(),/現在日時：\d+年/);
+ assert.equal(await page.evaluate(()=>typeof handleUtechAreaChange),'undefined');
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP02')),true);
  const voltageRequest=requests.findLast(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P91');
  assert.equal(new Date(voltageRequest.searchParams.get('end').replace(' ','T'))-new Date(voltageRequest.searchParams.get('start').replace(' ','T')),30*86400000);

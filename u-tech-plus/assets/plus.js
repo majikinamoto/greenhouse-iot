@@ -1855,19 +1855,6 @@ function formatDateInputValue(date){
     return y + "-" + m + "-" + d;
 }
 
-function handleUtechAreaChange(){
-    const select = document.getElementById("utechAreaSelect");
-    const key = select && UTECH_AREAS[select.value] ? select.value : "naha";
-    selectedUtechAreaKey = key;
-    localStorage.setItem(UTECH_AREA_STORAGE_KEY, key);
-    tideCalendarText = "満潮・干潮：読み込み中...";
-    updateHeaderTimeInfo();
-    loadTideCalendarInfo();
-    loadTomorrowForecast();
-    renderReviewDif();
-    recalculateReviewDifPeriodRows();
-}
-
 function applyReviewChartNoDataStates(charts, userId, startTime, endTime){
     const configs = [
         ["reviewTempChartP01", ["P01"]],
@@ -4157,10 +4144,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(panel&&event.target.closest('button'))setTimeout(()=>savePlusTab(panel.id.slice(4)),0);
  });
  document.addEventListener('touchstart',handleOutsideChartTouch,{capture:true,passive:true});
- updateHeaderTimeInfo();loadTideCalendarInfo();loadTomorrowForecast();setInterval(updateHeaderTimeInfo,60000);
+ updatePlusHeaderTime();setInterval(updatePlusHeaderTime,60000);
  // Consume the incoming ID once so refreshing does not overwrite a later tab selection.
  if(params.has('user_id')){params.delete('user_id');historyReplacePlusUrl(params);}
  switchPlusTab(entry);
 });
 
 function historyReplacePlusUrl(params){history.replaceState(null,'',location.pathname+(params.size?'?'+params:'')+location.hash);}
+
+// Plus only shows the clock; weather and calendar requests belong to U-Tech.
+function updatePlusHeaderTime(){
+ const p=getJapanDateParts(new Date());
+ document.getElementById("headerTimeInfo").textContent="現在日時："+p.year+"年"+p.month+"月"+p.day+"日 "+String(p.hour).padStart(2,"0")+":"+String(p.minute).padStart(2,"0");
+}
