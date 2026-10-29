@@ -35,6 +35,10 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('.tab-button').count(),5);
  assert.equal(await page.locator('#tab-maintenance').count(),0);
  assert.equal(await page.evaluate(()=>typeof loadActiveAlertSetting),'undefined');
+ assert.equal(await page.evaluate(()=>typeof loadTomorrowForecast),'function');
+ assert.equal(await page.evaluate(()=>typeof updateFarmCalendarInfo),'function');
+ assert.match(await page.locator('#headerSunInfo').textContent(),/日の出/);
+ assert.match(await page.locator('#farmCalendarInfo').textContent(),/旧暦/);
  await page.locator('#userId').fill('MAIN01');await page.getByRole('button',{name:'表示',exact:true}).first().click();await page.waitForTimeout(1600);
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP01')),true);
  assert(!requests.some(u=>/alert/.test(u.pathname)));
@@ -45,6 +49,10 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('.header-detail-area, #utechAreaSelect, #headerSunInfo, #farmCalendarInfo, #tomorrowForecastInfo').count(),0);
  assert.match(await page.locator('#headerTimeInfo').textContent(),/現在日時：\d+年/);
  assert.equal(await page.evaluate(()=>typeof handleUtechAreaChange),'undefined');
+ assert.equal(await page.evaluate(()=>typeof loadTomorrowForecast),'undefined');
+ assert.equal(await page.evaluate(()=>typeof loadTideCalendarInfo),'undefined');
+ assert.equal(await page.evaluate(()=>typeof updateFarmCalendarInfo),'undefined');
+ assert.equal(await page.evaluate(()=>typeof calculateSunTime),'function');
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP02')),true);
  const voltageRequest=requests.findLast(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P91');
  assert.equal(new Date(voltageRequest.searchParams.get('end').replace(' ','T'))-new Date(voltageRequest.searchParams.get('start').replace(' ','T')),30*86400000);
@@ -66,8 +74,10 @@ const server=http.createServer((req,res)=>{
  await page.locator('[aria-controls="tab-maintenance"]').click();await page.waitForTimeout(700);
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
+ await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-mobile-test.png'),fullPage:false});
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,
+  JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,6).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right})))));
  await page.getByRole('button',{name:'U-Techへ移動',exact:true}).click();await page.waitForTimeout(800);
  assert.equal(await page.locator('#userId').inputValue(),'MAINT02');
  await page.getByRole('button',{name:'表示・非表示設定',exact:true}).click();await page.getByRole('button',{name:'すべて非表示',exact:true}).click();

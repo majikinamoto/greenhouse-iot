@@ -1,7 +1,7 @@
 <!--
 U-Tech Monitor：メインの計測データ・環境スコア・データ出力を扱う画面。
 アラート・分析・WBGT・過去データ・メンテはu-tech-plus/に分離。
-共通処理：assets/utech-shared.js、本体処理：assets/utech-main.js。
+共通処理：assets/utech-shared.js、ヘッダー情報：assets/utech-header.js、本体処理：assets/utech-main.js。
 スタイル：assets/utech.css（共通）→ assets/utech-main.css（本体専用）。
 読み始める入口：utech-main.jsのDOMContentLoaded、switchTab、loadData。
 測定値の取得：fetchDataSafe → get_data.php、内部形式への変換：parseData。
@@ -739,6 +739,7 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 
 
 <script src="assets/utech-shared.js"></script>
+<script src="assets/utech-header.js"></script>
 <script src="assets/utech-main.js"></script>
 <script src="chart-axis-enter.js"></script>
 </body>
