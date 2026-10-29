@@ -1187,24 +1187,12 @@ function createWbgtChart(wbgtData, minTime, maxTime){
         y:yAxisOptions,
         yRight:createRightYAxis(yAxisOptions)
     };
-    const chart = new Chart(canvas, {
-        type:"line",
-        data:{
-            datasets:[{
-                label:"暑さ指数（WBGT）",
-                data:wbgtData,
-                borderColor:"rgb(215, 106, 43)",
-                backgroundColor:"rgba(215, 106, 43, 0.16)",
-                pointBackgroundColor:"rgb(215, 106, 43)",
-                pointRadius:0,
-                borderWidth:2,
-                tension:0.2,
-                fill:true
-            }]
-        },
-        options:options,
-        plugins:[wbgtAlertBandsPlugin]
-    });
+    const chart = createSingleLineChart(canvas, wbgtData, {
+        label:"暑さ指数（WBGT）",
+        color:"rgb(215, 106, 43)",
+        backgroundColor:"rgba(215, 106, 43, 0.16)",
+        fill:true
+    }, options, [wbgtAlertBandsPlugin]);
     saveInitialScaleLimits(chart);
     return chart;
 }
@@ -1220,13 +1208,10 @@ function createWbgtGlobeChart(parsed, minTime, maxTime){
     options.plugins.zoom.zoom.onZoomComplete = function(){};
     const yAxis = {min:20, max:50, ticks:{stepSize:5, color:"#000"}, title:{display:true, text:"℃", color:"#000"}};
     options.scales = {...options.scales, y:yAxis, yRight:createRightYAxis(yAxis)};
-    const chart = new Chart(canvas, {
-        type:"line",
-        data:{datasets:[{label:"黒球温度 (℃)", data:data, borderColor:"rgb(255, 0, 0)",
-            backgroundColor:"rgba(255, 0, 0, 0.18)", pointBackgroundColor:"rgb(255, 0, 0)",
-            pointRadius:0, borderWidth:2, tension:0.2, fill:true}]},
-        options:options
-    });
+    const chart = createSingleLineChart(canvas, data, {
+        label:"黒球温度 (℃)", color:"rgb(255, 0, 0)",
+        backgroundColor:"rgba(255, 0, 0, 0.18)", fill:true
+    }, options);
     saveInitialScaleLimits(chart);
     return chart;
 }

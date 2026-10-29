@@ -2069,6 +2069,27 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
     });
 }
 
+// Single-series charts share drawing defaults; callers retain data, axes and zoom rules.
+function createSingleLineChart(canvas, data, style, options, plugins){
+    const config = {
+        type:"line",
+        data:{datasets:[{
+            label:style.label,
+            data:data,
+            borderColor:style.color,
+            backgroundColor:style.backgroundColor,
+            pointBackgroundColor:style.color,
+            pointRadius:0,
+            borderWidth:2,
+            tension:0.2,
+            fill:style.fill
+        }]},
+        options:options
+    };
+    if(plugins) config.plugins = plugins;
+    return new Chart(canvas, config);
+}
+
 function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime, axisOverride){
 
     const canvas = getChartCanvas(canvasId);
@@ -2161,28 +2182,14 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime,
         }
     };
 
-    return new Chart(canvas,{
-        type:"line",
-        data:{
-            datasets:[{
-                label:label,
-                data:chartData,
-                borderColor:color,
-                backgroundColor:backgroundColor,
-                pointBackgroundColor:color,
-                pointRadius:0,
-                borderWidth:2,
-                tension:0.2,
-                fill:fill
-            }]
-        },
-        options:{
-            ...baseOptions(displayMinTime,maxTime),
-            scales:{
-                ...baseOptions(displayMinTime,maxTime).scales,
-y:yAxisOptions,
-yRight:createRightYAxis(yAxisOptions)
-            }
+    return createSingleLineChart(canvas, chartData, {
+        label:label, color:color, backgroundColor:backgroundColor, fill:fill
+    }, {
+        ...baseOptions(displayMinTime,maxTime),
+        scales:{
+            ...baseOptions(displayMinTime,maxTime).scales,
+            y:yAxisOptions,
+            yRight:createRightYAxis(yAxisOptions)
         }
     });
 }

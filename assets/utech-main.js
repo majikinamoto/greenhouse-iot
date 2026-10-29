@@ -1703,7 +1703,12 @@ function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, m
     const options=baseOptions(getChartDisplayMinTime(canvasId,minTime,maxTime),maxTime);
     options.scales={...options.scales,y:yAxis,yRight:createRightYAxis(yAxis)};
     const color=isTemp ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
-    return new Chart(canvas,{type:"line",data:{datasets:[{label:(isTemp ? "温度" : "湿度")+" ("+unit+")",data:data,borderColor:color,backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",pointBackgroundColor:color,pointRadius:0,borderWidth:2,tension:0.2,fill:true}]},options:options});
+    return createSingleLineChart(canvas, data, {
+        label:(isTemp ? "温度" : "湿度")+" ("+unit+")",
+        color:color,
+        backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",
+        fill:true
+    }, options);
 }
 
 function createWindChart(canvasId, parsed, minTime, maxTime){
