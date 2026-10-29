@@ -1,7 +1,8 @@
 <!--
 U-Tech Monitor：メインの計測データ・環境スコア・データ出力を扱う画面。
 アラート・分析・WBGT・過去データ・メンテはu-tech-plus/に分離。
-共通処理：assets/utech-shared.js、本体処理：assets/utech-main.js、共通スタイル：assets/utech.css。
+共通処理：assets/utech-shared.js、本体処理：assets/utech-main.js。
+スタイル：assets/utech.css（共通）→ assets/utech-main.css（本体専用）。
 読み始める入口：utech-main.jsのDOMContentLoaded、switchTab、loadData。
 測定値の取得：fetchDataSafe → get_data.php、内部形式への変換：parseData。
 雨量・CSVなどは既存の関連PHPと連携する。
@@ -22,6 +23,7 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 
 <!-- === デザイン・レイアウト（CSS） === -->
 <link rel="stylesheet" href="assets/utech.css">
+<link rel="stylesheet" href="assets/utech-main.css">
 </head>
 
 <!-- === 画面の構成（HTML）：ヘッダー・各タブ・設定欄 === -->
