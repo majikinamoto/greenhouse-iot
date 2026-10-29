@@ -1,0 +1,676 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U-Tech Plus</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-crosshair@1.2.0" crossorigin="anonymous"></script>
+
+
+<link rel="stylesheet" href="assets/utech.css">
+<link rel="stylesheet" href="u-tech-plus/assets/plus.css">
+</head>
+
+
+<body class="utech-plus"><div class="fixed-header">
+
+<header class="logo-header">
+    <div class="logo-mark">
+        <span class="logo-u">U</span><span class="logo-plus">＋</span>
+    </div>
+    <div class="logo-title-area">
+        <div class="logo-title-row">
+            <div class="logo-title">U-Tech Plus</div>
+            <button class="logo-info-button" type="button" aria-label="U-Tech Plusのコンセプト" onclick="toggleLogoInfo()">ℹ️</button>
+            <button class="site-switch-link" type="button" onclick="returnToUtech()">U-Techへ移動</button>
+            <div id="logoInfoPopup" class="logo-info-popup">
+<p>U-Tech Plusの「Plus」には、</p><p>・環境を詳しく振り返る<br>・センサーの状態を確かめる<br>・日々の管理に気づきを加える</p><p>という意味を込めています。</p><p>U-Tech Plusは、アラート・分析・暑さ指数・過去データ・センサー確認の機能を通して、生産者が栽培環境や作業環境をより詳しく把握し、日々の管理を考えるための支援を目的として開発されたシステムです。</p>
+            </div>
+        </div>
+        <div id="headerTimeInfo" class="header-time-info">現在日時：-</div>
+        <div class="logo-subtitle">Greenhouse Management Tools</div>
+    </div>
+    <div class="header-detail-area">
+        <div class="header-info-card">
+            <label for="utechAreaSelect">地域：</label>
+            <select id="utechAreaSelect" onchange="handleUtechAreaChange()"></select>
+        </div>
+        <div id="headerSunInfo" class="header-info-card">
+            <span>那覇 日の出：-</span>
+            <span>日の入り：-</span>
+            <span>昼：-</span>
+            <span>夜：-</span>
+        </div>
+        <div id="farmCalendarInfo" class="header-info-card farm-calendar-card">
+            <span class="farm-calendar-title">農作業こよみ</span>
+            <span style="font-weight:bold">旧暦：取得予定</span>
+            <span>月齢：取得予定</span>
+            <span>月相：取得予定</span>
+        </div>
+        <div id="tomorrowForecastInfo" class="header-info-card tomorrow-forecast-card">
+            <span>予報取得中</span>
+        </div>
+    </div>
+</header>
+
+</div>
+<div id="message" role="status"></div>
+<nav class="tab-nav" role="tablist" aria-label="Plusの機能"><button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
+<button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
+<button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">WBGT</button>
+<button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
+<button class="tab-button tab-button-maintenance" type="button" role="tab" aria-selected="false" aria-controls="tab-maintenance" onclick="switchTab('maintenance')">メンテ</button></nav><section id="tab-alert" class="tab-panel tab-panel-alert" role="tabpanel">
+    <div id="alertStatusCard" class="alert-status-card">
+        <div class="alert-status-title">現在のアラート状態</div>
+        <div class="alert-status-current">現在の状態：-</div>
+        <div>ハウス内温度（P01）：-</div>
+        <div>外気温度（P11）：-</div>
+        <div>設定条件：-</div>
+        <div>再通知間隔：-</div>
+    </div>
+    <div class="alert-setting-form">
+        <label>
+            user_id：
+            <input class="alert-user-input" type="text" id="alertUserId"
+                   placeholder="例：NS001" autocomplete="off" autocapitalize="none" spellcheck="false"
+                    onchange="handleAlertUserIdInput()">
+        </label>
+
+        <label>
+            point_id：
+            <select id="alertPointId" onchange="handleAlertPointChange()">
+                <option value="P01">P01 ハウス内</option>
+                <option value="P11">P11 外気</option>
+            </select>
+        </label>
+
+        <label>
+            温度
+            <input class="alert-temperature-input" type="number" id="alertTemperatureThreshold" step="0.1">
+            ℃
+        </label>
+
+        <label>
+            条件
+            <select id="alertConditionType">
+                <option value="above">以上</option>
+                <option value="below">以下</option>
+            </select>
+        </label>
+
+        <label>
+            通知先
+            <select id="alertNotifyTarget" onchange="handleAlertNotifyTargetChange()">
+                <option value="discord">Discord</option>
+                <option value="email">メール</option>
+                <option value="line" disabled>LINE（未対応）</option>
+            </select>
+        </label>
+
+        <label>
+            <span id="alertDestinationLabel">Webhook URL</span>
+            <input class="alert-webhook-input" type="url" id="alertWebhookUrl">
+        </label>
+
+        <label>
+            再通知間隔：
+            <select id="alertCooldownMinutes">
+                <option value="30">30分</option>
+                <option value="60">1時間</option>
+                <option value="120">2時間</option>
+                <option value="180" selected>3時間</option>
+                <option value="360">6時間</option>
+                <option value="720">12時間</option>
+            </select>
+        </label>
+
+        <label class="alert-enabled-label">
+            <input type="checkbox" id="alertEnabled" checked>
+            有効
+        </label>
+
+        <button type="button" id="alertSaveButton" onclick="saveAlertSetting()">保存</button>
+        <button type="button" id="alertDisableAllButton" class="alert-disable-all-button" onclick="disableAllAlerts()">対象user_idのアラートを解除</button>
+        <p class="alert-disable-all-note">一括解除は、選択中のuser_idの全測定地点が対象です。他のuser_idの設定には影響しません。設定内容と過去の通知履歴は残ります。</p>
+        <div id="alertMessage" class="alert-message"></div>
+    </div>
+    <div id="activeAlertSetting" class="active-alert-setting">
+        <div class="active-alert-setting-title">現在有効なアラート設定</div>
+        <div class="active-alert-setting-empty">有効なアラート設定はありません。</div>
+    </div>
+    <div id="alertHistory" class="alert-history">
+        <div class="alert-history-title">直近3日間のアラート履歴</div>
+        <div class="alert-history-empty">直近3日間のアラート履歴はありません。</div>
+    </div>
+
+    <div class="alert-notification-note">
+        <div class="alert-notification-note-title">通知方法について</div>
+        <p>U-Techのアラート通知では、DiscordのWebhook通知を推奨しています。</p>
+        <p>Discordは、PCやスマートフォンで使える連絡アプリです。LINEのグループのように、複数人で同じ通知を確認できます。U-Techでは、Discordのチャンネルにアラート通知を送るために「Webhook URL」を使用します。</p>
+        <p>Webhookとは、U-TechからDiscordへ自動でお知らせを送るための連絡口のようなものです。DiscordでWebhook URLを取得し、U-Techに貼り付けることで、温度や湿度などのアラートをDiscordで受け取れます。</p>
+        <p>電子メールやLINE通知も考えられますが、DiscordのWebhookは次の理由からU-Techで扱いやすい方法です。</p>
+        <ul>
+            <li>通知が早く、複数人で同じ情報を確認しやすい</li>
+            <li>専用チャンネルを作れば、アラート履歴を見返しやすい</li>
+            <li>メールのように迷惑メール判定を受けにくい</li>
+            <li>Webhook URLを貼るだけで設定でき、運用が比較的簡単</li>
+        </ul>
+        <p>Webhook URLの取得方法は、Discord公式の説明を参考にしてください。<br>
+            Discord公式：<a href="https://support.discord.com/hc/ja/articles/228383668-%E3%82%A6%E3%82%A7%E3%83%96%E3%83%95%E3%83%83%E3%82%AF%E3%81%AE%E3%81%94%E7%B4%B9%E4%BB%8B" target="_blank" rel="noopener noreferrer">ウェブフックのご紹介</a>
+        </p>
+        <p><span class="alert-notification-warning">注意：</span>Webhook URLは、知っている人がそのDiscordチャンネルへ投稿できる重要なURLです。他人に見られないように管理し、GitHubや公開ページなどに載せないでください。</p>
+    </div>
+</section>
+<section id="tab-analysis" class="tab-panel tab-panel-analysis" role="tabpanel">
+    <p class="analysis-description">マスターグラフ（M）に基準とするハウスのIDを入力し、グラフAやグラフBに比較したいハウスのIDを入力すると、同じ時間帯の環境データを並べて比較できます。また、グラフ差を見ることで、ハウス間の温度差や、その日の最大温度差などを確認できます。</p>
+    <div class="analysis-compare-grid">
+        <div class="analysis-compare-card">
+            <h4><span id="analysisTitleA">マスターグラフ（M）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdA" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('A')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdA" placeholder="例: P01" onchange="saveAnalysisCompareSetting('A')">
+                <button type="button" onclick="loadAnalysisCompareChart('A')">表示</button>
+            </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinA" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxA" value="40">
+                <button onclick="applyAnalysisTempYAxis('A')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisChartA"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisTitleB">グラフA</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdB" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('B')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdB" placeholder="例: P01" onchange="saveAnalysisCompareSetting('B')">
+                <button type="button" onclick="loadAnalysisCompareChart('B')">表示</button>
+            </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinB" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxB" value="40">
+                <button onclick="applyAnalysisTempYAxis('B')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisChartB"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisTitleC">グラフB</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="analysis-compare-controls">
+                user_id
+                <input class="analysis-compare-input" type="text" id="analysisUserIdC" placeholder="例: T0001" onchange="saveAnalysisCompareSetting('C')">
+                point_id
+                <input class="analysis-compare-input" type="text" id="analysisPointIdC" placeholder="例: P01" onchange="saveAnalysisCompareSetting('C')">
+                <button type="button" onclick="loadAnalysisCompareChart('C')">表示</button>
+            </div>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="analysisTempMinC" value="20"> ～
+                <input class="axis-input" type="number" id="analysisTempMaxC" value="40">
+                <button onclick="applyAnalysisTempYAxis('C')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisChartC"></canvas></div>
+        </div>
+
+        <hr class="analysis-divider">
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisDiffTitleB">温度差（M-A）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinB" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMaxB" value="8">
+                <button onclick="applyAnalysisDiffYAxis('B')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisDiffChartB"></canvas></div>
+        </div>
+
+        <div class="analysis-compare-card">
+            <h4><span id="analysisDiffTitleC">温度差（M-B）</span><button class="chart-reset-button" onclick="resetAnalysisZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="analysisDiffMinC" value="-8"> ～
+                <input class="axis-input" type="number" id="analysisDiffMaxC" value="8">
+                <button onclick="applyAnalysisDiffYAxis('C')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="analysisDiffChartC"></canvas></div>
+        </div>
+
+    </div>
+</section>
+<section id="tab-wbgt" class="tab-panel tab-panel-wbgt" role="tabpanel">
+    <div class="wbgt-content">
+        <div class="wbgt-card wbgt-setting-card">
+            <h3>WBGT用センサー設定</h3>
+            <div class="wbgt-setting-form">
+                <label>user_id<input type="text" id="wbgtUserId" placeholder="例: T0001" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>温湿度 point_id<input class="wbgt-point-input" type="text" id="wbgtTempHumPointId" value="P11" placeholder="例: P11" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <label>黒球温度 point_id<input class="wbgt-point-input" type="text" id="wbgtGlobePointId" value="P51" placeholder="例: P51" onkeydown="if(event.key === 'Enter'){ applyWbgtSettings(); }"></label>
+                <button class="show-button" type="button" onclick="applyWbgtSettings()">設定を適用</button>
+            </div>
+        </div>
+
+        <h2 class="wbgt-title">暑さ指数（WBGT）</h2>
+
+        <div class="wbgt-overview">
+            <div class="wbgt-card wbgt-current-card">
+                <h3 class="wbgt-current-heading"><span>現在状況（屋外：<span id="wbgtCurrentPointLabel">P11</span>）</span><span id="wbgtCurrentHeadingTime" class="wbgt-current-heading-time" hidden></span></h3>
+                <div class="wbgt-current-layout">
+                    <div class="wbgt-current-details">
+                        <div class="wbgt-current-primary">
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">現地気温</span><span id="wbgtTaNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row wbgt-current-wbgt-row"><span class="wbgt-current-label">WBGT</span><span id="wbgtNow" class="wbgt-current-value wbgt-current-wbgt-value">－</span><span id="wbgtLevelNow" class="wbgt-level-badge">－</span></div>
+                        </div>
+                        <div class="wbgt-current-secondary">
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">相対湿度 RH</span><span id="wbgtRhNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">黒球温度 Tg</span><span id="wbgtTgNow" class="wbgt-current-value">－</span></div>
+                            <div class="wbgt-current-row"><span class="wbgt-current-label">計算湿球温度 Tw</span><span id="wbgtTwNow" class="wbgt-current-value">－</span></div>
+                        </div>
+                    </div>
+                    <div class="wbgt-gauge-panel">
+                        <div class="wbgt-gauge-heading">現在WBGTレベル</div>
+                        <div id="wbgtGauge" class="wbgt-gauge-scale" aria-label="現在WBGTは算出できません">
+                            <div class="wbgt-gauge-zones">
+                                <div class="wbgt-gauge-zone wbgt-level-danger">危険</div>
+                                <div class="wbgt-gauge-zone wbgt-level-severe">厳重警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-warning">警戒</div>
+                                <div class="wbgt-gauge-zone wbgt-level-caution">注意</div>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-36">36</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-31">31</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-28">28</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-tick-boundary wbgt-gauge-value-25">25</span>
+                                <span class="wbgt-gauge-tick wbgt-gauge-value-20">20</span>
+                                <div id="wbgtGaugeMarker" class="wbgt-gauge-marker" hidden><span class="wbgt-gauge-marker-arrow">◀</span><span id="wbgtGaugeValue" class="wbgt-gauge-marker-value">—</span></div>
+                            </div>
+                        </div>
+                        <div id="wbgtGaugeUnavailable" class="wbgt-gauge-unavailable">現在値 —</div>
+                    </div>
+                </div>
+                <div class="wbgt-current-times"><span>温湿度 <span id="wbgtTempHumTime" class="wbgt-current-time-value">－</span></span><span aria-hidden="true">｜</span><span>黒球 <span id="wbgtGlobeTime" class="wbgt-current-time-value">－</span></span></div>
+                <p id="wbgtCurrentMessage" class="wbgt-message" role="status"></p>
+            </div>
+
+            <div class="wbgt-card wbgt-summary-card">
+                <h3>WBGT 7日間集計</h3>
+                <div class="wbgt-summary-table-wrap">
+                    <table class="wbgt-summary-table">
+                        <thead id="wbgtFiveDayHead">
+                            <tr><th>項目</th><th colspan="7">直近7日</th></tr>
+                        </thead>
+                        <tbody id="wbgtFiveDayBody">
+                            <tr><td colspan="8">センサー設定を適用すると表示します</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="wbgt-summary-note">本日の最高値は現在までの値です。時間帯平均は対象時間終了後に表示します。有効なデータがない項目は「—」で表示します。</p>
+                <p id="wbgtFiveDayMessage" class="wbgt-message" role="status"></p>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <h4><span>過去72時間のWBGT</span><button class="chart-reset-button" type="button" onclick="resetWbgtZoom()">ズームリセット</button></h4>
+                <div class="control-group axis-control-group chart-axis-control">
+                    <span class="axis-label-temp">WBGT軸：</span><input class="axis-input" type="number" id="wbgtMin" value="20"> ～
+                    <input class="axis-input" type="number" id="wbgtMax" value="36">
+                    <button type="button" onclick="applyWbgtYAxis(wbgtChart)">縦軸反映</button>
+                </div>
+                <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
+                <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
+            </div>
+            <div>
+                <h4><span>過去72時間の黒球温度（<span id="wbgtGlobePointLabel">P51</span>）</span><button class="chart-reset-button" type="button" onclick="resetWbgtGlobeZoom()">ズームリセット</button></h4>
+                <div class="control-group axis-control-group chart-axis-control">
+                    <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="wbgtGlobeMin" value="20"> ～
+                    <input class="axis-input" type="number" id="wbgtGlobeMax" value="50">
+                    <button type="button" onclick="applyWbgtGlobeYAxis()">縦軸反映</button>
+                </div>
+                <div class="chart-container"><canvas id="wbgtGlobeChart"></canvas></div>
+                <p id="wbgtGlobeChartMessage" class="wbgt-message" role="status"></p>
+            </div>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>WBGTの警戒レベル</h3>
+            <div class="wbgt-level-grid">
+                <div class="wbgt-level-card wbgt-level-danger"><strong>危険（31以上）</strong><br>外出はなるべく避け、涼しい室内に移動してください。</div>
+                <div class="wbgt-level-card wbgt-level-severe"><strong>厳重警戒（28以上31未満）</strong><br>外出時は炎天下を避け、室内では室温の上昇に注意してください。</div>
+                <div class="wbgt-level-card wbgt-level-warning"><strong>警戒（25以上28未満）</strong><br>運動や激しい作業では、定期的に十分な休息を取ってください。</div>
+                <div class="wbgt-level-card wbgt-level-caution"><strong>注意（25未満）</strong><br>激しい運動や重労働時には熱中症に注意してください。</div>
+            </div>
+        </div>
+
+        <div class="wbgt-card">
+            <h3>算出方法・注意事項</h3>
+            <ul class="wbgt-note-list">
+                <li>湿球温度Twは実測値ではなく、指定した温湿度Pointの気温・相対湿度と固定気圧1013.25 hPaから計算した値です。</li>
+                <li>黒球温度Tgには、指定した黒球温度Pointのtemperatureを使用しています。</li>
+                <li>屋外・日射ありの式「WBGT＝0.7×Tw＋0.2×Tg＋0.1×Ta」で算出しています。</li>
+                <li>市販のJIS適合WBGT計等と完全に同一の測定方式・精度を保証するものではありません。体調や現場状況、公的情報もあわせて確認してください。</li>
+            </ul>
+            <p class="wbgt-source-links">出典：<a href="https://www.wbgt.env.go.jp/wbgt_detail.php" target="_blank" rel="noopener noreferrer">環境省 熱中症予防情報サイト「当サイトで提供する暑さ指数（WBGT）について」</a><br>
+            湿球温度の計算式：<a href="https://www.wbgt.env.go.jp/pdf/doc_ccaa/20260401_doc01.pdf" target="_blank" rel="noopener noreferrer">環境省「暑さ指数（WBGT）の予測値の算出について」（PDF）</a><br>
+            警戒区分：<a href="https://www.wbgt.env.go.jp/wbgt.php" target="_blank" rel="noopener noreferrer">環境省 熱中症予防情報サイト「暑さ指数とは？」（日本生気象学会「日常生活における熱中症予防指針Ver.4」より改編）</a></p>
+        </div>
+    </div>
+</section>
+<section id="tab-review" class="tab-panel tab-panel-review" role="tabpanel">
+<div class="plus-user-controls"><label for="reviewUserId">user_id：<input id="reviewUserId" type="text" placeholder="例: T0001" onkeydown="if(event.key==='Enter')applyPlusTab('review')"></label><select data-plus-history="review" aria-label="user_idの履歴" onchange="document.getElementById('reviewUserId').value=this.value"><option value="">履歴</option></select><button type="button" class="show-button" onclick="applyPlusTab('review')">表示</button></div>
+    <p class="analysis-description">過去の環境データを、メインタブと同じ見やすいグラフで確認できます。良かった日や気になった日の環境を振り返り、次の栽培管理に役立てることができます。</p>
+    <div class="review-control-panel">
+        日付：
+        <input type="date" id="reviewDate">
+        <button class="show-button" type="button" onclick="loadReviewData()">表示</button>
+        <span id="reviewMessage" class="review-message"></span>
+    </div>
+
+    <section id="reviewDifPeriodPanel" class="review-dif-period-panel" aria-labelledby="reviewDifPeriodTitle" hidden>
+        <div class="review-dif-period-heading">
+            <h3 id="reviewDifPeriodTitle">昼夜温度・DIF（直近7日）</h3>
+            <div class="review-dif-period-meta">
+                <span>対象期間：<strong id="reviewDifPeriodRange">－</strong></span>
+                <span>基準地域：<strong id="reviewDifPeriodArea">－</strong></span>
+            </div>
+        </div>
+        <table class="review-dif-period-table">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>昼平均</th>
+                    <th>夜平均</th>
+                    <th>DIF</th>
+                    <th class="review-dif-period-secondary">日平均</th>
+                    <th class="review-dif-period-secondary">状態</th>
+                </tr>
+            </thead>
+            <tbody id="reviewDifPeriodBody"></tbody>
+        </table>
+        <p class="review-dif-period-note">DIFの符号は昼温と夜温の差を示し、良否を示すものではありません。</p>
+    </section>
+
+    <section id="reviewDifPanel" class="review-dif-panel" aria-labelledby="reviewDifTitle" hidden>
+        <div class="review-dif-heading">
+            <h3 id="reviewDifTitle">昼夜温度・DIF</h3>
+            <div class="review-dif-basic">
+                <span>対象日：<strong id="reviewDifDate">－</strong></span>
+                <span>基準地域：<strong id="reviewDifArea">－</strong></span>
+            </div>
+        </div>
+        <div class="review-dif-periods">
+            <span>昼：<strong id="reviewDifDayPeriod">－</strong></span>
+            <span>夜：<strong id="reviewDifNightPeriod">－</strong></span>
+        </div>
+        <div class="review-dif-values">
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">昼平均温度</span>
+                <strong id="reviewDifDayAverage" class="review-dif-value-number">－</strong>
+            </div>
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">夜平均温度</span>
+                <strong id="reviewDifNightAverage" class="review-dif-value-number">－</strong>
+            </div>
+            <div class="review-dif-value">
+                <span class="review-dif-value-label">DIF</span>
+                <strong id="reviewDifValue" class="review-dif-value-number">－</strong>
+            </div>
+        </div>
+        <div class="review-dif-footer">
+            <span>昼 <strong id="reviewDifDayCount">0件</strong></span>
+            <span>夜 <strong id="reviewDifNightCount">0件</strong></span>
+            <span>状態：<strong id="reviewDifStatus">－</strong></span>
+        </div>
+    </section>
+
+    <div class="grid">
+        <div>
+            <h4><span>温湿度_ハウス内（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+                <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMaxP01" value="100"></span>
+                <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="reviewTempMaxP01" value="40"></span>
+                <button class="temp-hum-axis-apply-button" onclick="applyReviewTempHumYAxis(reviewCharts[0],'P01')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewTempChartP01"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>温湿度_屋外（P11）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+                <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="reviewHumMaxP11" value="100"></span>
+                <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="reviewTempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="reviewTempMaxP11" value="40"></span>
+                <button class="temp-hum-axis-apply-button" onclick="applyReviewTempHumYAxis(reviewCharts[1],'P11')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewTempChartP11"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>温度差_内外（P01-P11）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="reviewOutsideDiffMin" value="-1"> ～
+                <input class="axis-input" type="number" id="reviewOutsideDiffMax" value="5">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[2], 'outsideDiff')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewOutsideDiffChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P01）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">飽差軸：</span><input class="axis-input" type="number" id="reviewVaporMin" value="0" readonly aria-label="縦軸最小値（0固定）"> ～
+                <input class="axis-input" type="number" id="reviewVaporMax">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[3], 'vapor')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewVaporChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>日射量（P31）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-solar">日射軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewSolarMin"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewSolarMax">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[4], 'solar')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewSolarChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>ハウス内CO2（P21）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2Min" value="300"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewCo2Max" value="700">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[5], 'co2')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewCo2Chart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMin" value="300"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewCo2OutsideMax" value="700">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[6], 'co2Outside')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewCo2OutsideChart"></canvas></div>
+        </div>
+
+        <div>
+            <h4><span>CO2差（P21-P26）</span><button class="chart-reset-button" onclick="resetReviewZoom()">ズームリセット</button></h4>
+            <div class="control-group axis-control-group chart-axis-control">
+                <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="reviewCo2DiffMin" value="-250"> ～
+                <input class="axis-input axis-input-wide" type="number" id="reviewCo2DiffMax" value="250">
+                <button onclick="applyReviewSingleYAxis(reviewCharts[7], 'co2Diff')">縦軸反映</button>
+            </div>
+            <div class="chart-container"><canvas id="reviewCo2DiffChart"></canvas></div>
+        </div>
+    </div>
+</section>
+<section id="tab-maintenance" class="tab-panel tab-panel-maintenance" role="tabpanel">
+<div class="plus-user-controls"><label for="maintenanceUserId">user_id：<input id="maintenanceUserId" type="text" placeholder="例: T0001" onkeydown="if(event.key==='Enter')applyPlusTab('maintenance')"></label><select data-plus-history="maintenance" aria-label="user_idの履歴" onchange="document.getElementById('maintenanceUserId').value=this.value"><option value="">履歴</option></select><button type="button" class="show-button" onclick="applyPlusTab('maintenance')">表示</button></div>
+<div class="maintenance-period-panel" aria-label="メンテナンス表示期間">
+    <div class="maintenance-period-group">
+        <strong>表示期間（日本時間）</strong>
+        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeLatest" value="latest" checked onchange="setMaintenanceMode('latest')">最新72時間</label>
+        <label><input type="radio" name="maintenanceRangeMode" id="maintenanceRangeCustom" value="custom" onchange="setMaintenanceMode('custom')">5日間表示</label>
+    </div>
+    <label class="maintenance-period-group">開始日
+        <input type="date" id="maintenanceStartDate" onchange="updateMaintenancePeriodPreview()">
+    </label>
+    <div class="maintenance-period-group maintenance-period-actions">
+        <button class="show-button" type="button" onclick="showMaintenanceCustomRange()">表示する</button>
+        <button type="button" onclick="showMaintenanceLatest72Hours()">最新72時間へ戻す</button>
+        <button id="maintenancePreviousPeriod" type="button" onclick="shiftMaintenanceFiveDayRange(-5)">← 前の5日間</button>
+        <button id="maintenanceNextPeriod" type="button" onclick="shiftMaintenanceFiveDayRange(5)">次の5日間 →</button>
+    </div>
+    <span id="maintenancePeriodPreview" class="maintenance-period-preview" hidden></span>
+    <span id="maintenanceMessage" class="maintenance-period-message" role="status"></span>
+</div>
+<div class="grid">
+
+    <div>
+        <h4><span>ハウス内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP02" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP02" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP02,'P02')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="tempChartP02"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>ハウス内（P01−P02_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMin" value="-5"> ～
+            <input class="axis-input" type="number" id="diffMax" value="5">
+            <button onclick="applyDiffYAxis(diffChart)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="diffChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>外気（P12）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP12" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP12" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP12" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP12" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(tempChartP12,'P12')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="tempChartP12"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>外気（P11−P12_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input" type="number" id="diffMinP11P12" value="-5"> ～
+            <input class="axis-input" type="number" id="diffMaxP11P12" value="5">
+            <button onclick="applyP11P12DiffYAxis(diffChartP11P12)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="diffChartP11P12"></canvas></div>
+    </div>
+
+    <div>
+        <h4 class="vapor-chart-heading"><span class="vapor-chart-heading-title">飽和水蒸気量/水蒸気量/飽差（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="chart-container"><canvas id="vaporChartP11"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>露点温度_ハウス内（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMin"> ～
+            <input class="axis-input" type="number" id="dewMax">
+            <button onclick="applySingleYAxis(dewChart,'dew')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="dewChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>露点温度_外気（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="dewMinP11"> ～
+            <input class="axis-input" type="number" id="dewMaxP11">
+            <button onclick="applySingleYAxis(dewChartP11,'dew',getDewAxisP11())">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="dewChartP11"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>CO2_ハウス内（P22）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP22" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2MaxP22" value="700">
+            <button onclick="applySingleYAxis(co2ChartP22,'co2',getCo2ComparisonAxis('P22'))">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2ChartP22"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>CO2_ハウス内（P21−P22_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMinP21P22" value="-200"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2DiffMaxP21P22" value="200">
+            <button onclick="applyCo2DiagnosticDiffYAxis(co2DiffChartP21P22,'P21','P22')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2DiffChartP21P22"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>CO2_外気（P27）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2MinP27" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2MaxP27" value="700">
+            <button onclick="applySingleYAxis(co2ChartP27,'co2Outside',getCo2ComparisonAxis('P27'))">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2ChartP27"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>CO2_外気（P26−P27_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMinP26P27" value="-200"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2DiffMaxP26P27" value="200">
+            <button onclick="applyCo2DiagnosticDiffYAxis(co2DiffChartP26P27,'P26','P27')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2DiffChartP26P27"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>日射量_ハウス内（P32）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-solar">日射量軸：</span><input class="axis-input axis-input-wide" type="number" id="solarMinP32" value=""> ～
+            <input class="axis-input axis-input-wide" type="number" id="solarMaxP32" value="">
+            <button onclick="applySingleYAxis(solarChartP32,'solar',getSolarComparisonAxis('P32'))">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="solarChartP32"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>日射量_ハウス内（P31−P32_差）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="solarDiffMinP31P32" value="-200"> ～
+            <input class="axis-input axis-input-wide" type="number" id="solarDiffMaxP31P32" value="200">
+            <button onclick="applySolarDiagnosticDiffYAxis(solarDiffChartP31P32,'P31','P32')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="solarDiffChartP31P32"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>電圧（P91）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-volt">電圧軸：</span><input class="axis-input" type="number" id="voltMin" value="11"> ～
+            <input class="axis-input" type="number" id="voltMax" value="14">
+            <button onclick="applySingleYAxis(voltChart,'volt')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="voltChart"></canvas></div>
+    </div>
+
+</div>
+</section>
+<script src="assets/utech-shared.js"></script>
+<script src="u-tech-plus/assets/plus.js"></script>
+<script src="chart-axis-enter.js"></script></body></html>

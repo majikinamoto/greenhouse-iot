@@ -1,0 +1,5 @@
+.logo-mark {position:relative}.logo-plus {position:absolute;right:4px;top:2px;color:#d9f2ff;font-size:18px;font-weight:800}.plus-user-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:8px 10px;background:#eef3f7;border:1px solid #c7d0da;border-radius:5px}.plus-user-controls input{width:120px}.logo-info-popup{width:360px;max-width:calc(100vw - 100px);max-height:65vh;overflow:auto}.logo-info-popup p{margin:0 0 8px}.utech-plus .logo-header{margin-bottom:0}
+@media (max-width:600px) {
+    .utech-plus .grid { width:100%; }
+    .utech-plus .grid > div { min-width:0; }
+}
