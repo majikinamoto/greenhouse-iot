@@ -1,4 +1,5 @@
-// U-Tech Plus: alert, analysis, WBGT, history and maintenance.
+// U-Tech Plus専用：アラート・分析・WBGT・過去データ・メンテ。
+// utech-shared.jsの後に読み込む。5タブの初期化・ID復元は末尾のDOMContentLoadedを参照する。
 let tempChartP02;
 
 let tempChartP12;
@@ -114,9 +115,9 @@ const WBGT_CURRENT_FRESHNESS_MS = 30*60*1000;
 
 // === ブラウザへの設定保存：保存範囲の案内 ===
 // localStorageは同じブラウザの同じオリジン（スキーム・ホスト・ポート）内の保存領域。
-// 以下の固定キーは画面で利用者IDを切り替えても共通。サーバーへの設定保存ではない。
-// 利用者別なのは、キーにuserIdを含める表示・非表示、縦軸リンク、ガイド範囲の設定。
-// 通知設定は別途PHP経由で保存するため、このlocalStorage設定とは分けて読む。
+// 以下のWBGT固定キーは従来の取得元設定。utechPlus_v1_{tab}によるタブ別保存とは別。
+// 本体の表示・非表示/縦軸リンクのuser_id別設定は、ここでは変更しない。
+// 通知設定はPHP経由でサーバーへ保存し、ブラウザの入力条件保存とは分けて扱う。
 const wbgtStorageKeys = {
     userId:"utech_wbgt_user_id",
     tempHumPointId:"utech_wbgt_temp_hum_point_id",
@@ -654,7 +655,8 @@ async function loadAnalysisCompareChart(graphId){
 }
 
 // === WBGT：設定・計算・表示・データ取得 ===
-// WBGTの取得元はブラウザ共通。未保存の利用者IDは直近のusui_user_id、なければ空欄。
+// 従来のWBGT取得元キーを復元する。未保存IDはusui_user_id、なければ空欄。
+// 初期化ではこの後restorePlusTabが、タブ別保存値や引継ぎURLのIDを適用する。
 // Point IDの既定値は温湿度P11・黒球P51。applyWbgtSettingsで同じ固定キーへ保存する。
 function restoreWbgtSettings(){
     const userId = document.getElementById("wbgtUserId");
@@ -1197,6 +1199,8 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     return chart;
 }
 
+// WBGT用に取得済みの黒球センサー（既定P51）のtemperatureを、直近72時間の単独系列として表示する。
+// 温湿度との8分以内の対応付けは行わない。WBGTを算出できない時刻でも黒球温度は表示できる。
 function createWbgtGlobeChart(parsed, minTime, maxTime){
     const data = parsed.filter(d=>Number.isFinite(d.temp) && d.xValue >= minTime.getTime() && d.xValue <= maxTime.getTime())
         .map(d=>({x:d.xValue, y:d.temp}));
@@ -1831,7 +1835,7 @@ const wbgtAlertBandsPlugin = {
     }
 };
 
-// === 地域・日時・日の出日の入り・暦・天気 ===
+// === 日付入力用の整形 ===
 function formatDateInputValue(date){
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -2215,6 +2219,8 @@ async function loadMaintenanceData(rangeOverride){
     const pointIds = ["P01", "P02", "P11", "P12", "P21", "P22", "P26", "P27", "P31", "P32", "P91"];
     const jstNow = new Date(getJapanWallClockMs(Date.now()));
     const voltageEnd = createMaintenanceLocalDate(jstNow.getTime());
+    // 電圧だけはタブの選択期間と別に、現在から直近30日間を取得・表示する。
+    // スマホの短縮表示や他グラフとのズーム同期からも除外する。
     const voltageRange = {
         startTime:new Date(voltageEnd.getTime() - 30*24*60*60*1000),
         endTime:voltageEnd,
@@ -4045,6 +4051,7 @@ async function saveAlertSetting(){
     }
 }
 
+// === Plusのタブ状態・入力条件保存・サイト間移動 ===
 const plusTabNames = ['alert','analysis','wbgt','review','maintenance'];
 
 let activePlusTab = 'maintenance';
@@ -4057,6 +4064,8 @@ function plusRead(key,fallback){try{return JSON.parse(localStorage.getItem('utec
 
 function plusWrite(key,value){try{localStorage.setItem('utechPlus_v1_'+key,JSON.stringify(value));}catch{document.getElementById('message').textContent='設定を保存できませんでした。';}}
 
+// タブの入力条件をブラウザへ保存する。パスワード・Webhook等は除き、本体のusui_user_idは更新しない。
+// アラートのサーバー保存はこの関数では行わない。
 function savePlusTab(tab){
  const values={};
  document.querySelectorAll('#tab-'+tab+' input[id], #tab-'+tab+' select[id]').forEach(input=>{
@@ -4067,6 +4076,8 @@ function savePlusTab(tab){
  const userId=getPlusUserId(tab);if(userId)saveUserIdHistory(userId);
 }
 
+// 開いたタブはURLのIDを最優先。他タブはタブ保存値→従来設定→URL→本体保存IDの順で補完する。
+// 分析はマスターのIDを復元し、空の比較元にだけ補完する。既存の比較元IDを一律上書きしない。
 function restorePlusTab(tab,incoming,isEntry){
  const values=plusRead(tab,{});
  for(const [id,value]of Object.entries(values)){const input=document.getElementById(id);if(input){if(input.type==='checkbox')input.checked=!!value;else input.value=value;}}
@@ -4086,6 +4097,7 @@ function applyPlusTab(tab){
  if(tab==='wbgt')applyWbgtSettings();
 }
 
+// 前回タブを保存し、そのタブで必要な条件に応じて取得する。ほかのタブの入力IDは変更しない。
 function switchPlusTab(tab){
  if(!plusTabNames.includes(tab))return;
  activePlusTab=tab;plusWrite('lastTab',tab);
@@ -4099,8 +4111,10 @@ function switchPlusTab(tab){
  if(tab==='review'&&getPlusUserId(tab)&&!reviewCharts.length)loadReviewData();
 }
 
+// 戻り先はbase hrefを基準に本体へ解決し、現在のタブの入力IDを渡す。
 function returnToUtech(){const url=new URL('./',document.baseURI);const userId=getPlusUserId(activePlusTab);if(userId)url.searchParams.set('user_id',userId);location.assign(url.href);}
 
+// 初回はメンテ、以降は前回タブ。各タブの入力を復元してから選択タブを開く。
 window.addEventListener('DOMContentLoaded',()=>{
  const requested=plusRead('lastTab','maintenance');
  const entry=plusTabNames.includes(requested)?requested:'maintenance';
@@ -4130,14 +4144,14 @@ window.addEventListener('DOMContentLoaded',()=>{
  });
  document.addEventListener('touchstart',handleOutsideChartTouch,{capture:true,passive:true});
  updatePlusHeaderTime();setInterval(updatePlusHeaderTime,60000);
- // Consume the incoming ID once so refreshing does not overwrite a later tab selection.
+ // 引継ぎIDは一度適用したらURLから除き、再読込時に後の変更を上書きしない。
  if(params.has('user_id')){params.delete('user_id');historyReplacePlusUrl(params);}
  switchPlusTab(entry);
 });
 
 function historyReplacePlusUrl(params){history.replaceState(null,'',location.pathname+(params.size?'?'+params:'')+location.hash);}
 
-// Plus only shows the clock; weather and calendar requests belong to U-Tech.
+// Plusのヘッダーは時計だけを更新する。天気・潮汐・こよみの取得/表示は本体側。
 function updatePlusHeaderTime(){
  const p=getJapanDateParts(new Date());
  document.getElementById("headerTimeInfo").textContent="現在日時："+p.year+"年"+p.month+"月"+p.day+"日 "+String(p.hour).padStart(2,"0")+":"+String(p.minute).padStart(2,"0");

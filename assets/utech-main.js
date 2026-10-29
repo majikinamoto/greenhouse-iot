@@ -1,4 +1,6 @@
-// U-Tech monitor and main-site features only.
+// U-Tech本体専用：メイン・環境スコア・CSV・表示設定・初期化。
+// utech-shared.js → utech-header.js → このファイルの順に読み込む。
+// アラート・分析・WBGT・過去データ・メンテの処理はPlus側で管理する。
 let mainVaporChart;
 
 let mainDewPointChart;
@@ -183,6 +185,8 @@ function getMainGraphVisibilityStorageKey(userId){
     return "utechMainGraphVisibility_v1_" + userId;
 }
 
+// 見出しを残して本文だけを折り畳む。カード全体の表示設定とは別で、再読込時は展開する。
+// 非表示でもデータ取得・計算は継続する。
 function initializeMainInfoCollapse(){
     mainInfoVisibilityIds.forEach(id=>{
         const card = document.querySelector('[data-main-info="' + id + '"]');
@@ -314,9 +318,8 @@ function hideAllMainGraphs(){
     saveMainGraphVisibility();
 }
 
-// === 初期設定：保存値の復元・イベント登録・ヘッダー情報の取得 ===
-// メインの測定値取得は「表示」ボタンからloadDataを呼び出す。
-// ここでは利用者IDや設定を復元し、通知設定・天気・潮汐などを読み込む。
+// === 他サイトへの移動確認：Next・G-Flow・Yui-Tech ===
+// Plusへの移動はパスワード不要で、末尾のopenUtechPlusが担当する。
 let pendingSiteSwitchUrl = "";
 
 function resetSiteSwitchDialog(){
@@ -537,13 +540,15 @@ function updateRainfallSourceNote(source){
         : "";
 }
 
-// === 分析用の比較設定・グラフ・差分 ===
+// === 本体のuser_id入力値 ===
+// 入力途中の値を返す。表示へ適用済みのIDを保持するmainGraphVisibilityUserIdとは区別する。
 function getMainUserIdInputValue(){
     const input = document.getElementById("userId");
     return input ? input.value.trim() : "";
 }
 
-// === 画面のタブ切替と必要なデータの読み込み ===
+// === 本体のタブ表示切替 ===
+// CSV欄が空ならuser_idを補完する。メインの測定値取得はloadDataが担当する。
 function switchTab(tabName){
  const targetId="tab-"+tabName;
  if(!document.getElementById(targetId)) return;
@@ -1688,6 +1693,7 @@ function getMainDewPointAxis(){
     };
 }
 
+// 温度/湿度の抽出・軸・スマホ用期間はここで決め、線の基本設定だけ共通描画へ渡す。
 function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, measurement){
     const canvas=getChartCanvas(canvasId);
     if(!canvas || !hasChartSourceData(parsed)) return null;
@@ -2282,7 +2288,11 @@ function downloadCSV(event){
     window.open("download_csv.php?" + params.toString(), "_blank", "noopener");
 }
 
+// 適用済みIDを優先してPlusへ渡す。保持値がなければ現在の入力値を使う。
 function openUtechPlus(){const url=new URL('u-tech-plus/',location.href);const userId=mainGraphVisibilityUserId || getMainUserIdInputValue();if(userId)url.searchParams.set('user_id',userId);location.assign(url.href);}
+// === 本体の初期化：設定復元・イベント登録・ヘッダー情報取得 ===
+// 有効なURLのuser_idを保存値より優先し、適用後はURLから除いて再読込時の上書きを防ぐ。
+// 通知設定は取得しない。メイン測定値は「表示」操作からloadDataで取得する。
 window.addEventListener('DOMContentLoaded',()=>{
  const params=new URLSearchParams(location.search);
  const raw=params.get('user_id') || '';

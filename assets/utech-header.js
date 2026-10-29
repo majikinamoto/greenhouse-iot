@@ -1,5 +1,6 @@
-// U-Tech-only clock, sun information, farm calendar, tides and weather forecasts.
-// Load after utech-shared.js; Plus uses only the shared date/region/sun calculations.
+// U-Tech本体専用：日時・日の出日の入りの表示、農作業こよみ、潮汐・気象予報の取得。
+// utech-shared.jsの後、utech-main.jsの前に読み込む。取得開始・地域変更の入口は本体JSにある。
+// Plusでは読み込まない。DIFにも必要な地域・日本時間・日の出日の入り計算は共通JSに残す。
 let tideCalendarText = "満潮・干潮：読み込み中...";
 
 function formatDurationMinutes(totalMinutes){

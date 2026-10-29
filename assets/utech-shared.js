@@ -1,4 +1,6 @@
-// Shared U-Tech/Plus chart, sensor and date utilities.
+// U-Tech本体/Plus共通：API取得・計算・グラフ・日時・地域。
+// 各サイトの専用JSより先に読み込む。サイト側のグラフ状態や関数を参照する処理も含む。
+// このファイルの変更時は本体とPlusの両方を確認する。
 // === JavaScript：エラー表示と外部ライブラリの確認 ===
 function formatScriptErrorDetails(details){
     const lines = [
@@ -877,7 +879,7 @@ function formatTime(value){
     return mo + "月" + da + "日 " + h + "時" + m + "分";
 }
 
-// === 水蒸気量・露点の計算と日別集計 ===
+// === 水蒸気量・露点の計算 ===
 /**
  * 気温temp（℃）と相対湿度hum（%）から、水蒸気量（g/㎥）を返す。
  * hum=100で飽和水蒸気量となり、実際の水蒸気量との差をこの画面の「飽差」として使う。
@@ -1242,7 +1244,8 @@ function getSelectedUtechArea(){
 }
 
 // 地域はブラウザ共通の固定キー。未保存・未登録のキーならnahaを使う。
-// handleUtechAreaChangeで保存し、天気・潮汐・暦や関連集計を更新する。
+// 地域の変更・保存は本体のhandleUtechAreaChangeが担当する。
+// Plusでは選択欄なしで保存値を復元し、DIFの日の出・日没計算にも使う。
 function restoreUtechAreaSelection(){
     const select = document.getElementById("utechAreaSelect");
     const savedKey = localStorage.getItem(UTECH_AREA_STORAGE_KEY);
@@ -1576,7 +1579,7 @@ function showRainfallTooltip(chart, bucket, event){
     tooltip.style.top = Math.max(chart.chartArea.top + 45, chart.chartArea.bottom - 4) + "px";
 }
 
-// === 縦軸の設定・保存とグラフの作成 ===
+// === 縦軸の入力値・設定とグラフの作成 ===
 function getAxisValue(id, fallback){
     const el = document.getElementById(id);
     if(!el || el.value === "") return fallback;
@@ -2069,7 +2072,9 @@ function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
     });
 }
 
-// Single-series charts share drawing defaults; callers retain data, axes and zoom rules.
+// 単一系列の線・点の基本設定を共通化する。styleのlabel/color/backgroundColor/fillは呼出側で指定する。
+// データ抽出・軸・期間・ズーム・既存グラフの破棄・初期範囲保存は呼出側の責任。
+// pluginsは任意。WBGTの警戒帯など、そのグラフ固有のプラグインを渡す。
 function createSingleLineChart(canvas, data, style, options, plugins){
     const config = {
         type:"line",

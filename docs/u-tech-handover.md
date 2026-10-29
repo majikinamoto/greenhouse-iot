@@ -1,16 +1,47 @@
 # U-Tech 引き継ぎガイド
 
-更新日：2026年10月26日。対象はgreenhouse-iotのU-Tech本体。U-Tech Next・G-Flow・Yui-Techの内部実装は対象外です。
+更新日：2026年10月29日。対象はgreenhouse-iotのU-Tech本体と、共通処理を使うU-Tech Plusです。U-Tech Next・G-Flow・Yui-Techの内部実装は対象外です。
 
 この資料はローカルのソース確認に基づきます。本番設定・DB構造の完全性・実機との対応・配送成功を保証するものではありません。パスはリポジトリのルート基準です。
 
+## サイトの担当範囲
+
+- **U-Tech本体**：メイン・環境スコア・データ出力・利用案内・システム情報。
+- **U-Tech Plus**：アラート・分析・WBGT・過去データ・メンテ。初回はメンテ、以降は前回タブを復元します。
+- 本体とPlusはパスワードなしで相互移動できます。本体からは表示へ適用済みのuser_idを引き継ぎ、Plusではタブごとに入力・保存します。
+- 旧quiz機能は削除済みです。StudyHubは別リポジトリで扱います。
+
+## ファイル構成と読み込み順
+
+| ファイル | 担当 |
+|---|---|
+| `index.html` | 本体の画面・入力欄・ボタン。アプリのJavaScriptは外部ファイルです |
+| `assets/utech-main.js` | 本体の初期化、メイン取得・表示、表示設定、環境スコア、雨量、CSV |
+| `assets/utech-header.js` | 本体専用の日時・日の出日の入り表示、農作業こよみ、潮汐・天気取得 |
+| `assets/utech-shared.js` | 共通のAPI取得・データ変換・計算・グラフ・ツールチップ同期 |
+| `assets/utech.css` | 共通のヘッダー・レイアウト・入力・グラフ部品 |
+| `assets/utech-main.css` | 本体専用のカード・環境スコア・CSV・表示設定 |
+| `u-tech-plus/index.html` | Plusの5タブと各入力欄 |
+| `u-tech-plus/assets/plus.js` | Plus専用処理、タブ別保存、初期化 |
+| `u-tech-plus/assets/plus.css` | Plusの5タブとロゴ・スマホ向け補正 |
+| `chart-axis-enter.js` | 縦軸入力欄のEnter操作 |
+
+JavaScriptは次の順番で読み込みます。
+
+- 本体：外部ライブラリ → `utech-shared.js` → `utech-header.js` → `utech-main.js` → `chart-axis-enter.js`。
+- Plus：外部ライブラリ → `utech-shared.js` → `plus.js` → `chart-axis-enter.js`。
+- CSSは共通を先に、サイト専用を次に読み込みます。Plus固有の補正はPlus専用CSSの末尾です。
+
+現在はES Modulesではなく、グローバルの関数・変数を使う構成です。共通JSも各サイトの状態や関数を参照するため、読み込み順を変えたり単独で評価したりする場合は依存関係の調整が必要です。
+
 ## 読む順番
 
-1. `index.html` 冒頭の案内と「===」の機能見出し。
-2. `DOMContentLoaded`：設定復元・イベント登録・初期情報取得。
-3. `switchTab`：タブ切替時の取得条件。
-4. `loadData` → `fetchDataSafe` → `parseData`：メインの測定値取得・変換・描画。
-5. 調整する機能の計算関数と関連PHP。
+1. `index.html` と上の構成表で画面とファイルの対応を確認。
+2. `assets/utech-main.js` の `DOMContentLoaded`：設定復元・イベント登録・ヘッダー取得。
+3. 同ファイルの `loadData`：取得条件の作成、現在値・スコア・グラフの更新。
+4. `assets/utech-shared.js` の `fetchDataSafe` → `parseData`：API取得と内部形式への変換。
+5. 変更する機能の作成関数・計算関数・関連PHPを確認。
+6. Plusの作業は `plus.js` の `DOMContentLoaded` → `switchPlusTab` と各タブの取得関数を確認。
 
 ## 全体の流れ
 
@@ -20,39 +51,54 @@ flowchart TD
     Insert --> DB[(DB)]
     DB --> Data[get_data.php]
     DB --> Rain[get_rainfall_data.php]
-    Data --> UI[index.html]
-    Rain --> UI
-    UI --> CSV[download_csv.php]
+    Data --> Main[U-Tech本体]
+    Data --> Plus[U-Tech Plus]
+    Rain --> Main
+    Main --> CSV[download_csv.php]
     DB --> CSV
-    UI <--> Settings[通知設定・履歴API]
+    Plus <--> Settings[通知設定・履歴API]
     Settings <--> DB
     DB --> Alerts[check_alerts.php]
     Alerts --> Delivery[Discord・メール]
     Alerts --> DB
-    Storage[localStorage] <--> UI
+    Storage[localStorage] <--> Main
+    Storage <--> Plus
 ```
 
-天気は気象庁・Open-Meteo、潮汐は `get_tide_calendar.php` と連携します。通知の起動スケジュールは本番環境で別途確認してください。
+本体の天気は気象庁・Open-Meteo、潮汐は `get_tide_calendar.php` と連携します。Plusはこれらを取得しません。通知の判定・配送はサーバー側で動き、本体やPlusを閉じても保存設定は解除されません。起動スケジュールは本番環境で確認してください。
 
 ## 機能の入口
 
 | 機能 | 主な検索語・ファイル |
 |---|---|
-| メイン表示 | `loadData`、`mainChartConfigs`、`create…Chart` |
-| 分析・差分 | `loadAnalysisCompareChart`、`calcAnalysisDiffData` |
-| 飽差・露点 | `calcVapor`、`calcDewPoint`、`calcVpdAverage` |
-| 環境スコア | `getScoreRowsForPeriod`、`calcEnvironmentScoreRow` |
-| WBGT | `calculateWbgt`、`renderWbgtCurrent`、`buildWbgtSeries` |
-| 雨量 | `insert.php`、`get_rainfall_data.php`、`loadRainfallData` |
-| 日別雨量 | `loadTenDayRainfallSummary`、`createDailyRainfallMap` |
-| 過去データ・DIF | `loadReviewData`、`createReviewDifBoundaries`、`calculateReviewDif` |
-| 7日DIF | `loadReviewDifPeriodData`、`calculateReviewDifPeriodRows` |
-| メンテナンス | `loadMaintenanceData`、`getMaintenanceRange` |
-| CSV | `downloadCSV`、`download_csv.php` |
+| 画面・配置 | 本体は `index.html` と `assets/utech-main.css`、Plusは `u-tech-plus/index.html` と `u-tech-plus/assets/plus.css` |
+| メイン表示 | `assets/utech-main.js`：`loadData`、`mainChartConfigs` |
+| 表示・非表示、縦軸リンク | 同上：`restoreMainGraphVisibility`、`restoreMainAxisLinks` |
+| 環境スコア | 同上：`getScoreRowsForPeriod`、`calcEnvironmentScoreRow` |
+| 雨量・日別集計 | 同上：`loadRainfallData`、`loadTenDayRainfallSummary`、`createDailyRainfallMap`。関連PHPは `insert.php`、`get_rainfall_data.php` |
+| CSV | 同上：`downloadCSV`。出力は `download_csv.php` |
+| 天気・こよみ | `assets/utech-header.js`。地域変更入口は本体JSの `handleUtechAreaChange` |
+| 飽差・露点 | `assets/utech-shared.js`：`calcVapor`、`calcDewPoint`。時間帯平均は本体JSの `calcVpdAverage` |
+| 単一系列の描画部品 | 共通JSの `createSingleLineChart`。データ抽出・軸・期間は各呼び出し元 |
+| 分析・差分 | `u-tech-plus/assets/plus.js`：`loadAnalysisCompareChart`、`calcAnalysisDiffData` |
+| WBGT・黒球温度 | 同上：`calculateWbgt`、`buildWbgtSeries`、`createWbgtGlobeChart` |
+| 過去データ・DIF | 同上：`loadReviewData`、`calculateReviewDif`、`loadReviewDifPeriodData` |
+| メンテナンス | 同上：`loadMaintenanceData`、`getMaintenanceRange`。電圧だけ直近30日間 |
+| アラート画面 | 同上：`loadActiveAlertSetting`、`saveAlertSetting` |
 | 通知の保存・取得 | `save_alert_setting.php`、`get_alert_setting.php` |
 | 通知の判定・配送 | `check_alerts.php`、`scripts/lib/alert-rules.php` |
 | 通知の停止・履歴 | `disable_all_alerts.php`、`get_alert_history.php` |
 | 縦軸Enter操作 | `chart-axis-enter.js` |
+
+## 共通部分を変更するときの注意
+
+- 共通JS・共通CSSは本体とPlusの両方に影響するため、両サイトで確認します。
+- PlusのDIFにも必要な地域設定・日本時間変換・日の出日の入り計算は共通JSに残しています。本体専用のヘッダー表示・外部取得と区別します。
+- 単一系列の共通描画は、温度・湿度・黒球温度・WBGT・汎用単一系列グラフが利用します。軸・単位・期間・警戒帯・ズームを維持してください。
+- HTML内のイベント属性や動的な作成処理から呼ばれる関数もあります。単純な文字列検索だけで未使用と判断しないでください。
+- CSSを移動するときは、通常指定とメディアクエリの適用順を維持します。
+
+相互移動・タブ別user_id・保存設定の詳細は [U-Tech / Plus構成ガイド](u-tech-plus.md) を参照してください。
 
 ## 変更前に知っておく仕様
 
@@ -91,20 +137,42 @@ localStorageは同じブラウザ・同じオリジンの保存領域で、別�
 |---|---|
 | 利用者ID別のキー | メイン表示・非表示、縦軸リンク、ガイド範囲の補助関数 |
 | ブラウザ共通のキー | 外気・雨量の取得元、分析の比較元、WBGTの取得元、スコア範囲、地域、雨量換算、利用者ID履歴 |
+| Plusのタブ別キー | `utechPlus_v1_{tab}` の入力条件、`utechPlus_v1_lastTab` の前回タブ |
 | PHP経由でDB | 通知設定・通知履歴 |
 
 ## 検証と運用
 
-コメント整理では、追加コメントを除いたバイト列が元ファイルと完全一致すること、JS/PHP構文と `git diff --check` を確認しています。ブラウザ・実データの確認は別途必要です。
+リポジトリのルートで実行します。ブラウザ系テストにはNode.js・Playwright・Microsoft Edgeが必要です。Playwrightが通常の探索先にない場合は、そのnode_modulesを `NODE_PATH` に設定します。
 
-既存の確認資産：
+| コマンド | 確認内容 |
+|---|---|
+| `node scripts/test-utech-plus.cjs` | 模擬APIで本体・Plusのグラフ、表示設定、相互移動、ID分離・復元、空データ、スマホ表示 |
+| `node scripts/test-utech-chart-configs.cjs` | 作業ツリーとHEADのグラフ設定を36条件で比較。Node.jsとGitが必要 |
+| `node scripts/test-utech-css.cjs` | 作業ツリーとHEADの静的要素のスタイルを全タブ・3画面幅の30条件で比較 |
+| `node scripts/test-chart-axis-enter.cjs` | 本体とYui-Techの縦軸Enter操作。Plus専用の検証ではありません |
+| `git diff --check` | 差分の余分な空白・改行など |
 
-- `scripts/test-chart-axis-enter.cjs`：縦軸Enter操作（Playwrightが必要）。
-- `scripts/test-alert-user-id.cjs`：通知画面の利用者切替など。
-- 通知のPHPテストと実行方法：`docs/alert-diagnostics.md`。
-- 本番反映の操作・失敗時確認：`docs/production-deploy.md`。プッシュと本番反映は別の手順です。
+HEAD比較の2テストは未コミットの変更を直前のコミットと比較します。コミット後は同じ実装同士の比較になる場合があり、固定期待値による回帰テストの代わりにはなりません。ブラウザ操作テストと併用します。
 
-ファイル分割時は、HTMLから関数ソースを抽出するテスト、グローバル変数、HTML内onclick、スクリプト実行順への影響も確認します。
+構文確認の例：
+
+```sh
+node --check assets/utech-shared.js
+node --check assets/utech-header.js
+node --check assets/utech-main.js
+node --check u-tech-plus/assets/plus.js
+```
+
+`scripts/test-alert-user-id.cjs` と `scripts/test-alert-setting-time.cjs` は本体HTMLから関数を抽出する旧構成のテストです。Plus分離後の構成への追従が必要で、現在の合格判定には使用していません。
+
+主要ブラウザテストはローカルの模擬APIを使い、本番DBや通知配送は検証しません。通知のPHPテスト・診断は [アラート診断](alert-diagnostics.md)、本番反映は [反映手順](production-deploy.md) を参照してください。プッシュと本番反映は別の手順です。
+
+変更ごとの確認範囲：
+
+- 本体専用処理：メイン、スコア、CSV、表示設定、PC・スマホ。
+- 共通グラフ：上記に加え、Plusの分析・WBGT/P51・過去データ・メンテ、ズーム・縦軸・データなし表示。
+- 地域・日時：本体の天気・こよみと、PlusのDIF。日付境界や日本以外のブラウザ時刻にも注意。
+- API・DB・通知：対象PHPの契約と専用テストを確認。通常の通知処理を検証代わりに起動しないでください。
 
 ## 未確認事項と保留事項
 
@@ -113,6 +181,6 @@ localStorageは同じブラウザ・同じオリジンの保存領域で、別�
 - 本番のDB定義・索引・時刻設定、バックアップと復旧手順。
 - 通知の実行スケジュール・管理担当・実際の配送結果。
 - 匿名化した検証用データと期待結果。
-- ズーム直後のChart.jsエラーは調査保留。表示ボタンで復旧したとの利用者報告があり、原因は未確定です。
+- 分離前に報告されたズーム直後のChart.jsエラーは調査保留です。表示ボタンで復旧したとの報告があり、現在の分離構成での再現性・原因は未確認です。
 
 秘密情報の実値は資料に記載しません。接続設定の配置・項目と管理方法を引き継ぎ時に確認してください。
