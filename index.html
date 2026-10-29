@@ -3477,6 +3477,16 @@ body.data-export-active .control-panel {
                 <div class="chart-container"><canvas id="wbgtChart"></canvas></div>
                 <p id="wbgtChartMessage" class="wbgt-message" role="status"></p>
             </div>
+            <div>
+                <h4><span>過去72時間の黒球温度（<span id="wbgtGlobePointLabel">P51</span>）</span><button class="chart-reset-button" type="button" onclick="resetWbgtGlobeZoom()">ズームリセット</button></h4>
+                <div class="control-group axis-control-group chart-axis-control">
+                    <span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="wbgtGlobeMin" value="20"> ～
+                    <input class="axis-input" type="number" id="wbgtGlobeMax" value="50">
+                    <button type="button" onclick="applyWbgtGlobeYAxis()">縦軸反映</button>
+                </div>
+                <div class="chart-container"><canvas id="wbgtGlobeChart"></canvas></div>
+                <p id="wbgtGlobeChartMessage" class="wbgt-message" role="status"></p>
+            </div>
         </div>
 
         <div class="wbgt-card">
@@ -4366,6 +4376,7 @@ let analysisCompareMeta = {};
 let analysisDiffCharts = {};
 let syncingAnalysisZoom = false;
 let wbgtChart = null;
+let wbgtGlobeChart = null;
 let wbgtDataRequestSequence = 0;
 let wbgtLoadedKey = "";
 let wbgtLastLoadedAt = 0;
@@ -6317,6 +6328,47 @@ function createWbgtChart(wbgtData, minTime, maxTime){
     return chart;
 }
 
+function createWbgtGlobeChart(parsed, minTime, maxTime){
+    const data = parsed.filter(d=>Number.isFinite(d.temp) && d.xValue >= minTime.getTime() && d.xValue <= maxTime.getTime())
+        .map(d=>({x:d.xValue, y:d.temp}));
+    const canvas = getChartCanvas("wbgtGlobeChart");
+    if(!canvas || !data.length) return null;
+    destroyExistingChart("wbgtGlobeChart");
+    const options = baseOptions(minTime, maxTime);
+    options.plugins.crosshair.sync.group = 5;
+    options.plugins.zoom.zoom.onZoomComplete = function(){};
+    const yAxis = {min:20, max:50, ticks:{stepSize:5, color:"#000"}, title:{display:true, text:"℃", color:"#000"}};
+    options.scales = {...options.scales, y:yAxis, yRight:createRightYAxis(yAxis)};
+    const chart = new Chart(canvas, {
+        type:"line",
+        data:{datasets:[{label:"黒球温度 (℃)", data:data, borderColor:"rgb(255, 0, 0)",
+            backgroundColor:"rgba(255, 0, 0, 0.18)", pointBackgroundColor:"rgb(255, 0, 0)",
+            pointRadius:0, borderWidth:2, tension:0.2, fill:true}]},
+        options:options
+    });
+    saveInitialScaleLimits(chart);
+    return chart;
+}
+
+function applyWbgtGlobeYAxis(){
+    if(!wbgtGlobeChart) return;
+    const min = getFiniteInputValue("wbgtGlobeMin");
+    const max = getFiniteInputValue("wbgtGlobeMax");
+    if(min === null || max === null || max <= min){
+        alert("温度軸には有効な最小値と最大値を入力してください。");
+        return;
+    }
+    setLinearYAxis(wbgtGlobeChart, {min:min, max:max});
+    wbgtGlobeChart.update();
+}
+
+function resetWbgtGlobeZoom(){
+    clearSyncedTooltipGroup("wbgt");
+    if(!wbgtGlobeChart) return;
+    if(wbgtGlobeChart.resetZoom) wbgtGlobeChart.resetZoom("none");
+    redrawChart(wbgtGlobeChart);
+}
+
 function getWbgtYAxis(){
     const min = getFiniteInputValue("wbgtMin");
     const max = getFiniteInputValue("wbgtMax");
@@ -6354,6 +6406,10 @@ function resetWbgtZoom(){
 async function loadWbgtData(){
     const settings = getWbgtSettings();
     setWbgtText("wbgtCurrentPointLabel", settings.tempHumPointId || "－");
+    setWbgtText("wbgtGlobePointLabel", settings.globePointId || "P51");
+    const globeMessage = document.getElementById("wbgtGlobeChartMessage");
+    if(wbgtGlobeChart) wbgtGlobeChart.destroy();
+    wbgtGlobeChart = null;
     const currentMessage = document.getElementById("wbgtCurrentMessage");
     const chartMessage = document.getElementById("wbgtChartMessage");
     const fiveDayMessage = document.getElementById("wbgtFiveDayMessage");
@@ -6362,6 +6418,7 @@ async function loadWbgtData(){
         resetWbgtFiveDaySummary("センサー設定を入力してください");
         if(currentMessage) currentMessage.innerText = "user_idと2つのpoint_idを入力してください";
         if(chartMessage) chartMessage.innerText = "センサー設定を入力してください";
+        if(globeMessage) globeMessage.innerText = "センサー設定を入力してください";
         if(fiveDayMessage) fiveDayMessage.innerText = "";
         if(wbgtChart) wbgtChart.destroy();
         wbgtChart = null;
@@ -6373,6 +6430,7 @@ async function loadWbgtData(){
     resetWbgtFiveDaySummary("読み込み中...");
     if(currentMessage) currentMessage.innerText = "読み込み中...";
     if(chartMessage) chartMessage.innerText = "読み込み中...";
+    if(globeMessage) globeMessage.innerText = "読み込み中...";
     if(fiveDayMessage) fiveDayMessage.innerText = "";
     if(wbgtChart) wbgtChart.destroy();
     wbgtChart = null;
@@ -6400,6 +6458,8 @@ async function loadWbgtData(){
         point.x >= minTime.getTime() && point.x <= now.getTime()
     );
     wbgtChart = createWbgtChart(wbgtData, minTime, now);
+    wbgtGlobeChart = createWbgtGlobeChart(globeData, minTime, now);
+    if(globeMessage) globeMessage.innerText = results[1].error || (wbgtGlobeChart ? "" : "有効な黒球温度データがありません");
     const errors = results.filter(result=>result.error).map(result=>result.error);
     if(fiveDayMessage){
         fiveDayMessage.innerText = errors.length
@@ -7367,7 +7427,7 @@ function getChartSyncGroup(chart){
     if(chart && chart.canvas && chart.canvas.id.indexOf("review") === 0) return "review";
     if(chart && chart.canvas && maintenanceCanvasIdSet.has(chart.canvas.id)) return "maintenance";
     if(chart && chart.canvas && chart.canvas.id.indexOf("analysis") === 0) return "analysis";
-    if(chart && chart.canvas && chart.canvas.id === "wbgtChart") return "wbgt";
+    if(chart && chart.canvas && ["wbgtChart", "wbgtGlobeChart"].includes(chart.canvas.id)) return "wbgt";
     return "main";
 }
 
@@ -7388,7 +7448,7 @@ function getSyncedTooltipCharts(sourceChart){
     }
 
     if(syncGroup === "analysis") return getAnalysisCharts();
-    if(syncGroup === "wbgt") return wbgtChart ? [wbgtChart] : [];
+    if(syncGroup === "wbgt") return [wbgtChart, wbgtGlobeChart].filter(Boolean);
     return getMainSyncedTooltipCharts();
 }
 
@@ -7396,14 +7456,14 @@ function getSyncedTooltipChartsByGroup(syncGroup){
     if(syncGroup === "review") return reviewCharts;
     if(syncGroup === "maintenance") return maintenanceCharts;
     if(syncGroup === "analysis") return getAnalysisCharts();
-    if(syncGroup === "wbgt") return wbgtChart ? [wbgtChart] : [];
+    if(syncGroup === "wbgt") return [wbgtChart, wbgtGlobeChart].filter(Boolean);
     return getMainSyncedTooltipCharts();
 }
 
 function getAllSyncedTooltipCharts(){
     const charts = [];
 
-    allCharts.concat(getAnalysisCharts(), wbgtChart ? [wbgtChart] : [], maintenanceCharts, reviewCharts).forEach(chart=>{
+    allCharts.concat(getAnalysisCharts(), [wbgtChart, wbgtGlobeChart].filter(Boolean), maintenanceCharts, reviewCharts).forEach(chart=>{
         if(!chart || charts.includes(chart)) return;
         charts.push(chart);
     });
