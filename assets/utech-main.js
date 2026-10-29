@@ -42,20 +42,6 @@ const mainChartConfigs = [
     },
     { key:"insideHumidity", canvasId:"humChartP01", title:"ハウス内湿度", fields:["humidity"], requests:context=>[{ userId:context.userId, pointId:"P01" }] },
     {
-        key:"maintenanceTempHumidity",
-        canvasId:"tempChartP02",
-        title:"温湿度_メンテナンス",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P02" }]
-    },
-    {
-        key:"maintenanceOutsideTempHumidity",
-        canvasId:"tempChartP12",
-        title:"温湿度_外気メンテナンス",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P12" }]
-    },
-    {
         key:"outsideTemperature",
         canvasId:"tempChartP11",
         title:"外気温度",
@@ -88,35 +74,11 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
-        key:"dewPoint",
-        canvasId:"dewChart",
-        title:"露点温度",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
-    },
-    {
         key:"solarRadiation",
         canvasId:"solarChart",
         title:"日射量",
         fields:["solar_radiation"],
         requests:context=>[{ userId:context.userId, pointId:"P31" }]
-    },
-    {
-        key:"maintenanceSolarRadiation",
-        canvasId:"solarChartP32",
-        title:"日射量_ハウス内メンテナンス",
-        fields:["solar_radiation"],
-        requests:context=>[{ userId:context.userId, pointId:"P32" }]
-    },
-    {
-        key:"maintenanceSolarDiff",
-        canvasId:"solarDiffChartP31P32",
-        title:"日射量差_ハウス内センサー診断",
-        fields:["solar_radiation"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P31" },
-            { userId:context.userId, pointId:"P32" }
-        ]
     },
     {
         key:"insideCo2",
@@ -148,72 +110,8 @@ const mainChartConfigs = [
         title:"ハウス内風速",
         fields:["wind_speed_avg", "wind_speed_max"],
         requests:context=>[{ userId:context.userId, pointId:"P61" }]
-    },
-    {
-        key:"maintenanceInsideCo2",
-        canvasId:"co2ChartP22",
-        title:"CO2_ハウス内メンテナンス",
-        fields:["co2"],
-        requests:context=>[{ userId:context.userId, pointId:"P22" }]
-    },
-    {
-        key:"maintenanceInsideCo2Diff",
-        canvasId:"co2DiffChartP21P22",
-        title:"CO2差_ハウス内センサー診断",
-        fields:["co2"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P21" },
-            { userId:context.userId, pointId:"P22" }
-        ]
-    },
-    {
-        key:"maintenanceOutsideCo2",
-        canvasId:"co2ChartP27",
-        title:"CO2_外気メンテナンス",
-        fields:["co2"],
-        requests:context=>[{ userId:context.userId, pointId:"P27" }]
-    },
-    {
-        key:"maintenanceOutsideCo2Diff",
-        canvasId:"co2DiffChartP26P27",
-        title:"CO2差_外気センサー診断",
-        fields:["co2"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P26" },
-            { userId:context.userId, pointId:"P27" }
-        ]
-    },
-    {
-        key:"maintenanceDiff",
-        canvasId:"diffChart",
-        title:"温度差_メンテナンス",
-        fields:["temperature", "humidity"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P01" },
-            { userId:context.userId, pointId:"P02" }
-        ]
-    },
-    {
-        key:"maintenanceOutsideDiff",
-        canvasId:"diffChartP11P12",
-        title:"温湿度差_外気センサー診断",
-        fields:["temperature", "humidity"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P11" },
-            { userId:context.userId, pointId:"P12" }
-        ]
-    },
-    {
-        key:"voltage",
-        canvasId:"voltChart",
-        title:"電圧",
-        fields:["voltage"],
-        rangeKey:"voltage",
-        requests:context=>[{ userId:context.userId, pointId:"P91" }]
     }
 ];
-
-const primaryChartConfigs = mainChartConfigs.filter(config=>!maintenanceCanvasIdSet.has(config.canvasId));
 
 const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
 
@@ -1311,13 +1209,12 @@ function applyMobileChartRanges(minTime, maxTime){
     });
 }
 
-function getMainChartContext(userId, outsideSource, minTime, now, voltMinTime){
+function getMainChartContext(userId, outsideSource, minTime, now){
     return {
         userId:userId,
         outsideSource:outsideSource,
         ranges:{
-            default:{ startTime:minTime, endTime:now },
-            voltage:{ startTime:voltMinTime, endTime:now }
+            default:{ startTime:minTime, endTime:now }
         }
     };
 }
@@ -1349,7 +1246,7 @@ function buildMainChartFetchRequests(context){
     const seen = {};
     const requests = [];
 
-    primaryChartConfigs.forEach(config=>{
+    mainChartConfigs.forEach(config=>{
         getMainChartRequests(config, context).forEach(request=>{
             const key = getFetchRequestKey(request);
             if(seen[key]) return;
@@ -1377,7 +1274,7 @@ function getFetchedResult(resultMap, userId, pointId, rangeKey){
 }
 
 function applyMainChartNoDataStates(chartMap, context){
-    primaryChartConfigs.forEach(config=>{
+    mainChartConfigs.forEach(config=>{
         const range = getMainChartRange(config, context);
         setChartNoDataState(
             config.canvasId,
@@ -1940,12 +1837,11 @@ async function loadData(){
             isMobileView() ? 48 : 72,
             rainfallRequestId
         );
-        const voltMinTime = new Date(now.getTime() - 30*24*60*60*1000);
         const scoreMinTime = new Date(now);
         scoreMinTime.setHours(0,0,0,0);
         scoreMinTime.setDate(scoreMinTime.getDate() - 30);
 
-        const chartContext = getMainChartContext(userId, outsideSource, minTime, now, voltMinTime);
+        const chartContext = getMainChartContext(userId, outsideSource, minTime, now);
         const chartFetchRequests = buildMainChartFetchRequests(chartContext);
         const scoreFetchRequests = [
             { userId:userId, pointId:"P01", rangeKey:"score" },
