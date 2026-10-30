@@ -1564,15 +1564,15 @@ function showRainfallTooltip(chart, bucket, event){
 
     if(bucket.missing){
         const missing = document.createElement("div");
-        missing.textContent = "雨量データ欠測";
+        missing.textContent = (chart.$rainfallQuantity || "雨量") + "データ欠測";
         tooltip.appendChild(missing);
     }else{
         const hourly = document.createElement("div");
-        hourly.textContent = "1時間雨量 " + Number(bucket.hourly_rainfall).toFixed(2) + " mm";
+        hourly.textContent = "1時間" + (chart.$rainfallQuantity || "雨量") + " " + Number(bucket.hourly_rainfall).toFixed(2) + " " + (chart.$rainfallUnit || "mm");
         tooltip.appendChild(hourly);
 
         const daily = document.createElement("div");
-        daily.textContent = "日積算雨量 " + Number(bucket.daily_cumulative).toFixed(2) + " mm";
+        daily.textContent = "日積算" + (chart.$rainfallQuantity || "雨量") + " " + Number(bucket.daily_cumulative).toFixed(2) + " " + (chart.$rainfallUnit || "mm");
         tooltip.appendChild(daily);
     }
 

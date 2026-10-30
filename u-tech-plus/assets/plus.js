@@ -1,5 +1,5 @@
-// U-Tech Plus専用：アラート・分析・WBGT・過去データ・メンテ。
-// utech-shared.jsの後に読み込む。5タブの初期化・ID復元は末尾のDOMContentLoadedを参照する。
+// U-Tech Plus専用：排液量・アラート・分析・WBGT・過去データ・メンテ。
+// utech-shared.jsの後に読み込む。6タブの初期化・ID復元は末尾のDOMContentLoadedを参照する。
 let maintenanceTempChartP01;
 let maintenanceTempChartP11;
 let tempChartP02;
@@ -4065,12 +4065,50 @@ async function saveAlertSetting(){
     }
 }
 
+// 排液はP41と同じ集計規則で取得する。APIのmLを表示時にLへ換算する。
+let drainageRequestSequence = 0;
+async function loadDrainageData(){
+ const sequence=++drainageRequestSequence;
+ savePlusTab('drainage');
+ const userId=getPlusUserId('drainage');
+ const hours=document.getElementById('drainageHours').value;
+ await Promise.all([1,2,3].map(async i=>{
+  const status=document.getElementById('drainageStatus'+i);
+  const canvas=document.getElementById('drainageChart'+i);
+  const previous=Chart.getChart(canvas);if(previous)previous.destroy();
+  const point=document.getElementById('drainagePoint'+i).value.trim().toUpperCase();
+  const volume=Number(document.getElementById('drainageVolume'+i).value);
+  if(!userId||!/^P\d{2}$/.test(point)||!Number.isFinite(volume)||volume<=0){
+   status.textContent='user_id、point_id（Pと2桁の数字）、0より大きい1転倒水量を入力してください。';return;
+  }
+  const key=JSON.stringify([userId,point,volume,hours]);
+  const current=()=>sequence===drainageRequestSequence&&key===JSON.stringify([getPlusUserId('drainage'),document.getElementById('drainagePoint'+i).value.trim().toUpperCase(),Number(document.getElementById('drainageVolume'+i).value),document.getElementById('drainageHours').value]);
+  status.textContent='取得中…';
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
+  try{
+   const params=new URLSearchParams({user_id:userId,point_id:point,display_hours:hours,coefficient:String(volume)});
+   const response=await fetch('get_drainage_data.php?'+params,{cache:'no-store',signal:controller.signal});
+   const result=await response.json();if(!current())return;
+   if(!response.ok||!result.success)throw new Error(result.error||'取得に失敗しました');
+   const liters=value=>value==null?'—':(value/1000).toLocaleString('ja-JP',{maximumFractionDigits:5})+' L';
+   status.textContent=point+' ｜ 今日：'+liters(result.daily_totals.today)+' ／ 昨日：'+liters(result.daily_totals.yesterday)+' ／ 一昨日：'+liters(result.daily_totals.day_before_yesterday)+'（欠測を除く既知の合計）';
+   if(!result.hourly.some(row=>!row.missing)){status.textContent=point+'：有効な転倒数データがありません。';return;}
+   const rows=result.hourly.filter(row=>row.x>=result.display_start);
+   new Chart(canvas,{type:'bar',data:{labels:rows.map(row=>row.hour_start.slice(5,16)),datasets:[
+    {label:'1時間排液量［L］',data:rows.map(row=>row.missing?null:row.hourly_rainfall/1000),backgroundColor:'#4d9dc3',yAxisID:'y'},
+    {type:'line',label:'日積算排液量［L］',data:rows.map((row,index)=>row.missing?null:{x:index,y:row.daily_cumulative/1000}),borderColor:'#dc8735',backgroundColor:'#dc8735',pointRadius:1,yAxisID:'daily',spanGaps:false,segment:{borderColor:ctx=>rows[ctx.p0DataIndex]?.date_key!==rows[ctx.p1DataIndex]?.date_key?'transparent':'#dc8735'}}
+   ]},options:{responsive:true,maintainAspectRatio:false,animation:false,scales:{y:{beginAtZero:true,title:{display:true,text:'1時間排液量［L］'}},daily:{position:'right',beginAtZero:true,title:{display:true,text:'日積算排液量［L］'},grid:{drawOnChartArea:false}},x:{ticks:{maxTicksLimit:8}}}}});
+  }catch(error){if(current())status.textContent=point+'：'+(error.name==='AbortError'?'取得がタイムアウトしました':error.message);}
+  finally{clearTimeout(timeout);}
+ }));
+}
+
 // === Plusのタブ状態・入力条件保存・サイト間移動 ===
-const plusTabNames = ['alert','analysis','wbgt','review','maintenance'];
+const plusTabNames = ['alert','analysis','wbgt','review','drainage','maintenance'];
 
 let activePlusTab = 'maintenance';
 
-const plusInputIds = {alert:'alertUserId',analysis:'analysisUserIdA',wbgt:'wbgtUserId',review:'reviewUserId',maintenance:'maintenanceUserId'};
+const plusInputIds = {alert:'alertUserId',analysis:'analysisUserIdA',wbgt:'wbgtUserId',review:'reviewUserId',maintenance:'maintenanceUserId',drainage:'drainageUserId'};
 
 function getPlusUserId(tab){return document.getElementById(plusInputIds[tab])?.value.trim() || '';}
 
@@ -4120,6 +4158,7 @@ function switchPlusTab(tab){
  document.querySelectorAll('.tab-button').forEach(button=>{const active=button.getAttribute('aria-controls')==='tab-'+tab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));});
  refreshVisibleCharts();
  if(tab==='maintenance'){const r=getMaintenanceRange();if(!r.error&&shouldReloadMaintenanceData(getPlusUserId(tab),r.range))loadMaintenanceData(r.range);}
+ if(tab==='drainage')loadDrainageData();
  if(tab==='wbgt'){const s=getWbgtSettings();if([s.userId,s.tempHumPointId,s.globePointId].join('|')!==wbgtLoadedKey||Date.now()-wbgtLastLoadedAt>=300000)loadWbgtData();}
  if(tab==='alert'&&alertFormUserId!==getPlusUserId(tab))clearAlertFormIfUserChanged();
  if(tab==='review'&&getPlusUserId(tab)&&!reviewCharts.length)loadReviewData();

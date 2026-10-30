@@ -42,7 +42,8 @@
 
 </div>
 <div id="message" role="status"></div>
-<nav class="tab-nav" role="tablist" aria-label="Plusの機能"><button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
+<nav class="tab-nav" role="tablist" aria-label="Plusの機能"><button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-drainage" onclick="switchTab('drainage')">排液量</button>
+<button class="tab-button tab-button-alert" type="button" role="tab" aria-selected="false" aria-controls="tab-alert" onclick="switchTab('alert')">アラート</button>
 <button class="tab-button tab-button-analysis" type="button" role="tab" aria-selected="false" aria-controls="tab-analysis" onclick="switchTab('analysis')">分析</button>
 <button class="tab-button tab-button-wbgt" type="button" role="tab" aria-selected="false" aria-controls="tab-wbgt" onclick="switchTab('wbgt')">WBGT</button>
 <button class="tab-button tab-button-review" type="button" role="tab" aria-selected="false" aria-controls="tab-review" onclick="switchTab('review')">過去データ</button>
@@ -148,6 +149,9 @@
         <p><span class="alert-notification-warning">注意：</span>Webhook URLは、知っている人がそのDiscordチャンネルへ投稿できる重要なURLです。他人に見られないように管理し、GitHubや公開ページなどに載せないでください。</p>
     </div>
 </section>
+<section id="tab-drainage" class="tab-panel" role="tabpanel"><p>転倒ます式雨量計の区間転倒数から排液量を算出します。1転倒水量は実測した値を入力してください。</p><div class="plus-user-controls"><label>user_id <input id="drainageUserId" autocomplete="off" autocapitalize="none" spellcheck="false"></label><label>表示期間 <select id="drainageHours"><option value="48">48時間</option><option value="72" selected>72時間</option></select></label><button type="button" onclick="loadDrainageData()">表示・更新</button></div><p>棒：1時間排液量［L］ ／ 線：日積算排液量［L］（日本時間0時にリセット）。欠測は0と区別し、既知の区間値だけを合算します。</p><div class="drainage-grid"><article class="drainage-card"><h4>排液 1</h4><div class="plus-user-controls"><label>point_id <input id="drainagePoint1" value="P41" placeholder="例：P41" maxlength="3" autocapitalize="characters"></label><label>1転倒水量 <input id="drainageVolume1" value="2.5" type="number" min="0.01" step="any" placeholder="要設定"> mL</label></div><p id="drainageStatus1" role="status">point_idと1転倒水量を設定してください。</p><div class="chart-container"><canvas id="drainageChart1" aria-label="排液1の時間別排液量と日積算量"></canvas></div></article>
+<article class="drainage-card"><h4>排液 2</h4><div class="plus-user-controls"><label>point_id <input id="drainagePoint2" value="P42" placeholder="例：P41" maxlength="3" autocapitalize="characters"></label><label>1転倒水量 <input id="drainageVolume2" value="2.5" type="number" min="0.01" step="any" placeholder="要設定"> mL</label></div><p id="drainageStatus2" role="status">point_idと1転倒水量を設定してください。</p><div class="chart-container"><canvas id="drainageChart2" aria-label="排液2の時間別排液量と日積算量"></canvas></div></article>
+<article class="drainage-card"><h4>排液 3</h4><div class="plus-user-controls"><label>point_id <input id="drainagePoint3" value="P43" placeholder="例：P41" maxlength="3" autocapitalize="characters"></label><label>1転倒水量 <input id="drainageVolume3" value="2.5" type="number" min="0.01" step="any" placeholder="要設定"> mL</label></div><p id="drainageStatus3" role="status">point_idと1転倒水量を設定してください。</p><div class="chart-container"><canvas id="drainageChart3" aria-label="排液3の時間別排液量と日積算量"></canvas></div></article></div></section>
 <section id="tab-analysis" class="tab-panel tab-panel-analysis" role="tabpanel">
     <p class="analysis-description">マスターグラフ（M）に基準とするハウスのIDを入力し、グラフAやグラフBに比較したいハウスのIDを入力すると、同じ時間帯の環境データを並べて比較できます。また、グラフ差を見ることで、ハウス間の温度差や、その日の最大温度差などを確認できます。</p>
     <div class="analysis-compare-grid">

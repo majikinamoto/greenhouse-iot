@@ -232,10 +232,11 @@ function runRainfallApi(): void
         ], 400);
     }
 
-    if ($pointId !== RAINFALL_POINT_ID) {
+    $isDrainage = defined('DRAINAGE_API_MODE') && DRAINAGE_API_MODE;
+    if ($isDrainage ? !preg_match('/\AP[0-9]{2}\z/D', $pointId) : $pointId !== RAINFALL_POINT_ID) {
         sendRainfallJson([
             'success' => false,
-            'error' => 'point_idはP41を指定してください',
+            'error' => $isDrainage ? 'point_idはPと2桁の数字で指定してください' : 'point_idはP41を指定してください',
         ], 400);
     }
 

@@ -345,13 +345,15 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
     </div>
 
     <div data-main-graph="rainChart">
-        <h4><span>雨量（P41）<span id="rainfallSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
+        <h4><span><span id="rainfallQuantityTitle">雨量（P41）</span><span id="rainfallSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
-            <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますカウントから算出</label>
+            <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますから雨量を算出</label>
+            <label><input type="radio" name="rainfallCalculationMode" value="water" onchange="handleRainfallCalculationModeChange()">転倒ますから水量を算出</label>
             <span id="rainfallTipSettings">
                 <label>受水面積 <input class="rainfall-calculation-input" type="number" id="rainfallCollectorArea" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> cm²</label>
                 <label>1転倒水量 <input class="rainfall-calculation-input" type="number" id="rainfallTipVolume" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> mL</label>
+                <label>1カウント水量 <input class="rainfall-calculation-input" type="number" id="rainfallWaterVolume" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> mL</label>
                 <span id="rainfallTipResult" class="rainfall-tip-result" aria-live="polite">1転倒あたり：未計算</span>
             </span>
         </div>

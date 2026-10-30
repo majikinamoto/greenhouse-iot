@@ -697,9 +697,9 @@ function createDailyRainfallMap(rows, mode, coefficient){
     const dayMap = new Map();
     (Array.isArray(rows) ? rows : []).forEach(row=>{
         const dateKey = getSummaryRowDateKey(row);
-        const rawValue = mode === "tip" ? row.rainfall_tip_interval : row.rainfall_interval;
+        const rawValue = mode !== "rainfall" ? row.rainfall_tip_interval : row.rainfall_interval;
         if(!dateKey || !isFiniteRainfallValue(rawValue)) return;
-        const rainfall = Number(rawValue) * (mode === "tip" ? coefficient : 1);
+        const rainfall = Number(rawValue) * (mode !== "rainfall" ? coefficient : 1);
         const hundredths = Math.round(rainfall * 100);
         const day = dayMap.get(dateKey) || { hundredths:0, count:0 };
         day.hundredths += hundredths;
@@ -710,6 +710,8 @@ function createDailyRainfallMap(rows, mode, coefficient){
 }
 
 function renderTenDayRainfallSummary(dayMap){
+    const label = document.querySelector("#outsideTempSummaryGrid .status-temp-label-grid .status-temp-label:last-child");
+    if(label) label.textContent = getRainfallCalculationMode() === "water" ? "水量(mL)" : "雨量(mm)";
     for(let i = 0; i < 10; i++){
         const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
         const cell = document.getElementById("outsideDay" + i + "Rain");
@@ -762,7 +764,7 @@ async function loadTenDayRainfallSummary(userId){
     resetTenDayRainfallSummary();
     const mode = getRainfallCalculationMode();
     const coefficient = getRainfallTipCoefficient();
-    if(mode === "tip" && coefficient === null) return;
+    if(mode !== "rainfall" && coefficient === null) return;
     const range = {
         start:getTenDayJstDateKey(9) + " 00:00:00",
         end:getTenDayJstNowSqlDateTime()
@@ -774,7 +776,7 @@ async function loadTenDayRainfallSummary(userId){
         requestId !== tenDayRainfallRequestSequence ||
         currentRainfallSource.userId !== userId ||
         getRainfallCalculationMode() !== mode ||
-        (mode === "tip" && getRainfallTipCoefficient() !== coefficient)
+        (mode !== "rainfall" && getRainfallTipCoefficient() !== coefficient)
     ) return;
 
     renderTenDayRainfallSummary(createDailyRainfallMap(result.data, mode, coefficient));
@@ -1292,16 +1294,20 @@ function applyMainChartNoDataStates(chartMap, context){
 }
 
 // === 雨量：計算設定・グラフ・データ取得 ===
-// 雨量の2方式：rainfallは保存済みrainfall_interval（mm）、tipはrainfall_tip_intervalを係数で換算する。
+// rainfallは送信雨量、tipは転倒数から雨量（mm）、waterは転倒数から水量（mL）を算出する。
 // 累積値から区間差分を作る処理はinsert.php、時間別集計はget_rainfall_data.phpが担当する。
 function getRainfallCalculationMode(){
     const selected = document.querySelector('input[name="rainfallCalculationMode"]:checked');
-    return selected && selected.value === "tip" ? "tip" : "rainfall";
+    return selected && ["tip", "water"].includes(selected.value) ? selected.value : "rainfall";
 }
 
 // 1転倒の雨量（mm）= 1転倒水量（mL）×10 ÷ 受水面積（cm²）。1 mL=1 cm³のため深さをmmへ換算する。
 // 空欄・非有限値・0以下はnull。係数はtip方式のAPIへ送り、保存済み雨量そのものは書き換えない。
 function getRainfallTipCoefficient(){
+    if(getRainfallCalculationMode() === "water"){
+        const value = Number(document.getElementById("rainfallWaterVolume").value);
+        return Number.isFinite(value) && value > 0 ? value : null;
+    }
     const areaInput = document.getElementById("rainfallCollectorArea");
     const volumeInput = document.getElementById("rainfallTipVolume");
     const areaText = areaInput ? String(areaInput.value).trim() : "";
@@ -1318,6 +1324,12 @@ function getRainfallTipCoefficient(){
 
 function updateRainfallCalculationDisplay(){
     const isTipMode = getRainfallCalculationMode() === "tip";
+    const isWater = getRainfallCalculationMode() === "water";
+    document.getElementById("rainfallWaterVolume").disabled = !isWater;
+    document.getElementById("rainfallQuantityTitle").textContent = isWater ? "水量（P41）" : "雨量（P41）";
+    const summaryLabel = document.querySelector("#outsideTempSummaryGrid .status-temp-label-grid .status-temp-label:last-child");
+    if(summaryLabel) summaryLabel.textContent = isWater ? "水量(mL)" : "雨量(mm)";
+    document.getElementById("rainChart").setAttribute("aria-label", isWater ? "1時間水量と日積算水量" : "1時間雨量と日積算雨量");
     const inputs = [
         document.getElementById("rainfallCollectorArea"),
         document.getElementById("rainfallTipVolume")
@@ -1329,19 +1341,19 @@ function updateRainfallCalculationDisplay(){
     const result = document.getElementById("rainfallTipResult");
     if(!result) return;
     const coefficient = getRainfallTipCoefficient();
-    result.classList.toggle("is-invalid", isTipMode && coefficient === null);
+    result.classList.toggle("is-invalid", (isTipMode || isWater) && coefficient === null);
     result.textContent = coefficient === null
-        ? (isTipMode
+        ? ((isTipMode || isWater)
             ? "1転倒あたり：未計算（正の数値を入力してください）"
             : "1転倒あたり：未計算")
-        : "1転倒あたり：" + coefficient.toFixed(4) + " mm";
+        : "1転倒あたり：" + coefficient.toFixed(4) + (isWater ? " mL" : " mm");
 }
 
 // 雨量計算設定はブラウザ共通。保存モードがtip以外ならrainfall、面積・容量は未保存なら空欄。
 // saveRainfallCalculationSettingは面積・容量が正の有限数のときだけ保存し、それ以外はキーを削除する。
 function restoreRainfallCalculationSetting(){
     const savedMode = localStorage.getItem(RAINFALL_MODE_STORAGE_KEY);
-    const mode = savedMode === "tip" ? "tip" : "rainfall";
+    const mode = ["tip", "water"].includes(savedMode) ? savedMode : "rainfall";
     const selected = document.querySelector(
         'input[name="rainfallCalculationMode"][value="' + mode + '"]'
     );
@@ -1353,6 +1365,7 @@ function restoreRainfallCalculationSetting(){
     const volumeInput = document.getElementById("rainfallTipVolume");
     if(areaInput) areaInput.value = area || "";
     if(volumeInput) volumeInput.value = volume || "";
+    document.getElementById("rainfallWaterVolume").value = localStorage.getItem("utechRainfallWaterVolume") ?? "2.5";
     updateRainfallCalculationDisplay();
 }
 
@@ -1360,7 +1373,8 @@ function saveRainfallCalculationSetting(){
     localStorage.setItem(RAINFALL_MODE_STORAGE_KEY, getRainfallCalculationMode());
     [
         ["rainfallCollectorArea", RAINFALL_COLLECTOR_AREA_STORAGE_KEY],
-        ["rainfallTipVolume", RAINFALL_TIP_VOLUME_STORAGE_KEY]
+        ["rainfallTipVolume", RAINFALL_TIP_VOLUME_STORAGE_KEY],
+        ["rainfallWaterVolume", "utechRainfallWaterVolume"]
     ].forEach(([id, key])=>{
         const input = document.getElementById(id);
         const value = input ? String(input.value).trim() : "";
@@ -1394,18 +1408,18 @@ function handleRainfallCalculationModeChange(){
 
 function handleRainfallCalculationInput(){
     updateRainfallCalculationDisplay();
-    if(getRainfallCalculationMode() === "tip" && getRainfallTipCoefficient() === null){
+    if(getRainfallCalculationMode() !== "rainfall" && getRainfallTipCoefficient() === null){
         rainfallRequestSequence++;
         destroyRainChart();
         invalidateTenDayRainfallSummary();
-        showRainfallCardMessage("受水面積と1転倒水量に0より大きい数値を入力してください");
+        showRainfallCardMessage(getRainfallCalculationMode() === "water" ? "1カウント水量に0より大きい数値を入力してください" : "受水面積と1転倒水量に0より大きい数値を入力してください");
     }
 }
 
 function handleRainfallCalculationInputChange(){
     handleRainfallCalculationInput();
     saveRainfallCalculationSetting();
-    if(getRainfallCalculationMode() === "tip" && getRainfallTipCoefficient() !== null){
+    if(getRainfallCalculationMode() !== "rainfall" && getRainfallTipCoefficient() !== null){
         reloadRainfallData();
     }
 }
@@ -1414,7 +1428,7 @@ function handleRainfallCalculationInputChange(){
 function formatDailySummaryRainfallValue(value){
     if(value === null || value === undefined || value === "") return "-";
     const number = Number(value);
-    return Number.isFinite(number) ? String(Math.round(number)) : "-";
+    return Number.isFinite(number) ? (getRainfallCalculationMode() === "water" ? number.toLocaleString("ja-JP", {maximumFractionDigits:2}) : String(Math.round(number))) : "-";
 }
 
 function isFiniteRainfallValue(value){
@@ -1470,6 +1484,9 @@ function destroyRainChart(){
 function createRainfallChart(response){
     const canvas = getChartCanvas("rainChart");
     const hourly = Array.isArray(response.hourly) ? response.hourly : [];
+    const isWater = getRainfallCalculationMode() === "water";
+    const quantity = isWater ? "水量" : "雨量";
+    const unit = isWater ? "mL" : "mm";
 
     if(!canvas || !hourly.length) return null;
 
@@ -1502,7 +1519,7 @@ function createRainfallChart(response){
 
     const dailyDatasets = Object.keys(dailyGroups).sort().map((dateKey, index)=>({
         type:"line",
-        label:"日積算雨量",
+        label:"日積算" + quantity,
         data:dailyGroups[dateKey].sort((a,b)=>a.x-b.x),
         yAxisID:"yDaily",
         borderColor:"rgb(0, 75, 145)",
@@ -1519,7 +1536,7 @@ function createRainfallChart(response){
     }));
     const barDataset = {
         type:"bar",
-        label:"1時間雨量",
+        label:"1時間" + quantity,
         data:hourly.map(bucket=>({
             x:Number(bucket.x),
             y:bucket.missing ? null : Number(bucket.hourly_rainfall)
@@ -1555,7 +1572,7 @@ function createRainfallChart(response){
                 return dataset && dataset.showInLegend !== false;
             },
             sort(itemA, itemB){
-                const order = { "1時間雨量":0, "日積算雨量":1 };
+                const order = { "1時間雨量":0, "日積算雨量":1, "1時間水量":0, "日積算水量":1 };
                 const orderA = Object.prototype.hasOwnProperty.call(order, itemA.text) ? order[itemA.text] : 99;
                 const orderB = Object.prototype.hasOwnProperty.call(order, itemB.text) ? order[itemB.text] : 99;
                 return orderA - orderB;
@@ -1573,14 +1590,14 @@ function createRainfallChart(response){
             position:"left",
             beginAtZero:true,
             ticks:{ color:"#000" },
-            title:{ display:true, text:"1時間雨量 (mm)", color:"#000" }
+            title:{ display:true, text:"1時間" + quantity + " (" + unit + ")", color:"#000" }
         },
         yDaily:{
             position:"right",
             beginAtZero:true,
             grid:{ drawOnChartArea:false },
             ticks:{ color:"#000" },
-            title:{ display:true, text:"日積算雨量 (mm)", color:"#000" }
+            title:{ display:true, text:"日積算" + quantity + " (" + unit + ")", color:"#000" }
         }
     };
 
@@ -1590,6 +1607,8 @@ function createRainfallChart(response){
         options:options
     });
 
+    chart.$rainfallQuantity = quantity;
+    chart.$rainfallUnit = unit;
     chart.$rainfallBuckets = hourly;
     chart.$rainfallEnd = endTime;
     saveInitialScaleLimits(chart);
@@ -1617,15 +1636,15 @@ async function loadRainfallData(userId, displayHours, requestId){
     try{
         const mode = getRainfallCalculationMode();
         const coefficient = getRainfallTipCoefficient();
-        if(mode === "tip" && coefficient === null){
-            showRainfallCardMessage("受水面積と1転倒水量に0より大きい数値を入力してください");
+        if(mode !== "rainfall" && coefficient === null){
+            showRainfallCardMessage(getRainfallCalculationMode() === "water" ? "1カウント水量に0より大きい数値を入力してください" : "受水面積と1転倒水量に0より大きい数値を入力してください");
             return;
         }
         const url =
             "get_rainfall_data.php?user_id=" + encodeURIComponent(userId) +
             "&point_id=P41&display_hours=" + encodeURIComponent(displayHours) +
-            "&mode=" + encodeURIComponent(mode) +
-            (mode === "tip" && coefficient !== null
+            "&mode=" + encodeURIComponent(mode === "water" ? "tip" : mode) +
+            (mode !== "rainfall" && coefficient !== null
                 ? "&coefficient=" + encodeURIComponent(coefficient)
                 : "");
         const response = await fetch(url, {

@@ -1,7 +1,7 @@
 # U-Tech / U-Tech Plus
 
 U-Tech本体はメイン・環境スコア・データ出力・利用案内・システム情報を表示します。
-`u-tech-plus/` はアラート・分析・WBGT・過去データ・メンテの5タブです。
+`u-tech-plus/` は排液量・アラート・分析・WBGT・過去データ・メンテの6タブです。
 本体のPlus移動ボタンはパスワード不要です。Next / G-Flow / Yui-Techの既存の移動方法は変更していません。
 
 ## ファイル構成
@@ -12,9 +12,9 @@ U-Tech本体はメイン・環境スコア・データ出力・利用案内・�
 - `assets/utech-shared.js`: グラフ描画・日時・API取得など両画面で使う処理。
 - `assets/utech-header.js`: 本体だけで使う現在日時・日の出日の入り表示、農作業こよみ、潮汐・天気取得。Plusでは読み込みません。
 - `assets/utech-main.js`: メイン・環境スコア・CSV・表示設定・本体の初期化。
-- `u-tech-plus/index.html`: Plusの5タブと共通ヘッダー。
-- `u-tech-plus/assets/plus.js`: 5タブの処理とタブ別設定・初期化。
-- `u-tech-plus/assets/plus.css`: Plusの5タブ専用CSSと、ロゴ・入力欄・スマホ幅の補正。
+- `u-tech-plus/index.html`: Plusの6タブと共通ヘッダー。
+- `u-tech-plus/assets/plus.js`: 6タブの処理とタブ別設定・初期化。
+- `u-tech-plus/assets/plus.css`: Plusの6タブ専用CSSと、ロゴ・入力欄・スマホ幅の補正。
 
 両画面とも共通JSを先に、専用JSを次に読み込みます。共通の関数・定数は従来と同じグローバル名で参照されます。本体はPlus専用の取得・計算・設定操作コードを読み込みません。
 本体の読み込み順は `utech-shared.js` → `utech-header.js` → `utech-main.js` です。PlusのDIF計算にも使う地域設定・日本時間変換・日の出日の入り計算は共通JSに残し、ヘッダーの表示や外部取得だけを本体専用に分離しています。
@@ -60,3 +60,11 @@ node scripts/test-utech-plus.cjs
 `node scripts/test-utech-css.cjs` は作業ツリーとHEADのCSSを比較し、本体・Plus全タブをPC幅・スマホ幅・横向きで検証します。画面内スクリプトやAPIは実行せず、静的HTML要素の計算済みスタイルを比較します。動的な描画・操作は上記のブラウザテストで別途確認します。
 
 `node scripts/test-utech-chart-configs.cjs` は作業ツリーとHEADのグラフ作成関数を比較し、データ・軸・プラグイン・コールバック・グラデーション・スマホの期間指定・空データ・キャンバス欠落時の挙動が一致することを検証します。
+
+## 排液量
+
+先頭の排液量タブは共通user_idと3地点（初期値P41・P42・P43）を入力します。各地点の1転倒水量[mL]は実測値を設定し、区間転倒数から1時間・日積算の排液量[L]を表示します。設定はutechPlus_v1_drainageに保存します。初回の表示タブは従来どおりメンテです。
+
+get_drainage_data.phpはP41雨量APIの集計処理を再利用します。係数およびAPI応答の数値単位はmLで、画面では1000で除してLに換算します。欠測はnull、日積算は日本時間0時でリセットし、既知の値のみ合計します。表示・更新ボタンとタブ再表示で再取得します。
+
+送信機は既存雨量計と同様にinsert.phpへrainfall_cumulativeとrainfall_tip_countを送信する必要があります。rainfall_tip_count単独では既存の雨量保存経路に入りません。DBスキーマと送信仕様は変更していません。

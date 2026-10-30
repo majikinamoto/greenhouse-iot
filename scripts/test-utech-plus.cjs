@@ -7,10 +7,19 @@ const server=http.createServer((req,res)=>{
  if(url.pathname.endsWith('.php')){
   requests.push(url);
   res.setHeader('Content-Type','application/json');
+  if(url.pathname==='/get_rainfall_data.php'){
+   const c=url.searchParams.get('mode')==='tip'?Number(url.searchParams.get('coefficient')):1;
+   const x=Date.now()-3600000;
+   return res.end(JSON.stringify({success:true,has_data:true,display_start:x-3600000,end:Date.now(),hourly:[{x,hour_start:'2026-10-30 01:00:00',hour_end:'2026-10-30 01:59:59',date_key:'2026-10-30',hourly_rainfall:2*c,daily_cumulative:2*c,missing:false}]}));
+  }
+  if(url.pathname==='/get_drainage_data.php'){
+   const volume=Number(url.searchParams.get('coefficient'));
+   return res.end(JSON.stringify({success:true,display_start:0,daily_totals:{today:3*volume,yesterday:0,day_before_yesterday:null},hourly:[{x:1,hour_start:'2026-10-30 01:00:00',date_key:'2026-10-30',hourly_rainfall:volume,daily_cumulative:volume,missing:false},{x:2,hour_start:'2026-10-30 02:00:00',date_key:'2026-10-30',hourly_rainfall:2*volume,daily_cumulative:3*volume,missing:false}]}));
+  }
   if(url.pathname==='/get_data.php'){
    const end=url.searchParams.get('end')?new Date(url.searchParams.get('end').replace(' ','T')):new Date();
    const start=url.searchParams.get('start')?new Date(url.searchParams.get('start').replace(' ','T')):new Date(end-72*3600000);
-   const rows=[];for(let t=+start;t<=+end;t+=3600000){const d=new Date(t);const stamp=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');rows.push({recorded_at:stamp,temperature:28+Math.sin(t/3600000),humidity:70,co2:500,solar_radiation:300,voltage:12.5,wind_speed_avg:1,wind_speed_max:2});}
+   const rows=[];for(let t=+start;t<=+end;t+=3600000){const d=new Date(t);const stamp=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');rows.push({recorded_at:stamp,rainfall_interval:1,rainfall_tip_interval:2,temperature:28+Math.sin(t/3600000),humidity:70,co2:500,solar_radiation:300,voltage:12.5,wind_speed_avg:1,wind_speed_max:2});}
    return res.end(JSON.stringify(rows));
   }
   if(/alert/.test(url.pathname))return res.end(JSON.stringify({success:true,data:[],settings:[],history:[]}));
@@ -24,7 +33,7 @@ const server=http.createServer((req,res)=>{
  let browser;try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  browser=await chromium.launch({channel:'msedge',headless:true});
- const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const context=await browser.newContext({timezoneId:'Asia/Tokyo',viewport:{width:1440,height:1000}});
  await context.route('https://**/*',async route=>{
   if(route.request().url().includes('cdn.jsdelivr.net'))return route.continue();
   return route.fulfill({json:{}});
@@ -42,9 +51,26 @@ const server=http.createServer((req,res)=>{
  await page.locator('#userId').fill('MAIN01');await page.getByRole('button',{name:'表示',exact:true}).first().click();await page.waitForTimeout(1600);
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP01')),true);
  assert(!requests.some(u=>/alert/.test(u.pathname)));
+ assert.equal(await page.locator('input[name="rainfallCalculationMode"]').count(),3);
+ await page.locator('#rainfallCollectorArea').evaluate(e=>e.value='100');
+ await page.locator('#rainfallTipVolume').evaluate(e=>e.value='5');
+ await page.locator('input[name="rainfallCalculationMode"][value="tip"]').check();
+ await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===1);
+ assert.match(await page.locator('#rainfallTipResult').textContent(),/0.5000 mm/);
+ await page.locator('input[name="rainfallCalculationMode"][value="water"]').check();
+ await page.locator('#rainfallWaterVolume').fill('5');await page.locator('#rainfallWaterVolume').blur();
+ await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===10);
+ assert.equal(await page.locator('#rainfallCollectorArea').isDisabled(),true);
+ assert.equal(await page.evaluate(()=>Chart.getChart('rainChart').options.scales.yHourly.title.text),'1時間水量 (mL)');
+ await page.evaluate(()=>{const c=Chart.getChart('rainChart');showRainfallTooltip(c,c.$rainfallBuckets[0],{clientX:100,clientY:100});});
+ assert.match(await page.locator('#rainfallTooltip').textContent(),/10.00 mL/);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('utechRainfallWaterVolume')),'5');
+ await page.locator('input[name="rainfallCalculationMode"][value="rainfall"]').check();
+ await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===2);
+ assert.equal(await page.evaluate(()=>Chart.getChart('rainChart').options.scales.yHourly.title.text),'1時間雨量 (mm)');
  const plusRequestStart=requests.length;
  await page.getByRole('button',{name:'U-Tech Plusへ移動',exact:true}).click();await page.waitForTimeout(1800);
- assert.equal(await page.locator('.tab-button').count(),5);
+ assert.equal(await page.locator('.tab-button').count(),6);
  assert.equal(await page.locator('.tab-panel.active').getAttribute('id'),'tab-maintenance');
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAIN01');
  assert.equal(await page.locator('.header-detail-area, #utechAreaSelect, #headerSunInfo, #farmCalendarInfo, #tomorrowForecastInfo').count(),0);
@@ -68,6 +94,7 @@ const server=http.createServer((req,res)=>{
  for(const id of ['tempChartP02','maintenanceTempChartP11','tempChartP12'])assert.equal(await page.evaluate(id=>Chart.getChart(id).options.scales.yTemp.min,id),22);
  await page.locator('#maintenanceTempChartP01').locator('..').locator('..').getByRole('button',{name:'ズームリセット',exact:true}).click();
  await page.locator('#maintenanceRangeCustom').check();
+ await page.locator('#maintenanceStartDate').fill('2026-10-01');
  await page.getByRole('button',{name:'表示する',exact:true}).click();
  await page.waitForFunction(()=>{const r=getMaintenanceRange().range;return ['maintenanceTempChartP01','maintenanceTempChartP11'].every(id=>{const c=Chart.getChart(id);return c&&c.scales.x.min===+r.startTime&&c.scales.x.max===+r.endTime;});});
  await page.getByRole('button',{name:'最新72時間へ戻す',exact:true}).click();await page.waitForTimeout(900);
@@ -88,6 +115,20 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>!!Chart.getChart('wbgtGlobeChart')),true);
  await page.locator('[aria-controls="tab-alert"]').click();await page.locator('#alertUserId').fill('ALERT06');await page.locator('#alertPointId').focus();await page.waitForTimeout(800);
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAINT02');assert.equal(await page.locator('#wbgtUserId').inputValue(),'WBGT05');
+ await page.locator('[aria-controls="tab-drainage"]').click();
+ assert.equal(await page.locator('.tab-button').first().getAttribute('aria-controls'),'tab-drainage');
+ await page.locator('#drainageUserId').fill('DRAIN07');
+ for(let i=1;i<=3;i++){assert.equal(await page.locator('#drainagePoint'+i).inputValue(),'P'+(40+i));await page.locator('#drainageVolume'+i).fill('5');}
+ await page.getByRole('button',{name:'表示・更新',exact:true}).click();
+ await page.waitForFunction(()=>!!Chart.getChart('drainageChart3'));
+ assert.deepEqual(await page.evaluate(()=>Chart.getChart('drainageChart1').data.datasets[0].data),[0.005,0.01]);
+ assert.match(await page.locator('#drainageStatus1').textContent(),/0.015 L/);
+ assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAINT02');
+ await page.reload();await page.waitForFunction(()=>!!Chart.getChart('drainageChart3'));
+ assert.equal(await page.locator('#drainageUserId').inputValue(),'DRAIN07');
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.setViewportSize({width:1440,height:1000});
  await page.locator('[aria-controls="tab-maintenance"]').click();await page.waitForTimeout(700);
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
@@ -108,7 +149,7 @@ const server=http.createServer((req,res)=>{
  for(const tab of ['analysis','wbgt','review','alert','maintenance']){
   await page.locator('[aria-controls="tab-'+tab+'"]').click();await page.waitForTimeout(700);
  }
- const empty=await browser.newContext({viewport:{width:390,height:844}});
+ const empty=await browser.newContext({timezoneId:'Asia/Tokyo',viewport:{width:390,height:844}});
  await empty.route('**/*.php*',route=>route.fulfill({json:[]}));
  await empty.route('https://**/*',route=>route.request().url().includes('cdn.jsdelivr.net')?route.continue():route.fulfill({json:{}}));
  const blank=await empty.newPage();blank.on('pageerror',e=>errors.push(e.message));
@@ -120,6 +161,6 @@ const server=http.createServer((req,res)=>{
  for(const id of ['maintenanceTempChartP01','maintenanceTempChartP11'])assert.equal(await blank.evaluate(id=>!!Chart.getChart(id),id),false);
  await empty.close();
  assert.deepEqual(errors,[]);
- console.log('Passed: main charts/visibility; password-free handoff; five tabs; maintenance 30-day voltage; review, analysis, WBGT/P51; independent IDs/history; saved-tab restore; mobile layout; empty data. No page errors.');
+ console.log('Passed: main charts/visibility; password-free handoff; six tabs; drainage conversion/settings/mobile; maintenance 30-day voltage; review, analysis, WBGT/P51; independent IDs/history; saved-tab restore; mobile layout; empty data. No page errors.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
