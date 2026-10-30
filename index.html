@@ -145,16 +145,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
     <p id="mainGraphSettingsMessage" class="main-graph-settings-note" role="status"></p>
 </div>
 <div class="status-container">
-<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="houseTenDaySummary">
-<div class="status-group-title">ハウス内（P01）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
-</div>
-<div class="status-row-break" aria-hidden="true"></div>
-<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="outsideTenDaySummary">
-<div class="status-group-title">外気（P11）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
-</div>
-<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-current" data-main-info="currentP01">
 <div class="status-group-title">現在（P01）</div>
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
@@ -169,6 +159,17 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 <div class="status-box">ハウス内風速 平均：<span id="windAvgNow">-</span> m/s</div>
 <div class="status-box">最大：<span id="windMaxNow">-</span> m/s</div>
 </div>
+<div class="status-row-break" aria-hidden="true"></div>
+<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="houseTenDaySummary">
+<div class="status-group-title">ハウス内（P01）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
+<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="outsideTenDaySummary">
+<div class="status-group-title">外気（P11）・直近10日</div>
+<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-vpd-eval" data-main-info="yesterdayVpdEvaluation">
 <div class="status-group-title">昨日の飽差評価</div>
 <div class="vpd-eval-line">午前：<span id="vpdEvalAm">データなし</span></div>
@@ -233,20 +234,23 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 <div class="grid">
 
     <div data-main-graph="tempChartP01">
-        <h4><span>ハウス内温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>ハウス内（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP01,'P01','temperature')">縦軸反映</button>
+            <button class="temp-hum-axis-apply-button" onclick="applyMainTempHumYAxis(tempChartP01,'P01')">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="tempChartP01"></canvas></div>
     </div>
 
     <div data-main-graph="tempChartP11">
-        <h4><span>外気温度（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
+        <h4><span>外気（P11）<span id="outsideSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
+            <label><input type="checkbox" id="mainHumAxisLink" onchange="changeMainAxisLink('humidity')">湿度軸をP01に連動</label>
             <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
-            <button class="temp-hum-axis-apply-button" onclick="applyTempHumSingleYAxis(tempChartP11,'P11','temperature')">縦軸反映</button>
-            <label><input type="checkbox" id="mainTempAxisLink" onchange="changeMainAxisLink('temperature')">P01と同じ縦軸</label>
+            <button class="temp-hum-axis-apply-button" onclick="applyMainTempHumYAxis(tempChartP11,'P11')">縦軸反映</button>
+            <label><input type="checkbox" id="mainTempAxisLink" onchange="changeMainAxisLink('temperature')">温度軸をP01に連動</label>
         </div>
         <div class="chart-container"><canvas id="tempChartP11"></canvas></div>
     </div>
@@ -269,24 +273,7 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
         </div>
         <div class="chart-container"><canvas id="mainVaporChart"></canvas></div>
     </div>
-    <div data-main-graph="humChartP01">
-        <h4><span>ハウス内湿度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
-            <button onclick="applyTempHumSingleYAxis(humChartP01,'P01','humidity')">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="humChartP01"></canvas></div>
-    </div>
 
-    <div data-main-graph="humChartP11">
-        <h4><span>外気湿度（P11）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
-            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
-            <button onclick="applyTempHumSingleYAxis(humChartP11,'P11','humidity')">縦軸反映</button>
-            <label><input type="checkbox" id="mainHumAxisLink" onchange="changeMainAxisLink('humidity')">P01と同じ縦軸</label>
-        </div>
-        <div class="chart-container"><canvas id="humChartP11"></canvas></div>
-    </div>
 
     <div data-main-graph="mainDewPointChart">
         <h4><span>ハウス内結露温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>

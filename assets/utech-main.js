@@ -38,19 +38,17 @@ const mainChartConfigs = [
     {
         key:"insideTemperature",
         canvasId:"tempChartP01",
-        title:"ハウス内温度",
-        fields:["temperature"],
+        title:"ハウス内温湿度",
+        fields:["temperature","humidity"],
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
-    { key:"insideHumidity", canvasId:"humChartP01", title:"ハウス内湿度", fields:["humidity"], requests:context=>[{ userId:context.userId, pointId:"P01" }] },
     {
         key:"outsideTemperature",
         canvasId:"tempChartP11",
-        title:"外気温度",
-        fields:["temperature"],
+        title:"外気温湿度",
+        fields:["temperature","humidity"],
         requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }]
     },
-    { key:"outsideHumidity", canvasId:"humChartP11", title:"外気湿度", fields:["humidity"], requests:context=>[{ userId:context.outsideSource.userId, pointId:context.outsideSource.pointId }] },
     {
         key:"outsideDiff",
         canvasId:"outsideDiffChart",
@@ -171,7 +169,7 @@ function toggleMobileShareQr(){
 }
 
 // 表示設定は入力途中のIDではなく、表示へ適用したIDに紐づける。
-const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "humChartP01", "humChartP11", "mainDewPointChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "windChartP61", "rainChart"];
+const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "mainDewPointChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "windChartP61", "rainChart"];
 
 const mainInfoVisibilityIds = ["mobileQrCard", "houseTenDaySummary", "outsideTenDaySummary", "currentP01", "yesterdayVpdEvaluation"];
 
@@ -1201,8 +1199,6 @@ function applyMobileChartRanges(minTime, maxTime){
     [
         tempChartP01,
         tempChartP11,
-        humChartP01,
-        humChartP11,
         outsideDiffChart,
         mainVaporChart,
         mainDewPointChart,
@@ -1712,30 +1708,6 @@ function getMainDewPointAxis(){
     };
 }
 
-// 温度/湿度の抽出・軸・スマホ用期間はここで決め、線の基本設定だけ共通描画へ渡す。
-function createTempHumSingleChart(canvasId, parsed, minTime, maxTime, pointId, measurement){
-    const canvas=getChartCanvas(canvasId);
-    if(!canvas || !hasChartSourceData(parsed)) return null;
-    destroyExistingChart(canvasId);
-    const axis=getTempHumAxis(pointId);
-    const isTemp=measurement==="temperature";
-    const key=isTemp ? "temp" : "hum";
-    const data=parsed.filter(d=>d[key]!==null && !isNaN(d[key])).map(d=>({x:d.xValue,y:d[key]}));
-    if(!data.length) return null;
-    const range=isTemp ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax};
-    const unit=isTemp ? "℃" : "%";
-    const yAxis={...range,ticks:{stepSize:isTemp ? 5 : 10,color:"#000"},title:{display:true,text:unit,color:"#000"}};
-    const options=baseOptions(getChartDisplayMinTime(canvasId,minTime,maxTime),maxTime);
-    options.scales={...options.scales,y:yAxis,yRight:createRightYAxis(yAxis)};
-    const color=isTemp ? "rgb(255, 0, 0)" : "rgb(0, 100, 255)";
-    return createSingleLineChart(canvas, data, {
-        label:(isTemp ? "温度" : "湿度")+" ("+unit+")",
-        color:color,
-        backgroundColor:isTemp ? "rgba(255, 0, 0, 0.18)" : "rgba(0, 100, 255, 0.18)",
-        fill:true
-    }, options);
-}
-
 function createWindChart(canvasId, parsed, minTime, maxTime){
     const canvas = getChartCanvas(canvasId);
     if(!canvas || !hasChartSourceData(parsed)) return null;
@@ -1974,10 +1946,8 @@ async function loadData(){
             }
         }
 
-        tempChartP01 = createTempHumSingleChart("tempChartP01", p01, chartMinTime, now, "P01", "temperature");
-        tempChartP11 = createTempHumSingleChart("tempChartP11", p11, chartMinTime, now, "P11", "temperature");
-        humChartP01 = createTempHumSingleChart("humChartP01", p01, chartMinTime, now, "P01", "humidity");
-        humChartP11 = createTempHumSingleChart("humChartP11", p11, chartMinTime, now, "P11", "humidity");
+        tempChartP01 = createTempHumChart("tempChartP01", p01, chartMinTime, now, "P01");
+        tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
         mainVaporChart = createVaporChart("mainVaporChart", p01, chartMinTime, now);
         mainDewPointChart = createSingleChart(
@@ -1993,9 +1963,7 @@ async function loadData(){
 
         applyMainChartNoDataStates({
             insideTemperature:tempChartP01,
-            insideHumidity:humChartP01,
             outsideTemperature:tempChartP11,
-            outsideHumidity:humChartP11,
             outsideDiff:outsideDiffChart,
             mainVapor:mainVaporChart,
             mainDewPoint:mainDewPointChart,
@@ -2011,8 +1979,6 @@ async function loadData(){
             tempChartP11,
             outsideDiffChart,
             mainVaporChart,
-            humChartP01,
-            humChartP11,
             mainDewPointChart,
             solarChart,
             co2Chart,
@@ -2047,8 +2013,6 @@ function destroyCharts(){
     allCharts = [];
     tempChartP01 = null;
     tempChartP11 = null;
-    humChartP01 = null;
-    humChartP11 = null;
     outsideDiffChart = null;
     mainVaporChart = null;
     mainDewPointChart = null;
@@ -2061,8 +2025,6 @@ function destroyCharts(){
     [
         "tempChartP01",
         "tempChartP11",
-        "humChartP01",
-        "humChartP11",
         "outsideDiffChart",
         "mainVaporChart",
         "mainDewPointChart",
@@ -2109,7 +2071,7 @@ function updateMainAxisLinkControls(pair){
     const checkbox=document.getElementById(pair.checkbox);
     checkbox.disabled=!mainGraphVisibilityUserId;
     pair.inputs.forEach(id=>{document.getElementById(id).disabled=checkbox.checked;});
-    checkbox.closest('.chart-axis-control').querySelector('button').disabled=checkbox.checked;
+    checkbox.closest('.chart-axis-control').querySelector('button').disabled=pair.key==='co2' ? checkbox.checked : isMainAxisLinked('temperature') && isMainAxisLinked('humidity');
 }
 
 // 縦軸リンクは利用者別に復元し、保存値がtrueの項目だけ有効にする。
@@ -2137,15 +2099,12 @@ function changeMainAxisLink(key){
         matchMainAxisLinks();
     }else if(pair.outside){
         if(key==='co2') applyCo2OutsideYAxis(pair.outside);
-        else applyTempHumSingleYAxis(pair.outside,'P11',key);
+        else applyMainTempHumYAxis(pair.outside,'P11');
     }
 }
 
-function applyTempHumSingleYAxis(chart, pointId, measurement){
-    if(!chart) return;
-    const axis=getTempHumAxis(pointId);
-    setLinearYAxis(chart,measurement==="temperature" ? {min:axis.tempMin,max:axis.tempMax} : {min:axis.humMin,max:axis.humMax});
-    chart.update();
+function applyMainTempHumYAxis(chart, pointId){
+    applyTempHumYAxis(chart, pointId);
     matchMainAxisLinks();
 }
 

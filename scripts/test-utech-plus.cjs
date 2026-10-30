@@ -58,6 +58,27 @@ const server=http.createServer((req,res)=>{
  assert.match(await page.locator('#farmCalendarInfo').textContent(),/旧暦/);
  await page.locator('#userId').fill('MAIN01');await page.getByRole('button',{name:'表示',exact:true}).first().click();await page.waitForTimeout(1600);
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP01')),true);
+ assert.equal(await page.locator('#humChartP01, #humChartP11, [data-main-graph="humChartP01"], [data-main-graph="humChartP11"]').count(),0);
+ for(const id of ['tempChartP01','tempChartP11'])assert.deepEqual(await page.evaluate(id=>{const c=Chart.getChart(id);return [c.data.datasets.map(d=>d.label),c.scales.yHum.position,c.scales.yTemp.position];},id),[['湿度 (%)','温度 (℃)'],'left','right']);
+ await page.locator('#tempMinP01').fill('15');await page.locator('#tempMaxP01').fill('45');
+ await page.locator('#humMinP01').fill('30');await page.locator('#humMaxP01').fill('90');
+ await page.locator('[data-main-graph="tempChartP01"]').getByRole('button',{name:'縦軸反映',exact:true}).click();
+ await page.locator('#mainTempAxisLink').check();
+ assert.deepEqual(await page.evaluate(()=>{const c=Chart.getChart('tempChartP11');return [c.scales.yTemp.min,c.scales.yTemp.max,c.scales.yHum.min];}),[15,45,40]);
+ await page.locator('#mainHumAxisLink').check();
+ assert.equal(await page.evaluate(()=>Chart.getChart('tempChartP11').scales.yHum.min),30);
+ await page.evaluate(()=>{const c=Chart.getChart('tempChartP01');c.zoomScale('yTemp',{min:22,max:32},'none');c.zoomScale('yHum',{min:50,max:70},'none');syncZoom(c);});
+ assert.deepEqual(await page.evaluate(()=>{const c=Chart.getChart('tempChartP11');return [c.scales.yTemp.min,c.scales.yTemp.max,c.scales.yHum.min,c.scales.yHum.max];}),[22,32,50,70]);
+ await page.locator('#mainTempAxisLink').uncheck();
+ assert.equal(await page.locator('[data-main-graph="tempChartP11"]').getByRole('button',{name:'縦軸反映',exact:true}).isEnabled(),true);
+ assert.equal(await page.locator('#humMinP11').isDisabled(),true);
+ await page.locator('#mainHumAxisLink').uncheck();
+ await page.locator('[data-main-graph="tempChartP01"]').screenshot({path:path.join(os.tmpdir(),'u-tech-combined-desktop-test.png')});
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
+ await page.locator('[data-main-graph="tempChartP11"]').screenshot({path:path.join(os.tmpdir(),'u-tech-combined-mobile-test.png')});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(e=>({id:e.id,cl:e.className,right:e.getBoundingClientRect().right})))));
+ await page.setViewportSize({width:1440,height:1000});
+
  assert(!requests.some(u=>/alert/.test(u.pathname)));
  assert.equal(await page.locator('input[name="rainfallCalculationMode"]').count(),3);
  await page.locator('#rainfallCollectorArea').evaluate(e=>e.value='100');
@@ -175,7 +196,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('[aria-controls="tab-maintenance"]').click();await page.waitForTimeout(700);
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
- await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});
+ await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000}).catch(async error=>{console.log('Mobile overflow',await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,items:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&e.getBoundingClientRect().width>0).slice(0,15).map(e=>({id:e.id,cl:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width}))})));throw error;});
  for(const [added,existing]of [['maintenanceTempChartP01','tempChartP02'],['maintenanceTempChartP11','tempChartP12']]){
   assert.deepEqual(await page.evaluate(([a,b])=>{const first=Chart.getChart(a),second=Chart.getChart(b);return [first.scales.x.min===second.scales.x.min,first.scales.x.max===second.scales.x.max];},[added,existing]),[true,true]);
  }

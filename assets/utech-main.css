@@ -565,7 +565,7 @@ body.data-export-active .control-panel {
 .status-group-current {
     border-color:#5f758b;
     background:#f8fafc;
-    max-width:248px;
+    max-width:280px;
 }
 
 
@@ -913,6 +913,10 @@ body.data-export-active .control-panel {
         max-width:calc(100vw - 24px);
     }
 
+    .status-group-current {
+        width:280px;
+    }
+
 
     .status-temp-grid:not(.ten-day-temp-grid) {
         grid-template-columns:60px repeat(3, minmax(0, 1fr));
@@ -1163,3 +1167,11 @@ body.data-export-active .control-panel {
 #tab-monitor [data-main-graph][hidden],
 #tab-monitor [data-main-info][hidden],
 #tab-monitor [data-main-info][hidden] + .status-row-break { display:none; }
+
+/* 統合温湿度カードの軸設定と連動チェックを枠内で折り返す。 */
+#tab-monitor .temp-hum-axis-control {flex-wrap:wrap;row-gap:4px;}
+@media (max-width:600px) {
+    #tab-monitor .grid {width:100%;}
+    #tab-monitor .temp-hum-axis-control .axis-range {display:inline-flex;}
+    #tab-monitor .temp-hum-axis-control .axis-input {width:44px !important;}
+}

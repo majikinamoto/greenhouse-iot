@@ -69,10 +69,6 @@ let tempChartP01;
 
 let tempChartP11;
 
-let humChartP01;
-
-let humChartP11;
-
 let co2Chart;
 
 let co2OutsideChart;
@@ -1078,8 +1074,6 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const tempHumChartGroups = [["tempChartP01", "tempChartP11"], ["humChartP01", "humChartP11"]];
-    const tempHumChartGroup = tempHumChartGroups.find(group=>group.includes(sourceChart.canvas.id));
     const co2ChartIds = ["co2Chart", "co2OutsideChart"];
     const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
     const co2DiffChartIds = ["co2DiffChart"];
@@ -1114,14 +1108,12 @@ function syncZoom(sourceChart){
                 chart.update("none");
             }
 
-            if(tempHumChartGroup && sourceChart.canvas.id === tempHumChartGroup[0] && isMainAxisLinked(sourceChart.canvas.id === 'tempChartP01' ? 'temperature' : 'humidity') && tempHumChartGroup.includes(chart.canvas.id) && sourceChart.scales.y){
-                const yRange = { min:sourceChart.scales.y.min, max:sourceChart.scales.y.max };
-                if(chart.zoomScale){
-                    chart.zoomScale("y", yRange, "none");
-                    if(chart.scales.yRight) chart.zoomScale("yRight", yRange, "none");
-                }else{
-                    setLinearYAxis(chart, yRange);
-                    chart.update("none");
+            if(sourceChart.canvas.id==='tempChartP01' && chart.canvas.id==='tempChartP11'){
+                for(const [key,axis] of [['temperature','yTemp'],['humidity','yHum']]){
+                    if(isMainAxisLinked(key)&&sourceChart.scales[axis]){
+                        const scale=sourceChart.scales[axis];
+                        chart.zoomScale(axis,{min:scale.min,max:scale.max},'none');
+                    }
                 }
             }
 
@@ -1691,10 +1683,8 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "maintenanceTempChartP01",
         "maintenanceTempChartP11",
         "tempChartP01",
-        "humChartP01",
         "tempChartP02",
         "tempChartP11",
-        "humChartP11",
         "tempChartP12",
         "outsideDiffChart",
         "mainVaporChart",
@@ -2208,9 +2198,9 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime,
 
 function getMainAxisLinkPairs(){
     return [
-        {key:'temperature', checkbox:'mainTempAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['tempMinP11','tempMaxP11']},
-        {key:'humidity', checkbox:'mainHumAxisLink', inside:humChartP01, outside:humChartP11, inputs:['humMinP11','humMaxP11']},
-        {key:'co2', checkbox:'mainCo2AxisLink', inside:co2Chart, outside:co2OutsideChart, inputs:['co2OutsideMin','co2OutsideMax']}
+        {key:'temperature', axis:'yTemp', checkbox:'mainTempAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['tempMinP11','tempMaxP11']},
+        {key:'humidity', axis:'yHum', checkbox:'mainHumAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['humMinP11','humMaxP11']},
+        {key:'co2', axis:'y', checkbox:'mainCo2AxisLink', inside:co2Chart, outside:co2OutsideChart, inputs:['co2OutsideMin','co2OutsideMax']}
     ];
 }
 
@@ -2221,8 +2211,10 @@ function isMainAxisLinked(key){
 
 function matchMainAxisLinks(){
     getMainAxisLinkPairs().forEach(pair=>{
-        if(!isMainAxisLinked(pair.key) || !pair.inside?.scales.y || !pair.outside) return;
-        setLinearYAxis(pair.outside,{min:pair.inside.scales.y.min,max:pair.inside.scales.y.max});
+        if(!isMainAxisLinked(pair.key) || !pair.inside?.scales[pair.axis] || !pair.outside) return;
+        const scale=pair.inside.scales[pair.axis];
+        if(pair.key==='co2')setLinearYAxis(pair.outside,{min:scale.min,max:scale.max});
+        else {pair.outside.options.scales[pair.axis].min=scale.min;pair.outside.options.scales[pair.axis].max=scale.max;}
         pair.outside.update('none');
     });
 }
@@ -2232,6 +2224,146 @@ function applySingleYAxis(chart, key, axisOverride){
 
     const axis = axisOverride || getSingleAxis(key);
     setLinearYAxis(chart, axis);
+
+    chart.update();
+}
+
+// メインとPlusメンテで共用する温湿度2軸グラフ。
+function setTempHumYAxis(chart, axis){
+    if(!chart || !chart.options || !chart.options.scales || !axis) return;
+
+    if(chart.options.scales.yHum){
+        chart.options.scales.yHum.min = axis.humMin;
+        chart.options.scales.yHum.max = axis.humMax;
+    }
+
+    if(chart.options.scales.yTemp){
+        chart.options.scales.yTemp.min = axis.tempMin;
+        chart.options.scales.yTemp.max = axis.tempMax;
+    }
+}
+
+function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
+
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+
+    destroyExistingChart(canvasId);
+
+    const axis = getTempHumAxis(pointId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+    const humColor = "rgb(0, 100, 255)";
+    const tempColor = "rgb(255, 0, 0)";
+    const humData = parsed
+        .filter(d=>d.hum !== null && !isNaN(d.hum))
+        .map(d=>({x:d.xValue,y:d.hum}));
+    const tempData = parsed
+        .filter(d=>d.temp !== null && !isNaN(d.temp))
+        .map(d=>({x:d.xValue,y:d.temp}));
+
+    if(!humData.length && !tempData.length) return null;
+
+    return new Chart(canvas,{
+        type:"line",
+        data:{
+            datasets:[
+                {
+                    label:"湿度 (%)",
+                    data:humData,
+                    yAxisID:"yHum",
+                    borderColor:humColor,
+                    backgroundColor:function(context){
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if(!chartArea){
+                            return "rgba(0, 100, 255, 0.45)";
+                        }
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, "rgba(0, 100, 255, 0.90)");
+                        gradient.addColorStop(0.08, "rgba(0, 100, 255, 0.45)");
+                        gradient.addColorStop(0.20, "rgba(0, 100, 255, 0.15)");
+                        gradient.addColorStop(0.35, "rgba(0, 100, 255, 0.00)");
+                        return gradient;
+                    },
+                    pointBackgroundColor:humColor,
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:true
+                },
+                {
+                    label:"温度 (℃)",
+                    data:tempData,
+                    yAxisID:"yTemp",
+                    borderColor:tempColor,
+                    backgroundColor:function(context){
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if(!chartArea){
+                            return "rgba(255, 0, 0, 0.25)";
+                        }
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, "rgba(255, 0, 0, 0.85)");
+                        gradient.addColorStop(0.15, "rgba(255, 0, 0, 0.45)");
+                        gradient.addColorStop(0.50, "rgba(255, 0, 0, 0.12)");
+                        gradient.addColorStop(1.00, "rgba(255, 0, 0, 0.00)");
+                        return gradient;
+                    },
+                    pointBackgroundColor:tempColor,
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:true
+                }
+            ]
+        },
+        options:{
+            ...baseOptions(displayMinTime,maxTime),
+            scales:{
+                ...baseOptions(displayMinTime,maxTime).scales,
+yHum:{
+    position:"left",
+    min:axis.humMin,
+    max:axis.humMax,
+    ticks:{
+        stepSize:10,
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"%",
+        color:"#000"
+    },
+    grid:{
+        borderColor:humColor
+    }
+},
+yTemp:{
+    position:"right",
+    min:axis.tempMin,
+    max:axis.tempMax,
+    ticks:{
+        stepSize:5,
+        color:"#000"
+    },
+    title:{
+        display:true,
+        text:"℃",
+        color:"#000"
+    },
+    grid:{
+        borderColor:tempColor
+    }
+}            }
+        }
+    });
+}
+
+function applyTempHumYAxis(chart, pointId){
+    if(!chart) return;
+
+    const axis = getTempHumAxis(pointId);
+    setTempHumYAxis(chart, axis);
 
     chart.update();
 }

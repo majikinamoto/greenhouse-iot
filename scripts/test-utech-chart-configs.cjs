@@ -9,9 +9,9 @@ for(const [key,path]of Object.entries(paths)){
 function extract(source,name){
  const start=source.indexOf('function '+name+'(');
  if(start<0)throw Error('Missing function '+name);
- const end=source.indexOf('\n}',start);
- if(end<0)throw Error('Missing function end '+name);
- return source.slice(start,end+2);
+ let end=source.indexOf('\n}',start);
+ while(end>=0){const candidate=source.slice(start,end+2);try{new Function('return ('+candidate+');');return candidate;}catch{}end=source.indexOf('\n}',end+2);}
+ throw Error('Missing function end '+name);
 }
 function compile(sources,file,name,{mobile=false,missingCanvas=false}={}){
  const events=[];
@@ -46,13 +46,13 @@ const rows=[{xValue:+min-1,temp:29,hum:65,co2:420,solar:100,volt:12.1,dew:21},
  {xValue:+max+1,temp:32,hum:80,co2:500,solar:400,volt:13.5,dew:24},
  {xValue:+min+1,temp:null,hum:NaN,co2:null,solar:null,volt:null,dew:null}];
 const cases=[];
-for(const measurement of ['temperature','humidity'])for(const mobile of [false,true])cases.push({file:'main',name:'createTempHumSingleChart',args:['test',rows,min,max,'P01',measurement],settings:{mobile}});
+for(const mobile of [false,true])cases.push({file:'shared',beforeFile:'plus',name:'createTempHumChart',args:['test',rows,min,max,'P01'],settings:{mobile}});
 for(const key of ['solar','co2','co2Outside','volt','dew'])for(const mobile of [false,true])cases.push({file:'shared',name:'createSingleChart',args:['test',rows,key,key,key==='volt'?'V':'unit',min,max,{min:0,max:100}],settings:{mobile}});
 cases.push({file:'plus',name:'createWbgtGlobeChart',args:[rows,min,max]},{file:'plus',name:'createWbgtChart',args:[[{x:+min,y:28},{x:+max,y:30}],min,max]});
 let checked=0;
 for(const item of cases){
  for(const missingCanvas of [false,true]){
-  const old=compile(before,item.file,item.name,{...item.settings,missingCanvas}).run(item.args);
+  const old=compile(before,item.beforeFile||item.file,item.name,{...item.settings,missingCanvas}).run(item.args);
   const current=compile(after,item.file,item.name,{...item.settings,missingCanvas}).run(item.args);
   assert.deepEqual(normalize(current),normalize(old),item.name+' '+item.args[2]);
   if(current.chart){
@@ -65,7 +65,8 @@ for(const item of cases){
   checked++;
  }
 }
-for(const [file,name,args]of [['main','createTempHumSingleChart',['test',[],min,max,'P01','temperature']],['shared','createSingleChart',['test',[],'volt','電圧','V',min,max]],['plus','createWbgtGlobeChart',[[],min,max]],['plus','createWbgtChart',[[],min,max]]]){
+for(const [file,name,args]of [['shared','createSingleChart',['test',[],'volt','電圧','V',min,max]],['plus','createWbgtGlobeChart',[[],min,max]],['plus','createWbgtChart',[[],min,max]]]){
  assert.deepEqual(compile(after,file,name).run(args),compile(before,file,name).run(args));checked++;
 }
+assert.deepEqual(compile(after,'shared','createTempHumChart').run(['test',[],min,max,'P01']),compile(before,'plus','createTempHumChart').run(['test',[],min,max,'P01']));
 console.log('Chart config equivalence passed: '+checked+' cases, including axes, datasets, plugins, callbacks, gradients, mobile ranges and empty/missing-canvas behavior.');
