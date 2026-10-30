@@ -14,7 +14,15 @@ const server=http.createServer((req,res)=>{
   }
   if(url.pathname==='/get_drainage_data.php'){
    const volume=Number(url.searchParams.get('coefficient'));
-   return res.end(JSON.stringify({success:true,display_start:0,daily_totals:{today:3*volume,yesterday:0,day_before_yesterday:null},hourly:[{x:1,hour_start:'2026-10-30 01:00:00',date_key:'2026-10-30',hourly_rainfall:volume,daily_cumulative:volume,missing:false},{x:2,hour_start:'2026-10-30 02:00:00',date_key:'2026-10-30',hourly_rainfall:2*volume,daily_cumulative:3*volume,missing:false}]}));
+   const start=Date.parse('2026-10-27T12:30:00+09:00'),end=Date.parse('2026-10-30T12:30:00+09:00');
+   const hourly=[];let cumulative=0,lastDate='';
+   for(let x=start-1800000;x<=end;x+=3600000){
+    const stamp=new Date(x+9*3600000).toISOString().slice(0,19).replace('T',' '),date=stamp.slice(0,10);
+    if(date!==lastDate){cumulative=0;lastDate=date;}
+    const missing=stamp==='2026-10-29 10:00:00';if(!missing)cumulative+=volume;
+    hourly.push({x,hour_start:stamp,date_key:date,hourly_rainfall:missing?null:volume,daily_cumulative:missing?null:cumulative,missing});
+   }
+   return res.end(JSON.stringify({success:true,display_start:start,end,daily_totals:{today:3*volume,yesterday:0,day_before_yesterday:null},hourly}));
   }
   if(url.pathname==='/get_data.php'){
    const end=url.searchParams.get('end')?new Date(url.searchParams.get('end').replace(' ','T')):new Date();
@@ -121,13 +129,26 @@ const server=http.createServer((req,res)=>{
  for(let i=1;i<=3;i++){assert.equal(await page.locator('#drainagePoint'+i).inputValue(),'P'+(40+i));await page.locator('#drainageVolume'+i).fill('5');}
  await page.getByRole('button',{name:'表示・更新',exact:true}).click();
  await page.waitForFunction(()=>!!Chart.getChart('drainageChart3'));
- assert.deepEqual(await page.evaluate(()=>Chart.getChart('drainageChart1').data.datasets[0].data),[0.005,0.01]);
+ assert.equal(await page.evaluate(()=>Chart.getChart('drainageChart1').data.datasets[0].data[0].y),0.005);
+ assert.deepEqual(await page.evaluate(()=>{const c=Chart.getChart('drainageChart1');return [c.scales.y.position,c.scales.daily.position,c.scales.x.type,c.data.datasets.length];}),['left','right','linear',5]);
+ assert.equal(await page.evaluate(()=>{const lines=Chart.getChart('drainageChart1').data.datasets.slice(1);return lines.every(line=>new Set(line.data.map(p=>new Date(p.x+9*3600000).toISOString().slice(0,10))).size===1)&&lines.some(line=>line.data.some(p=>p.y===null));}),true);
+ assert.deepEqual(await page.evaluate(()=>{const c=Chart.getChart('drainageChart1'),times=[];drainageMidnightPlugin.afterDraw({scales:{x:{min:c.scales.x.min,max:c.scales.x.max,getPixelForValue:t=>{times.push(t);return 10;}}},chartArea:{left:0,right:20,top:0,bottom:20},ctx:{save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}}});return times.map(t=>new Date(t).toISOString());}),['2026-10-27T15:00:00.000Z','2026-10-28T15:00:00.000Z','2026-10-29T15:00:00.000Z']);
+ assert.equal(await page.evaluate(()=>{const c=Chart.getChart('drainageChart1');return c.scales.x.max-c.scales.x.min;}),72*3600000);
+ assert.equal(await page.locator('.drainage-card').first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),400);
+ assert.equal(requests.filter(u=>u.pathname==='/get_drainage_data.php').every(u=>u.searchParams.get('display_hours')==='72'),true);
+ const hover=await page.evaluate(()=>{const c=Chart.getChart('drainageChart1');return {x:c.chartArea.left+(c.chartArea.right-c.chartArea.left)*0.4,y:c.chartArea.top+40};});
+ const bounds=await page.locator('#drainageChart1').boundingBox();await page.mouse.move(bounds.x+hover.x,bounds.y+hover.y);
+ await page.waitForFunction(()=>Chart.getChart('drainageChart1').tooltip.getActiveElements().length===2);
+ assert.equal(await page.evaluate(()=>[1,2,3].every(i=>Chart.getChart('drainageChart'+i).tooltip.getActiveElements().length===2)),true);
+ assert.equal(await page.evaluate(()=>getChartSyncGroup(Chart.getChart('drainageChart1'))),'drainage');
+ await page.screenshot({path:path.join(os.tmpdir(),'u-tech-drainage-desktop-test.png'),fullPage:true});
  assert.match(await page.locator('#drainageStatus1').textContent(),/0.015 L/);
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAINT02');
  await page.reload();await page.waitForFunction(()=>!!Chart.getChart('drainageChart3'));
  assert.equal(await page.locator('#drainageUserId').inputValue(),'DRAIN07');
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.screenshot({path:path.join(os.tmpdir(),'u-tech-drainage-mobile-test.png'),fullPage:true});
  await page.setViewportSize({width:1440,height:1000});
  await page.locator('[aria-controls="tab-maintenance"]').click();await page.waitForTimeout(700);
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});

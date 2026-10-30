@@ -93,9 +93,9 @@ let reviewCharts = [];
 
 let syncingZoom = false;
 
-let syncedCrosshairValues = { main:null, analysis:null, wbgt:null, maintenance:null, review:null };
+let syncedCrosshairValues = { main:null, drainage:null, analysis:null, wbgt:null, maintenance:null, review:null };
 
-let syncedCrosshairLatest = { main:false, analysis:false, wbgt:false, maintenance:false, review:false };
+let syncedCrosshairLatest = { main:false, drainage:false, analysis:false, wbgt:false, maintenance:false, review:false };
 
 let lastTouchChart = null;
 
@@ -638,6 +638,7 @@ const syncedCrosshairPlugin = {
 };
 
 function getChartSyncGroup(chart){
+    if(chart?.canvas?.id.startsWith("drainageChart")) return "drainage";
     if(chart && chart.canvas && chart.canvas.id.indexOf("review") === 0) return "review";
     if(chart && chart.canvas && maintenanceCanvasIdSet.has(chart.canvas.id)) return "maintenance";
     if(chart && chart.canvas && chart.canvas.id.indexOf("analysis") === 0) return "analysis";
@@ -653,6 +654,7 @@ function getMainSyncedTooltipCharts(){
 
 function getSyncedTooltipCharts(sourceChart){
     const syncGroup = getChartSyncGroup(sourceChart);
+    if(syncGroup === "drainage") return [1,2,3].map(i=>Chart.getChart("drainageChart"+i)).filter(Boolean);
     if(syncGroup === "review"){
         return reviewCharts;
     }
@@ -667,6 +669,7 @@ function getSyncedTooltipCharts(sourceChart){
 }
 
 function getSyncedTooltipChartsByGroup(syncGroup){
+    if(syncGroup === "drainage") return [1,2,3].map(i=>Chart.getChart("drainageChart"+i)).filter(Boolean);
     if(syncGroup === "review") return reviewCharts;
     if(syncGroup === "maintenance") return maintenanceCharts;
     if(syncGroup === "analysis") return getAnalysisCharts();

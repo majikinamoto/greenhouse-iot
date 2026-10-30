@@ -4066,12 +4066,67 @@ async function saveAlertSetting(){
 }
 
 // 排液はP41と同じ集計規則で取得する。APIのmLを表示時にLへ換算する。
+// 日付の境界は端末のタイムゾーンによらず日本時間0時に描く。
+const drainageMidnightPlugin = {
+ id:'drainageMidnight',
+ afterDraw(chart){
+  const x=chart.scales.x,area=chart.chartArea;if(!x||!area)return;
+  const day=86400000,offset=9*3600000;
+  const ctx=chart.ctx;ctx.save();ctx.strokeStyle='rgba(0,0,0,0.28)';ctx.lineWidth=1;
+  for(let t=Math.ceil((x.min+offset)/day)*day-offset;t<=x.max;t+=day){
+   const pixel=x.getPixelForValue(t);
+   if(pixel<area.left||pixel>area.right)continue;
+   ctx.beginPath();ctx.moveTo(pixel,area.top);ctx.lineTo(pixel,area.bottom);ctx.stroke();
+  }
+  ctx.restore();
+ }
+};
+
+function createDrainageChart(canvas,result){
+ const groups={};
+ const hourly=result.hourly;
+ for(const row of hourly){
+  (groups[row.date_key]??=[]).push({x:Number(row.x),y:row.missing?null:row.daily_cumulative/1000});
+ }
+ // 表示窓が日の途中から始まっても、その時点の既知の日積算を引き継ぐ。
+ if(result.display_start_date_key&&result.display_start_daily_cumulative!=null){
+  (groups[result.display_start_date_key]??=[]).push({x:Number(result.display_start),y:result.display_start_daily_cumulative/1000});
+ }
+ const lines=Object.keys(groups).sort().map((date,index)=>({
+  type:'line',label:'日積算排液量 (L)',data:groups[date].sort((a,b)=>a.x-b.x),
+  yAxisID:'daily',borderColor:'rgb(0, 75, 145)',backgroundColor:'rgb(0, 75, 145)',
+  borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:0,spanGaps:false,fill:false,order:1,showInLegend:index===0
+ }));
+ return new Chart(canvas,{
+  type:'bar',plugins:[drainageMidnightPlugin],data:{datasets:[{
+   label:'1時間排液量 (L)',data:hourly.map(row=>({x:Number(row.x),y:row.missing?null:row.hourly_rainfall/1000})),
+   backgroundColor:'rgba(54, 162, 235, 0.65)',borderColor:'rgb(54, 162, 235)',borderWidth:1,
+   barPercentage:0.88,categoryPercentage:1,yAxisID:'y',order:2,showInLegend:true
+  },...lines]},options:{
+   parsing:false,responsive:true,maintainAspectRatio:false,animation:false,
+   interaction:{mode:'nearest',axis:'x',intersect:false},
+   plugins:{zoom:{zoom:{wheel:{enabled:false},pinch:{enabled:!isMobileView()},drag:{enabled:!isMobileView(),backgroundColor:'rgba(30,120,255,0.35)',borderColor:'rgba(30,120,255,0.8)',borderWidth:1},mode:'xy'}},midnightLinePlugin:false,rainfallTooltipPlugin:false,crosshair:{...baseOptions(new Date(result.display_start),new Date(result.end)).plugins.crosshair,sync:{enabled:false}},
+    legend:{labels:{filter:(item,data)=>data.datasets[item.datasetIndex].showInLegend!==false,sort:(a,b)=>a.datasetIndex-b.datasetIndex}},
+    tooltip:baseOptions(new Date(result.display_start),new Date(result.end)).plugins.tooltip
+   },
+   scales:{
+    x:{...baseOptions(new Date(result.display_start),new Date(result.end)).scales.x,
+     afterBuildTicks(scale){const ticks=[];for(let t=Math.ceil(scale.min/3600000)*3600000;t<=scale.max;t+=3600000)ticks.push({value:t});scale.ticks=ticks;},
+     ticks:{color:'#000',maxRotation:0,autoSkip:true,maxTicksLimit:8,callback(value){const p=getJapanDateParts(new Date(value));return [String(p.hour).padStart(2,'0')+'時',String(p.minute).padStart(2,'0')+'分'];}}
+    },
+    y:{position:'left',beginAtZero:true,ticks:{color:'#000'},title:{display:true,text:'1時間排液量［L］'}},
+    daily:{position:'right',beginAtZero:true,ticks:{color:'#000'},title:{display:true,text:'日積算排液量［L］'},grid:{drawOnChartArea:false}}
+   }
+  }
+ });
+}
+
 let drainageRequestSequence = 0;
 async function loadDrainageData(){
  const sequence=++drainageRequestSequence;
  savePlusTab('drainage');
  const userId=getPlusUserId('drainage');
- const hours=document.getElementById('drainageHours').value;
+ const hours='72';
  await Promise.all([1,2,3].map(async i=>{
   const status=document.getElementById('drainageStatus'+i);
   const canvas=document.getElementById('drainageChart'+i);
@@ -4082,7 +4137,7 @@ async function loadDrainageData(){
    status.textContent='user_id、point_id（Pと2桁の数字）、0より大きい1転倒水量を入力してください。';return;
   }
   const key=JSON.stringify([userId,point,volume,hours]);
-  const current=()=>sequence===drainageRequestSequence&&key===JSON.stringify([getPlusUserId('drainage'),document.getElementById('drainagePoint'+i).value.trim().toUpperCase(),Number(document.getElementById('drainageVolume'+i).value),document.getElementById('drainageHours').value]);
+  const current=()=>sequence===drainageRequestSequence&&key===JSON.stringify([getPlusUserId('drainage'),document.getElementById('drainagePoint'+i).value.trim().toUpperCase(),Number(document.getElementById('drainageVolume'+i).value),'72']);
   status.textContent='取得中…';
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
   try{
@@ -4093,11 +4148,7 @@ async function loadDrainageData(){
    const liters=value=>value==null?'—':(value/1000).toLocaleString('ja-JP',{maximumFractionDigits:5})+' L';
    status.textContent=point+' ｜ 今日：'+liters(result.daily_totals.today)+' ／ 昨日：'+liters(result.daily_totals.yesterday)+' ／ 一昨日：'+liters(result.daily_totals.day_before_yesterday)+'（欠測を除く既知の合計）';
    if(!result.hourly.some(row=>!row.missing)){status.textContent=point+'：有効な転倒数データがありません。';return;}
-   const rows=result.hourly.filter(row=>row.x>=result.display_start);
-   new Chart(canvas,{type:'bar',data:{labels:rows.map(row=>row.hour_start.slice(5,16)),datasets:[
-    {label:'1時間排液量［L］',data:rows.map(row=>row.missing?null:row.hourly_rainfall/1000),backgroundColor:'#4d9dc3',yAxisID:'y'},
-    {type:'line',label:'日積算排液量［L］',data:rows.map((row,index)=>row.missing?null:{x:index,y:row.daily_cumulative/1000}),borderColor:'#dc8735',backgroundColor:'#dc8735',pointRadius:1,yAxisID:'daily',spanGaps:false,segment:{borderColor:ctx=>rows[ctx.p0DataIndex]?.date_key!==rows[ctx.p1DataIndex]?.date_key?'transparent':'#dc8735'}}
-   ]},options:{responsive:true,maintainAspectRatio:false,animation:false,scales:{y:{beginAtZero:true,title:{display:true,text:'1時間排液量［L］'}},daily:{position:'right',beginAtZero:true,title:{display:true,text:'日積算排液量［L］'},grid:{drawOnChartArea:false}},x:{ticks:{maxTicksLimit:8}}}}});
+   createDrainageChart(canvas,result);
   }catch(error){if(current())status.textContent=point+'：'+(error.name==='AbortError'?'取得がタイムアウトしました':error.message);}
   finally{clearTimeout(timeout);}
  }));
