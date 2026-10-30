@@ -4094,7 +4094,44 @@ function syncDrainageZoom(source){
 }
 
 function resetDrainageZoom(){
- for(const i of [1,2,3])Chart.getChart('drainageChart'+i)?.resetZoom('none');
+ for(const i of [1,2,3]){
+  const chart=Chart.getChart('drainageChart'+i);
+  if(chart){chart.resetZoom('none');setDrainageAxisLimits(chart);}
+ }
+}
+
+function setDrainageAxisLimits(chart){
+ const settings=plusRead('drainageAxes',{});
+ for(const [axis,prefix] of [['y','Hourly'],['daily','Daily']]){
+  for(const bound of ['min','max']){
+   const value=settings[prefix+bound];
+   if(Number.isFinite(value))chart.options.scales[axis][bound]=value;
+   else delete chart.options.scales[axis][bound];
+  }
+ }
+ chart.update('none');
+}
+
+function applyDrainageAxes(auto=false){
+ const settings={};
+ const message=document.getElementById('drainageAxisMessage');
+ for(const prefix of ['Hourly','Daily']){
+  for(const bound of ['min','max']){
+   const input=document.getElementById('drainage'+prefix+bound);
+   const text=auto?'':input.value.trim();
+   if(text){
+    const value=Number(text);
+    if(!Number.isFinite(value)||value<0){message.textContent='縦軸には0以上の数値を入力してください。';return;}
+    settings[prefix+bound]=value;
+   }
+  }
+  const min=settings[prefix+'min']??0,max=settings[prefix+'max'];
+  if(max!==undefined&&max<=min){message.textContent='最大値は最小値より大きくしてください。';return;}
+ }
+ if(auto)for(const prefix of ['Hourly','Daily'])for(const bound of ['min','max'])document.getElementById('drainage'+prefix+bound).value='';
+ plusWrite('drainageAxes',settings);savePlusTab('drainage');
+ for(const i of [1,2,3]){const chart=Chart.getChart('drainageChart'+i);if(chart)setDrainageAxisLimits(chart);}
+ message.textContent=auto?'縦軸を自動調節に戻しました。':'縦軸を3地点へ反映しました。';
 }
 
 function createDrainageChart(canvas,result){
@@ -4112,7 +4149,7 @@ function createDrainageChart(canvas,result){
   yAxisID:'daily',borderColor:'rgb(0, 75, 145)',backgroundColor:'rgb(0, 75, 145)',
   borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:0,spanGaps:false,fill:false,order:1,showInLegend:index===0
  }));
- return new Chart(canvas,{
+ const chart=new Chart(canvas,{
   type:'bar',plugins:[drainageMidnightPlugin],data:{datasets:[{
    label:'1時間排液量 (L)',data:hourly.map(row=>({x:Number(row.x),y:row.missing?null:row.hourly_rainfall/1000})),
    backgroundColor:'rgba(54, 162, 235, 0.65)',borderColor:'rgb(54, 162, 235)',borderWidth:1,
@@ -4134,6 +4171,8 @@ function createDrainageChart(canvas,result){
    }
   }
  });
+ setDrainageAxisLimits(chart);
+ return chart;
 }
 
 let drainageRequestSequence = 0;

@@ -1291,3 +1291,6 @@
     .utech-plus .grid { width:100%; }
     .utech-plus .grid > div { min-width:0; }
 }
+
+.drainage-axis-controls > div {display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+#tab-drainage .drainage-axis-controls input {width:76px;}
