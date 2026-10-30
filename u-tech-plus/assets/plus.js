@@ -4082,6 +4082,21 @@ const drainageMidnightPlugin = {
  }
 };
 
+function syncDrainageZoom(source){
+ for(const i of [1,2,3]){
+  const chart=Chart.getChart('drainageChart'+i);
+  if(!chart||chart===source)continue;
+  for(const axis of ['x','y','daily']){
+   const scale=source.scales[axis];
+   if(scale)chart.zoomScale(axis,{min:scale.min,max:scale.max},'none');
+  }
+ }
+}
+
+function resetDrainageZoom(){
+ for(const i of [1,2,3])Chart.getChart('drainageChart'+i)?.resetZoom('none');
+}
+
 function createDrainageChart(canvas,result){
  const groups={};
  const hourly=result.hourly;
@@ -4105,7 +4120,7 @@ function createDrainageChart(canvas,result){
   },...lines]},options:{
    parsing:false,responsive:true,maintainAspectRatio:false,animation:false,
    interaction:{mode:'nearest',axis:'x',intersect:false},
-   plugins:{zoom:{zoom:{wheel:{enabled:false},pinch:{enabled:!isMobileView()},drag:{enabled:!isMobileView(),backgroundColor:'rgba(30,120,255,0.35)',borderColor:'rgba(30,120,255,0.8)',borderWidth:1},mode:'xy'}},midnightLinePlugin:false,rainfallTooltipPlugin:false,crosshair:{...baseOptions(new Date(result.display_start),new Date(result.end)).plugins.crosshair,sync:{enabled:false}},
+   plugins:{zoom:{zoom:{wheel:{enabled:false},pinch:{enabled:!isMobileView()},drag:{enabled:!isMobileView(),backgroundColor:'rgba(30,120,255,0.35)',borderColor:'rgba(30,120,255,0.8)',borderWidth:1},mode:'xy',onZoomComplete:({chart})=>syncDrainageZoom(chart)}},midnightLinePlugin:false,rainfallTooltipPlugin:false,crosshair:{...baseOptions(new Date(result.display_start),new Date(result.end)).plugins.crosshair,sync:{enabled:false}},
     legend:{labels:{filter:(item,data)=>data.datasets[item.datasetIndex].showInLegend!==false,sort:(a,b)=>a.datasetIndex-b.datasetIndex}},
     tooltip:baseOptions(new Date(result.display_start),new Date(result.end)).plugins.tooltip
    },

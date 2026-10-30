@@ -142,6 +142,14 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>[1,2,3].every(i=>Chart.getChart('drainageChart'+i).tooltip.getActiveElements().length===2)),true);
  assert.equal(await page.evaluate(()=>getChartSyncGroup(Chart.getChart('drainageChart1'))),'drainage');
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-drainage-desktop-test.png'),fullPage:true});
+ // マウスで範囲を選択し、時間・左右軸が3地点で連動することを確認する。
+ const drag=await page.evaluate(()=>{const c=Chart.getChart('drainageChart1'),a=c.chartArea;return {x:a.left+20,y:a.top+30,endX:a.right-30,endY:a.bottom-35};});
+ await page.mouse.move(bounds.x+drag.x,bounds.y+drag.y);await page.mouse.down();
+ await page.mouse.move(bounds.x+drag.endX,bounds.y+drag.endY,{steps:8});await page.mouse.up();
+ await page.waitForFunction(()=>{const c=Chart.getChart('drainageChart1');return c.scales.x.max-c.scales.x.min<72*3600000;});
+ assert.equal(await page.evaluate(()=>{const charts=[1,2,3].map(i=>Chart.getChart('drainageChart'+i));return ['x','y','daily'].every(axis=>charts.every(c=>c.scales[axis].min===charts[0].scales[axis].min&&c.scales[axis].max===charts[0].scales[axis].max));}),true);
+ await page.locator('.drainage-card').nth(1).getByRole('button',{name:'ズームリセット'}).click();
+ assert.equal(await page.evaluate(()=>[1,2,3].every(i=>{const c=Chart.getChart('drainageChart'+i);return c.scales.x.max-c.scales.x.min===72*3600000&&c.scales.y.min===0&&c.scales.daily.min===0;})),true);
  assert.match(await page.locator('#drainageStatus1').textContent(),/0.015 L/);
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAINT02');
  await page.reload();await page.waitForFunction(()=>!!Chart.getChart('drainageChart3'));
