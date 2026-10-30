@@ -1,5 +1,7 @@
 // U-Tech Plus専用：アラート・分析・WBGT・過去データ・メンテ。
 // utech-shared.jsの後に読み込む。5タブの初期化・ID復元は末尾のDOMContentLoadedを参照する。
+let maintenanceTempChartP01;
+let maintenanceTempChartP11;
 let tempChartP02;
 
 let tempChartP12;
@@ -2157,6 +2159,8 @@ function applyMaintenanceMobileChartRanges(startTime, endTime){
 
 function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime, voltageRange){
     const configs = [
+        ["maintenanceTempChartP01", "tempP01", ["P01"]],
+        ["maintenanceTempChartP11", "tempP11", ["P11"]],
         ["tempChartP12", "tempP12", ["P12"]],
         ["diffChartP11P12", "diffP11P12", ["P11", "P12"]],
         ["tempChartP02", "tempP02", ["P02"]],
@@ -2249,6 +2253,12 @@ async function loadMaintenanceData(rangeOverride){
 
         destroyMaintenanceCharts();
 
+        maintenanceTempChartP01 = configureMaintenanceChart(
+            createTempHumChart("maintenanceTempChartP01", parsed.P01, range.startTime, range.endTime, "P01")
+        );
+        maintenanceTempChartP11 = configureMaintenanceChart(
+            createTempHumChart("maintenanceTempChartP11", parsed.P11, range.startTime, range.endTime, "P11")
+        );
         tempChartP02 = configureMaintenanceChart(
             createTempHumChart("tempChartP02", parsed.P02, range.startTime, range.endTime, "P02")
         );
@@ -2317,6 +2327,8 @@ async function loadMaintenanceData(rangeOverride){
         );
 
         const chartMap = {
+            tempP01:maintenanceTempChartP01,
+            tempP11:maintenanceTempChartP11,
             tempP12:tempChartP12,
             diffP11P12:diffChartP11P12,
             tempP02:tempChartP02,
@@ -3085,7 +3097,7 @@ function syncMaintenanceZoom(sourceChart){
 
     try{
         const xRange = { min:sourceChart.scales.x.min, max:sourceChart.scales.x.max };
-        const tempHumChartIds = ["tempChartP02", "tempChartP12"];
+        const tempHumChartIds = ["maintenanceTempChartP01", "tempChartP02", "maintenanceTempChartP11", "tempChartP12"];
         const co2ChartIds = ["co2ChartP22", "co2ChartP27"];
         const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
         const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
@@ -3153,6 +3165,8 @@ function destroyMaintenanceCharts(){
         if(chart) chart.destroy();
     });
 
+    maintenanceTempChartP01 = null;
+    maintenanceTempChartP11 = null;
     tempChartP02 = null;
     diffChart = null;
     tempChartP12 = null;

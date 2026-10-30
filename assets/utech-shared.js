@@ -140,6 +140,8 @@ let voltAxisMin = 11;
 let voltAxisMax = 14;
 
 const maintenanceCanvasIds = [
+    "maintenanceTempChartP01",
+    "maintenanceTempChartP11",
     "tempChartP12",
     "diffChartP11P12",
     "tempChartP02",
@@ -1683,6 +1685,8 @@ function setLinearYAxis(chart, axis){
 
 function getChartDisplayMinTime(canvasId, minTime, maxTime){
     const mobile24HourCharts = [
+        "maintenanceTempChartP01",
+        "maintenanceTempChartP11",
         "tempChartP01",
         "humChartP01",
         "tempChartP02",

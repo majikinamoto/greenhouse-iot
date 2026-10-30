@@ -514,6 +514,16 @@
 <div class="grid">
 
     <div>
+        <h4><span>ハウス内（P01）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP01" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP01" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP01" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP01" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(maintenanceTempChartP01,'P01')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="maintenanceTempChartP01"></canvas></div>
+    </div>
+
+    <div>
         <h4><span>ハウス内（P02）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
             <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP02" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP02" value="100"></span>
@@ -531,6 +541,16 @@
             <button onclick="applyDiffYAxis(diffChart)">縦軸反映</button>
         </div>
         <div class="chart-container"><canvas id="diffChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>外気（P11）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control temp-hum-axis-control">
+            <span class="axis-range"><span class="axis-label-hum">湿度軸：</span><input class="axis-input humidity-axis-input" type="number" id="humMinP11" value="40"><span>～</span><input class="axis-input humidity-axis-input" type="number" id="humMaxP11" value="100"></span>
+            <span class="axis-range"><span class="axis-label-temp">温度軸：</span><input class="axis-input" type="number" id="tempMinP11" value="20"><span>～</span><input class="axis-input" type="number" id="tempMaxP11" value="40"></span>
+            <button class="temp-hum-axis-apply-button" onclick="applyTempHumYAxis(maintenanceTempChartP11,'P11')">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="maintenanceTempChartP11"></canvas></div>
     </div>
 
     <div>

@@ -42,6 +42,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('#userId').fill('MAIN01');await page.getByRole('button',{name:'表示',exact:true}).first().click();await page.waitForTimeout(1600);
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP01')),true);
  assert(!requests.some(u=>/alert/.test(u.pathname)));
+ const plusRequestStart=requests.length;
  await page.getByRole('button',{name:'U-Tech Plusへ移動',exact:true}).click();await page.waitForTimeout(1800);
  assert.equal(await page.locator('.tab-button').count(),5);
  assert.equal(await page.locator('.tab-panel.active').getAttribute('id'),'tab-maintenance');
@@ -54,6 +55,22 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>typeof updateFarmCalendarInfo),'undefined');
  assert.equal(await page.evaluate(()=>typeof calculateSunTime),'function');
  assert.equal(await page.evaluate(()=>!!Chart.getChart('tempChartP02')),true);
+ assert.deepEqual(await page.locator('#tab-maintenance .grid > div h4 > span').evaluateAll(elements=>elements.slice(0,6).map(e=>e.textContent)),
+  ['ハウス内（P01）','ハウス内（P02）','ハウス内（P01−P02_差）','外気（P11）','外気（P12）','外気（P11−P12_差）']);
+ for(const id of ['maintenanceTempChartP01','maintenanceTempChartP11']){
+  assert.equal(await page.evaluate(id=>Chart.getChart(id).data.datasets.length,id),2);
+ }
+ for(const point of ['P01','P11'])assert.equal(requests.slice(plusRequestStart).filter(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')===point).length,1);
+ await page.locator('#tempMinP01').fill('15');await page.locator('#tempMaxP01').fill('45');
+ await page.locator('#maintenanceTempChartP01').locator('..').locator('..').getByRole('button',{name:'縦軸反映',exact:true}).click();
+ assert.deepEqual(await page.evaluate(()=>{const c=Chart.getChart('maintenanceTempChartP01');return [c.options.scales.yTemp.min,c.options.scales.yTemp.max];}),[15,45]);
+ await page.evaluate(()=>{const c=Chart.getChart('maintenanceTempChartP01');c.zoomScale('yTemp',{min:22,max:32},'none');syncMaintenanceZoom(c);});
+ for(const id of ['tempChartP02','maintenanceTempChartP11','tempChartP12'])assert.equal(await page.evaluate(id=>Chart.getChart(id).options.scales.yTemp.min,id),22);
+ await page.locator('#maintenanceTempChartP01').locator('..').locator('..').getByRole('button',{name:'ズームリセット',exact:true}).click();
+ await page.locator('#maintenanceRangeCustom').check();
+ await page.getByRole('button',{name:'表示する',exact:true}).click();
+ await page.waitForFunction(()=>{const r=getMaintenanceRange().range;return ['maintenanceTempChartP01','maintenanceTempChartP11'].every(id=>{const c=Chart.getChart(id);return c&&c.scales.x.min===+r.startTime&&c.scales.x.max===+r.endTime;});});
+ await page.getByRole('button',{name:'最新72時間へ戻す',exact:true}).click();await page.waitForTimeout(900);
  const voltageRequest=requests.findLast(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P91');
  assert.equal(new Date(voltageRequest.searchParams.get('end').replace(' ','T'))-new Date(voltageRequest.searchParams.get('start').replace(' ','T')),30*86400000);
  await page.locator('#maintenanceUserId').fill('MAINT02');await page.locator('#tab-maintenance .plus-user-controls button').click();await page.waitForTimeout(1000);
@@ -75,6 +92,9 @@ const server=http.createServer((req,res)=>{
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
  await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});
+ for(const [added,existing]of [['maintenanceTempChartP01','tempChartP02'],['maintenanceTempChartP11','tempChartP12']]){
+  assert.deepEqual(await page.evaluate(([a,b])=>{const first=Chart.getChart(a),second=Chart.getChart(b);return [first.scales.x.min===second.scales.x.min,first.scales.x.max===second.scales.x.max];},[added,existing]),[true,true]);
+ }
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-mobile-test.png'),fullPage:false});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,
   JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,6).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right})))));
@@ -97,6 +117,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await blank.locator('#maintenanceUserId').inputValue(),'');
  await blank.locator('#maintenanceUserId').fill('EMPTY');await blank.locator('#tab-maintenance .plus-user-controls button').click();await blank.waitForTimeout(600);
  assert.equal(await blank.evaluate(()=>!!Chart.getChart('tempChartP02')),false);
+ for(const id of ['maintenanceTempChartP01','maintenanceTempChartP11'])assert.equal(await blank.evaluate(id=>!!Chart.getChart(id),id),false);
  await empty.close();
  assert.deepEqual(errors,[]);
  console.log('Passed: main charts/visibility; password-free handoff; five tabs; maintenance 30-day voltage; review, analysis, WBGT/P51; independent IDs/history; saved-tab restore; mobile layout; empty data. No page errors.');
