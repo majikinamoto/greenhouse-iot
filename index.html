@@ -159,17 +159,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 <div class="status-box">ハウス内風速 平均：<span id="windAvgNow">-</span> m/s</div>
 <div class="status-box">最大：<span id="windMaxNow">-</span> m/s</div>
 </div>
-<div class="status-row-break" aria-hidden="true"></div>
-<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="houseTenDaySummary">
-<div class="status-group-title">ハウス内（P01）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近10日集計"></div>
-</div>
-<div class="status-row-break" aria-hidden="true"></div>
-<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="outsideTenDaySummary">
-<div class="status-group-title">外気（P11）・直近10日</div>
-<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近10日集計"></div>
-</div>
-<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-vpd-eval" data-main-info="yesterdayVpdEvaluation">
 <div class="status-group-title">昨日の飽差評価</div>
 <div class="vpd-eval-line">午前：<span id="vpdEvalAm">データなし</span></div>
@@ -193,6 +182,17 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 15以上：乾燥ストレス
 </details>
 </div>
+<div class="status-row-break" aria-hidden="true"></div>
+<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="houseTenDaySummary">
+<div class="status-group-title">ハウス内（P01）・直近7日間</div>
+<div class="status-temp-grid ten-day-temp-grid" id="houseTempSummaryGrid" aria-label="ハウス内（P01）温度の直近7日間集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
+<div class="status-group status-group-temp-summary ten-day-summary" data-main-info="outsideTenDaySummary">
+<div class="status-group-title">外気（P11）・直近7日間</div>
+<div class="status-temp-grid ten-day-temp-grid" id="outsideTempSummaryGrid" aria-label="外気（P11）温度・雨量の直近7日間集計"></div>
+</div>
+<div class="status-row-break" aria-hidden="true"></div>
 <div class="status-group status-group-mobile-qr" data-main-info="mobileQrCard">
 <div class="status-group-title">スマホで開く</div>
 <div id="mobileQrImageHome" class="mobile-share-qr-image-home">

@@ -700,7 +700,7 @@ body.data-export-active .control-panel {
 
 
 .ten-day-temp-grid .status-temp-data-grid {
-    grid-template-columns:repeat(10, 60px);
+    grid-template-columns:repeat(7, 60px);
     width:max-content;
 }
 
@@ -759,6 +759,13 @@ body.data-export-active .control-panel {
     max-width:360px;
 }
 
+
+.status-group-current,
+.status-group-vpd-eval {
+    width:378px;
+    max-width:100%;
+    box-sizing:border-box;
+}
 
 .status-group-mobile-qr {
     border-color:#83c2ca;
@@ -913,9 +920,6 @@ body.data-export-active .control-panel {
         max-width:calc(100vw - 24px);
     }
 
-    .status-group-current {
-        width:280px;
-    }
 
 
     .status-temp-grid:not(.ten-day-temp-grid) {
@@ -949,6 +953,7 @@ body.data-export-active .control-panel {
     }
 
 
+    .status-group-current,
     .status-group-vpd-eval {
         width:100%;
     }

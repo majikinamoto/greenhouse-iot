@@ -1,3 +1,4 @@
+const MAIN_SUMMARY_DAYS = 7;
 // U-Tech本体専用：メイン・環境スコア・CSV・表示設定・初期化。
 // utech-shared.js → utech-header.js → このファイルの順に読み込む。
 // アラート・分析・WBGT・過去データ・メンテの処理はPlus側で管理する。
@@ -561,7 +562,7 @@ function switchTab(tabName){
 function resetDailyTempStats(){
     initializeTenDaySummaryTables();
     ["house", "outside"].forEach(prefix=>{
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
             ["Max", "Min", "Avg", "Rain"].forEach(key=>{
                 const value = document.getElementById(prefix + "Day" + i + key);
                 if(value) value.textContent = "-";
@@ -576,7 +577,7 @@ function buildTenDaySummaryCells(prefix, includeRain){
 
     let labelHtml = '<div class="status-temp-label-spacer"></div>';
     let dataHtml = "";
-    for(let i = 0; i < 10; i++){
+    for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
         dataHtml += '<div class="status-temp-date" id="' + prefix + "Day" + i + 'Label">-</div>';
     }
 
@@ -590,7 +591,7 @@ function buildTenDaySummaryCells(prefix, includeRain){
     rows.forEach(row=>{
         const key = row[0];
         labelHtml += '<div class="status-temp-label">' + row[1] + "</div>";
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
             dataHtml += '<div class="status-box status-temp-value' + row[2] + '" id="' +
                 prefix + "Day" + i + key + '">-</div>';
         }
@@ -644,8 +645,8 @@ function formatTenDaySummaryDateLabel(dateKey){
 
 function renderTenDaySummaryDateLabels(){
     ["house", "outside"].forEach(prefix=>{
-        for(let i = 0; i < 10; i++){
-            const dateKey = getTenDayJstDateKey(9 - i);
+        for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
+            const dateKey = getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1 - i);
             const label = document.getElementById(prefix + "Day" + i + "Label");
             if(label) label.textContent = formatTenDaySummaryDateLabel(dateKey);
         }
@@ -675,8 +676,8 @@ function createDailyTemperatureMap(rows){
 }
 
 function renderTenDayTemperatureSummary(prefix, dayMap){
-    for(let i = 0; i < 10; i++){
-        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+    for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1 - i)) : null;
         const values = {
             Max:day && day.count ? day.max.toFixed(1) : "-",
             Min:day && day.count ? day.min.toFixed(1) : "-",
@@ -710,8 +711,8 @@ function createDailyRainfallMap(rows, mode, coefficient){
 function renderTenDayRainfallSummary(dayMap){
     const label = document.querySelector("#outsideTempSummaryGrid .status-temp-label-grid .status-temp-label:last-child");
     if(label) label.textContent = getRainfallCalculationMode() === "water" ? "水量(mL)" : "雨量(mm)";
-    for(let i = 0; i < 10; i++){
-        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(9 - i)) : null;
+    for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
+        const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1 - i)) : null;
         const cell = document.getElementById("outsideDay" + i + "Rain");
         if(cell) cell.textContent = day && day.count
             ? formatDailySummaryRainfallValue(day.hundredths / 100)
@@ -735,7 +736,7 @@ function invalidateTenDayRainfallSummary(){
 async function loadTenDayTemperatureSummaries(userId, outsideSource){
     const requestId = ++tenDayTemperatureRequestSequence;
     const range = {
-        start:getTenDayJstDateKey(9) + " 00:00:00",
+        start:getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1) + " 00:00:00",
         end:getTenDayJstNowSqlDateTime()
     };
     const results = await Promise.all([
@@ -764,7 +765,7 @@ async function loadTenDayRainfallSummary(userId){
     const coefficient = getRainfallTipCoefficient();
     if(mode !== "rainfall" && coefficient === null) return;
     const range = {
-        start:getTenDayJstDateKey(9) + " 00:00:00",
+        start:getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1) + " 00:00:00",
         end:getTenDayJstNowSqlDateTime()
     };
     const result = await fetchDataSafe(userId, "P41", range);

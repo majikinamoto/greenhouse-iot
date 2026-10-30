@@ -79,6 +79,14 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(e=>({id:e.id,cl:e.className,right:e.getBoundingClientRect().right})))));
  await page.setViewportSize({width:1440,height:1000});
 
+ for(const prefix of ['house','outside']){
+  assert.equal(await page.locator('#'+prefix+'TempSummaryGrid .status-temp-date').count(),7);
+  assert.equal(await page.locator('#'+prefix+'Day7Label').count(),0);
+ }
+ assert.equal(await page.evaluate(()=>document.getElementById('houseDay0Label').textContent===formatTenDaySummaryDateLabel(getTenDayJstDateKey(6))),true);
+ const summaryStart=await page.evaluate(()=>getTenDayJstDateKey(6)+' 00:00:00');
+ assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P01'&&u.searchParams.get('start')===summaryStart));
+ assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P41'&&u.searchParams.get('start')===summaryStart));
  assert(!requests.some(u=>/alert/.test(u.pathname)));
  assert.equal(await page.locator('input[name="rainfallCalculationMode"]').count(),3);
  await page.locator('#rainfallCollectorArea').evaluate(e=>e.value='100');
