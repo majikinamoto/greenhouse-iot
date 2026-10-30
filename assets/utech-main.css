@@ -700,7 +700,7 @@ body.data-export-active .control-panel {
 
 
 .ten-day-temp-grid .status-temp-data-grid {
-    grid-template-columns:repeat(7, 60px);
+    grid-template-columns:repeat(10, 60px);
     width:max-content;
 }
 

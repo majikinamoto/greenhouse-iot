@@ -80,11 +80,11 @@ const server=http.createServer((req,res)=>{
  await page.setViewportSize({width:1440,height:1000});
 
  for(const prefix of ['house','outside']){
-  assert.equal(await page.locator('#'+prefix+'TempSummaryGrid .status-temp-date').count(),7);
-  assert.equal(await page.locator('#'+prefix+'Day7Label').count(),0);
+  assert.equal(await page.locator('#'+prefix+'TempSummaryGrid .status-temp-date').count(),10);
+  assert.equal(await page.locator('#'+prefix+'Day10Label').count(),0);
  }
- assert.equal(await page.evaluate(()=>document.getElementById('houseDay0Label').textContent===formatTenDaySummaryDateLabel(getTenDayJstDateKey(6))),true);
- const summaryStart=await page.evaluate(()=>getTenDayJstDateKey(6)+' 00:00:00');
+ assert.equal(await page.evaluate(()=>document.getElementById('houseDay0Label').textContent===formatTenDaySummaryDateLabel(getTenDayJstDateKey(9))),true);
+ const summaryStart=await page.evaluate(()=>getTenDayJstDateKey(9)+' 00:00:00');
  assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P01'&&u.searchParams.get('start')===summaryStart));
  assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P41'&&u.searchParams.get('start')===summaryStart));
  assert(!requests.some(u=>/alert/.test(u.pathname)));

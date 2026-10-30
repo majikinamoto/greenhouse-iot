@@ -1,4 +1,4 @@
-const MAIN_SUMMARY_DAYS = 7;
+const MAIN_SUMMARY_DAYS = 10;
 // U-Tech本体専用：メイン・環境スコア・CSV・表示設定・初期化。
 // utech-shared.js → utech-header.js → このファイルの順に読み込む。
 // アラート・分析・WBGT・過去データ・メンテの処理はPlus側で管理する。
