@@ -1,0 +1,151 @@
+{
+  "date": "2026-09-22",
+  "note": "Indoor radiation; use transmission=100. Hour 10 interpolation is validation only.",
+  "hours": [
+    {
+      "hour": 0,
+      "temperature": 23.76973684210527,
+      "humidity": 82.04552631578944,
+      "radiation": 0.0
+    },
+    {
+      "hour": 1,
+      "temperature": 23.2325,
+      "humidity": 84.15681818181817,
+      "radiation": 0.0
+    },
+    {
+      "hour": 2,
+      "temperature": 22.755000000000003,
+      "humidity": 85.76200000000003,
+      "radiation": 0.0
+    },
+    {
+      "hour": 3,
+      "temperature": 22.755925925925915,
+      "humidity": 86.12759259259262,
+      "radiation": 0.0
+    },
+    {
+      "hour": 4,
+      "temperature": 23.344666666666665,
+      "humidity": 85.43533333333333,
+      "radiation": 0.0
+    },
+    {
+      "hour": 5,
+      "temperature": 23.239795918367353,
+      "humidity": 84.69285714285714,
+      "radiation": 0.0
+    },
+    {
+      "hour": 6,
+      "temperature": 22.701315789473686,
+      "humidity": 84.74236842105263,
+      "radiation": 8.478357875948236
+    },
+    {
+      "hour": 7,
+      "temperature": 26.571923076923078,
+      "humidity": 75.36807692307693,
+      "radiation": 67.80455153949136
+    },
+    {
+      "hour": 8,
+      "temperature": 29.210727272727272,
+      "humidity": 66.6009090909091,
+      "radiation": 197.73538598839792
+    },
+    {
+      "hour": 9,
+      "temperature": 30.491315789473685,
+      "humidity": 59.86842105263157,
+      "radiation": 274.4310575635877
+    },
+    {
+      "hour": 10,
+      "temperature": 30.504257894736845,
+      "humidity": 59.14101052631578,
+      "radiation": 374.2079428826418,
+      "validation_only_interpolation": true
+    },
+    {
+      "hour": 11,
+      "temperature": 30.517200000000003,
+      "humidity": 58.413599999999995,
+      "radiation": 339.636323070058
+    },
+    {
+      "hour": 12,
+      "temperature": 30.708750000000002,
+      "humidity": 57.22874999999999,
+      "radiation": 405.65595716198135
+    },
+    {
+      "hour": 13,
+      "temperature": 31.23425925925926,
+      "humidity": 55.48111111111108,
+      "radiation": 373.5274431057562
+    },
+    {
+      "hour": 14,
+      "temperature": 31.225090909090902,
+      "humidity": 58.743636363636334,
+      "radiation": 223.29317269076316
+    },
+    {
+      "hour": 15,
+      "temperature": 31.338000000000008,
+      "humidity": 56.22436363636365,
+      "radiation": 224.88844265952702
+    },
+    {
+      "hour": 16,
+      "temperature": 31.17763636363636,
+      "humidity": 56.238,
+      "radiation": 138.13029897367258
+    },
+    {
+      "hour": 17,
+      "temperature": 29.999818181818192,
+      "humidity": 59.71090909090909,
+      "radiation": 48.95136099955382
+    },
+    {
+      "hour": 18,
+      "temperature": 27.605636363636364,
+      "humidity": 65.07363636363638,
+      "radiation": 2.8558679161088816
+    },
+    {
+      "hour": 19,
+      "temperature": 26.12490909090908,
+      "humidity": 70.04545454545456,
+      "radiation": 0.0
+    },
+    {
+      "hour": 20,
+      "temperature": 25.350833333333338,
+      "humidity": 73.54194444444445,
+      "radiation": 0.0
+    },
+    {
+      "hour": 21,
+      "temperature": 24.517142857142854,
+      "humidity": 77.35785714285713,
+      "radiation": 0.0
+    },
+    {
+      "hour": 22,
+      "temperature": 24.66672727272728,
+      "humidity": 77.32181818181816,
+      "radiation": 0.0
+    },
+    {
+      "hour": 23,
+      "temperature": 24.34314814814815,
+      "humidity": 77.68444444444445,
+      "radiation": 0.0
+    }
+  ]
+}

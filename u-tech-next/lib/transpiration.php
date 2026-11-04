@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace UTechNext;
 require_once __DIR__.'/irrigation.php';
+require_once __DIR__.'/net_radiation.php';
 
 const TRANSPIRATION_VERSION = 'staff-penman-hourly-v1';
 
@@ -9,6 +10,9 @@ function validateWaterSettings(array $settings): array
 {
     $modern=($settings['schema_version']??1)===2;
     if($modern)$settings=validateIrrigationSettings($settings);
+    $net=usesNetRadiation($settings);
+    if(isset($settings['formula_version'])&&!in_array($settings['formula_version'],[TRANSPIRATION_VERSION,NET_PENMAN_VERSION],true))throw new \InvalidArgumentException('計算式の版を確認してください。');
+    if($net&&(!$modern||!netRadiationSettingsValid($settings)))throw new \InvalidArgumentException('新式用Kc・緯度（−90より大きく90未満）・経度（−180〜180）・アルベド（0〜1）を確認してください。');
     $errors = [];
     $check = static function ($value, string $label, float $min, ?float $max = null, bool $integer = false) use (&$errors): void {
         if ((!is_int($value) && !is_float($value)) || !is_finite((float)$value) || $value < $min || ($max !== null && $value > $max) || ($integer && floor($value) !== (float)$value)) {
@@ -31,6 +35,12 @@ function validateWaterSettings(array $settings): array
     if ($errors !== []) throw new \InvalidArgumentException(implode("\n", $errors));
     $out=['transmission_percent'=>$settings['transmission_percent'],'wind_speed'=>$settings['wind_speed'],'cycles'=>$settings['cycles'],'trees'=>array_map(static function($tree)use($modern){return array_intersect_key($tree,array_flip($modern?['leaf_area','kc','flow','nozzles','a','b','irrigation_mode']:['leaf_area','kc','flow']));},$settings['trees'])];
     if($modern)$out+=array_intersect_key($settings,array_flip(['schema_version','stage','kc','stage_kc']));
+    if($net){
+        $out+=array_intersect_key($settings,array_flip(['formula_version','kc_formula_version','latitude','longitude','albedo']));
+        $legacy=$settings['legacy_stage_kc']??[];if(!is_array($legacy))throw new \InvalidArgumentException('旧式Kcの記録を確認してください。');
+        foreach($legacy as $stage=>$kc){if(!in_array($stage,WATER_STAGES,true))throw new \InvalidArgumentException('旧式Kcのステージを確認してください。');$check($kc,'旧式Kc',0);}
+        if($errors!==[])throw new \InvalidArgumentException(implode("\n",$errors));$out['legacy_stage_kc']=$legacy;
+    }
     return $out;
 }
 
@@ -52,6 +62,11 @@ function hourlyPenman(?float $temperature, ?float $humidity, ?float $radiation, 
 function calculateWaterDay(string $date, array $rows, ?array $settings): array
 {
     $indexed = array_column($rows, null, 'forecast_for');
+    $net=usesNetRadiation($settings);$radiation=[];
+    if($net)for($h=0;$h<24;$h++){
+        $at=forecastDate($date)->modify("+$h hours");$now=$indexed[$at->format('Y-m-d H:i:s')]??[];$next=$indexed[$at->modify('+1 hour')->format('Y-m-d H:i:s')]??[];
+        $radiation[]=netPenmanHour($at->format('Y-m-d H:i:s'),$now['temperature_2m']??null,$now['relative_humidity_2m']??null,$next['shortwave_radiation']??null,$settings);
+    }
     $trees = [];
     for ($tree = 0; $tree < 6; $tree++) {
         $hours = []; $sum = 0.0; $complete = $settings !== null;
@@ -61,7 +76,7 @@ function calculateWaterDay(string $date, array $rows, ?array $settings): array
             $next = $indexed[$start->modify('+1 hour')->format('Y-m-d H:i:s')] ?? [];
             // Instantaneous temperature/humidity at interval start; radiation at
             // interval end describes the same preceding hour, including 24:00.
-            $et = $settings === null ? null : hourlyPenman($current['temperature_2m'] ?? null, $current['relative_humidity_2m'] ?? null, $next['shortwave_radiation'] ?? null, (float)$settings['wind_speed'], (float)$settings['transmission_percent']);
+            $et = $settings === null ? null : ($net?$radiation[$hour]['et0']:hourlyPenman($current['temperature_2m'] ?? null, $current['relative_humidity_2m'] ?? null, $next['shortwave_radiation'] ?? null, (float)$settings['wind_speed'], (float)$settings['transmission_percent']));
             $litres = $et === null ? null : $et * $settings['trees'][$tree]['kc'] * $settings['trees'][$tree]['leaf_area'];
             if ($litres !== null && !is_finite($litres)) $litres = null;
             if ($litres === null) $complete = false; else $sum += $litres;
@@ -71,7 +86,8 @@ function calculateWaterDay(string $date, array $rows, ?array $settings): array
         $seconds = $minutes === null ? null : (int)round($minutes / $settings['cycles'] * 60);
         $trees[] = applyDailyIrrigation(['number' => $tree + 1, 'hours' => $hours, 'complete' => $complete, 'partial_litres' => $sum, 'daily_litres' => $complete ? $sum : null, 'daily_minutes' => $minutes, 'cycle_seconds' => $seconds],$settings,$tree);
     }
-    return ['date' => $date, 'version' => TRANSPIRATION_VERSION, 'settings' => $settings, 'trees' => $trees];
+    $result=['date'=>$date,'version'=>$net||$settings===null?NET_PENMAN_VERSION:TRANSPIRATION_VERSION,'settings'=>$settings,'trees'=>$trees];
+    if($net)$result+=['radiation'=>$radiation,'kc_basis'=>netKcBasis($settings)];return $result;
 }
 
 function waterSettings(\PDO $db, int $locationId): ?array

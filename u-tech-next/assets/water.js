@@ -1,7 +1,7 @@
 'use strict';
 window.NextWater = (() => {
   const version='staff-penman-hourly-v1';
-  let livePayload=null, revision=0, token='', liveCharts=[], request=0, selectedDate=null, settingsLoaded=false,stageKc={};
+  let livePayload=null, revision=0, token='', liveCharts=[], request=0, selectedDate=null, settingsLoaded=false,stageKc={},legacyStageKc={};
   const $=id=>document.getElementById(id);
   const number=id=>$(id).value.trim()===''?null:Number($(id).value);
   const finite=value=>typeof value==='number' && Number.isFinite(value);
@@ -20,7 +20,9 @@ window.NextWater = (() => {
   }
   function calculate(date,rows,settings) {
     const indexed=new Map(rows.map(row=>[row.forecast_for,row]));
-    const common=settings && (settings.schema_version!==2||window.NextIrrigation?.valid(settings)) && finite(settings.transmission_percent) && settings.transmission_percent>=0 && settings.transmission_percent<=100 && finite(settings.wind_speed) && settings.wind_speed>=0 && Number.isInteger(settings.cycles) && settings.cycles>=1;
+    const net=window.NextNetPenman?.uses(settings),radiation=[];
+    if(net)for(let h=0;h<24;h++){const time=`${date} ${String(h).padStart(2,'0')}:00:00`,end=h===23?`${shift(date,1)} 00:00:00`:`${date} ${String(h+1).padStart(2,'0')}:00:00`,current=indexed.get(time),next=indexed.get(end);radiation.push(NextNetPenman.hour(time,current?.temperature_2m,current?.relative_humidity_2m,next?.shortwave_radiation,settings));}
+    const common=settings && (!net||NextNetPenman.valid(settings)) && (settings.schema_version!==2||window.NextIrrigation?.valid(settings)) && finite(settings.transmission_percent) && settings.transmission_percent>=0 && settings.transmission_percent<=100 && finite(settings.wind_speed) && settings.wind_speed>=0 && Number.isInteger(settings.cycles) && settings.cycles>=1;
     const trees=Array.from({length:6},(_,i)=>{
       const tree=settings?.trees[i];const valid=common && finite(tree?.leaf_area) && tree.leaf_area>0 && finite(tree.kc) && tree.kc>=0 && finite(tree.flow) && tree.flow>0;
       let sum=0,complete=!!valid;
@@ -28,7 +30,7 @@ window.NextWater = (() => {
         const time=`${date} ${String(hour).padStart(2,'0')}:00:00`;
         const end=hour===23?`${shift(date,1)} 00:00:00`:`${date} ${String(hour+1).padStart(2,'0')}:00:00`;
         const current=indexed.get(time),next=indexed.get(end);
-        const et=valid?penman(current?.temperature_2m,current?.relative_humidity_2m,next?.shortwave_radiation,settings.wind_speed,settings.transmission_percent):null;
+        const et=valid?(net?radiation[hour].et0:penman(current?.temperature_2m,current?.relative_humidity_2m,next?.shortwave_radiation,settings.wind_speed,settings.transmission_percent)):null;
         let litres=et===null?null:et*tree.kc*tree.leaf_area;if(!finite(litres))litres=null;
         if(litres===null)complete=false;else sum+=litres;
         return {time,et0:et,litres,cumulative:sum,cumulative_complete:complete};
@@ -36,14 +38,15 @@ window.NextWater = (() => {
       const minutes=complete?sum/tree.flow:null;
       const result={number:i+1,hours,complete,partial_litres:sum,daily_litres:complete?sum:null,daily_minutes:minutes,cycle_seconds:complete?Math.round(minutes/settings.cycles*60):null};return window.NextIrrigation?NextIrrigation.apply(result,settings,i):result;
     });
-    return {date,version,settings,trees};
+    const result={date,version:net||!settings?(window.NextNetPenman?.version||version):version,settings,trees};if(net)Object.assign(result,{radiation,kc_basis:NextNetPenman.kcBasis(settings)});return result;
   }
   function input(id,label,group,options={}) {
     const wrapper=text('label',label,'water-field');const field=document.createElement('input');field.id=id;field.type='number';field.step=options.integer?'1':'any';field.min=String(options.min??0);if(options.max!==undefined)field.max=String(options.max);if(options.signed)field.removeAttribute('min');field.required=true;field.setAttribute('aria-describedby',id+'-error');
     const error=text('span','','error');error.id=id+'-error';wrapper.append(field,error);group.append(wrapper);field.addEventListener('input',preview);
   }
-  function settingsFromInputs() {return {schema_version:2,stage:$('water-stage').value,kc:number('water-kc'),stage_kc:{...stageKc},transmission_percent:number('water-transmission'),wind_speed:number('water-wind'),cycles:number('water-cycles'),trees:Array.from({length:6},(_,i)=>({leaf_area:number(`water-area-${i}`),kc:number('water-kc'),flow:number(`water-flow-${i}`),nozzles:number(`water-nozzles-${i}`),a:number(`water-a-${i}`),b:number(`water-b-${i}`),irrigation_mode:$(`water-mode-${i}`).value}))};}
+  function settingsFromInputs() {return {schema_version:2,formula_version:NextNetPenman.version,kc_formula_version:NextNetPenman.version,latitude:number('water-latitude'),longitude:number('water-longitude'),albedo:number('water-albedo'),legacy_stage_kc:{...legacyStageKc},stage:$('water-stage').value,kc:number('water-kc'),stage_kc:{...stageKc},transmission_percent:number('water-transmission'),wind_speed:number('water-wind'),cycles:number('water-cycles'),trees:Array.from({length:6},(_,i)=>({leaf_area:number(`water-area-${i}`),kc:number('water-kc'),flow:number(`water-flow-${i}`),nozzles:number(`water-nozzles-${i}`),a:number(`water-a-${i}`),b:number(`water-b-${i}`),irrigation_mode:$(`water-mode-${i}`).value}))};}
   function validate() {
+    const latitude=number('water-latitude');$('water-latitude').setCustomValidity(latitude!==null&&Math.abs(latitude)>=90?'緯度は−90より大きく90未満で入力してください。':'');
     let valid=true;for(const field of $('water-settings').querySelectorAll('input,select')) {const error=$(field.id+'-error');error.textContent=field.validity.valueMissing?'入力してください。':!field.checkValidity()?'範囲内の数値を入力してください。':'';if(error.textContent)valid=false;}
     $('water-save').disabled=!valid || !token;
     $('water-validation').textContent=valid?'': '未入力または無効な項目があるため保存できません。各入力欄を確認してください。';return valid;
@@ -51,9 +54,14 @@ window.NextWater = (() => {
   function fill(settings) {
     if(!settings)return;
     for(const [id,key] of [['water-transmission','transmission_percent'],['water-wind','wind_speed'],['water-cycles','cycles']])$(id).value=settings[key];
-    stageKc={...(settings.stage_kc||{})};$('water-stage').value=settings.stage||'';$('water-kc').value=settings.kc??(settings.trees.every(t=>t.kc===settings.trees[0].kc)?settings.trees[0].kc:'');
+    const current=NextNetPenman.uses(settings)&&settings.kc_formula_version===NextNetPenman.version;
+    stageKc={'栄養成長期':NextNetPenman.vegetativeKc,...(current?settings.stage_kc:{})};legacyStageKc={...(current?settings.legacy_stage_kc:settings.stage_kc)||{}};
+    if(!current&&settings.stage&&finite(settings.kc))legacyStageKc[settings.stage]=settings.kc;
+    $('water-stage').value=settings.stage||'';$('water-kc').value=current?settings.kc:stageKc[settings.stage]??'';
+    for(const [id,key] of [['water-latitude','latitude'],['water-longitude','longitude']])$(id).value=current?settings[key]??'':'';
+    $('water-albedo').value=current?settings.albedo??'':.20;
     settings.trees.forEach((tree,i)=>{for(const [key,prefix] of [['leaf_area','area'],['flow','flow'],['nozzles','nozzles'],['a','a'],['b','b']])$(`water-${prefix}-${i}`).value=tree[key]??'';$(`water-mode-${i}`).value=tree.irrigation_mode||'';});
-    if(settings.schema_version!==2)$('water-message').textContent='旧設定を読み込みました。生育ステージ・補正A/B・適用方法・ノズル本数を入力して保存してください。旧設定の吐出量は1樹全体の値だったため、1本あたりの値を確認してください。';
+    if(!current)$('water-message').textContent='旧式の保存設定を読み込みました。旧式の登録Kcは新式へ自動流用しません。緯度・経度・新式用Kcを確認して保存してください。栄養成長期の新式用登録値は0.4888563516です。'+(settings.schema_version!==2?'旧設定の吐出量は樹全体の値です。1本の吐出量とノズル本数・補正A/Bも確認してください。':'');
   }
   function sync(charts,index) {
     for(const chart of charts) {
@@ -125,7 +133,7 @@ window.NextWater = (() => {
     });
     render($('water-charts'),days,'live');
     window.NextCorrection?.refresh(livePayload,settings);
-    $('water-period').textContent=`${days[0].date}〜${last} JST。選択日は入力中の設定で計算します。過去日は保存履歴を優先し、履歴がない日は現在の入力値で再計算します。`+(recalculated.length?` 現在の設定で再計算：${recalculated.join('、')}（当時の保存値ではありません）。`:'');
+    $('water-period').textContent=`${days[0].date}〜${last} JST。選択日は入力中の設定で計算します。過去日は保存履歴を優先し、履歴がない日は現在の入力値で再計算します。`+(recalculated.length?` 現在の設定で再計算：${recalculated.join('、')}（当時の保存値ではありません）。`:'')+' 計算式：'+days.map(d=>d.date+' '+(d.version===window.NextNetPenman?.version?'新式（純放射量）':'旧式')).join('、');
   }
   async function load(center,initial=false,refresh=false) {
     const sequence=++request;
@@ -147,8 +155,10 @@ window.NextWater = (() => {
   }
   function download(days,name) {const url=URL.createObjectURL(new Blob([csv(days)],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function initialize() {
+    stageKc={'栄養成長期':NextNetPenman.vegetativeKc};
     function select(id,label,group,options){const wrapper=text('label',label,'water-field'),field=document.createElement('select');field.id=id;field.required=true;field.append(new Option('選択してください',''));for(const [value,title] of options)field.append(new Option(title,value));const error=text('span','','error');error.id=id+'-error';field.setAttribute('aria-describedby',error.id);wrapper.append(field,error);group.append(wrapper);field.onchange=()=>{if(id==='water-stage')$('water-kc').value=stageKc[field.value]??'';preview();};}
     select('water-stage','生育ステージ（6本共通）',$('water-common'),NextIrrigation.stages.map(stage=>[stage,stage]));input('water-kc','作物係数 Kc（6本共通）',$('water-common'));
+    input('water-latitude','ハウス緯度（北緯°）',$('water-common'),{min:-90,max:90});input('water-longitude','ハウス経度（東経°）',$('water-common'),{min:-180,max:180});input('water-albedo','アルベド（0〜1）',$('water-common'),{max:1});$('water-albedo').value=.20;
     input('water-transmission','平均日射透過率 (%)',$('water-common'),{max:100});input('water-wind','ハウス内風速 (m/s)',$('water-common'));input('water-cycles','1日のかん水回数',$('water-common'),{min:1,integer:true});
     for(let i=0;i<6;i++){const group=text('fieldset','','water-settings-fold');group.append(text('legend',`No.${i+1}`));input(`water-area-${i}`,'葉面積 (m²)',group,{min:.000001});input(`water-flow-${i}`,'1本の吐出量 (L/分)',group,{min:.000001});input(`water-nozzles-${i}`,'ノズル本数',group,{min:1,integer:true});input(`water-a-${i}`,'かん水補正 A（倍率）',group);input(`water-b-${i}`,'かん水補正 B（L/日/樹）',group,{signed:true});select(`water-mode-${i}`,'適用方法',group,NextIrrigation.modes);$('water-trees').append(group);}
     $('water-save').addEventListener('click',async()=>{if(!validate())return;$('water-save').disabled=true;try{const response=await fetch('api/water.php',{method:'POST',headers:{'Content-Type':'application/json','X-Water-Token':token},body:JSON.stringify({revision,settings:settingsFromInputs()})});const data=await response.json();if(!response.ok || !data.success)throw new Error(data.message);revision=data.revision;stageKc={...data.settings.stage_kc};$('water-message').textContent='共通設定を保存しました。次の予報取得から使用します。過去の履歴は変更しません。';}catch(error){$('water-message').textContent=error.message;}finally{validate();}});

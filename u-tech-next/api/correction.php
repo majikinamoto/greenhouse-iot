@@ -21,7 +21,7 @@ try{
         }
         if(!in_array($body['action'],['trial','reconstruct'],true))throw new InvalidArgumentException('操作を確認してください。');
         $date=$body['date']??null;if(!is_string($date)||$date>$tomorrow)throw new InvalidArgumentException('保存済み予報の対象日を選択してください。');$selected=UTechNext\forecastDate($date);
-        $water=$body['water_settings']??null;if($water!==null)$water=UTechNext\validateWaterSettings($water);
+        $water=$body['water_settings']??null;if($water!==null){if(!UTechNext\usesNetRadiation($water))throw new InvalidArgumentException('新式の設定画面を再読み込みしてください。');$water=UTechNext\validateWaterSettings($water);}
         $days=[];
         for($offset=-2;$offset<=0;$offset++){
             $day=$selected->modify("$offset days")->format('Y-m-d');$snapshot=correctionHistory($db,$id,$day);
