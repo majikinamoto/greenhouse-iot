@@ -849,8 +849,10 @@ button { margin:5px; }
 
 
     .site-switch-link {
-        min-height:38px;
-        padding:8px 12px;
+        min-height:28px;
+        padding:3px 7px;
+        margin:0;
+        font-size:11px;
     }
 
     .control-panel,
