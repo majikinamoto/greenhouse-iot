@@ -110,6 +110,29 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('.tab-button').count(),6);
  assert.equal(await page.locator('.tab-panel.active').getAttribute('id'),'tab-maintenance');
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAIN01');
+ // History limits, MRU ordering, tab isolation, and selection without changing another input.
+ await page.evaluate(()=>{
+  for(let i=0;i<17;i++)saveUserIdHistory('MAIN_HISTORY_'+i);
+  for(const tab of plusTabNames){
+   for(let i=0;i<17;i++)savePlusUserIdHistory(tab,tab+'_HISTORY_'+i);
+   savePlusUserIdHistory(tab,tab+'_HISTORY_15');
+  }
+ });
+ assert.equal(await page.evaluate(()=>getUserIdHistory().length),15);
+ for(const tab of ['alert','analysis','wbgt','review','drainage','maintenance']){
+  assert.deepEqual(await page.evaluate(tab=>{
+   const h=getPlusUserIdHistory(tab);
+   return [h.length,new Set(h).size,h[0],h[1],h.every(id=>id.startsWith(tab+'_HISTORY_'))];
+  },tab),[15,15,tab+'_HISTORY_15',tab+'_HISTORY_16',true]);
+  assert.equal(await page.locator('[data-plus-history="'+tab+'"]').first().locator('option').count(),16);
+ }
+ const originalReviewId=await page.locator('#reviewUserId').inputValue();
+ await page.locator('[data-plus-history="maintenance"]').selectOption('maintenance_HISTORY_15');
+ assert.equal(await page.locator('#maintenanceUserId').inputValue(),'maintenance_HISTORY_15');
+ assert.equal(await page.locator('#reviewUserId').inputValue(),originalReviewId);
+ await page.locator('#maintenanceUserId').fill('MAIN01');
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('utechPlus_v1_maintenance_userIdHistory'))[0]),'maintenance_HISTORY_15');
+
  assert.equal(await page.locator('.header-detail-area, #utechAreaSelect, #headerSunInfo, #farmCalendarInfo, #tomorrowForecastInfo').count(),0);
  assert.match(await page.locator('#headerTimeInfo').textContent(),/現在日時：\d+年/);
  assert.equal(await page.evaluate(()=>typeof handleUtechAreaChange),'undefined');

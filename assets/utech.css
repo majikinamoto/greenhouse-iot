@@ -873,6 +873,7 @@ button { margin:5px; }
 
     #userId,
     #userIdHistorySelect,
+    [data-plus-history],
     .control-group input[type="datetime-local"],
     .control-group button {
         width:100%;
@@ -888,7 +889,8 @@ button { margin:5px; }
     }
 
 
-    #userIdHistorySelect {
+    #userIdHistorySelect,
+    [data-plus-history] {
         width:62px;
         height:42px;
         padding:4px 6px;

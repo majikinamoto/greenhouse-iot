@@ -3679,7 +3679,7 @@ async function loadReviewData(){
     renderReviewDif();
 
     // U-Tech main user ID is independent.
-    saveUserIdHistory(userId);
+    savePlusUserIdHistory('review',userId);
 
     const selectedDate = new Date(dateValue + "T00:00:00");
     const minTime = new Date(selectedDate);
@@ -4083,6 +4083,25 @@ function plusRead(key,fallback){try{return JSON.parse(localStorage.getItem('utec
 
 function plusWrite(key,value){try{localStorage.setItem('utechPlus_v1_'+key,JSON.stringify(value));}catch{document.getElementById('message').textContent='設定を保存できませんでした。';}}
 
+// 履歴はタブ単位で最新15件。本体やほかのタブの履歴には書き込まない。
+function getPlusUserIdHistory(tab){
+ const values=plusRead(tab+'_userIdHistory',[]);
+ return Array.isArray(values)?[...new Set(values.filter(id=>typeof id==='string'&&id.trim()))].slice(0,15):[];
+}
+function updatePlusUserIdHistoryList(tab){
+ document.querySelectorAll('[data-plus-history="'+tab+'"]').forEach(select=>{
+  const selected=select.value;
+  select.replaceChildren(new Option('履歴',''));
+  getPlusUserIdHistory(tab).forEach(id=>select.add(new Option(id,id)));
+  select.value=selected;
+ });
+}
+function savePlusUserIdHistory(tab,userId){
+ if(!userId)return;
+ plusWrite(tab+'_userIdHistory',[userId,...getPlusUserIdHistory(tab).filter(id=>id!==userId)].slice(0,15));
+ updatePlusUserIdHistoryList(tab);
+}
+
 // タブの入力条件をブラウザへ保存する。パスワード・Webhook等は除き、本体のusui_user_idは更新しない。
 // アラートのサーバー保存はこの関数では行わない。
 function savePlusTab(tab){
@@ -4092,7 +4111,8 @@ function savePlusTab(tab){
   values[input.id]=input.type==='checkbox'?input.checked:input.value;
  });
  plusWrite(tab,values);
- const userId=getPlusUserId(tab);if(userId)saveUserIdHistory(userId);
+ const ids=tab==='analysis'?analysisCompareGraphs.map(graph=>'analysisUserId'+graph):[plusInputIds[tab]];
+ for(const id of [...ids].reverse())savePlusUserIdHistory(tab,document.getElementById(id)?.value.trim());
 }
 
 // 開いたタブはURLのIDを最優先。他タブはタブ保存値→従来設定→URL→本体保存IDの順で補完する。
@@ -4147,7 +4167,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  initializeMaintenanceRangeInputs();
  maintenanceKnownUserId=getPlusUserId('maintenance');
  handleAlertNotifyTargetChange();
- for(const tab of ['alert','wbgt','analysis']){
+ for(const tab of ['alert','wbgt','analysis','drainage']){
   const ids=tab==='analysis'?analysisCompareGraphs.map(graph=>'analysisUserId'+graph):[plusInputIds[tab]];
   for(const id of ids){
    const input=document.getElementById(id);if(!input)continue;
@@ -4156,7 +4176,7 @@ window.addEventListener('DOMContentLoaded',()=>{
    input.insertAdjacentElement('afterend',select);
   }
  }
- updateUserIdHistoryList();
+ for(const tab of plusTabNames)updatePlusUserIdHistoryList(tab);
  document.addEventListener('click',event=>{
   closeLogoInfoOnOutsideClick(event);
   const panel=event.target.closest('.tab-panel');

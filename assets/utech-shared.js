@@ -232,8 +232,8 @@ function escapeHtml(value){
         .replace(/'/g, "&#39;");
 }
 
-// 利用者ID履歴はブラウザ共通。読取・JSON解析失敗時は空配列へ戻す。
-// saveUserIdHistoryは同じIDを除いて先頭へ追加し、最新10件を保存する。
+// 本体の利用者ID履歴はブラウザに保存する。読取・JSON解析失敗時は空配列へ戻す。
+// saveUserIdHistoryは同じIDを除いて先頭へ追加し、最新15件を保存する。
 function getUserIdHistory(){
     try{
         return JSON.parse(localStorage.getItem("usui_user_id_history")) || [];
@@ -247,7 +247,7 @@ function saveUserIdHistory(userId){
         .filter(id=>id && id !== userId);
 
     history.unshift(userId);
-    localStorage.setItem("usui_user_id_history", JSON.stringify(history.slice(0,10)));
+    localStorage.setItem("usui_user_id_history", JSON.stringify(history.slice(0,15)));
     updateUserIdHistoryList();
 }
 
@@ -266,12 +266,7 @@ function updateUserIdHistoryList(){
             select.appendChild(option);
         }
     });
-    document.querySelectorAll('[data-plus-history]').forEach(select=>{
-        const selected = select.value;
-        select.replaceChildren(new Option('履歴', ''));
-        getUserIdHistory().forEach(id=>select.add(new Option(id,id)));
-        select.value = selected;
-    });
+
 }
 
 function refreshVisibleCharts(){
