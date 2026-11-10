@@ -15,9 +15,10 @@ main { max-width: none; }
 .dd-toolbar input:not([type="date"]), #base { width: 112px; }
 .dd-mode { margin-top: 16px; }
 .dd-mode label { display: block; }
+#result .chart-card { width: 720px; }
 .dd-chart {
   position: relative;
-  height: clamp(540px, 72vh, 780px);
+  height: clamp(270px, 36vh, 390px);
 }
 .dd-chart-controls {
   display: flex;
@@ -40,7 +41,7 @@ main { max-width: none; }
 #missing-dates { overflow-wrap: anywhere; }
 
 @media (max-width: 600px) {
-  .dd-chart { height: 720px; }
+  .dd-chart { height: 360px; }
   .dd-chart-controls .caption { display: none; }
   .dd-mark { width: 40px; height: 40px; }
   .dd-mode { gap: 8px; }
