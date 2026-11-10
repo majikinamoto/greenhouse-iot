@@ -18,6 +18,7 @@ main { max-width: none; }
 .dd-toolbar #fill-limit { width: 80px; }
 .dd-forecast { border: 0; padding: 0; margin: 0; min-width: 0; }
 .dd-forecast .dd-fill-toggle { display: flex; align-items: center; gap: 4px; }
+#forecast-fields #coordinate-example { width: 210px; }
 #forecast-note { margin: 6px 0 0; }
 #user-history { width: 105px; }
 .dd-mode { margin-top: 16px; }

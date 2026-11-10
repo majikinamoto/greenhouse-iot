@@ -63,9 +63,10 @@
         <fieldset class="dd-forecast">
           <label class="dd-fill-toggle"><input id="show-forecast" type="checkbox"> 将来予測を表示する</label>
           <div id="forecast-fields" class="selection-controls" hidden>
-            <div class="control-field"><label for="latitude">緯度</label><input id="latitude" type="number" step="any" min="-90" max="90" required disabled></div>
-            <div class="control-field"><label for="longitude">経度</label><input id="longitude" type="number" step="any" min="-180" max="180" required disabled></div>
+            <div class="control-field"><label for="latitude">緯度</label><input id="latitude" type="number" value="26.110025" step="any" min="-90" max="90" required disabled></div>
+            <div class="control-field"><label for="longitude">経度</label><input id="longitude" type="number" value="127.68276667" step="any" min="-180" max="180" required disabled></div>
             <div class="control-field"><label for="comparison-days">比較日数</label><select id="comparison-days" name="comparison_days" disabled></select></div>
+            <div class="control-field"><label for="coordinate-example">農研センター（入力例）</label><input id="coordinate-example" type="text" readonly></div>
           </div>
           <p id="forecast-note" class="caption" hidden>緯度・経度は地点ごとにこのブラウザーに保存し、外気データの取得に使います。</p>
         </fieldset>

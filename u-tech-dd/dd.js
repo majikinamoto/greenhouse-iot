@@ -8,6 +8,9 @@
     const forecastFields = byId("forecast-fields");
     const latitude = byId("latitude");
     const longitude = byId("longitude");
+    const coordinateExample = byId("coordinate-example");
+    coordinateExample.value = `${latitude.defaultValue}, ${longitude.defaultValue}`;
+    coordinateExample.addEventListener("focus", () => coordinateExample.select());
     const comparisonDays = byId("comparison-days");
     const forecastStatus = byId("forecast-status");
     const startDate = byId("start");
@@ -91,8 +94,8 @@
         } catch {
             // Storage can be unavailable.
         }
-        latitude.value = saved?.latitude ?? "";
-        longitude.value = saved?.longitude ?? "";
+        latitude.value = saved?.latitude ?? latitude.defaultValue;
+        longitude.value = saved?.longitude ?? longitude.defaultValue;
     }
 
     let currentSite = coordinateKey();
