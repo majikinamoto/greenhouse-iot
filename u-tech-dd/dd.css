@@ -1,3 +1,5 @@
+main { max-width: none; }
+
 .dd-mark {
   flex: none;
   width: 52px;
@@ -15,7 +17,7 @@
 .dd-mode label { display: block; }
 .dd-chart {
   position: relative;
-  height: clamp(180px, 24vh, 260px);
+  height: clamp(540px, 72vh, 780px);
 }
 .dd-chart-controls {
   display: flex;
@@ -26,8 +28,9 @@
 }
 .dd-chart-controls .caption { margin: 0; }
 .dd-chart-controls button {
-  min-height: 32px;
-  font-size: 13px;
+  min-height: 26px;
+  padding: 2px 7px;
+  font-size: 11px;
 }
 #coverage {
   font-size: .9rem;
@@ -37,7 +40,7 @@
 #missing-dates { overflow-wrap: anywhere; }
 
 @media (max-width: 600px) {
-  .dd-chart { height: 240px; }
+  .dd-chart { height: 720px; }
   .dd-chart-controls .caption { display: none; }
   .dd-mark { width: 40px; height: 40px; }
   .dd-mode { gap: 8px; }
