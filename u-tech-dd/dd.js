@@ -1,6 +1,10 @@
 (() => {
     const byId = (id) => document.getElementById(id);
     const form = byId("dd-form");
+    const userId = byId("user-id");
+    const userHistory = byId("user-history");
+    const historyKey = "utech_dd_user_history_v1";
+    const historyLimit = 15;
     const mode = byId("mode");
     const base = byId("base");
     const status = byId("status");
@@ -10,6 +14,31 @@
     const popup = byId("dd-info-popup");
     let days = null;
     let chart = null;
+
+    function readUserHistory() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(historyKey));
+            if (Array.isArray(saved)) {
+                return [...new Set(saved.filter((id) => typeof id === "string" && id.trim() && id.length <= userId.maxLength))]
+                    .slice(0, historyLimit);
+            }
+        } catch {
+            // Browsers can block access to local storage.
+        }
+        return [];
+    }
+
+    function renderUserHistory(ids) {
+        userHistory.replaceChildren(new Option("履歴", ""), ...ids.map((id) => new Option(id, id)));
+        userHistory.disabled = ids.length === 0;
+    }
+
+    let recentUsers = readUserHistory();
+    renderUserHistory(recentUsers);
+    userHistory.addEventListener("change", () => {
+        if (userHistory.value) userId.value = userHistory.value;
+        userHistory.value = "";
+    });
 
     const tokyoDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" });
     function shiftDate(date, offset) {
@@ -211,6 +240,15 @@
             if (!response.ok) throw new Error(data.message);
             days = data.days;
             render();
+
+            const selectedUser = query.get("user_id").trim();
+            recentUsers = [...new Set([selectedUser, ...readUserHistory(), ...recentUsers])].slice(0, historyLimit);
+            try {
+                localStorage.setItem(historyKey, JSON.stringify(recentUsers));
+            } catch {
+                // Keep the history available until the page is closed.
+            }
+            renderUserHistory(recentUsers);
         } catch (error) {
             days = null;
             result.hidden = true;

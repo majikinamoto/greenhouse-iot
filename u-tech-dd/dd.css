@@ -13,6 +13,7 @@ main { max-width: none; }
 }
 .dd-toolbar { padding-top: 12px; }
 .dd-toolbar input:not([type="date"]), #base { width: 112px; }
+#user-history { width: 105px; }
 .dd-mode { margin-top: 16px; }
 .dd-mode label { display: block; }
 #result .chart-card { width: 720px; }

@@ -40,7 +40,13 @@
     </header>
     <section class="toolbar dd-toolbar" aria-label="地点・期間の選択">
       <form id="dd-form" class="selection-controls">
-        <div class="control-field"><label for="user-id">user_id</label><input id="user-id" name="user_id" maxlength="64" placeholder="例：T0001" spellcheck="false" required></div>
+        <div class="control-field">
+          <label for="user-id">user_id</label>
+          <div class="id-controls">
+            <input id="user-id" name="user_id" maxlength="64" placeholder="例：T0001" spellcheck="false" required>
+            <select id="user-history" aria-label="user_idの履歴" disabled><option value="">履歴</option></select>
+          </div>
+        </div>
         <div class="control-field"><label for="point-id">point_id</label><input id="point-id" name="point_id" maxlength="64" placeholder="例：P01" spellcheck="false" required></div>
         <div class="control-field"><label for="start">開始日 <small>JST</small></label><input id="start" name="start" type="date" min="1000-01-01" required></div>
         <div class="control-field"><label for="end">終了日 <small>JST</small></label><input id="end" name="end" type="date" min="1000-01-01" required></div>
