@@ -19,7 +19,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 }
 
 $zone = new DateTimeZone('Asia/Tokyo');
-$today = new DateTimeImmutable('today', $zone);
+$now = new DateTimeImmutable('now', $zone);
+$today = $now->setTime(0, 0);
+$comparison = 0;
 try {
     foreach (['user_id', 'point_id'] as $key) {
         $input = $_GET[$key] ?? '';
@@ -30,11 +32,18 @@ try {
         $ids[$key] = $value;
     }
 
+    if (isset($_GET['comparison_days'])) {
+        $comparison = filter_var($_GET['comparison_days'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10]]);
+        if ($comparison === false) {
+            throw new InvalidArgumentException('比較日数は1〜10日で指定してください。');
+        }
+    }
+    $latest = $comparison ? $today->modify('+365 days') : $today;
     foreach (['start', 'end'] as $key) {
         $value = $_GET[$key] ?? '';
         $date = is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value)
             ? DateTimeImmutable::createFromFormat('!Y-m-d', $value, $zone) : false;
-        if (!$date || $date->format('Y-m-d') !== $value || $date > $today || $date->format('Y') < '1000') {
+        if (!$date || $date->format('Y-m-d') !== $value || $date > $latest || $date->format('Y') < '1000') {
             throw new InvalidArgumentException('開始日と終了日を確認してください。');
         }
         $dates[$key] = $date;
@@ -57,9 +66,10 @@ try {
 }
 
 try {
+    require_once dirname(__DIR__) . '/u-tech-next/lib/db.php';
     $queryStart = $start;
-    $queryEnd = $end;
-    if ($fillLimit > 0) {
+    $queryEnd = min($end, $today);
+    if ($fillLimit > 0 && $start < $today) {
         $padding = $fillLimit + 1;
         $queryStart = max($start->modify("-$padding days"), new DateTimeImmutable('1000-01-01', $zone));
         $queryEnd = min($end->modify("+$padding days"), $today);
@@ -67,7 +77,6 @@ try {
 
     $rows = [];
     if ($start < $today) {
-        require_once dirname(__DIR__) . '/u-tech-next/lib/db.php';
         $db = UTechNext\connect();
         $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
         $stop = min($queryEnd->modify('+1 day'), $today);
@@ -78,11 +87,28 @@ try {
         $rows = $stmt;
     }
     $days = ddDailyAverages($queryStart, $queryEnd, $today, $rows);
-    if ($fillLimit > 0) {
+    if ($fillLimit > 0 && $start < $today) {
         $days = ddFillMissingDays($days, $fillLimit);
-        $days = array_slice($days, $queryStart->diff($start)->days, $start->diff($end)->days + 1);
+        $days = array_slice($days, $queryStart->diff($start)->days, $start->diff(min($end, $today))->days + 1);
     }
-    ddReply(['days' => $days]);
+    $payload = ['days' => $days];
+    if ($comparison && $end >= $today) {
+        if ($rows instanceof PDOStatement) {
+            $rows->closeCursor();
+        }
+        $db = $db ?? UTechNext\connect();
+        $first = $today->modify("-$comparison days");
+        $stmt = $db->prepare("SELECT DATE_FORMAT(recorded_at, '%Y-%m-%dT%H:00') AS hour_key, AVG(temperature) AS average
+            FROM measurements WHERE user_id = ? AND point_id = ? AND recorded_at >= ? AND recorded_at <= ?
+            AND temperature > -237.3 GROUP BY hour_key");
+        $stmt->execute([$ids['user_id'], $ids['point_id'], $first->format('Y-m-d H:i:s'), $now->format('Y-m-d H:i:s')]);
+        $hourly = [];
+        foreach ($stmt as $row) {
+            $hourly[$row['hour_key']] = (float) $row['average'];
+        }
+        $payload['comparison'] = ['today' => $today->format('Y-m-d'), 'first' => $first->format('Y-m-d'), 'hourly' => (object) $hourly];
+    }
+    ddReply($payload);
 } catch (Throwable $error) {
     error_log('U-Tech DD measurements: ' . $error->getMessage());
     ddReply(['message' => '実測気温を取得できませんでした。'], 503);

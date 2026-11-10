@@ -16,6 +16,9 @@ main { max-width: none; }
 .dd-fill .dd-fill-toggle { display: flex; align-items: center; gap: 4px; }
 .dd-toolbar .dd-fill-toggle input { min-height: 0; width: auto; margin: 0; }
 .dd-toolbar #fill-limit { width: 80px; }
+.dd-forecast { border: 0; padding: 0; margin: 0; min-width: 0; }
+.dd-forecast .dd-fill-toggle { display: flex; align-items: center; gap: 4px; }
+#forecast-note { margin: 6px 0 0; }
 #user-history { width: 105px; }
 .dd-mode { margin-top: 16px; }
 .dd-mode label { display: block; }

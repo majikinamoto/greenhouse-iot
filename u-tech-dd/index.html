@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
+  <script src="forecast.js" defer></script>
   <script src="dd.js" defer></script>
 </head>
 <body>
@@ -59,6 +60,15 @@
             <span>日</span>
           </div>
         </div>
+        <fieldset class="dd-forecast">
+          <label class="dd-fill-toggle"><input id="show-forecast" type="checkbox"> 将来予測を表示する</label>
+          <div id="forecast-fields" class="selection-controls" hidden>
+            <div class="control-field"><label for="latitude">緯度</label><input id="latitude" type="number" step="any" min="-90" max="90" required disabled></div>
+            <div class="control-field"><label for="longitude">経度</label><input id="longitude" type="number" step="any" min="-180" max="180" required disabled></div>
+            <div class="control-field"><label for="comparison-days">比較日数</label><select id="comparison-days" name="comparison_days" disabled></select></div>
+          </div>
+          <p id="forecast-note" class="caption" hidden>緯度・経度は地点ごとにこのブラウザーに保存し、外気データの取得に使います。</p>
+        </fieldset>
         <button id="display" type="submit">表示</button>
       </form>
     </section>
@@ -76,9 +86,11 @@
       </div>
     </section>
     <p id="status" role="status">地点と期間を指定し、「表示」を押してください。</p>
+    <p id="forecast-status" role="status" hidden></p>
     <section id="result" aria-labelledby="chart-title" hidden>
       <h2 id="chart-title">積算温度の推移</h2>
       <p id="coverage" role="status"></p>
+      <p id="forecast-source" class="caption" hidden>外気データ提供 <a href="https://open-meteo.com/">Open-Meteo</a>。ハウス内の実測で時間帯別に補正した推定値です。平年相当値はERA5-Landの1991〜2020年から算出しています。</p>
       <div class="chart-card">
         <div class="dd-chart-controls">
           <button id="reset-zoom" type="button">ズームリセット</button>
