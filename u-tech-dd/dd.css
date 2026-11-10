@@ -15,7 +15,19 @@
 .dd-mode label { display: block; }
 .dd-chart {
   position: relative;
-  height: clamp(270px, 48vh, 520px);
+  height: clamp(180px, 24vh, 260px);
+}
+.dd-chart-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.dd-chart-controls .caption { margin: 0; }
+.dd-chart-controls button {
+  min-height: 32px;
+  font-size: 13px;
 }
 #coverage {
   font-size: .9rem;
@@ -25,6 +37,8 @@
 #missing-dates { overflow-wrap: anywhere; }
 
 @media (max-width: 600px) {
+  .dd-chart { height: 240px; }
+  .dd-chart-controls .caption { display: none; }
   .dd-mark { width: 40px; height: 40px; }
   .dd-mode { gap: 8px; }
 }

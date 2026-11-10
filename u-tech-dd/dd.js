@@ -25,6 +25,34 @@
         return today;
     }
 
+    const crosshair = {
+        id: "ddCrosshair",
+        afterDatasetsDraw(chart) {
+            const [active] = chart.getActiveElements();
+            if (!active || chart.isZoomingOrPanning?.()) return;
+
+            const { x, y } = active.element;
+            const { ctx, chartArea: { left, right, top, bottom } } = chart;
+            if (x < left || x > right || y < top || y > bottom) return;
+
+            ctx.save();
+            ctx.strokeStyle = "#66788b";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x, top);
+            ctx.lineTo(x, bottom);
+            if (active.datasetIndex === 0) {
+                ctx.moveTo(left, y);
+                ctx.lineTo(right, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+    };
+
+    byId("reset-zoom").addEventListener("click", () => chart?.resetZoom?.("none"));
+
     const today = updateDateLimits();
     byId("start").value = shiftDate(today, -30);
     byId("end").value = shiftDate(today, -1);
@@ -84,6 +112,7 @@
         result.hidden = false;
         chart = new Chart(byId("chart"), {
             type: "line",
+            plugins: [crosshair],
             data: {
                 labels: days.map((day) => day.date),
                 datasets: [
@@ -129,6 +158,19 @@
                 },
                 plugins: {
                     legend: { onClick() {}, labels: { usePointStyle: true } },
+                    zoom: {
+                        limits: { x: { min: "original", max: "original" }, y: { min: "original", max: "original" } },
+                        zoom: {
+                            mode: "xy",
+                            drag: {
+                                enabled: true,
+                                threshold: 8,
+                                backgroundColor: "#3f638833",
+                                borderColor: "#3f6388",
+                                borderWidth: 1
+                            }
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label(context) {

@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="../u-tech-next/assets/utech-style.css">
   <link rel="stylesheet" href="dd.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script>
   <script src="dd.js" defer></script>
 </head>
 <body>
@@ -62,7 +64,12 @@
     <section id="result" aria-labelledby="chart-title" hidden>
       <h2 id="chart-title">積算温度の推移</h2>
       <p id="coverage" role="status"></p>
-      <div class="chart-card"><div class="dd-chart"><canvas id="chart" role="img" aria-label="日ごとの積算温度の折れ線グラフ" aria-describedby="coverage"></canvas></div></div>
+      <div class="chart-card">
+        <div class="dd-chart-controls">
+          <button id="reset-zoom" type="button">ズームリセット</button>
+          <span class="caption">マウスで範囲をドラッグすると拡大できます。</span>
+        </div>
+        <div class="dd-chart"><canvas id="chart" role="img" aria-label="日ごとの積算温度の折れ線グラフ" aria-describedby="coverage"></canvas></div></div>
       <details id="missing-detail" class="hourly" hidden>
         <summary>欠測日を確認</summary>
         <p id="missing-dates"></p>
