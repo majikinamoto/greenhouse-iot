@@ -59,10 +59,8 @@
             if (active.datasetIndex === 0) {
                 const value = chart.data.datasets[0].data[active.index];
                 const label = `${numberFormat.format(value)} ℃·日`;
-                const labelWidth = ctx.measureText(label).width;
-                const labelX = x + 8 + labelWidth <= right ? x + 8 : Math.max(left, x - 8 - labelWidth);
-                const labelY = y - 20 >= top ? y - 20 : y + 8;
-                ctx.fillText(label, labelX, labelY);
+                ctx.textBaseline = "bottom";
+                ctx.fillText(label, left + 8, Math.max(top + 16, y - 4));
             }
             ctx.restore();
         }
