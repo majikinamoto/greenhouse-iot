@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>U-Tech DD</title>
+  <link rel="icon" href="mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../u-tech-next/assets/next.css">
+  <link rel="stylesheet" href="../u-tech-next/assets/utech-style.css">
+  <link rel="stylesheet" href="dd.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+  <script src="dd.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div class="brand">
+        <img class="dd-mark" src="mark.svg" alt="" width="52" height="52">
+        <div>
+          <div class="brand-title-row">
+            <div class="brand-title-info">
+              <h1>U-Tech <span>DD</span></h1>
+              <button id="dd-info" class="logo-info-button" type="button" aria-label="U-Tech DDについて" aria-expanded="false" aria-controls="dd-info-popup">ℹ️</button>
+            </div>
+            <a class="back" href="../">U-Techへ移動</a>
+            <div id="dd-info-popup" class="logo-info-popup" hidden>
+              <p class="info-heading"><img src="mark.svg" alt="" width="28" height="28"><strong>U-Tech DDについて</strong></p>
+              <p>U-Tech DDは、測定地点の実測気温から積算温度をグラフで確認できるU-Techシリーズのサービスです。単位は degree-days（日度、℃·日）です。</p>
+              <p><strong>単純積算温度</strong>は日平均気温をそのまま足します。<strong>growing degree-days（GDD、有効積算温度）</strong>は日平均気温が基準温度を超えた分を足します。</p>
+              <p><strong>日平均気温</strong>は、日本時間の1日分の有効な測定値を同じ重みで平均します。</p>
+              <p><strong>欠測</strong>は、有効な測定値が120件未満、または日付の両端を含めて2時間以上の空白がある日です。欠測日で線が途切れても、次の有効日にはそれまでの累計を引き継ぎます。当日は「計測中」と表示し、積算と欠測日数の集計から外します。</p>
+            </div>
+          </div>
+          <p class="eyebrow">実測気温から積算温度を確認</p>
+          <p class="subtitle">Degree-days</p>
+        </div>
+      </div>
+    </header>
+    <section class="toolbar dd-toolbar" aria-label="地点・期間の選択">
+      <form id="dd-form" class="selection-controls">
+        <div class="control-field"><label for="user-id">user_id</label><input id="user-id" name="user_id" maxlength="64" placeholder="例：T0001" spellcheck="false" required></div>
+        <div class="control-field"><label for="point-id">point_id</label><input id="point-id" name="point_id" maxlength="64" placeholder="例：P01" spellcheck="false" required></div>
+        <div class="control-field"><label for="start">開始日 <small>JST</small></label><input id="start" name="start" type="date" min="1000-01-01" required></div>
+        <div class="control-field"><label for="end">終了日 <small>JST</small></label><input id="end" name="end" type="date" min="1000-01-01" required></div>
+        <button id="display" type="submit">表示</button>
+      </form>
+    </section>
+    <section class="selection-controls dd-mode" aria-label="計算方法">
+      <div class="control-field">
+        <label for="mode">計算方法</label>
+        <select id="mode">
+          <option value="simple">単純積算温度</option>
+          <option value="gdd">有効積算温度</option>
+        </select>
+      </div>
+      <div class="control-field" id="base-field" hidden>
+        <label for="base">基準温度（℃）</label>
+        <input id="base" type="number" step="any" placeholder="例：10">
+      </div>
+    </section>
+    <p id="status" role="status">地点と期間を指定し、「表示」を押してください。</p>
+    <section id="result" aria-labelledby="chart-title" hidden>
+      <h2 id="chart-title">積算温度の推移</h2>
+      <p id="coverage" role="status"></p>
+      <div class="chart-card"><div class="dd-chart"><canvas id="chart" role="img" aria-label="日ごとの積算温度の折れ線グラフ" aria-describedby="coverage"></canvas></div></div>
+      <details id="missing-detail" class="hourly" hidden>
+        <summary>欠測日を確認</summary>
+        <p id="missing-dates"></p>
+      </details>
+    </section>
+  </main>
+</body>
+</html>

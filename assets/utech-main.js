@@ -331,6 +331,7 @@ function openSiteSwitchDialog(destination){
     const destinations = {
         flow:{ url:"g-flow/", title:"G-Flowへ移動" },
         next:{ url:"u-tech-next/", title:"U-Tech Nextへ移動" },
+        dd:{ url:"u-tech-dd/", title:"U-Tech DDへ移動" },
         yui:{ url:"yui-tech/", title:"Yui-Techへ移動" }
     };
     const target = destinations[destination];

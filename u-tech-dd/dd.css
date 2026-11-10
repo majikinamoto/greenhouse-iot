@@ -1,0 +1,30 @@
+.dd-mark {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 3px 4px #2f4f6f40);
+}
+.hero .info-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dd-toolbar { padding-top: 12px; }
+.dd-toolbar input:not([type="date"]), #base { width: 112px; }
+.dd-mode { margin-top: 16px; }
+.dd-mode label { display: block; }
+.dd-chart {
+  position: relative;
+  height: clamp(270px, 48vh, 520px);
+}
+#coverage {
+  font-size: .9rem;
+  font-weight: 700;
+}
+#coverage.has-missing { color: #963e30; }
+#missing-dates { overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .dd-mark { width: 40px; height: 40px; }
+  .dd-mode { gap: 8px; }
+}
