@@ -7,6 +7,14 @@
     const historyLimit = 15;
     const mode = byId("mode");
     const base = byId("base");
+    const fillMissing = byId("fill-missing");
+    const fillLimit = byId("fill-limit");
+    function updateFillControls() {
+        byId("fill-limit-field").hidden = !fillMissing.checked;
+        fillLimit.disabled = !fillMissing.checked;
+    }
+    fillMissing.addEventListener("change", updateFillControls);
+    updateFillControls();
     const status = byId("status");
     const result = byId("result");
     const display = byId("display");
@@ -80,7 +88,8 @@
             ctx.fillStyle = "#000";
             ctx.font = "bold 13px sans-serif";
             ctx.textBaseline = "top";
-            const date = chart.data.labels[active.index];
+            const filled = active.datasetIndex === 0 && chart.data.datasets[0].pointStyle[active.index] === "rectRot";
+            const date = chart.data.labels[active.index] + (filled ? "（補完）" : "");
             const dateWidth = ctx.measureText(date).width;
             const dateX = Math.max(4, Math.min(x - dateWidth / 2, chart.width - dateWidth - 4));
             ctx.fillText(date, dateX, bottom + 9);
@@ -132,20 +141,25 @@
         }
 
         const missing = days.filter((day) => day.status === "missing");
+        const filled = days.filter((day) => day.status === "filled");
         const measuring = days.some((day) => day.status === "measuring");
         const coverage = byId("coverage");
         coverage.textContent = [
-            missing.length ? `欠測日あり（${missing.length}日）` : "欠測日なし",
+            missing.length ? `欠測日あり（${missing.length}日）` : (filled.length ? "未補完の欠測なし" : "欠測日なし"),
+            filled.length ? `補完 ${filled.length}日（◆）` : "",
             measuring ? "当日：計測中" : ""
         ].filter(Boolean).join(" ／ ");
         coverage.classList.toggle("has-missing", missing.length > 0);
-        byId("missing-detail").hidden = missing.length === 0;
-        byId("missing-dates").textContent = missing.map((day) => day.date).join("、");
+        byId("missing-detail").hidden = missing.length === 0 && filled.length === 0;
+        byId("filled-dates").hidden = filled.length === 0;
+        byId("filled-dates").textContent = "補完日 " + filled.map((day) => day.date).join("、");
+        byId("missing-dates").hidden = missing.length === 0;
+        byId("missing-dates").textContent = "未補完の欠測日 " + missing.map((day) => day.date).join("、");
 
         const title = gdd ? "有効積算温度" : "単純積算温度";
         let total = 0;
         const cumulative = days.map((day) => {
-            if (day.status !== "valid") return null;
+            if (day.average === null) return null;
             total += gdd ? Math.max(0, day.average - base.valueAsNumber) : day.average;
             return total;
         });
@@ -166,7 +180,10 @@
                         borderColor: "#3f6388",
                         backgroundColor: "#3f6388",
                         borderWidth: 2,
-                        pointRadius: days.length > 90 ? 1.5 : 3,
+                        pointStyle: days.map((day) => day.status === "filled" ? "rectRot" : "circle"),
+                        pointBackgroundColor: days.map((day) => day.status === "filled" ? "#98610e" : "#3f6388"),
+                        pointBorderColor: days.map((day) => day.status === "filled" ? "#98610e" : "#3f6388"),
+                        pointRadius: days.map((day) => day.status === "filled" ? 5 : (days.length > 90 ? 1.5 : 3)),
                         spanGaps: false
                     },
                     {

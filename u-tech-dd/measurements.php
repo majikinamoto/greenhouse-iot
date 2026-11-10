@@ -44,25 +44,45 @@ try {
     if ($start > $end || $start->diff($end)->days >= 366) {
         throw new InvalidArgumentException('開始日と終了日を確認してください（最大366日）。');
     }
+    $fillLimit = 0;
+    if (isset($_GET['fill_limit'])) {
+        $fillLimit = filter_var($_GET['fill_limit'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 366]]);
+        if ($fillLimit === false) {
+            throw new InvalidArgumentException('補完の上限は1〜366日で指定してください。');
+        }
+    }
 } catch (InvalidArgumentException $error) {
     ddReply(['message' => $error->getMessage()], 400);
     return;
 }
 
 try {
+    $queryStart = $start;
+    $queryEnd = $end;
+    if ($fillLimit > 0) {
+        $padding = $fillLimit + 1;
+        $queryStart = max($start->modify("-$padding days"), new DateTimeImmutable('1000-01-01', $zone));
+        $queryEnd = min($end->modify("+$padding days"), $today);
+    }
+
     $rows = [];
     if ($start < $today) {
         require_once dirname(__DIR__) . '/u-tech-next/lib/db.php';
         $db = UTechNext\connect();
         $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-        $stop = min($end->modify('+1 day'), $today);
+        $stop = min($queryEnd->modify('+1 day'), $today);
         $stmt = $db->prepare('SELECT recorded_at, temperature FROM measurements
             WHERE user_id = ? AND point_id = ? AND recorded_at >= ? AND recorded_at < ?
               AND temperature IS NOT NULL ORDER BY recorded_at');
-        $stmt->execute([$ids['user_id'], $ids['point_id'], $start->format('Y-m-d H:i:s'), $stop->format('Y-m-d H:i:s')]);
+        $stmt->execute([$ids['user_id'], $ids['point_id'], $queryStart->format('Y-m-d H:i:s'), $stop->format('Y-m-d H:i:s')]);
         $rows = $stmt;
     }
-    ddReply(['days' => ddDailyAverages($start, $end, $today, $rows)]);
+    $days = ddDailyAverages($queryStart, $queryEnd, $today, $rows);
+    if ($fillLimit > 0) {
+        $days = ddFillMissingDays($days, $fillLimit);
+        $days = array_slice($days, $queryStart->diff($start)->days, $start->diff($end)->days + 1);
+    }
+    ddReply(['days' => $days]);
 } catch (Throwable $error) {
     error_log('U-Tech DD measurements: ' . $error->getMessage());
     ddReply(['message' => '実測気温を取得できませんでした。'], 503);

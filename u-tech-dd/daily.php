@@ -34,3 +34,29 @@ function ddDailyAverages(DateTimeImmutable $start, DateTimeImmutable $end, DateT
     }
     return $result;
 }
+
+function ddFillMissingDays(array $days, int $limit): array
+{
+    $index = 0;
+    $count = count($days);
+    while ($index < $count) {
+        if ($days[$index]['status'] !== 'missing') {
+            $index++;
+            continue;
+        }
+        $first = $index;
+        while ($index < $count && $days[$index]['status'] === 'missing') {
+            $index++;
+        }
+        if ($index - $first > $limit || $first === 0 || $index === $count
+            || $days[$first - 1]['status'] !== 'valid' || $days[$index]['status'] !== 'valid') {
+            continue;
+        }
+        $average = ($days[$first - 1]['average'] + $days[$index]['average']) / 2;
+        for ($day = $first; $day < $index; $day++) {
+            $days[$day]['status'] = 'filled';
+            $days[$day]['average'] = $average;
+        }
+    }
+    return $days;
+}

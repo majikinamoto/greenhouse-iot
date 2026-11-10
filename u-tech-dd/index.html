@@ -31,6 +31,7 @@
               <p><strong>単純積算温度</strong>は日平均気温をそのまま足します。<strong>growing degree-days（GDD、有効積算温度）</strong>は日平均気温が基準温度を超えた分を足します。</p>
               <p><strong>日平均気温</strong>は、日本時間の1日分の有効な測定値を同じ重みで平均します。</p>
               <p><strong>欠測</strong>は、有効な測定値が120件未満、または日付の両端を含めて2時間以上の空白がある日です。欠測日で線が途切れても、次の有効日にはそれまでの累計を引き継ぎます。当日は「計測中」と表示し、積算と欠測日数の集計から外します。</p>
+              <p><strong>欠測補完</strong>をオンにすると、指定日数以内の連続欠測を、前後の有効な実測日の日平均気温の平均で補います。表示期間外の実測も参照し、補完した日はグラフ上で区別します。</p>
             </div>
           </div>
           <p class="eyebrow">実測気温から積算温度を確認</p>
@@ -50,6 +51,14 @@
         <div class="control-field"><label for="point-id">point_id</label><input id="point-id" name="point_id" maxlength="64" placeholder="例：P01" spellcheck="false" required></div>
         <div class="control-field"><label for="start">開始日 <small>JST</small></label><input id="start" name="start" type="date" min="1000-01-01" required></div>
         <div class="control-field"><label for="end">終了日 <small>JST</small></label><input id="end" name="end" type="date" min="1000-01-01" required></div>
+        <div class="control-field dd-fill">
+          <label class="dd-fill-toggle"><input id="fill-missing" type="checkbox"> 欠測日を補完する</label>
+          <div id="fill-limit-field" hidden>
+            <label for="fill-limit">連続何日まで補完するか</label>
+            <input id="fill-limit" name="fill_limit" type="number" min="1" max="366" step="1" value="3" required disabled>
+            <span>日</span>
+          </div>
+        </div>
         <button id="display" type="submit">表示</button>
       </form>
     </section>
@@ -77,7 +86,8 @@
         </div>
         <div class="dd-chart"><canvas id="chart" role="img" aria-label="日ごとの積算温度の折れ線グラフ" aria-describedby="coverage"></canvas></div></div>
       <details id="missing-detail" class="hourly" hidden>
-        <summary>欠測日を確認</summary>
+        <summary>補完日・欠測日を確認</summary>
+        <p id="filled-dates" hidden></p>
         <p id="missing-dates"></p>
       </details>
     </section>
