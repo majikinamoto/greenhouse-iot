@@ -47,6 +47,23 @@
                 ctx.lineTo(right, y);
             }
             ctx.stroke();
+
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 13px sans-serif";
+            ctx.textBaseline = "top";
+            const date = chart.data.labels[active.index];
+            const dateWidth = ctx.measureText(date).width;
+            const dateX = Math.max(4, Math.min(x - dateWidth / 2, chart.width - dateWidth - 4));
+            ctx.fillText(date, dateX, bottom + 9);
+
+            if (active.datasetIndex === 0) {
+                const value = chart.data.datasets[0].data[active.index];
+                const label = `${numberFormat.format(value)} ℃·日`;
+                const labelWidth = ctx.measureText(label).width;
+                const labelX = x + 8 + labelWidth <= right ? x + 8 : Math.max(left, x - 8 - labelWidth);
+                const labelY = y - 20 >= top ? y - 20 : y + 8;
+                ctx.fillText(label, labelX, labelY);
+            }
             ctx.restore();
         }
     };
@@ -100,11 +117,11 @@
 
         const title = gdd ? "有効積算温度" : "単純積算温度";
         let total = 0;
-        const added = days.map((day) => {
+        const cumulative = days.map((day) => {
             if (day.status !== "valid") return null;
-            return gdd ? Math.max(0, day.average - base.valueAsNumber) : day.average;
+            total += gdd ? Math.max(0, day.average - base.valueAsNumber) : day.average;
+            return total;
         });
-        const cumulative = added.map((value) => value === null ? null : (total += value));
         status.textContent = cumulative.some((value) => value !== null) ? "" : "積算に使える日がありません。";
         byId("chart-title").textContent = title + "の推移";
 
@@ -152,7 +169,7 @@
                 maintainAspectRatio: false,
                 interaction: { mode: "nearest", intersect: false, axis: "x" },
                 scales: {
-                    x: { offset: true, ticks: { maxTicksLimit: 10 } },
+                    x: { offset: true, ticks: { maxTicksLimit: 10, padding: 20 } },
                     y: { beginAtZero: true, title: { display: true, text: "℃·日" } },
                     marker: { axis: "y", min: 0, max: 1, display: false }
                 },
@@ -171,19 +188,7 @@
                             }
                         }
                     },
-                    tooltip: {
-                        callbacks: {
-                            label(context) {
-                                if (context.datasetIndex !== 0) return context.dataset.label;
-                                const index = context.dataIndex;
-                                return [
-                                    `累計 ${numberFormat.format(context.parsed.y)} ℃·日`,
-                                    `加算値 ${numberFormat.format(added[index])} ℃·日`,
-                                    `日平均気温 ${numberFormat.format(days[index].average)} ℃`
-                                ];
-                            }
-                        }
-                    }
+                    tooltip: { enabled: false }
                 }
             }
         });
