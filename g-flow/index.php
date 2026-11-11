@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>G-Flow｜ハウス内の風を見る</title>
 <link rel="stylesheet" href="../u-tech-next/assets/next.css"><link rel="stylesheet" href="../u-tech-next/assets/utech-style.css"><link rel="stylesheet" href="flow.css">
 <?php if (flowAuthorized()): ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script><script src="flow.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script><script src="temperature.js" defer></script><script src="flow.js" defer></script>
 <?php endif; ?></head><body><main>
 <header class="hero"><div class="brand"><div class="logo-mark" aria-hidden="true">G</div><div><div class="brand-title-row"><h1>G-Flow</h1><a class="back" href="../" aria-label="U-Techへ移動">U-Techへ移動</a></div><p class="eyebrow">ゴーヤーのハウス内の風を見る</p><p class="subtitle">Greenhouse Wind Flow</p></div></div></header>
 <?php if (!flowAuthorized()): ?>
@@ -32,11 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <section class="chart-card"><h3>No.<?= $index+1 ?> · <?= $point ?></h3><div class="chart-container"><canvas aria-label="No.<?= $index+1 ?>の風速グラフ" role="img"></canvas></div><p class="chart-readout">user_idを入力して「表示」を押してください。</p></section>
 <?php endforeach; ?>
 </div>
-<p class="caption">マウスでドラッグした範囲を縦横に拡大できます。「表示リセット」で元に戻せます。表示時間は4棟で連動します。No.2〜No.4は「P61と同じ縦軸」で連動・個別調整を選べます。</p>
+<h2>温湿度</h2><div id="temperature-charts" class="chart-grid"><?php foreach (['P01','P02','P03','P04'] as $index=>$point): ?><section class="chart-card temperature-card"><h3>温湿度No.<?= $index+1 ?>（<?= $point ?>）</h3><div class="chart-container"><canvas role="img" aria-label="温湿度No.<?= $index+1 ?>のグラフ"></canvas></div><p class="chart-readout">user_idを入力して「表示」を押してください。</p></section><?php endforeach; ?></div><p class="caption">マウスでドラッグした範囲を縦横に拡大できます。「表示リセット」で元に戻せます。表示時間は風速・温湿度の全グラフで連動します。No.2〜No.4は「P61と同じ縦軸」で連動・個別調整を選べます。</p>
 </section>
 <section id="export-panel" role="tabpanel" aria-labelledby="tab-export" hidden>
 <p id="export-context" role="status" aria-live="polite">出力対象：未選択</p>
-<form id="export-form"><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="csv" type="submit">CSVダウンロード</button></div></form>
-<p class="caption">各棟はuser_id・point_id・ハウス名・測定日時（JST）・10分最大風速・10分平均風速（m/s）の順です。No.1〜No.4を空列1つで区切って横に並べ、各棟のデータは日時順に出力します。user_id・point_idは各棟の最初のデータ行だけに表示します。欠測値は空欄です。</p>
+<form id="export-form"><fieldset id="export-targets"><legend>出力するデータ（複数選択可）</legend><?php foreach (['P61','P62','P63','P64','P01','P02','P03','P04'] as $index=>$point): ?><label><input type="checkbox" name="export-point" value="<?= $point ?>" checked><?= $index < 4 ? '風速' : '温湿度' ?>No.<?= $index % 4 + 1 ?>（<?= $point ?>）</label><?php endforeach; ?></fieldset><div class="export-actions"><label>開始（JST）<input id="start" type="datetime-local" required></label><label>終了（JST）<input id="end" type="datetime-local" required></label><button id="csv" type="submit">CSVダウンロード</button></div></form>
+<p class="caption">各棟はuser_id・point_id・ハウス名・測定日時（JST）・10分最大風速・10分平均風速（m/s）の順です。温湿度は温度（℃）・湿度（%）を出力します。選択した項目を空列1つで区切って横に並べ、各棟のデータは日時順に出力します。user_id・point_idは各棟の最初のデータ行だけに表示します。欠測値は空欄です。</p>
 </section>
 <?php endif; ?><footer>G-Flow · Gima / Goya</footer></main></body></html>

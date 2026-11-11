@@ -6,3 +6,21 @@
 .measured-axes input[type=checkbox]{min-height:0}
 
 #export-panel #csv{min-height:24px;padding:3px 8px;font-size:11px;border-radius:5px}
+
+.temperature-card{width:400px}
+.temperature-card .chart-container{height:280px}
+.temperature-axes{display:flex;align-items:center;flex-wrap:wrap;gap:2px;font-size:13px;margin-bottom:6px}
+.temperature-axes label{display:inline-flex;align-items:center;gap:1px;white-space:nowrap}
+.temperature-axes input[type=number]{width:40px;min-height:20px;padding:1px 2px;font-size:12px;box-sizing:border-box}
+.temperature-axes button{min-height:24px;padding:3px 4px;font-size:11px}
+.temperature-card .error:empty{display:none}
+.chart-no-data{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#export-targets{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+#export-targets label{display:flex;align-items:center;gap:4px}
+#export-targets input{min-height:0}
+
+.temperature-card h3{font-size:16px}
+.temperature-card .chart-reset-button{height:auto;min-height:24px;padding:3px 8px;font-size:12px;white-space:nowrap}
+@media(max-width:600px){.temperature-card{width:100%;padding:6px;border-left:0;border-right:0}.temperature-card .chart-container{width:min(100%,calc((100vh - 44px)*10/7));height:min(350px,calc(100vw - 12px),calc((100vh - 44px)*10/7));margin-inline:auto}}
+
+.temperature-axes label:first-child input[type=number]{width:44px}

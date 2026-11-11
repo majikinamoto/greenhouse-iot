@@ -19,7 +19,7 @@ $span=$dates['end']->getTimestamp()-$dates['start']->getTimestamp();
 if ($span<0 || $span>366*86400) reply(['message'=>'期間は開始から終了まで最大366日です。'],400);
 try {
     require_once dirname(__DIR__).'/u-tech-next/lib/db.php';
-    $stmt=UTechNext\connect()->prepare("SELECT point_id,recorded_at,wind_speed_avg,wind_speed_max FROM measurements WHERE user_id=? AND point_id IN ('P61','P62','P63','P64') AND recorded_at>=? AND recorded_at<=? ORDER BY recorded_at,point_id");
+    $stmt=UTechNext\connect()->prepare("SELECT point_id,recorded_at,wind_speed_avg,wind_speed_max,temperature,humidity FROM measurements WHERE user_id=? AND point_id IN ('P61','P62','P63','P64','P01','P02','P03','P04') AND recorded_at>=? AND recorded_at<=? ORDER BY recorded_at,point_id");
     $stmt->execute([$user,$dates['start']->format('Y-m-d H:i:s'),$dates['end']->format('Y-m-d H:i:s')]);
     reply(['rows'=>$stmt->fetchAll()]);
-} catch (Throwable $e) { error_log('G-Flow: '.$e->getMessage()); reply(['message'=>'風速データを取得できませんでした。'],503); }
+} catch (Throwable $e) { error_log('G-Flow: '.$e->getMessage()); reply(['message'=>'測定データを取得できませんでした。'],503); }
