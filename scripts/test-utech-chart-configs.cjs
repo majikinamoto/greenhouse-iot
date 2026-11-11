@@ -21,8 +21,9 @@ function compile(sources,file,name,{mobile=false,missingCanvas=false}={}){
   destroyExistingChart:id=>events.push(['destroy',id]),
   getTempHumAxis:()=>({tempMin:20,tempMax:40,humMin:40,humMax:100}),
   getSingleAxis:()=>({min:10,max:80}),
+  getCo2DiffAxis:()=>({min:-250,max:250}),
   getChartDisplayMinTime:(id,min,max)=>mobile?new Date(max-24*3600000):min,
-  baseOptions:(min,max)=>({scales:{x:{min:+min,max:+max}},plugins:{crosshair:{sync:{group:1}},zoom:{zoom:{onZoomComplete:function syncZoom(){}}}}}),
+  baseOptions:(min,max)=>({scales:{x:{min:+min,max:+max}},plugins:{tooltip:{callbacks:{}},crosshair:{sync:{group:1}},zoom:{zoom:{onZoomComplete:function syncZoom(){}}}}}),
   createRightYAxis:axis=>({...axis,position:'right'}),
   formatIntegerAxisTick:value=>String(Math.round(value)),
   saveInitialScaleLimits:chart=>events.push(['save',chart.canvas.id]),
@@ -34,7 +35,7 @@ function compile(sources,file,name,{mobile=false,missingCanvas=false}={}){
  return {run:args=>{events.length=0;const chart=fn(...args);return {chart,events:[...events]};}};
 }
 function normalize(value){
- if(typeof value==='function')return value.toString();
+ if(typeof value==='function')return value.toString().replace(/\r\n/g,'\n');
  if(Array.isArray(value))return value.map(normalize);
  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalize(v)]));
  return value;
@@ -45,8 +46,13 @@ const rows=[{xValue:+min-1,temp:29,hum:65,co2:420,solar:100,volt:12.1,dew:21},
  {xValue:+max,temp:31,hum:75,co2:480,solar:300,volt:13,dew:23},
  {xValue:+max+1,temp:32,hum:80,co2:500,solar:400,volt:13.5,dew:24},
  {xValue:+min+1,temp:null,hum:NaN,co2:null,solar:null,volt:null,dew:null}];
+const windRows=rows.map(row=>({...row,windSpeedAvg:1,windSpeedMax:2}));
 const cases=[];
-for(const mobile of [false,true])cases.push({file:'shared',beforeFile:'plus',name:'createTempHumChart',args:['test',rows,min,max,'P01'],settings:{mobile}});
+for(const mobile of [false,true]){
+ cases.push({file:'plus',beforeFile:'main',name:'createWindChart',args:['windChartP61',windRows,min,max],settings:{mobile}});
+ cases.push({file:'plus',beforeFile:'shared',name:'createCo2DiffChart',args:['co2DiffChart',rows,rows,min,max],settings:{mobile}});
+}
+for(const mobile of [false,true])cases.push({file:'shared',name:'createTempHumChart',args:['test',rows,min,max,'P01'],settings:{mobile}});
 for(const key of ['solar','co2','co2Outside','volt','dew'])for(const mobile of [false,true])cases.push({file:'shared',name:'createSingleChart',args:['test',rows,key,key,key==='volt'?'V':'unit',min,max,{min:0,max:100}],settings:{mobile}});
 cases.push({file:'plus',name:'createWbgtGlobeChart',args:[rows,min,max]},{file:'plus',name:'createWbgtChart',args:[[{x:+min,y:28},{x:+max,y:30}],min,max]});
 let checked=0;
@@ -68,5 +74,5 @@ for(const item of cases){
 for(const [file,name,args]of [['shared','createSingleChart',['test',[],'volt','電圧','V',min,max]],['plus','createWbgtGlobeChart',[[],min,max]],['plus','createWbgtChart',[[],min,max]]]){
  assert.deepEqual(compile(after,file,name).run(args),compile(before,file,name).run(args));checked++;
 }
-assert.deepEqual(compile(after,'shared','createTempHumChart').run(['test',[],min,max,'P01']),compile(before,'plus','createTempHumChart').run(['test',[],min,max,'P01']));
+assert.deepEqual(compile(after,'shared','createTempHumChart').run(['test',[],min,max,'P01']),compile(before,'shared','createTempHumChart').run(['test',[],min,max,'P01']));
 console.log('Chart config equivalence passed: '+checked+' cases, including axes, datasets, plugins, callbacks, gradients, mobile ranges and empty/missing-canvas behavior.');

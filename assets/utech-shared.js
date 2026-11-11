@@ -71,7 +71,6 @@ let tempChartP11;
 
 let co2Chart;
 
-let co2OutsideChart;
 
 let analysisCompareCharts = {};
 
@@ -136,6 +135,9 @@ let voltAxisMin = 11;
 let voltAxisMax = 14;
 
 const maintenanceCanvasIds = [
+    "co2OutsideChart",
+    "co2DiffChart",
+    "windChartP61",
     "maintenanceTempChartP01",
     "maintenanceTempChartP11",
     "tempChartP12",
@@ -1069,37 +1071,16 @@ function syncZoom(sourceChart){
     syncingZoom = true;
 
     const xScale = sourceChart.scales.x;
-    const co2ChartIds = ["co2Chart", "co2OutsideChart"];
-    const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
-    const co2DiffChartIds = ["co2DiffChart"];
-    const isCo2DiffSource = co2DiffChartIds.includes(sourceChart.canvas.id);
     const solarChartIds = ["solarChart"];
     const isSolarSource = solarChartIds.includes(sourceChart.canvas.id);
 
     allCharts.forEach(chart=>{
         if(chart && chart !== sourceChart){
-            const preserveCo2Y = isCo2DiffSource && co2ChartIds.includes(chart.canvas.id) && chart.scales.y
-                ? {
-                    y:{ min:chart.scales.y.min, max:chart.scales.y.max },
-                    yRight:chart.scales.yRight ? { min:chart.scales.yRight.min, max:chart.scales.yRight.max } : null
-                }
-                : null;
-
             if(chart.zoomScale){
                 chart.zoomScale("x", { min:xScale.min, max:xScale.max }, "none");
             }else{
                 chart.options.scales.x.min = xScale.min;
                 chart.options.scales.x.max = xScale.max;
-                chart.update("none");
-            }
-
-            if(preserveCo2Y){
-                chart.options.scales.y.min = preserveCo2Y.y.min;
-                chart.options.scales.y.max = preserveCo2Y.y.max;
-                if(preserveCo2Y.yRight && chart.options.scales.yRight){
-                    chart.options.scales.yRight.min = preserveCo2Y.yRight.min;
-                    chart.options.scales.yRight.max = preserveCo2Y.yRight.max;
-                }
                 chart.update("none");
             }
 
@@ -1109,27 +1090,6 @@ function syncZoom(sourceChart){
                         const scale=sourceChart.scales[axis];
                         chart.zoomScale(axis,{min:scale.min,max:scale.max},'none');
                     }
-                }
-            }
-
-            if(isCo2Source && sourceChart.canvas.id === 'co2Chart' && isMainAxisLinked('co2') && co2ChartIds.includes(chart.canvas.id) && sourceChart.scales.y){
-                const co2YRange = {
-                    min:sourceChart.scales.y.min,
-                    max:sourceChart.scales.y.max
-                };
-                if(chart.zoomScale){
-                    chart.zoomScale("y", co2YRange, "none");
-                    if(chart.scales.yRight){
-                        chart.zoomScale("yRight", co2YRange, "none");
-                    }
-                }else{
-                    chart.options.scales.y.min = co2YRange.min;
-                    chart.options.scales.y.max = co2YRange.max;
-                    if(chart.options.scales.yRight){
-                        chart.options.scales.yRight.min = co2YRange.min;
-                        chart.options.scales.yRight.max = co2YRange.max;
-                    }
-                    chart.update("none");
                 }
             }
 
@@ -1683,7 +1643,6 @@ function getChartDisplayMinTime(canvasId, minTime, maxTime){
         "tempChartP12",
         "outsideDiffChart",
         "mainVaporChart",
-        "mainDewPointChart",
         "solarChart",
         "solarChartP32",
         "solarDiffChartP31P32",
@@ -1964,105 +1923,7 @@ yRight:createRightYAxis(yAxisOptions)
     });
 }
 
-function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
 
-    const canvas = getChartCanvas(canvasId);
-    if(!canvas || !hasChartSourceData(p21) || !hasChartSourceData(p26)) return null;
-
-    destroyExistingChart(canvasId);
-    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
-
-    const co2DiffData = [];
-    const toleranceMs = 360 * 1000;
-    const axis = getCo2DiffAxis();
-    const yAxisOptions = {
-        min:axis.min,
-        max:axis.max,
-        ticks:{
-            color:"#000",
-            callback:formatIntegerAxisTick
-        },
-        title:{
-            display:true,
-            text:"ppm",
-            color:"#000"
-        }
-    };
-    const zeroOriginFill = {
-        target:"origin",
-        above:"rgba(120, 120, 120, 0.18)",
-        below:"rgba(120, 120, 120, 0.18)"
-    };
-
-    p21.forEach(d=>{
-        let nearestP26 = null;
-        let nearestDiff = Infinity;
-
-        p26.forEach(p=>{
-            const diff = Math.abs(d.xValue - p.xValue);
-
-            if(diff < nearestDiff){
-                nearestDiff = diff;
-                nearestP26 = p;
-            }
-        });
-
-        if(!nearestP26 || nearestDiff > toleranceMs) return;
-
-        if(d.co2 !== null && nearestP26.co2 !== null && !isNaN(d.co2) && !isNaN(nearestP26.co2)){
-            co2DiffData.push({ x:d.xValue, y:d.co2 - nearestP26.co2 });
-        }
-    });
-
-    if(!co2DiffData.length) return null;
-
-    return new Chart(canvas,{
-        type:"line",
-        data:{
-            datasets:[{
-                label:"CO2差 (ppm)",
-                data:co2DiffData,
-                borderColor:"rgba(0, 0, 0, 0.55)",
-                backgroundColor:"rgba(0, 0, 0, 0.08)",
-                pointBackgroundColor:"rgb(255, 0, 0)",
-                pointRadius:0,
-                borderWidth:2,
-                tension:0.2,
-                fill:zeroOriginFill
-            },
-            {
-                label:"ゼロライン",
-                data:[
-                    {x:minTime, y:0},
-                    {x:maxTime, y:0}
-                ],
-                borderColor:"rgba(0, 120, 255, 0.8)",
-                borderWidth:1.5,
-                pointRadius:0,
-                tension:0,
-                fill:false
-            }]
-        },
-        options:{
-            ...baseOptions(displayMinTime,maxTime),
-            plugins:{
-                ...baseOptions(displayMinTime,maxTime).plugins,
-                legend:{
-                    labels:{
-                        filter(item){
-                            return item.text !== "ゼロライン";
-                        }
-                    }
-                }
-            },
-            scales:{
-                ...baseOptions(displayMinTime,maxTime).scales,
-                y:yAxisOptions,
-                yRight:createRightYAxis(yAxisOptions)
-            }
-        }
-    });
-}
 
 // 単一系列の線・点の基本設定を共通化する。styleのlabel/color/backgroundColor/fillは呼出側で指定する。
 // データ抽出・軸・期間・ズーム・既存グラフの破棄・初期範囲保存は呼出側の責任。
@@ -2194,22 +2055,20 @@ function createSingleChart(canvasId, parsed, key, label, unit, minTime, maxTime,
 function getMainAxisLinkPairs(){
     return [
         {key:'temperature', axis:'yTemp', checkbox:'mainTempAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['tempMinP11','tempMaxP11']},
-        {key:'humidity', axis:'yHum', checkbox:'mainHumAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['humMinP11','humMaxP11']},
-        {key:'co2', axis:'y', checkbox:'mainCo2AxisLink', inside:co2Chart, outside:co2OutsideChart, inputs:['co2OutsideMin','co2OutsideMax']}
+        {key:'humidity', axis:'yHum', checkbox:'mainHumAxisLink', inside:tempChartP01, outside:tempChartP11, inputs:['humMinP11','humMaxP11']}
     ];
 }
 
 function isMainAxisLinked(key){
     const pair=getMainAxisLinkPairs().find(pair=>pair.key===key);
-    return !!document.getElementById(pair.checkbox)?.checked;
+    return !!document.getElementById(pair?.checkbox)?.checked;
 }
 
 function matchMainAxisLinks(){
     getMainAxisLinkPairs().forEach(pair=>{
         if(!isMainAxisLinked(pair.key) || !pair.inside?.scales[pair.axis] || !pair.outside) return;
         const scale=pair.inside.scales[pair.axis];
-        if(pair.key==='co2')setLinearYAxis(pair.outside,{min:scale.min,max:scale.max});
-        else {pair.outside.options.scales[pair.axis].min=scale.min;pair.outside.options.scales[pair.axis].max=scale.max;}
+        pair.outside.options.scales[pair.axis].min=scale.min;pair.outside.options.scales[pair.axis].max=scale.max;
         pair.outside.update('none');
     });
 }

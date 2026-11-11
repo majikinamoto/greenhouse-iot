@@ -151,14 +151,10 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 <div class="status-box">🌡️ 温度：<span id="tempNow">-</span>℃</div>
 <div class="status-box">💧 湿度：<span id="humNow">-</span>%</div>
 <div class="status-break"></div>
-<div class="status-box">露点温度：<span id="dewNow">-</span>℃</div>
 <div class="status-box">飽差：<span id="vpdNow">-</span>g/㎥</div>
 <div class="status-break"></div>
 <div class="status-box">☀️ 日射量：<span id="solarNow">-</span> W/㎡</div>
 <div class="status-box">🫧 CO2：<span id="co2Now">-</span> ppm</div>
-<div class="status-break"></div>
-<div class="status-box">ハウス内風速 平均：<span id="windAvgNow">-</span> m/s</div>
-<div class="status-box">最大：<span id="windMaxNow">-</span> m/s</div>
 </div>
 <div class="status-group status-group-vpd-eval" data-main-info="yesterdayVpdEvaluation">
 <div class="status-group-title">昨日の飽差評価</div>
@@ -231,7 +227,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
     <button type="button" onclick="applyRainfallSourceSetting()">取得</button>
 </div>
 
-
 <div class="grid">
 
     <div data-main-graph="tempChartP01">
@@ -275,17 +270,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
         <div class="chart-container"><canvas id="mainVaporChart"></canvas></div>
     </div>
 
-
-    <div data-main-graph="mainDewPointChart">
-        <h4><span>ハウス内結露温度（P01）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-temp">露点軸：</span><input class="axis-input" type="number" id="mainDewPointMin"> ～
-            <input class="axis-input" type="number" id="mainDewPointMax">
-            <button onclick="applySingleYAxis(mainDewPointChart,'dew',getMainDewPointAxis())">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="mainDewPointChart"></canvas></div>
-    </div>
-
     <div data-main-graph="solarChart">
         <h4><span>ハウス内日射量（P31）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
@@ -306,42 +290,14 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
         <div class="chart-container"><canvas id="co2Chart"></canvas></div>
     </div>
 
-    <div data-main-graph="co2OutsideChart">
-        <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="300"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2OutsideMax" value="700">
-            <button onclick="applyCo2OutsideYAxis(co2OutsideChart)">縦軸反映</button>
-            <label><input type="checkbox" id="mainCo2AxisLink" onchange="changeMainAxisLink('co2')">P21と同じ縦軸</label>
-        </div>
-        <div class="chart-container"><canvas id="co2OutsideChart"></canvas></div>
-    </div>
-
-    <div data-main-graph="co2DiffChart">
-        <h4><span>CO2差内外（P21-P26）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="control-group axis-control-group chart-axis-control">
-            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMin" value="-250"> ～
-            <input class="axis-input axis-input-wide" type="number" id="co2DiffMax" value="250">
-            <button onclick="applyCo2DiffYAxis(co2DiffChart)">縦軸反映</button>
-        </div>
-        <div class="chart-container"><canvas id="co2DiffChart"></canvas></div>
-    </div>
-
-    <div data-main-graph="windChartP61">
-        <h4><span>ハウス内風速（P61）</span><button class="chart-reset-button" onclick="resetZoom()">ズームリセット</button></h4>
-        <div class="chart-container"><canvas id="windChartP61"></canvas></div>
-    </div>
-
     <div data-main-graph="rainChart">
         <h4><span><span id="rainfallQuantityTitle">雨量（P41）</span><span id="rainfallSourceNote" class="outside-source-note"></span></span><button class="chart-reset-button" onclick="resetRainZoom()">ズームリセット</button></h4>
         <div class="rainfall-calculation-setting" aria-label="雨量算出方法">
             <label><input type="radio" name="rainfallCalculationMode" value="rainfall" checked onchange="handleRainfallCalculationModeChange()">送信雨量をそのまま使用</label>
             <label><input type="radio" name="rainfallCalculationMode" value="tip" onchange="handleRainfallCalculationModeChange()">転倒ますから雨量を算出</label>
-            <label><input type="radio" name="rainfallCalculationMode" value="water" onchange="handleRainfallCalculationModeChange()">転倒ますから水量を算出</label>
             <span id="rainfallTipSettings">
                 <label>受水面積 <input class="rainfall-calculation-input" type="number" id="rainfallCollectorArea" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> cm²</label>
                 <label>1転倒水量 <input class="rainfall-calculation-input" type="number" id="rainfallTipVolume" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> mL</label>
-                <label>1カウント水量 <input class="rainfall-calculation-input" type="number" id="rainfallWaterVolume" min="0" step="any" inputmode="decimal" oninput="handleRainfallCalculationInput()" onchange="handleRainfallCalculationInputChange()"> mL</label>
                 <span id="rainfallTipResult" class="rainfall-tip-result" aria-live="polite">1転倒あたり：未計算</span>
             </span>
         </div>
@@ -353,10 +309,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 
 </div>
 </section>
-
-
-
-
 
 <section id="tab-export" class="tab-panel tab-panel-export" role="tabpanel">
     <div class="csv-export-panel">
@@ -485,8 +437,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
     </div>
 </section>
 
-
-
 <section id="tab-score" class="tab-panel tab-panel-score" role="tabpanel">
     <div class="environment-score-panel">
         <div class="environment-score-description">
@@ -558,10 +508,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
     </div>
 </section>
 
-
-
-
-
 <section id="tab-guide" class="tab-panel tab-panel-guide" role="tabpanel">
     <div class="guide-content">
         <h3>U-Techのコンセプト</h3>
@@ -576,7 +522,7 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
 
         <h3>各シートの説明</h3>
         <h4>＜メイン＞</h4>
-        <p>ハウス内外の現在および直近の環境を確認するための画面です。温湿度、ハウス内外温度差、飽差、日射量、CO2、風速、雨量などを確認できます。</p>
+        <p>ハウス内外の現在および直近の環境を確認するための画面です。温湿度、ハウス内外温度差、飽差、日射量、ハウス内CO2、雨量などを確認できます。</p>
         <h4>＜環境スコア＞</h4><p>目標範囲に対して栽培環境がどの程度維持されていたかを確認できます。</p>
         <h4>＜データ出力＞</h4><p>user_id・期間・Point IDを指定して、保存された測定データをCSVでダウンロードできます。</p>
         <h3>U-Tech Plus</h3><p>アラート・分析・WBGT・過去データ・メンテは、パスワード不要の「U-Tech Plusへ移動」から利用できます。</p>
@@ -725,8 +671,6 @@ U-Tech Monitor：メインの計測データ・環境スコア・データ出力
         <p>※内容は随時更新予定</p>
     </div>
 </section>
-
-
 
 <script src="assets/utech-shared.js"></script>
 <script src="assets/utech-header.js"></script>

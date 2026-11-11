@@ -1290,6 +1290,7 @@
 @media (max-width:600px) {
     .utech-plus .grid { width:100%; }
     .utech-plus .grid > div { min-width:0; }
+    .utech-plus #tab-maintenance .chart-container > canvas { max-width:100%; }
 }
 
 .drainage-axis-controls > div {display:flex;align-items:center;flex-wrap:wrap;gap:6px;}

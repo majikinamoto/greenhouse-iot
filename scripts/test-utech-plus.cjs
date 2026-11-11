@@ -27,7 +27,7 @@ const server=http.createServer((req,res)=>{
   if(url.pathname==='/get_data.php'){
    const end=url.searchParams.get('end')?new Date(url.searchParams.get('end').replace(' ','T')):new Date();
    const start=url.searchParams.get('start')?new Date(url.searchParams.get('start').replace(' ','T')):new Date(end-72*3600000);
-   const rows=[];for(let t=+start;t<=+end;t+=3600000){const d=new Date(t);const stamp=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');rows.push({recorded_at:stamp,rainfall_interval:1,rainfall_tip_interval:2,temperature:28+Math.sin(t/3600000),humidity:70,co2:500,solar_radiation:300,voltage:12.5,wind_speed_avg:1,wind_speed_max:2});}
+   const rows=[];for(let t=+start;t<=+end;t+=3600000){const d=new Date(t);const stamp=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')+' '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');rows.push({recorded_at:stamp,rainfall_interval:1,rainfall_tip_interval:2,temperature:28+Math.sin(t/3600000),humidity:70,co2:url.searchParams.get('point_id')==='P26'?450:500,solar_radiation:300,voltage:12.5,wind_speed_avg:1,wind_speed_max:2});}
    return res.end(JSON.stringify(rows));
   }
   if(/alert/.test(url.pathname))return res.end(JSON.stringify({success:true,data:[],settings:[],history:[]}));
@@ -88,20 +88,20 @@ const server=http.createServer((req,res)=>{
  assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P01'&&u.searchParams.get('start')===summaryStart));
  assert(requests.some(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P41'&&u.searchParams.get('start')===summaryStart));
  assert(!requests.some(u=>/alert/.test(u.pathname)));
- assert.equal(await page.locator('input[name="rainfallCalculationMode"]').count(),3);
+ assert.equal(await page.locator('input[name="rainfallCalculationMode"]').count(),2);
+ assert.equal(await page.locator('#mainDewPointChart,#co2OutsideChart,#co2DiffChart,#windChartP61,#dewNow,#windAvgNow,#windMaxNow,#rainfallWaterVolume,#mainCo2AxisLink').count(),0);
+ assert.equal(await page.locator('[data-main-graph]').count(),7);
+ assert.equal(await page.evaluate(()=>mainGraphVisibilityIds.length),7);
+ assert(!requests.some(u=>u.pathname==='/get_data.php'&&['P26','P61'].includes(u.searchParams.get('point_id'))));
+ await page.evaluate(()=>{localStorage.setItem('utechRainfallCalculationMode','water');restoreRainfallCalculationSetting();});
+ assert.equal(await page.locator('input[name="rainfallCalculationMode"]:checked').inputValue(),'rainfall');
  await page.locator('#rainfallCollectorArea').evaluate(e=>e.value='100');
  await page.locator('#rainfallTipVolume').evaluate(e=>e.value='5');
  await page.locator('input[name="rainfallCalculationMode"][value="tip"]').check();
  await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===1);
  assert.match(await page.locator('#rainfallTipResult').textContent(),/0.5000 mm/);
- await page.locator('input[name="rainfallCalculationMode"][value="water"]').check();
- await page.locator('#rainfallWaterVolume').fill('5');await page.locator('#rainfallWaterVolume').blur();
- await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===10);
- assert.equal(await page.locator('#rainfallCollectorArea').isDisabled(),true);
- assert.equal(await page.evaluate(()=>Chart.getChart('rainChart').options.scales.yHourly.title.text),'1時間水量 (mL)');
  await page.evaluate(()=>{const c=Chart.getChart('rainChart');showRainfallTooltip(c,c.$rainfallBuckets[0],{clientX:100,clientY:100});});
- assert.match(await page.locator('#rainfallTooltip').textContent(),/10.00 mL/);
- assert.equal(await page.evaluate(()=>localStorage.getItem('utechRainfallWaterVolume')),'5');
+ assert.match(await page.locator('#rainfallTooltip').textContent(),/1.00 mm/);
  await page.locator('input[name="rainfallCalculationMode"][value="rainfall"]').check();
  await page.waitForFunction(()=>Chart.getChart('rainChart')?.data.datasets[0].data[0].y===2);
  assert.equal(await page.evaluate(()=>Chart.getChart('rainChart').options.scales.yHourly.title.text),'1時間雨量 (mm)');
@@ -110,6 +110,25 @@ const server=http.createServer((req,res)=>{
  assert.equal(await page.locator('.tab-button').count(),6);
  assert.equal(await page.locator('.tab-panel.active').getAttribute('id'),'tab-maintenance');
  assert.equal(await page.locator('#maintenanceUserId').inputValue(),'MAIN01');
+ assert.equal(await page.locator('#tab-maintenance canvas').count(),19);
+ for(const id of ['dewChart','co2OutsideChart','co2DiffChart','windChartP61']){
+  assert.equal(await page.locator('#tab-maintenance #'+id).count(),1);
+  assert.equal(await page.evaluate(id=>!!Chart.getChart(id),id),true);
+  assert.equal(await page.evaluate(id=>getChartSyncGroup(Chart.getChart(id)),id),'maintenance');
+ }
+ assert.equal(await page.evaluate(()=>Chart.getChart('co2OutsideChart').data.datasets[0].data[0].y),450);
+ assert.equal(await page.evaluate(()=>Chart.getChart('co2DiffChart').data.datasets[0].data[0].y),50);
+ assert.deepEqual(await page.evaluate(()=>Chart.getChart('windChartP61').data.datasets.map(d=>d.data[0].y)),[1,2]);
+ await page.locator('#co2DiffMin').fill('-100');await page.locator('#co2DiffMax').fill('100');
+ await page.locator('#co2DiffChart').locator('..').locator('..').getByRole('button',{name:'縦軸反映',exact:true}).click();
+ assert.equal(await page.evaluate(()=>Chart.getChart('co2DiffChart').scales.y.max),100);
+ await page.locator('#co2OutsideMin').fill('350');await page.locator('#co2OutsideMax').fill('650');
+ await page.locator('#co2OutsideChart').locator('..').locator('..').getByRole('button',{name:'縦軸反映',exact:true}).click();
+ assert.equal(await page.evaluate(()=>Chart.getChart('co2OutsideChart').scales.y.min),350);
+ await page.evaluate(()=>{const c=Chart.getChart('windChartP61');c.zoomScale('x',{min:c.scales.x.max-24*3600000,max:c.scales.x.max},'none');syncMaintenanceZoom(c);});
+ assert.equal(await page.evaluate(()=>['dewChart','co2OutsideChart','co2DiffChart'].every(id=>{const c=Chart.getChart(id),w=Chart.getChart('windChartP61');return c.scales.x.min===w.scales.x.min;})),true);
+ await page.locator('#windChartP61').locator('..').locator('..').getByRole('button',{name:'ズームリセット',exact:true}).click();
+
  // History limits, MRU ordering, tab isolation, and selection without changing another input.
  await page.evaluate(()=>{
   for(let i=0;i<17;i++)saveUserIdHistory('MAIN_HISTORY_'+i);
@@ -156,7 +175,7 @@ const server=http.createServer((req,res)=>{
  await page.locator('#maintenanceRangeCustom').check();
  await page.locator('#maintenanceStartDate').fill('2026-10-01');
  await page.getByRole('button',{name:'表示する',exact:true}).click();
- await page.waitForFunction(()=>{const r=getMaintenanceRange().range;return ['maintenanceTempChartP01','maintenanceTempChartP11'].every(id=>{const c=Chart.getChart(id);return c&&c.scales.x.min===+r.startTime&&c.scales.x.max===+r.endTime;});});
+ await page.waitForFunction(()=>{const r=getMaintenanceRange().range;return ['maintenanceTempChartP01','maintenanceTempChartP11','co2OutsideChart','co2DiffChart','windChartP61'].every(id=>{const c=Chart.getChart(id);return c&&c.scales.x.min===+r.startTime&&c.scales.x.max===+r.endTime;});});
  await page.getByRole('button',{name:'最新72時間へ戻す',exact:true}).click();await page.waitForTimeout(900);
  const voltageRequest=requests.findLast(u=>u.pathname==='/get_data.php'&&u.searchParams.get('point_id')==='P91');
  assert.equal(new Date(voltageRequest.searchParams.get('end').replace(' ','T'))-new Date(voltageRequest.searchParams.get('start').replace(' ','T')),30*86400000);
@@ -228,7 +247,7 @@ const server=http.createServer((req,res)=>{
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-desktop-test.png'),fullPage:false});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(500);
  await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000}).catch(async error=>{console.log('Mobile overflow',await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,items:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&e.getBoundingClientRect().width>0).slice(0,15).map(e=>({id:e.id,cl:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width}))})));throw error;});
- for(const [added,existing]of [['maintenanceTempChartP01','tempChartP02'],['maintenanceTempChartP11','tempChartP12']]){
+ for(const [added,existing]of [['maintenanceTempChartP01','tempChartP02'],['maintenanceTempChartP11','tempChartP12'],['co2OutsideChart','tempChartP02'],['co2DiffChart','tempChartP02'],['windChartP61','tempChartP02']]){
   assert.deepEqual(await page.evaluate(([a,b])=>{const first=Chart.getChart(a),second=Chart.getChart(b);return [first.scales.x.min===second.scales.x.min,first.scales.x.max===second.scales.x.max];},[added,existing]),[true,true]);
  }
  await page.screenshot({path:path.join(os.tmpdir(),'u-tech-plus-mobile-test.png'),fullPage:false});
@@ -253,7 +272,7 @@ const server=http.createServer((req,res)=>{
  assert.equal(await blank.locator('#maintenanceUserId').inputValue(),'');
  await blank.locator('#maintenanceUserId').fill('EMPTY');await blank.locator('#tab-maintenance .plus-user-controls button').click();await blank.waitForTimeout(600);
  assert.equal(await blank.evaluate(()=>!!Chart.getChart('tempChartP02')),false);
- for(const id of ['maintenanceTempChartP01','maintenanceTempChartP11'])assert.equal(await blank.evaluate(id=>!!Chart.getChart(id),id),false);
+ for(const id of ['maintenanceTempChartP01','maintenanceTempChartP11','dewChart','co2OutsideChart','co2DiffChart','windChartP61'])assert.equal(await blank.evaluate(id=>!!Chart.getChart(id),id),false);
  await empty.close();
  assert.deepEqual(errors,[]);
  console.log('Passed: main charts/visibility; password-free handoff; six tabs; drainage conversion/settings/mobile; maintenance 30-day voltage; review, analysis, WBGT/P51; independent IDs/history; saved-tab restore; mobile layout; empty data. No page errors.');

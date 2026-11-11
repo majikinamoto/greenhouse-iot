@@ -4,19 +4,13 @@ const MAIN_SUMMARY_DAYS = 10;
 // アラート・分析・WBGT・過去データ・メンテの処理はPlus側で管理する。
 let mainVaporChart;
 
-let mainDewPointChart;
-
 let outsideDiffChart;
 
 let solarChart;
 
 let rainChart = null;
 
-let windChartP61 = null;
-
 let rainfallRequestSequence = 0;
-
-let co2DiffChart;
 
 let environmentScoreP01 = [];
 
@@ -68,13 +62,6 @@ const mainChartConfigs = [
         requests:context=>[{ userId:context.userId, pointId:"P01" }]
     },
     {
-        key:"mainDewPoint",
-        canvasId:"mainDewPointChart",
-        title:"ハウス内結露温度",
-        fields:["temperature", "humidity"],
-        requests:context=>[{ userId:context.userId, pointId:"P01" }]
-    },
-    {
         key:"solarRadiation",
         canvasId:"solarChart",
         title:"日射量",
@@ -88,30 +75,6 @@ const mainChartConfigs = [
         fields:["co2"],
         requests:context=>[{ userId:context.userId, pointId:"P21" }]
     },
-    {
-        key:"outsideCo2",
-        canvasId:"co2OutsideChart",
-        title:"CO2_外気",
-        fields:["co2"],
-        requests:context=>[{ userId:context.userId, pointId:"P26" }]
-    },
-    {
-        key:"co2Diff",
-        canvasId:"co2DiffChart",
-        title:"CO2差",
-        fields:["co2"],
-        requests:context=>[
-            { userId:context.userId, pointId:"P21" },
-            { userId:context.userId, pointId:"P26" }
-        ]
-    },
-    {
-        key:"insideWind",
-        canvasId:"windChartP61",
-        title:"ハウス内風速",
-        fields:["wind_speed_avg", "wind_speed_max"],
-        requests:context=>[{ userId:context.userId, pointId:"P61" }]
-    }
 ];
 
 const RAINFALL_MODE_STORAGE_KEY = "utechRainfallCalculationMode";
@@ -170,7 +133,7 @@ function toggleMobileShareQr(){
 }
 
 // 表示設定は入力途中のIDではなく、表示へ適用したIDに紐づける。
-const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "mainDewPointChart", "solarChart", "co2Chart", "co2OutsideChart", "co2DiffChart", "windChartP61", "rainChart"];
+const mainGraphVisibilityIds = ["tempChartP01", "tempChartP11", "outsideDiffChart", "mainVaporChart", "solarChart", "co2Chart", "rainChart"];
 
 const mainInfoVisibilityIds = ["mobileQrCard", "houseTenDaySummary", "outsideTenDaySummary", "currentP01", "yesterdayVpdEvaluation"];
 
@@ -711,7 +674,7 @@ function createDailyRainfallMap(rows, mode, coefficient){
 
 function renderTenDayRainfallSummary(dayMap){
     const label = document.querySelector("#outsideTempSummaryGrid .status-temp-label-grid .status-temp-label:last-child");
-    if(label) label.textContent = getRainfallCalculationMode() === "water" ? "水量(mL)" : "雨量(mm)";
+    if(label) label.textContent = "雨量(mm)";
     for(let i = 0; i < MAIN_SUMMARY_DAYS; i++){
         const day = dayMap instanceof Map ? dayMap.get(getTenDayJstDateKey(MAIN_SUMMARY_DAYS - 1 - i)) : null;
         const cell = document.getElementById("outsideDay" + i + "Rain");
@@ -1203,12 +1166,8 @@ function applyMobileChartRanges(minTime, maxTime){
         tempChartP11,
         outsideDiffChart,
         mainVaporChart,
-        mainDewPointChart,
         solarChart,
         co2Chart,
-        co2OutsideChart,
-        co2DiffChart,
-        windChartP61,
     ].forEach(chart=>{
         applyChartXRange(chart, minTime, maxTime);
     });
@@ -1292,20 +1251,16 @@ function applyMainChartNoDataStates(chartMap, context){
 }
 
 // === 雨量：計算設定・グラフ・データ取得 ===
-// rainfallは送信雨量、tipは転倒数から雨量（mm）、waterは転倒数から水量（mL）を算出する。
+// rainfallは送信雨量、tipは転倒数から雨量（mm）を算出する。
 // 累積値から区間差分を作る処理はinsert.php、時間別集計はget_rainfall_data.phpが担当する。
 function getRainfallCalculationMode(){
     const selected = document.querySelector('input[name="rainfallCalculationMode"]:checked');
-    return selected && ["tip", "water"].includes(selected.value) ? selected.value : "rainfall";
+    return selected && selected.value === "tip" ? selected.value : "rainfall";
 }
 
 // 1転倒の雨量（mm）= 1転倒水量（mL）×10 ÷ 受水面積（cm²）。1 mL=1 cm³のため深さをmmへ換算する。
 // 空欄・非有限値・0以下はnull。係数はtip方式のAPIへ送り、保存済み雨量そのものは書き換えない。
 function getRainfallTipCoefficient(){
-    if(getRainfallCalculationMode() === "water"){
-        const value = Number(document.getElementById("rainfallWaterVolume").value);
-        return Number.isFinite(value) && value > 0 ? value : null;
-    }
     const areaInput = document.getElementById("rainfallCollectorArea");
     const volumeInput = document.getElementById("rainfallTipVolume");
     const areaText = areaInput ? String(areaInput.value).trim() : "";
@@ -1322,12 +1277,10 @@ function getRainfallTipCoefficient(){
 
 function updateRainfallCalculationDisplay(){
     const isTipMode = getRainfallCalculationMode() === "tip";
-    const isWater = getRainfallCalculationMode() === "water";
-    document.getElementById("rainfallWaterVolume").disabled = !isWater;
-    document.getElementById("rainfallQuantityTitle").textContent = isWater ? "水量（P41）" : "雨量（P41）";
+    document.getElementById("rainfallQuantityTitle").textContent = "雨量（P41）";
     const summaryLabel = document.querySelector("#outsideTempSummaryGrid .status-temp-label-grid .status-temp-label:last-child");
-    if(summaryLabel) summaryLabel.textContent = isWater ? "水量(mL)" : "雨量(mm)";
-    document.getElementById("rainChart").setAttribute("aria-label", isWater ? "1時間水量と日積算水量" : "1時間雨量と日積算雨量");
+    if(summaryLabel) summaryLabel.textContent = "雨量(mm)";
+    document.getElementById("rainChart").setAttribute("aria-label", "1時間雨量と日積算雨量");
     const inputs = [
         document.getElementById("rainfallCollectorArea"),
         document.getElementById("rainfallTipVolume")
@@ -1339,19 +1292,19 @@ function updateRainfallCalculationDisplay(){
     const result = document.getElementById("rainfallTipResult");
     if(!result) return;
     const coefficient = getRainfallTipCoefficient();
-    result.classList.toggle("is-invalid", (isTipMode || isWater) && coefficient === null);
+    result.classList.toggle("is-invalid", isTipMode && coefficient === null);
     result.textContent = coefficient === null
-        ? ((isTipMode || isWater)
+        ? (isTipMode
             ? "1転倒あたり：未計算（正の数値を入力してください）"
             : "1転倒あたり：未計算")
-        : "1転倒あたり：" + coefficient.toFixed(4) + (isWater ? " mL" : " mm");
+        : "1転倒あたり：" + coefficient.toFixed(4) + " mm";
 }
 
 // 雨量計算設定はブラウザ共通。保存モードがtip以外ならrainfall、面積・容量は未保存なら空欄。
 // saveRainfallCalculationSettingは面積・容量が正の有限数のときだけ保存し、それ以外はキーを削除する。
 function restoreRainfallCalculationSetting(){
     const savedMode = localStorage.getItem(RAINFALL_MODE_STORAGE_KEY);
-    const mode = ["tip", "water"].includes(savedMode) ? savedMode : "rainfall";
+    const mode = savedMode === "tip" ? savedMode : "rainfall";
     const selected = document.querySelector(
         'input[name="rainfallCalculationMode"][value="' + mode + '"]'
     );
@@ -1363,7 +1316,6 @@ function restoreRainfallCalculationSetting(){
     const volumeInput = document.getElementById("rainfallTipVolume");
     if(areaInput) areaInput.value = area || "";
     if(volumeInput) volumeInput.value = volume || "";
-    document.getElementById("rainfallWaterVolume").value = localStorage.getItem("utechRainfallWaterVolume") ?? "2.5";
     updateRainfallCalculationDisplay();
 }
 
@@ -1371,8 +1323,7 @@ function saveRainfallCalculationSetting(){
     localStorage.setItem(RAINFALL_MODE_STORAGE_KEY, getRainfallCalculationMode());
     [
         ["rainfallCollectorArea", RAINFALL_COLLECTOR_AREA_STORAGE_KEY],
-        ["rainfallTipVolume", RAINFALL_TIP_VOLUME_STORAGE_KEY],
-        ["rainfallWaterVolume", "utechRainfallWaterVolume"]
+        ["rainfallTipVolume", RAINFALL_TIP_VOLUME_STORAGE_KEY]
     ].forEach(([id, key])=>{
         const input = document.getElementById(id);
         const value = input ? String(input.value).trim() : "";
@@ -1410,7 +1361,7 @@ function handleRainfallCalculationInput(){
         rainfallRequestSequence++;
         destroyRainChart();
         invalidateTenDayRainfallSummary();
-        showRainfallCardMessage(getRainfallCalculationMode() === "water" ? "1カウント水量に0より大きい数値を入力してください" : "受水面積と1転倒水量に0より大きい数値を入力してください");
+        showRainfallCardMessage("受水面積と1転倒水量に0より大きい数値を入力してください");
     }
 }
 
@@ -1426,7 +1377,7 @@ function handleRainfallCalculationInputChange(){
 function formatDailySummaryRainfallValue(value){
     if(value === null || value === undefined || value === "") return "-";
     const number = Number(value);
-    return Number.isFinite(number) ? (getRainfallCalculationMode() === "water" ? number.toLocaleString("ja-JP", {maximumFractionDigits:2}) : String(Math.round(number))) : "-";
+    return Number.isFinite(number) ? String(Math.round(number)) : "-";
 }
 
 function isFiniteRainfallValue(value){
@@ -1482,9 +1433,8 @@ function destroyRainChart(){
 function createRainfallChart(response){
     const canvas = getChartCanvas("rainChart");
     const hourly = Array.isArray(response.hourly) ? response.hourly : [];
-    const isWater = getRainfallCalculationMode() === "water";
-    const quantity = isWater ? "水量" : "雨量";
-    const unit = isWater ? "mL" : "mm";
+    const quantity = "雨量";
+    const unit = "mm";
 
     if(!canvas || !hourly.length) return null;
 
@@ -1635,13 +1585,13 @@ async function loadRainfallData(userId, displayHours, requestId){
         const mode = getRainfallCalculationMode();
         const coefficient = getRainfallTipCoefficient();
         if(mode !== "rainfall" && coefficient === null){
-            showRainfallCardMessage(getRainfallCalculationMode() === "water" ? "1カウント水量に0より大きい数値を入力してください" : "受水面積と1転倒水量に0より大きい数値を入力してください");
+            showRainfallCardMessage("受水面積と1転倒水量に0より大きい数値を入力してください");
             return;
         }
         const url =
             "get_rainfall_data.php?user_id=" + encodeURIComponent(userId) +
             "&point_id=P41&display_hours=" + encodeURIComponent(displayHours) +
-            "&mode=" + encodeURIComponent(mode === "water" ? "tip" : mode) +
+            "&mode=" + encodeURIComponent(mode) +
             (mode !== "rainfall" && coefficient !== null
                 ? "&coefficient=" + encodeURIComponent(coefficient)
                 : "");
@@ -1703,88 +1653,6 @@ function setGuideRangeInputs(minId, maxId, range){
     if(maxInput) maxInput.value = range.max;
 }
 
-function getMainDewPointAxis(){
-    return {
-        min:getAxisValue("mainDewPointMin", undefined),
-        max:getAxisValue("mainDewPointMax", undefined)
-    };
-}
-
-function createWindChart(canvasId, parsed, minTime, maxTime){
-    const canvas = getChartCanvas(canvasId);
-    if(!canvas || !hasChartSourceData(parsed)) return null;
-
-    destroyExistingChart(canvasId);
-    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
-    const averageData = parsed
-        .filter(d=>d.windSpeedAvg !== null && !isNaN(d.windSpeedAvg))
-        .map(d=>({ x:d.xValue, y:d.windSpeedAvg }));
-    const maximumData = parsed
-        .filter(d=>d.windSpeedMax !== null && !isNaN(d.windSpeedMax))
-        .map(d=>({ x:d.xValue, y:d.windSpeedMax }));
-
-    if(!averageData.length && !maximumData.length) return null;
-
-    const options = baseOptions(displayMinTime, maxTime);
-    options.plugins = {
-        ...options.plugins,
-        tooltip:{
-            ...options.plugins.tooltip,
-            callbacks:{
-                ...options.plugins.tooltip.callbacks,
-                // 日時欄は月日と時刻のみ。風速値は点のラベルに表示する。
-                title(items){
-                    if(!items.length) return "";
-                    const syncGroup = getChartSyncGroup(items[0].chart);
-                    const time = syncedCrosshairLatest[syncGroup] && syncedCrosshairValues[syncGroup] !== null
-                        ? syncedCrosshairValues[syncGroup]
-                        : items[0].parsed.x;
-                    return formatTime(time);
-                }
-            }
-        }
-    };
-    options.scales = {
-        ...options.scales,
-        y:{
-            min:0,
-            ticks:{ color:"#000", callback:value=>Number(value).toFixed(1) },
-            title:{ display:true, text:"風速（m/s）", color:"#000" }
-        }
-    };
-
-    return new Chart(canvas,{
-        type:"line",
-        data:{
-            datasets:[
-                {
-                    label:"10分平均風速",
-                    data:averageData,
-                    borderColor:"rgb(0, 135, 120)",
-                    backgroundColor:"rgba(0, 135, 120, 0.10)",
-                    pointBackgroundColor:"rgb(0, 135, 120)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2,
-                    fill:false
-                },
-                {
-                    label:"10分最大風速",
-                    data:maximumData,
-                    borderColor:"rgb(210, 90, 40)",
-                    backgroundColor:"rgba(210, 90, 40, 0.10)",
-                    pointBackgroundColor:"rgb(210, 90, 40)",
-                    pointRadius:0,
-                    borderWidth:2,
-                    tension:0.2,
-                    fill:false
-                }
-            ]
-        },
-        options:options
-    });
-}
-
 // === メイン画面：取得・計算・現在値表示・グラフ描画 ===
 async function loadData(){
     clearAllSyncedTooltips();
@@ -1815,12 +1683,9 @@ async function loadData(){
 
     document.getElementById("tempNow").innerText = "-";
     document.getElementById("vpdNow").innerText = "-";
-    document.getElementById("dewNow").innerText = "-";
     document.getElementById("humNow").innerText = "-";
     document.getElementById("solarNow").innerText = "-";
     document.getElementById("co2Now").innerText = "-";
-    document.getElementById("windAvgNow").innerText = "-";
-    document.getElementById("windMaxNow").innerText = "-";
     resetDailyTempStats();
     loadTenDayDailySummaries(userId, outsideSource, rainfallSource);
     document.getElementById("vpdEvalAm").innerText = "データなし";
@@ -1872,8 +1737,6 @@ async function loadData(){
         const resultP11 = getFetchedResult(resultMap, outsideSource.userId, outsideSource.pointId);
         const resultP31 = getFetchedResult(resultMap, userId, "P31");
         const resultP21 = getFetchedResult(resultMap, userId, "P21");
-        const resultP26 = getFetchedResult(resultMap, userId, "P26");
-        const resultP61 = getFetchedResult(resultMap, userId, "P61");
         const resultScoreP01 = getFetchedResult(resultMap, userId, "P01", "score");
         const resultScoreP21 = getFetchedResult(resultMap, userId, "P21", "score");
         const resultScoreP31 = getFetchedResult(resultMap, userId, "P31", "score");
@@ -1882,8 +1745,6 @@ async function loadData(){
         const p11 = parseData(resultP11.data, minTime);
         const p31 = parseData(resultP31.data, minTime);
         const p21 = parseData(resultP21.data, minTime);
-        const p26 = parseData(resultP26.data, minTime);
-        const p61 = parseData(resultP61.data, minTime);
         const scoreP01 = parseData(resultScoreP01.data, scoreMinTime);
         const scoreP21 = parseData(resultScoreP21.data, scoreMinTime);
         const scoreP31 = parseData(resultScoreP31.data, scoreMinTime);
@@ -1891,26 +1752,12 @@ async function loadData(){
 
         const validP31 = p31.filter(d=>d.solar !== null && !isNaN(d.solar));
         const validP21 = p21.filter(d=>d.co2 !== null && !isNaN(d.co2));
-        const validP26 = p26.filter(d=>d.co2 !== null && !isNaN(d.co2));
-        const validP61 = p61.filter(d=>
-            d.windSpeedAvg !== null && d.windSpeedMax !== null &&
-            !isNaN(d.windSpeedAvg) && !isNaN(d.windSpeedMax)
-        );
-
-        console.log("[CO2_外気_P26] 描画可能CO2件数:", validP26.length);
-
         if(validP31.length){
             document.getElementById("solarNow").innerText = validP31[validP31.length - 1].solar.toFixed(1);
         }
 
         if(validP21.length){
             document.getElementById("co2Now").innerText = validP21[validP21.length - 1].co2.toFixed(0);
-        }
-
-        if(validP61.length){
-            const latestWind = validP61[validP61.length - 1];
-            document.getElementById("windAvgNow").innerText = latestWind.windSpeedAvg.toFixed(2);
-            document.getElementById("windMaxNow").innerText = latestWind.windSpeedMax.toFixed(2);
         }
 
         const errors = results
@@ -1930,7 +1777,6 @@ async function loadData(){
 
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
                 document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
-                document.getElementById("dewNow").innerText = calcDewPoint(last.temp, last.hum).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
                 const yStart = new Date();
@@ -1952,28 +1798,17 @@ async function loadData(){
         tempChartP11 = createTempHumChart("tempChartP11", p11, chartMinTime, now, "P11");
         outsideDiffChart = createOutsideDiffChart("outsideDiffChart", p01, p11, chartMinTime, now);
         mainVaporChart = createVaporChart("mainVaporChart", p01, chartMinTime, now);
-        mainDewPointChart = createSingleChart(
-            "mainDewPointChart", p01, "dew", "露点温度", "℃",
-            chartMinTime, now, getMainDewPointAxis()
-        );
 
         solarChart = createSingleChart("solarChart", p31, "solar", "日射", "日射", chartMinTime, now);
         co2Chart = createSingleChart("co2Chart", p21, "co2", "co2", "ppm", chartMinTime, now);
-        co2OutsideChart = createSingleChart("co2OutsideChart", p26, "co2Outside", "co2", "ppm", chartMinTime, now);
-        co2DiffChart = createCo2DiffChart("co2DiffChart", p21, p26, chartMinTime, now);
-        windChartP61 = createWindChart("windChartP61", p61, chartMinTime, now);
 
         applyMainChartNoDataStates({
             insideTemperature:tempChartP01,
             outsideTemperature:tempChartP11,
             outsideDiff:outsideDiffChart,
             mainVapor:mainVaporChart,
-            mainDewPoint:mainDewPointChart,
             solarRadiation:solarChart,
             insideCo2:co2Chart,
-            outsideCo2:co2OutsideChart,
-            co2Diff:co2DiffChart,
-            insideWind:windChartP61,
         }, chartContext);
 
         allCharts = [
@@ -1981,12 +1816,8 @@ async function loadData(){
             tempChartP11,
             outsideDiffChart,
             mainVaporChart,
-            mainDewPointChart,
             solarChart,
             co2Chart,
-            co2OutsideChart,
-            co2DiffChart,
-            windChartP61,
             rainChart,
         ].filter(Boolean);
 
@@ -2017,24 +1848,16 @@ function destroyCharts(){
     tempChartP11 = null;
     outsideDiffChart = null;
     mainVaporChart = null;
-    mainDewPointChart = null;
     solarChart = null;
     co2Chart = null;
-    co2OutsideChart = null;
-    co2DiffChart = null;
-    windChartP61 = null;
 
     [
         "tempChartP01",
         "tempChartP11",
         "outsideDiffChart",
         "mainVaporChart",
-        "mainDewPointChart",
         "solarChart",
         "co2Chart",
-        "co2OutsideChart",
-        "co2DiffChart",
-        "windChartP61"
     ].forEach(canvasId=>{
         clearChartNoDataState(canvasId);
         const chart = Chart.getChart(canvasId);
@@ -2073,7 +1896,7 @@ function updateMainAxisLinkControls(pair){
     const checkbox=document.getElementById(pair.checkbox);
     checkbox.disabled=!mainGraphVisibilityUserId;
     pair.inputs.forEach(id=>{document.getElementById(id).disabled=checkbox.checked;});
-    checkbox.closest('.chart-axis-control').querySelector('button').disabled=pair.key==='co2' ? checkbox.checked : isMainAxisLinked('temperature') && isMainAxisLinked('humidity');
+    checkbox.closest('.chart-axis-control').querySelector('button').disabled=isMainAxisLinked('temperature') && isMainAxisLinked('humidity');
 }
 
 // 縦軸リンクは利用者別に復元し、保存値がtrueの項目だけ有効にする。
@@ -2100,8 +1923,7 @@ function changeMainAxisLink(key){
     if(isMainAxisLinked(key)){
         matchMainAxisLinks();
     }else if(pair.outside){
-        if(key==='co2') applyCo2OutsideYAxis(pair.outside);
-        else applyMainTempHumYAxis(pair.outside,'P11');
+        applyMainTempHumYAxis(pair.outside,'P11');
     }
 }
 
@@ -2113,10 +1935,6 @@ function applyMainTempHumYAxis(chart, pointId){
 function applyCo2YAxis(chart){
     applySingleYAxis(chart, "co2");
     matchMainAxisLinks();
-}
-
-function applyCo2OutsideYAxis(chart){
-    applySingleYAxis(chart, "co2Outside");
 }
 
 function applyMainVaporYAxis(chart){
@@ -2139,15 +1957,6 @@ function applyMainVaporYAxis(chart){
     }
 
     setLinearYAxis(chart, { min:min, max:max });
-    chart.update();
-}
-
-function applyCo2DiffYAxis(chart){
-    if(!chart) return;
-
-    const axis = getCo2DiffAxis();
-    setLinearYAxis(chart, axis);
-
     chart.update();
 }
 

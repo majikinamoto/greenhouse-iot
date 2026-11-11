@@ -663,6 +663,31 @@
     </div>
 
     <div>
+        <h4><span>CO2_外気（P26）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-co2">CO2軸：</span><input class="axis-input axis-input-wide" type="number" id="co2OutsideMin" value="300"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2OutsideMax" value="700">
+            <button onclick="applyCo2OutsideYAxis(co2OutsideChart)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2OutsideChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>CO2差内外（P21-P26）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="control-group axis-control-group chart-axis-control">
+            <span class="axis-label-diff">差軸：</span><input class="axis-input axis-input-wide" type="number" id="co2DiffMin" value="-250"> ～
+            <input class="axis-input axis-input-wide" type="number" id="co2DiffMax" value="250">
+            <button onclick="applyCo2DiffYAxis(co2DiffChart)">縦軸反映</button>
+        </div>
+        <div class="chart-container"><canvas id="co2DiffChart"></canvas></div>
+    </div>
+
+    <div>
+        <h4><span>ハウス内風速（P61）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
+        <div class="chart-container"><canvas id="windChartP61"></canvas></div>
+    </div>
+
+    <div>
         <h4><span>電圧（P91）</span><button class="chart-reset-button" onclick="resetMaintenanceZoom()">ズームリセット</button></h4>
         <div class="control-group axis-control-group chart-axis-control">
             <span class="axis-label-volt">電圧軸：</span><input class="axis-input" type="number" id="voltMin" value="11"> ～

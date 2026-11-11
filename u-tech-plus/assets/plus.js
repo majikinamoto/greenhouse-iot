@@ -1,3 +1,195 @@
+let co2OutsideChart;
+let co2DiffChart;
+let windChartP61 = null;
+
+function createCo2DiffChart(canvasId, p21, p26, minTime, maxTime){
+
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(p21) || !hasChartSourceData(p26)) return null;
+
+    destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+
+    const co2DiffData = [];
+    const toleranceMs = 360 * 1000;
+    const axis = getCo2DiffAxis();
+    const yAxisOptions = {
+        min:axis.min,
+        max:axis.max,
+        ticks:{
+            color:"#000",
+            callback:formatIntegerAxisTick
+        },
+        title:{
+            display:true,
+            text:"ppm",
+            color:"#000"
+        }
+    };
+    const zeroOriginFill = {
+        target:"origin",
+        above:"rgba(120, 120, 120, 0.18)",
+        below:"rgba(120, 120, 120, 0.18)"
+    };
+
+    p21.forEach(d=>{
+        let nearestP26 = null;
+        let nearestDiff = Infinity;
+
+        p26.forEach(p=>{
+            const diff = Math.abs(d.xValue - p.xValue);
+
+            if(diff < nearestDiff){
+                nearestDiff = diff;
+                nearestP26 = p;
+            }
+        });
+
+        if(!nearestP26 || nearestDiff > toleranceMs) return;
+
+        if(d.co2 !== null && nearestP26.co2 !== null && !isNaN(d.co2) && !isNaN(nearestP26.co2)){
+            co2DiffData.push({ x:d.xValue, y:d.co2 - nearestP26.co2 });
+        }
+    });
+
+    if(!co2DiffData.length) return null;
+
+    return new Chart(canvas,{
+        type:"line",
+        data:{
+            datasets:[{
+                label:"CO2差 (ppm)",
+                data:co2DiffData,
+                borderColor:"rgba(0, 0, 0, 0.55)",
+                backgroundColor:"rgba(0, 0, 0, 0.08)",
+                pointBackgroundColor:"rgb(255, 0, 0)",
+                pointRadius:0,
+                borderWidth:2,
+                tension:0.2,
+                fill:zeroOriginFill
+            },
+            {
+                label:"ゼロライン",
+                data:[
+                    {x:minTime, y:0},
+                    {x:maxTime, y:0}
+                ],
+                borderColor:"rgba(0, 120, 255, 0.8)",
+                borderWidth:1.5,
+                pointRadius:0,
+                tension:0,
+                fill:false
+            }]
+        },
+        options:{
+            ...baseOptions(displayMinTime,maxTime),
+            plugins:{
+                ...baseOptions(displayMinTime,maxTime).plugins,
+                legend:{
+                    labels:{
+                        filter(item){
+                            return item.text !== "ゼロライン";
+                        }
+                    }
+                }
+            },
+            scales:{
+                ...baseOptions(displayMinTime,maxTime).scales,
+                y:yAxisOptions,
+                yRight:createRightYAxis(yAxisOptions)
+            }
+        }
+    });
+}
+
+function createWindChart(canvasId, parsed, minTime, maxTime){
+    const canvas = getChartCanvas(canvasId);
+    if(!canvas || !hasChartSourceData(parsed)) return null;
+
+    destroyExistingChart(canvasId);
+    const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
+    const averageData = parsed
+        .filter(d=>d.windSpeedAvg !== null && !isNaN(d.windSpeedAvg))
+        .map(d=>({ x:d.xValue, y:d.windSpeedAvg }));
+    const maximumData = parsed
+        .filter(d=>d.windSpeedMax !== null && !isNaN(d.windSpeedMax))
+        .map(d=>({ x:d.xValue, y:d.windSpeedMax }));
+
+    if(!averageData.length && !maximumData.length) return null;
+
+    const options = baseOptions(displayMinTime, maxTime);
+    options.plugins = {
+        ...options.plugins,
+        tooltip:{
+            ...options.plugins.tooltip,
+            callbacks:{
+                ...options.plugins.tooltip.callbacks,
+                // 日時欄は月日と時刻のみ。風速値は点のラベルに表示する。
+                title(items){
+                    if(!items.length) return "";
+                    const syncGroup = getChartSyncGroup(items[0].chart);
+                    const time = syncedCrosshairLatest[syncGroup] && syncedCrosshairValues[syncGroup] !== null
+                        ? syncedCrosshairValues[syncGroup]
+                        : items[0].parsed.x;
+                    return formatTime(time);
+                }
+            }
+        }
+    };
+    options.scales = {
+        ...options.scales,
+        y:{
+            min:0,
+            ticks:{ color:"#000", callback:value=>Number(value).toFixed(1) },
+            title:{ display:true, text:"風速（m/s）", color:"#000" }
+        }
+    };
+
+    return new Chart(canvas,{
+        type:"line",
+        data:{
+            datasets:[
+                {
+                    label:"10分平均風速",
+                    data:averageData,
+                    borderColor:"rgb(0, 135, 120)",
+                    backgroundColor:"rgba(0, 135, 120, 0.10)",
+                    pointBackgroundColor:"rgb(0, 135, 120)",
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:false
+                },
+                {
+                    label:"10分最大風速",
+                    data:maximumData,
+                    borderColor:"rgb(210, 90, 40)",
+                    backgroundColor:"rgba(210, 90, 40, 0.10)",
+                    pointBackgroundColor:"rgb(210, 90, 40)",
+                    pointRadius:0,
+                    borderWidth:2,
+                    tension:0.2,
+                    fill:false
+                }
+            ]
+        },
+        options:options
+    });
+}
+
+function applyCo2OutsideYAxis(chart){
+    applySingleYAxis(chart, "co2Outside");
+}
+
+function applyCo2DiffYAxis(chart){
+    if(!chart) return;
+
+    const axis = getCo2DiffAxis();
+    setLinearYAxis(chart, axis);
+
+    chart.update();
+}
+
 // U-Tech Plus専用：排液量・アラート・分析・WBGT・過去データ・メンテ。
 // utech-shared.jsの後に読み込む。6タブの初期化・ID復元は末尾のDOMContentLoadedを参照する。
 let maintenanceTempChartP01;
@@ -2174,6 +2366,9 @@ function applyMaintenanceChartNoDataStates(chartMap, userId, startTime, endTime,
         ["co2DiffChartP21P22", "diffP21P22", ["P21", "P22"]],
         ["solarChartP32", "solarP32", ["P32"]],
         ["solarDiffChartP31P32", "diffP31P32", ["P31", "P32"]],
+        ["co2OutsideChart", "co2P26", ["P26"]],
+        ["co2DiffChart", "diffP21P26", ["P21", "P26"]],
+        ["windChartP61", "windP61", ["P61"]],
         ["voltChart", "voltP91", ["P91"]]
     ];
 
@@ -2220,7 +2415,7 @@ async function loadMaintenanceData(rangeOverride){
     maintenanceLastLoadSucceeded = false;
     if(message) message.innerText = "読み込み中...";
 
-    const pointIds = ["P01", "P02", "P11", "P12", "P21", "P22", "P26", "P27", "P31", "P32", "P91"];
+    const pointIds = ["P01", "P02", "P11", "P12", "P21", "P22", "P26", "P27", "P31", "P32", "P61", "P91"];
     const jstNow = new Date(getJapanWallClockMs(Date.now()));
     const voltageEnd = createMaintenanceLocalDate(jstNow.getTime());
     // 電圧だけはタブの選択期間と別に、現在から直近30日間を取得・表示する。
@@ -2322,6 +2517,15 @@ async function loadMaintenanceData(rangeOverride){
                 range.startTime, range.endTime
             )
         );
+        co2OutsideChart = configureMaintenanceChart(
+            createSingleChart("co2OutsideChart", parsed.P26, "co2Outside", "co2", "ppm", range.startTime, range.endTime)
+        );
+        co2DiffChart = configureMaintenanceChart(
+            createCo2DiffChart("co2DiffChart", parsed.P21, parsed.P26, range.startTime, range.endTime)
+        );
+        windChartP61 = configureMaintenanceChart(
+            createWindChart("windChartP61", parsed.P61, range.startTime, range.endTime)
+        );
         voltChart = configureMaintenanceChart(
             createSingleChart("voltChart", parsed.P91, "volt", "電圧", "V", voltageRange.startTime, voltageRange.endTime)
         );
@@ -2342,6 +2546,9 @@ async function loadMaintenanceData(rangeOverride){
             diffP21P22:co2DiffChartP21P22,
             solarP32:solarChartP32,
             diffP31P32:solarDiffChartP31P32,
+            co2P26:co2OutsideChart,
+            diffP21P26:co2DiffChart,
+            windP61:windChartP61,
             voltP91:voltChart
         };
         maintenanceCharts = Object.values(chartMap).filter(Boolean);
@@ -2968,7 +3175,7 @@ function syncMaintenanceZoom(sourceChart){
     try{
         const xRange = { min:sourceChart.scales.x.min, max:sourceChart.scales.x.max };
         const tempHumChartIds = ["maintenanceTempChartP01", "tempChartP02", "maintenanceTempChartP11", "tempChartP12"];
-        const co2ChartIds = ["co2ChartP22", "co2ChartP27"];
+        const co2ChartIds = ["co2ChartP22", "co2ChartP27", "co2OutsideChart"];
         const isTempHumSource = tempHumChartIds.includes(sourceChart.canvas.id);
         const isCo2Source = co2ChartIds.includes(sourceChart.canvas.id);
 
@@ -3050,6 +3257,9 @@ function destroyMaintenanceCharts(){
     co2DiffChartP26P27 = null;
     solarChartP32 = null;
     solarDiffChartP31P32 = null;
+    co2OutsideChart = null;
+    co2DiffChart = null;
+    windChartP61 = null;
     voltChart = null;
 }
 
