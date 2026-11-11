@@ -1,3 +1,5 @@
+/* Four 400px cards, three 10px gaps, and 20px page padding on each side. */
+main{max-width:1670px}
 .selection-controls label{display:flex;flex-direction:column;gap:4px}
 .measured-axes{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:6px 0;font-size:11px}
 .measured-axes input[type=number]{width:65px;min-height:24px;padding:2px 4px;font-size:11px}
