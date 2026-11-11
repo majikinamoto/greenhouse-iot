@@ -1537,12 +1537,14 @@ function createRainfallChart(response){
         yHourly:{
             position:"left",
             beginAtZero:true,
+            suggestedMax:10,
             ticks:{ color:"#000" },
             title:{ display:true, text:"1時間" + quantity + " (" + unit + ")", color:"#000" }
         },
         yDaily:{
             position:"right",
             beginAtZero:true,
+            suggestedMax:10,
             grid:{ drawOnChartArea:false },
             ticks:{ color:"#000" },
             title:{ display:true, text:"日積算" + quantity + " (" + unit + ")", color:"#000" }
