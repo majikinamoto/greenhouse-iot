@@ -675,9 +675,7 @@ function isAuxiliaryChartDataset(dataset){
 }
 
 function isValidChartPoint(point){
-    if(!point || point.x === null || point.x === undefined) return false;
-    if(point.y === null || point.y === undefined) return false;
-    return Number.isFinite(Number(point.x)) && Number.isFinite(Number(point.y));
+    return UTechChartPoints.isValid(point);
 }
 
 function getLatestChartXValue(chart){
@@ -709,37 +707,21 @@ function getNearestChartXValue(chart, xValue){
         if(chart.isDatasetVisible && !chart.isDatasetVisible(datasetIndex)) return;
         if(isAuxiliaryChartDataset(dataset) || !Array.isArray(dataset.data)) return;
 
-        dataset.data.forEach(point=>{
-            if(!isValidChartPoint(point)) return;
-
-            const diff = Math.abs(Number(point.x) - Number(xValue));
-            if(diff < nearestDiff){
-                nearestDiff = diff;
-                nearestValue = Number(point.x);
-            }
-        });
+        const index = getNearestPointIndexAtXValue(dataset.data, xValue);
+        if(index < 0) return;
+        const point = dataset.data[index];
+        const diff = Math.abs(Number(point.x) - Number(xValue));
+        if(diff < nearestDiff){
+            nearestDiff = diff;
+            nearestValue = Number(point.x);
+        }
     });
 
     return nearestValue;
 }
 
 function getNearestPointIndexAtXValue(data, xValue){
-    if(!data || !data.length) return -1;
-
-    let nearestIndex = -1;
-    let nearestDiff = Infinity;
-
-    data.forEach((point, index)=>{
-        if(!isValidChartPoint(point)) return;
-
-        const diff = Math.abs(Number(point.x) - Number(xValue));
-        if(diff < nearestDiff){
-            nearestDiff = diff;
-            nearestIndex = index;
-        }
-    });
-
-    return nearestIndex;
+    return UTechChartPoints.nearestIndex(data, xValue);
 }
 
 function getSyncedTooltipDatasetKey(dataset, datasetIndex){
