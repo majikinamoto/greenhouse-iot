@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__.'/auth.php';
+// Change local asset URLs when files change, without clearing saved browser settings.
+$assetUrl = static function (string $path): string {
+    return htmlspecialchars($path.'?v='.filemtime(__DIR__.'/'.$path), ENT_QUOTES, 'UTF-8');
+};
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_string($_POST['password'] ?? null) && hash_equals('8515', $_POST['password'])) {
@@ -11,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?><!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>G-Flow｜ハウス内の風を見る</title>
-<link rel="stylesheet" href="../u-tech-next/assets/next.css"><link rel="stylesheet" href="../u-tech-next/assets/utech-style.css"><link rel="stylesheet" href="flow.css">
+<link rel="stylesheet" href="<?= $assetUrl('../u-tech-next/assets/next.css') ?>"><link rel="stylesheet" href="<?= $assetUrl('../u-tech-next/assets/utech-style.css') ?>"><link rel="stylesheet" href="<?= $assetUrl('flow.css') ?>">
 <?php if (flowAuthorized()): ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script><script src="../chart-latest-value.js" defer></script><script src="temperature.js" defer></script><script src="latest.js" defer></script><script src="flow.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js" defer></script><script src="<?= $assetUrl('../chart-latest-value.js') ?>" defer></script><script src="<?= $assetUrl('temperature.js') ?>" defer></script><script src="<?= $assetUrl('latest.js') ?>" defer></script><script src="<?= $assetUrl('flow.js') ?>" defer></script>
 <?php endif; ?></head><body><main>
 <header class="hero"><div class="brand"><div class="logo-mark" aria-hidden="true">G</div><div><div class="brand-title-row"><h1>G-Flow</h1><a class="back" href="../" aria-label="U-Techへ移動">U-Techへ移動</a></div><p class="eyebrow">ゴーヤーのハウス内の風を見る</p><p class="subtitle">Greenhouse Wind Flow</p></div></div></header>
 <?php if (!flowAuthorized()): ?>
