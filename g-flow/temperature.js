@@ -411,7 +411,8 @@ function renderTemperatures(){
   const rows=loaded.rows.filter(r=>r.point_id===point);
   const last=rows.filter(r=>numeric(r.temperature)!==null||numeric(r.humidity)!==null).at(-1);
   const readout=document.createElement('p');readout.className='chart-readout';
-  readout.textContent=last ? `最新測定 ${last.recorded_at} JST ｜ 温度 ${numeric(last.temperature)?.toFixed(1)??'—'} ℃／湿度 ${numeric(last.humidity)?.toFixed(1)??'—'} %` : 'この期間の温湿度データはありません。';
+  readout.textContent=last ? `最新測定 ${last.recorded_at} JST ｜ ` : 'この期間の温湿度データはありません。';
+  if(last){const values=document.createElement('strong');values.textContent=`温度 ${numeric(last.temperature)?.toFixed(1)??'—'} ℃／湿度 ${numeric(last.humidity)?.toFixed(1)??'—'} %`;readout.append(values);}
   card.append(readout);
   const parsed=rows.map(r=>({xValue:stamp(r.recorded_at),hum:numeric(r.humidity),temp:numeric(r.temperature)}));const chart=createTempHumChart(canvas.id,parsed,new Date(loaded.startMs),new Date(loaded.endMs),point);
   if(!chart){const note=document.createElement('p');note.className='chart-no-data';note.textContent='この期間の温湿度データはありません。';wrap.append(note);}else{chart.$point=point;charts.push(chart);}
