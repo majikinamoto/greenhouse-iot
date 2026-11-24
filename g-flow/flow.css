@@ -27,22 +27,19 @@ main{max-width:1670px}
 
 .temperature-axes label:first-child input[type=number]{width:44px}
 
-.latest-section{margin:0 0 24px}
-.latest-section h2{margin-top:0}
-.latest-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.latest-card{min-width:0;padding:14px;border:1px solid #c4ccd6;border-top:4px solid #3f6388;background:#fff;border-radius:6px}
-.latest-card h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 14px;font-size:17px;color:#264764}
-.latest-sensors{font-size:11px;font-weight:400;color:#5b6c7f}
-.latest-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px;margin:0 0 16px}
-.latest-metric dt{font-size:12px;color:#5b6c7f;margin-bottom:3px}
-.latest-metric dd{margin:0;font-size:28px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
-.latest-unit{margin-left:5px;font-size:12px;font-weight:400;color:#5b6c7f}
-.latest-temperature dd{color:rgb(255,0,0)}
-.latest-humidity dd{color:rgb(0,100,255)}
-.latest-wind-avg dd{color:rgb(0,135,120)}
-.latest-wind-max dd{color:rgb(210,90,40)}
-.latest-times{border-top:1px solid #e1e7ee;padding-top:8px}
-.latest-times p,.latest-message{margin:4px 0;font-size:11px;color:#5b6c7f}
-.latest-stale{display:block;margin-top:3px;color:#975b08;font-weight:600}
-@media(max-width:1300px){.latest-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.latest-grid{grid-template-columns:1fr}}
+.latest-section{margin:0 0 14px;color:#000}
+.latest-section h2{margin:0 0 4px;font-size:13px}
+.latest-section .caption{margin-bottom:8px;font-size:10px;color:#000}
+.latest-grid{display:grid;grid-template-columns:repeat(4,minmax(0,240px));gap:8px}
+.latest-card{min-width:0;padding:8px;border:1px solid #c4ccd6;background:#fff;border-radius:4px;color:#000}
+.latest-card h3{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 7px;font-size:12px;color:#000}
+.latest-sensors{font-size:9px;font-weight:400}
+.latest-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 10px;margin:0 0 7px}
+.latest-metric dt{font-size:10px;margin-bottom:1px}
+.latest-metric dd{margin:0;font-size:16px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.latest-unit{margin-left:3px;font-size:10px;font-weight:400}
+.latest-times{border-top:1px solid #e1e7ee;padding-top:4px}
+.latest-times p,.latest-message{margin:2px 0;font-size:9px}
+.latest-stale{display:block;margin-top:1px;font-weight:600}
+@media(max-width:1030px){.latest-grid{grid-template-columns:repeat(2,minmax(0,240px))}}
+@media(max-width:600px){.latest-grid{grid-template-columns:minmax(0,300px)}}
