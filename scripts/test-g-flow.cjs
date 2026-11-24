@@ -8,9 +8,14 @@ vm.runInContext(`loaded={user:'TEST',start:'2026-11-10T00:00',end:'2026-11-11T00
 assert.equal(vm.runInContext('charts.length',context),8);
 assert.equal(elements['temperature-charts'].children.length,4);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(charts[4].data.datasets.map(d=>[d.yAxisID,d.borderColor]))',context)),[['yHum','rgb(0, 100, 255)'],['yTemp','rgb(255, 0, 0)']]);
+assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(getTempHumAxis("P01"))',context)),{humMin:20,humMax:90,tempMin:10,tempMax:45});
 const card=elements['temperature-charts'].children[0],controls=card.children[1];controls.children[0].children[0].value='30';controls.children[1].children[0].value='15';controls.children[2].onclick();
 assert.equal(vm.runInContext('charts[4].scales.yHum.min',context),30);assert.equal(vm.runInContext('charts[4].scales.yTemp.min',context),15);
 vm.runInContext('resetViews();syncZoom({chart:charts[4]});',context);assert.equal(vm.runInContext('charts[4].scales.yTemp.min',context),15);
+vm.runInContext('render();',context);
+assert.equal(vm.runInContext('charts[4].scales.yHum.min',context),30);
+assert.equal(vm.runInContext('charts[4].scales.yTemp.min',context),15);
+assert.equal(elements['temperature-charts'].children[0].children[1].children[0].children[0].value,'30');
 vm.runInContext("download(loaded,['P62','P01']);",context);assert.ok(blob.startsWith('\uFEFF'));assert.match(blob,/P62/);assert.match(blob,/P01/);assert.doesNotMatch(blob,/P61|P02/);assert.match(blob,/温度（℃）/);assert.equal(blob.trim().split('\r\n').length,3);
 vm.runInContext("download(loaded,['P04']);",context);assert.doesNotMatch(blob,/風速/);assert.match(blob,/湿度（%）/);
 vm.runInContext("loaded.rows=[];render();",context);assert.equal(vm.runInContext('charts.length',context),4);assert.equal(elements['temperature-charts'].children.length,4);
