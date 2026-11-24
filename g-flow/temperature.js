@@ -408,7 +408,12 @@ function renderTemperatures(){
   for(const [name,label] of [['hum','湿度軸：'],['temp','温度軸：']]){const range=document.createElement('label');range.textContent=label;for(const suffix of ['Min','Max']){if(suffix==='Max')range.append('～');const input=document.createElement('input');input.type='number';input.step='any';input.value=axis[name+suffix];input.setAttribute('aria-label',`${point} ${label}${suffix==='Min'?'最小':'最大'}`);inputs[name+suffix]=input;range.append(input);}controls.append(range);}
   const apply=document.createElement('button');apply.type='button';apply.textContent='縦軸反映';controls.append(apply);const error=document.createElement('p');error.className='error';error.setAttribute('role','alert');
   const wrap=document.createElement('div');wrap.className='chart-container';const canvas=document.createElement('canvas');canvas.id='flowTemp'+point;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`温湿度No.${index+1}のグラフ`);wrap.append(canvas);card.append(title,controls,error,wrap);$('temperature-charts').append(card);
-  const parsed=loaded.rows.filter(r=>r.point_id===point).map(r=>({xValue:stamp(r.recorded_at),hum:numeric(r.humidity),temp:numeric(r.temperature)}));const chart=createTempHumChart(canvas.id,parsed,new Date(loaded.startMs),new Date(loaded.endMs),point);
+  const rows=loaded.rows.filter(r=>r.point_id===point);
+  const last=rows.filter(r=>numeric(r.temperature)!==null||numeric(r.humidity)!==null).at(-1);
+  const readout=document.createElement('p');readout.className='chart-readout';
+  readout.textContent=last ? `最新測定 ${last.recorded_at} JST ｜ 温度 ${numeric(last.temperature)?.toFixed(1)??'—'} ℃／湿度 ${numeric(last.humidity)?.toFixed(1)??'—'} %` : 'この期間の温湿度データはありません。';
+  card.append(readout);
+  const parsed=rows.map(r=>({xValue:stamp(r.recorded_at),hum:numeric(r.humidity),temp:numeric(r.temperature)}));const chart=createTempHumChart(canvas.id,parsed,new Date(loaded.startMs),new Date(loaded.endMs),point);
   if(!chart){const note=document.createElement('p');note.className='chart-no-data';note.textContent='この期間の温湿度データはありません。';wrap.append(note);}else{chart.$point=point;charts.push(chart);}
   apply.onclick=()=>{const values=Object.fromEntries(Object.entries(inputs).map(([key,input])=>[key,input.value.trim()===''?NaN:Number(input.value)]));if(Object.values(values).some(v=>!Number.isFinite(v))||values.humMin>=values.humMax||values.tempMin>=values.tempMax){error.textContent='最小・最大を入力し、最大を最小より大きくしてください。';return;}error.textContent='';const saved=readAxes();saved[point]=values;saveAxes(saved);if(chart){ownAxis(chart);chart.update('none');}};
   controls.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply.click();}});
