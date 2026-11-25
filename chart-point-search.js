@@ -1,6 +1,6 @@
 'use strict';
 
-// Raw {x, y} point searches for the main U-Tech and Plus charts.
+// Raw {x, y} point searches for the main U-Tech, Plus and Yui-Tech charts.
 // Keep numeric conversion, first-in-array tie breaking and unlimited distance.
 window.UTechChartPoints = (() => {
     function isValid(point){

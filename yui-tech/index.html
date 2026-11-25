@@ -2363,6 +2363,8 @@ body.data-export-active .control-panel {
     }
 }
 </style>
+<script src="../chart-point-search.js"></script>
+<script src="../chart-background.js"></script>
 <script src="../moisture-calculations.js"></script>
 <script src="../temp-hum-axis-settings.js"></script>
 </head>
@@ -4851,29 +4853,7 @@ const p11FixedFillPlugin = {
     }
 };
 
-const chartBackgroundPlugin = {
-    id: 'chartBackgroundPlugin',
-    beforeDraw(chart) {
-
-        const ctx = chart.ctx;
-        const chartArea = chart.chartArea;
-
-        if (!chartArea) return;
-
-        ctx.save();
-
-        ctx.fillStyle = "#ffffff";
-
-        ctx.fillRect(
-            chartArea.left,
-            chartArea.top,
-            chartArea.right - chartArea.left,
-            chartArea.bottom - chartArea.top
-        );
-
-        ctx.restore();
-    }
-};
+const chartBackgroundPlugin = window.UTechChartBackground;
 
 const midnightLinePlugin = {
     id:"midnightLinePlugin",
@@ -5237,9 +5217,7 @@ function isAuxiliaryChartDataset(dataset){
 }
 
 function isValidChartPoint(point){
-    if(!point || point.x === null || point.x === undefined) return false;
-    if(point.y === null || point.y === undefined) return false;
-    return Number.isFinite(Number(point.x)) && Number.isFinite(Number(point.y));
+    return window.UTechChartPoints.isValid(point);
 }
 
 function getLatestChartXValue(chart){
@@ -5301,22 +5279,7 @@ function getPointIndexAtXValue(data, xValue){
 }
 
 function getNearestPointIndexAtXValue(data, xValue){
-    if(!data || !data.length) return -1;
-
-    let nearestIndex = -1;
-    let nearestDiff = Infinity;
-
-    data.forEach((point, index)=>{
-        if(!isValidChartPoint(point)) return;
-
-        const diff = Math.abs(Number(point.x) - Number(xValue));
-        if(diff < nearestDiff){
-            nearestDiff = diff;
-            nearestIndex = index;
-        }
-    });
-
-    return nearestIndex;
+    return window.UTechChartPoints.nearestIndex(data, xValue);
 }
 
 function getSyncedTooltipDatasetKey(dataset, datasetIndex){

@@ -285,29 +285,7 @@ function refreshVisibleCharts(){
 }
 
 // === グラフの描画プラグイン・ツールチップ同期 ===
-const chartBackgroundPlugin = {
-    id: 'chartBackgroundPlugin',
-    beforeDraw(chart) {
-
-        const ctx = chart.ctx;
-        const chartArea = chart.chartArea;
-
-        if (!chartArea) return;
-
-        ctx.save();
-
-        ctx.fillStyle = "#ffffff";
-
-        ctx.fillRect(
-            chartArea.left,
-            chartArea.top,
-            chartArea.right - chartArea.left,
-            chartArea.bottom - chartArea.top
-        );
-
-        ctx.restore();
-    }
-};
+const chartBackgroundPlugin = window.UTechChartBackground;
 
 const midnightLinePlugin = {
     id:"midnightLinePlugin",

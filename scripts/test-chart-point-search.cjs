@@ -58,3 +58,20 @@ for(const file of ['index.html', 'u-tech-plus/index.html']){
     assert.ok(html.indexOf('src="chart-point-search.js"') < html.indexOf('src="assets/utech-shared.js"'));
 }
 console.log(`Point search passed: ${comparisons} before/after cases, selected tooltip points, zero/null/strings, ties, missing/hidden/auxiliary/split series, distance and load order.`);
+
+// Yui keeps its own hover rules; only raw point validation and nearest search are shared.
+const yuiBefore=cp.execFileSync('git',['show','HEAD:yui-tech/index.html'],{cwd:root,encoding:'utf8'});
+const yuiCurrent=fs.readFileSync(path.join(root,'yui-tech/index.html'),'utf8');
+const oldYui=compile(yuiBefore),nextYui=compile(yuiCurrent);
+for(const point of points)assert.equal(nextYui.isValidChartPoint(point),oldYui.isValidChartPoint(point));
+let yuiComparisons=0;
+for(let offset=0;offset<points.length;offset++)for(const target of [-1e12,0,1,3,4,1e12,'3',null,undefined,NaN,Infinity]){
+ const data=points.slice(offset).concat(points.slice(0,offset));
+ assert.equal(nextYui.getNearestPointIndexAtXValue(data,target),oldYui.getNearestPointIndexAtXValue(data,target));
+ const chart={data:{datasets:[{label:'温度',data},{label:'湿度',data:data.slice().reverse()},{label:'非表示',data}]},isDatasetVisible:i=>i!==2};
+ assert.equal(nextYui.getNearestChartXValue(chart,target),oldYui.getNearestChartXValue(chart,target));
+ assert.equal(nextYui.getLatestChartXValue(chart),oldYui.getLatestChartXValue(chart));yuiComparisons++;
+}
+for(const data of [null,undefined,[]])assert.equal(nextYui.getNearestPointIndexAtXValue(data,1),-1);
+assert.ok(yuiCurrent.indexOf('src="../chart-point-search.js"')<yuiCurrent.indexOf('function isValidChartPoint('));
+console.log('Yui point search passed: '+yuiComparisons+' old/new comparisons, missing data, zero, strings, ties, hidden datasets and unlimited distance retained.');
