@@ -1,79 +1,113 @@
 'use strict';
 
-// Same formula and valid input range as U-Tech Next measured.js.
-// This function is shared by the graphs, latest readings, and CSV export.
+// U-Tech calcVapor formula. All graphs/readouts/CSV use these same derived values.
 function flowDeficit(row) {
     const t = numeric(row.temperature), h = numeric(row.humidity);
-    if (t === null || h === null || t <= -237.3 || h < 0 || h > 100) return {deficit:null, vpd:null};
-    const difference = 6.1078 * 10 ** (7.5 * t / (237.3 + t)) * (1 - h / 100);
-    const deficit = 216.7 * difference / (t + 273.15), vpd = difference / 10;
-    return Number.isFinite(deficit) && Number.isFinite(vpd) ? {deficit, vpd} : {deficit:null, vpd:null};
+    const result = {saturated:null, vapor:null, deficit:null, vpd:null};
+    if (t === null || t <= -237.3) return result;
+    const es = 6.1078 * 10 ** (7.5 * t / (237.3 + t));
+    const saturated = 216.7 * es / (t + 273.15);
+    if (!Number.isFinite(saturated)) return result;
+    result.saturated = saturated;
+    if (h === null || h < 0 || h > 100) return result;
+    result.vapor = saturated * h / 100;
+    result.deficit = saturated - result.vapor;
+    result.vpd = es * (1 - h / 100) / 10;
+    return result;
 }
 
-function deficitAxes(point) {
-    return {deficitMin:0, deficitMax:null, vpdMin:0, vpdMax:null, ...readAxes()['deficit_'+point]};
+function moistureDefinition(kind) {
+    return kind === 'vpd' ? {title:'VPD', unit:'kPa', fields:[['vpd','VPD','rgb(210, 90, 40)',false,2]]}
+        : {title:'飽差',unit:'g/㎥',fields:[
+            ['saturated','飽和水蒸気量','rgb(255, 0, 0)',false,1],
+            ['vapor','水蒸気量','rgb(75, 192, 192)',false,1],
+            ['deficit','飽差','rgb(255, 159, 64)',true,1]
+        ]};
+}
+
+function moistureAxis(point, kind) {
+    const saved = readAxes();
+    const settings = saved[kind+'_'+point];
+    // Preserve the former combined graph's kPa upper bound; g/㎥ now includes saturation.
+    const max = settings ? settings.max : kind === 'vpd' ? saved['deficit_'+point]?.vpdMax : null;
+    return {min:0, max:Number.isFinite(max) && max > 0 ? max : null};
 }
 
 function applyDeficitAxes(chart) {
-    const axis = deficitAxes(chart.$point);
-    for (const [key, id] of [['deficit','yDeficit'], ['vpd','yVpd']]) {
-        chart.options.scales[id].min = axis[key+'Min'];
-        if (axis[key+'Max'] === null) delete chart.options.scales[id].max;
-        else chart.options.scales[id].max = axis[key+'Max'];
+    const axis = moistureAxis(chart.$point, chart.$kind);
+    for (const id of Object.keys(chart.options.scales).filter(id=>id !== 'x')) {
+        chart.options.scales[id].min = 0;
+        if (axis.max === null) delete chart.options.scales[id].max;
+        else chart.options.scales[id].max = axis.max;
     }
 }
 
+// Background shading only: unlike U-Tech's plugin, never force zero during zoom.
+const flowVaporBand = {
+    id:'flowVaporBand',
+    beforeUpdate(chart) {
+        const left = chart.options.scales.y, right = chart.options.scales.yRight;
+        if (!left || !right) return;
+        right.min = left.min;
+        if (left.max === undefined) delete right.max;
+        else right.max = left.max;
+    },
+    beforeDatasetsDraw(chart) {
+        const a = chart.chartArea, y = chart.scales.y;
+        if (!a || !y) return;
+        const min = Math.max(5,y.min), max = Math.min(10,y.max);
+        if (max <= min) return;
+        const top = Math.max(a.top,y.getPixelForValue(max));
+        const bottom = Math.min(a.bottom,y.getPixelForValue(min));
+        chart.ctx.save();chart.ctx.fillStyle = 'rgba(31, 143, 95, 0.12)';
+        chart.ctx.fillRect(a.left,top,a.right-a.left,bottom-top);chart.ctx.restore();
+    }
+};
+
 function renderDeficits(message = '') {
-    $('deficit-charts').replaceChildren();
-    for (const [index, point] of temperaturePoints.entries()) {
-        const card = document.createElement('section');
-        card.className = 'chart-card temperature-card deficit-card';
-        const title = document.createElement('h3');
-        title.textContent = `飽差No.${index+1}（${point}）`;
-        const reset = document.createElement('button');
-        reset.type = 'button';reset.className = 'chart-reset-button';reset.textContent = 'ズームリセット';reset.onclick = resetViews;
-        title.append(reset);
+    for (const kind of ['vpd','vapor']) renderMoistureGroup(kind,message);
+}
+
+function renderMoistureGroup(kind, message) {
+    const container = $(kind+'-charts'), def = moistureDefinition(kind);
+    container.replaceChildren();
+    for (const [index,point] of temperaturePoints.entries()) {
+        const card = document.createElement('section');card.className = 'chart-card temperature-card '+kind+'-card';
+        const title = document.createElement('h3');title.textContent = `${def.title}No.${index+1}（${point}）`;
+        const reset = document.createElement('button');reset.type = 'button';reset.className = 'chart-reset-button';reset.textContent = 'ズームリセット';reset.onclick = resetViews;title.append(reset);
         const controls = document.createElement('div');controls.className = 'temperature-axes';
-        const inputs = {}, axis = loaded ? deficitAxes(point) : {deficitMin:0,deficitMax:null,vpdMin:0,vpdMax:null};
-        for (const [key, unit] of [['deficit','g/m³'],['vpd','kPa']]) {
-            const range = document.createElement('label');range.textContent = unit+'：';
-            for (const suffix of ['Min','Max']) {
-                if (suffix === 'Max') range.append('～');
-                const input = document.createElement('input');input.type = 'number';input.step = 'any';input.value = axis[key+suffix] ?? '';input.placeholder = '自動';
-                input.setAttribute('aria-label', `飽差 ${point} ${unit} ${suffix === 'Min' ? '最小' : '最大'}`);
-                inputs[key+suffix] = input;range.append(input);
-            }
-            controls.append(range);
-        }
-        const apply = document.createElement('button');apply.type = 'button';apply.textContent = '縦軸反映';controls.append(apply);
+        const axis = loaded ? moistureAxis(point,kind) : {min:0,max:null};
+        const range = document.createElement('label');range.textContent = def.unit+'：';
+        const minInput = document.createElement('input');minInput.type = 'number';minInput.value = '0';minInput.readOnly = true;minInput.setAttribute('aria-label',`${def.title} ${point} 最小（0固定）`);
+        const maxInput = document.createElement('input');maxInput.type = 'number';maxInput.step = 'any';maxInput.min = '0';maxInput.value = axis.max ?? '';maxInput.placeholder = '自動';maxInput.setAttribute('aria-label',`${def.title} ${point} 最大`);
+        range.append(minInput,'～',maxInput);
+        const apply = document.createElement('button');apply.type = 'button';apply.textContent = '縦軸反映';controls.append(range,apply);
         const error = document.createElement('p');error.className = 'error';error.setAttribute('role','alert');
         const wrap = document.createElement('div');wrap.className = 'chart-container';
-        const canvas = document.createElement('canvas');canvas.id = 'flowDeficit'+point;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`飽差No.${index+1}のグラフ`);wrap.append(canvas);
+        const canvas = document.createElement('canvas');canvas.id = 'flow'+kind+point;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${def.title}No.${index+1}のグラフ`);wrap.append(canvas);
         const readout = document.createElement('p');readout.className = 'chart-readout';
-        const rows = message ? [] : loaded.rows.filter(r=>r.point_id === point).map(r=>({...r,...flowDeficit(r)}));
-        const last = rows.filter(r=>r.deficit !== null && Number.isFinite(stamp(r.recorded_at))).at(-1);
-        readout.textContent = message || (last ? `最新測定 ${last.recorded_at} JST ｜ ` : 'この期間の飽差データはありません。');
-        if (last) {const values = document.createElement('strong');values.textContent = `飽差 ${last.deficit.toFixed(1)} g/m³／VPD ${last.vpd.toFixed(2)} kPa`;readout.append(values);}
-        card.append(title,controls,error,wrap,readout);$('deficit-charts').append(card);
+        const rows = message ? [] : loaded.rows.filter(r=>r.point_id === point && Number.isFinite(stamp(r.recorded_at))).map(r=>({...r,...flowDeficit(r)}));
+        const last = rows.filter(r=>def.fields.some(([key])=>r[key] !== null)).at(-1);
+        readout.textContent = message || (last ? `最新測定 ${last.recorded_at} JST ｜ ` : `この期間の${def.title}データはありません。`);
+        if (last) {const values = document.createElement('strong');values.textContent = def.fields.map(([key,label,,,digits])=>`${label} ${last[key]?.toFixed(digits)??'—'} ${def.unit}`).join('／');readout.append(values);}
+        card.append(title,controls,error,wrap,readout);container.append(card);
         let chart = null;
         if (last) {
-            const options = baseOptions(new Date(loaded.startMs), new Date(loaded.endMs));
-            options.animation = false;
-            options.scales.yDeficit = {position:'left',min:0,title:{display:true,text:'g/m³'},ticks:{callback:v=>Number(v).toFixed(1)}};
-            options.scales.yVpd = {position:'right',min:0,title:{display:true,text:'kPa'},grid:{drawOnChartArea:false},ticks:{callback:v=>Number(v).toFixed(2)}};
-            options.plugins.tooltip.callbacks.label = item => `${item.dataset.label}: ${item.parsed.y.toFixed(item.dataset.yAxisID === 'yVpd' ? 2 : 1)}`;
-            chart = new Chart(canvas,{type:'line',plugins:[flowGuides,chartBackgroundPlugin],data:{datasets:[
-                ['deficit','飽差 (g/m³)','yDeficit','#8054b5'],['vpd','VPD (kPa)','yVpd','#d25a28']
-            ].map(([key,label,yAxisID,color])=>({label,yAxisID,borderColor:color,backgroundColor:color,borderWidth:2,pointRadius:0,tension:.2,spanGaps:false,data:rows.map(r=>({x:stamp(r.recorded_at),y:r[key]})).filter(p=>Number.isFinite(p.x))}))},options});
-            chart.$point = point;chart.$kind = 'deficit';applyDeficitAxes(chart);chart.update('none');charts.push(chart);
+            const options = baseOptions(new Date(loaded.startMs),new Date(loaded.endMs));options.animation = false;
+            options.scales.y = {position:'left',min:0,title:{display:true,text:def.unit,color:'#000'},ticks:{color:'#000'}};
+            if (kind === 'vapor') options.scales.yRight = {position:'right',min:0,title:{display:true,text:def.unit,color:'#000'},grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits(scale){const left = scale.chart.scales.y;if(left){scale.min=left.min;scale.max=left.max;}}};
+            options.plugins.legend = {labels:{font:{size:11},boxWidth:18,boxHeight:10,padding:6}};
+            // Match U-Tech: numeric callouts at each series and a bottom time tooltip.
+            chart = new Chart(canvas,{type:'line',plugins:[flowGuides,chartBackgroundPlugin,pointLabelPlugin,...(kind === 'vapor' ? [flowVaporBand] : [])],data:{datasets:def.fields.map(([key,label,color,fill,digits])=>({label:`${label} (${def.unit})`,valueDigits:digits,yAxisID:'y',borderColor:color,backgroundColor:fill?'rgba(255, 159, 64, 0.20)':color,pointBackgroundColor:color,borderWidth:2,pointRadius:0,tension:.2,fill,spanGaps:false,data:rows.map(r=>({x:stamp(r.recorded_at),y:r[key]}))}))},options});
+            chart.$point = point;chart.$kind = kind;applyDeficitAxes(chart);chart.update('none');charts.push(chart);
         } else if (!message) {
-            const note = document.createElement('p');note.className = 'chart-no-data';note.textContent = 'この期間の飽差データはありません。';wrap.append(note);
+            const note = document.createElement('p');note.className = 'chart-no-data';note.textContent = `この期間の${def.title}データはありません。`;wrap.append(note);
         }
         apply.disabled = Boolean(message);
         apply.onclick = () => {
-            const values = Object.fromEntries(Object.entries(inputs).map(([key,input])=>[key,input.value.trim() === '' ? (key.endsWith('Min') ? 0 : null) : Number(input.value)]));
-            if (Object.values(values).some(v=>v !== null && (!Number.isFinite(v) || v < 0)) || ['deficit','vpd'].some(key=>values[key+'Max'] !== null && values[key+'Min'] >= values[key+'Max'])) {error.textContent = '0以上の値を入力し、最大を最小より大きくしてください。';return;}
-            error.textContent = '';const saved = readAxes();saved['deficit_'+point] = values;saveAxes(saved);
+            const max = maxInput.value.trim() === '' ? null : Number(maxInput.value);
+            if (max !== null && (!Number.isFinite(max) || max <= 0)) {error.textContent = '最大は0より大きくしてください。';return;}
+            error.textContent = '';const saved = readAxes();saved[kind+'_'+point] = {max};saveAxes(saved);
             if (chart) {applyDeficitAxes(chart);chart.update('none');}
         };
         controls.addEventListener('keydown',event=>{if(event.key === 'Enter'){event.preventDefault();apply.click();}});

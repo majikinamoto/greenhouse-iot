@@ -73,7 +73,7 @@ const pointLabelPlugin = {
             const isIntegerValue = unit === "ppm";
             const displayValue = isWindChart
                 ? Number(value).toFixed(2)
-                : isIntegerValue ? Number(value).toFixed(0) : Number(value).toFixed(1);
+                : isIntegerValue ? Number(value).toFixed(0) : Number(value).toFixed(dataset.valueDigits ?? 1);
             const labelText = labelName + "_";
             const valueText = displayValue + unit;
 

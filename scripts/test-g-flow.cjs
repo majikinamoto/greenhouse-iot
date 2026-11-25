@@ -5,8 +5,8 @@ class Chart{static Tooltip={positioners:{}};static getChart(){} constructor(canv
 const context=vm.createContext({console,Chart,Date,Intl,Number,Map,JSON,Array,Object,String,Math,Infinity,NaN,Blob:class{constructor(parts){blob=parts.join('')}},URL:{createObjectURL(){return 'blob:test'},revokeObjectURL(){}},URLSearchParams,setTimeout(){},requestAnimationFrame:f=>f(),window:{matchMedia:()=>({matches:false})},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:id=>elements[id]??(elements[id]=new Element()),createElement:tag=>new Element(tag),createTextNode:s=>s}});
 for(const file of ['temperature.js','latest.js','deficit.js','flow.js'])vm.runInContext(fs.readFileSync('g-flow/'+file,'utf8'),context);
 vm.runInContext(`loaded={user:'TEST',start:'2026-11-10T00:00',end:'2026-11-11T00:00',startMs:1794236400000,endMs:1794322800000,rows:[...points,...temperaturePoints].flatMap(point=>[0,1].map(i=>({point_id:point,recorded_at:'2026-11-10 00:'+String(i*10).padStart(2,'0')+':00',temperature:i?null:25,humidity:60,wind_speed_avg:.1,wind_speed_max:.2})))};render();`,context);
-assert.equal(vm.runInContext('charts.length',context),12);
-assert.equal(elements['deficit-charts'].children.length,4);
+assert.equal(vm.runInContext('charts.length',context),16);
+assert.equal(elements['vpd-charts'].children.length,4);assert.equal(elements['vapor-charts'].children.length,4);
 assert.equal(elements['temperature-charts'].children.length,4);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(charts[4].data.datasets.map(d=>[d.yAxisID,d.borderColor]))',context)),[['yHum','rgb(0, 100, 255)'],['yTemp','rgb(255, 0, 0)']]);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(getTempHumAxis("P01"))',context)),{humMin:20,humMax:90,tempMin:10,tempMax:45});
@@ -21,7 +21,7 @@ vm.runInContext("download(loaded,['P62','P01']);",context);assert.ok(blob.starts
 vm.runInContext("download(loaded,['P04']);",context);assert.doesNotMatch(blob,/風速/);assert.match(blob,/湿度（%）/);
 vm.runInContext("loaded.rows=[];render();",context);assert.equal(vm.runInContext('charts.length',context),4);assert.equal(elements['temperature-charts'].children.length,4);
 vm.runInContext("flowGuides.afterEvent({}, {replay:true});",context);
-console.log('G-Flow passed: 12 charts, dual axes/colors, saved axes/reset, sync, selected mixed CSV, nulls, empty data.');
+console.log('G-Flow passed: 16 charts, dual axes/colors, saved axes/reset, sync, selected mixed CSV, nulls, empty data.');
 
 
 // Latest rows are selected per sensor, without replacing missing fields with old values.
@@ -52,15 +52,25 @@ assert.ok(Math.abs(derived.deficit-9.2)<0.05);assert.ok(Math.abs(derived.vpd-1.2
 for(const row of [{temperature:null,humidity:60},{temperature:25,humidity:101},{temperature:-237.3,humidity:50}])assert.equal(vm.runInContext('flowDeficit('+JSON.stringify(row)+').deficit',context),null);
 assert.equal(vm.runInContext('flowDeficit({temperature:25,humidity:100}).vpd',context),0);
 vm.runInContext("loaded.rows=[{point_id:'P01',recorded_at:'2026-11-10 00:00:00',temperature:25,humidity:60},{point_id:'P01',recorded_at:'2026-11-10 00:10:00',temperature:null,humidity:60}];render();",context);
-assert.equal(vm.runInContext('charts.filter(c=>c.$kind==="deficit").length',context),1);
-const deficitCard=elements['deficit-charts'].children[0];
-assert.match(text(deficitCard),/飽差 9.2 g\/m³／VPD 1.27 kPa/);
-const deficitControls=deficitCard.children[1];deficitControls.children[0].children[2].value='25';deficitControls.children[1].children[2].value='3';deficitControls.children[2].onclick();
+
+assert.equal(vm.runInContext('charts.filter(c=>c.$kind==="vpd").length',context),1);
+assert.equal(vm.runInContext('charts.filter(c=>c.$kind==="vapor").length',context),1);
+assert.match(text(elements['vpd-charts']),/VPD 1.27 kPa/);
+assert.doesNotMatch(text(elements['vpd-charts']),/g\/㎥/);
+assert.match(text(elements['vapor-charts']),/飽和水蒸気量 23.0 g\/㎥／水蒸気量 13.8 g\/㎥／飽差 9.2 g\/㎥/);
+const vaporControls=elements['vapor-charts'].children[0].children[1];
+assert.equal(vaporControls.children[0].children[0].readOnly,true);
+vaporControls.children[0].children[2].value='35';vaporControls.children[1].onclick();
+const vpdControls=elements['vpd-charts'].children[0].children[1];vpdControls.children[0].children[2].value='3';vpdControls.children[1].onclick();
 vm.runInContext('render();resetViews();',context);
-assert.equal(vm.runInContext('charts.find(c=>c.$kind==="deficit").scales.yDeficit.max',context),25);
-assert.equal(vm.runInContext('charts.find(c=>c.$kind==="deficit").scales.yVpd.max',context),3);
-vm.runInContext("download(loaded,['P01','deficit:P01']);",context);
-assert.match(blob,/飽差（g\/m³）/);assert.match(blob,/VPD（kPa）/);assert.match(blob,/"9.2","1.27"/);
-assert.ok(blob.trim().split('\r\n')[2].endsWith('"",""'));
-vm.runInContext("emptyGraphs('読み込み中');",context);assert.equal(elements['deficit-charts'].children.length,4);assert.doesNotMatch(text(elements['deficit-charts']),/9.2/);
-console.log('Deficit passed: formula, invalid/null/saturation, 4 charts, latest readings, dual axes persistence/reset, selected CSV and loading.');
+assert.equal(vm.runInContext('charts.find(c=>c.$kind==="vapor").scales.y.max',context),35);
+assert.equal(vm.runInContext('charts.find(c=>c.$kind==="vpd").scales.y.max',context),3);
+assert.equal(vm.runInContext('charts.find(c=>c.$kind==="vapor").scales.y.min',context),0);
+assert.equal(vm.runInContext('charts.find(c=>c.$kind==="vapor").data.datasets[2].fill',context),true);
+assert.equal(vm.runInContext('flowDeficit({temperature:25,humidity:null}).saturated.toFixed(1)',context),'23.0');
+assert.ok(Math.abs(derived.deficit-(vm.runInContext('flowDeficit({temperature:25,humidity:60}).saturated-flowDeficit({temperature:25,humidity:60}).vapor',context)))<1e-10);
+vm.runInContext("download(loaded,['P01','vpd:P01','vapor:P01']);",context);
+assert.match(blob,/飽和水蒸気量（g\/㎥）/);assert.match(blob,/VPD（kPa）/);assert.match(blob,/"23.0","13.8","9.2"/);
+assert.ok(blob.trim().split('\r\n')[2].endsWith('"","",""'));
+vm.runInContext("emptyGraphs('読み込み中');",context);assert.equal(elements['vpd-charts'].children.length,4);assert.equal(elements['vapor-charts'].children.length,4);assert.doesNotMatch(text(elements['vapor-charts']),/9.2/);
+console.log('Moisture passed: separate VPD/vapor groups, 3 series, fill, zero minima, separate saved maxima, missing humidity, CSV widths and loading.');
