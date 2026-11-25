@@ -7,6 +7,7 @@ for(const file of ['temperature.js','latest.js','deficit.js','flow.js'])vm.runIn
 vm.runInContext(`loaded={user:'TEST',start:'2026-11-10T00:00',end:'2026-11-11T00:00',startMs:1794236400000,endMs:1794322800000,rows:[...points,...temperaturePoints].flatMap(point=>[0,1].map(i=>({point_id:point,recorded_at:'2026-11-10 00:'+String(i*10).padStart(2,'0')+':00',temperature:i?null:25,humidity:60,wind_speed_avg:.1,wind_speed_max:.2})))};render();`,context);
 assert.equal(vm.runInContext('charts.length',context),16);
 assert.equal(elements['vpd-charts'].children.length,4);assert.equal(elements['vapor-charts'].children.length,4);
+assert.equal(vm.runInContext('charts.filter(c=>c.$kind==="vapor").every(c=>!c.options.scales.yRight)',context),true);
 assert.equal(elements['temperature-charts'].children.length,4);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(charts[4].data.datasets.map(d=>[d.yAxisID,d.borderColor]))',context)),[['yHum','rgb(0, 100, 255)'],['yTemp','rgb(255, 0, 0)']]);
 assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(getTempHumAxis("P01"))',context)),{humMin:20,humMax:90,tempMin:10,tempMax:45});

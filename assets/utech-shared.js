@@ -1682,7 +1682,6 @@ const vaporTargetBandPlugin = {
     beforeUpdate(chart){
         if(!["mainVaporChart", "reviewVaporChart"].includes(chart.canvas.id)) return;
         chart.options.scales.y.min = 0;
-        chart.options.scales.yRight.min = 0;
     },
     beforeDatasetsDraw(chart){
         if(!["mainVaporChart", "reviewVaporChart"].includes(chart.canvas.id)) return;
@@ -1795,8 +1794,7 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
             ...vaporOptions,
             scales:{
                 ...vaporOptions.scales,
-y:yAxisOptions,
-yRight:createRightYAxis(yAxisOptions)
+y:yAxisOptions
             }
         }
     });

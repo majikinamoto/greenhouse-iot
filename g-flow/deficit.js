@@ -45,13 +45,6 @@ function applyDeficitAxes(chart) {
 // Background shading only: unlike U-Tech's plugin, never force zero during zoom.
 const flowVaporBand = {
     id:'flowVaporBand',
-    beforeUpdate(chart) {
-        const left = chart.options.scales.y, right = chart.options.scales.yRight;
-        if (!left || !right) return;
-        right.min = left.min;
-        if (left.max === undefined) delete right.max;
-        else right.max = left.max;
-    },
     beforeDatasetsDraw(chart) {
         const a = chart.chartArea, y = chart.scales.y;
         if (!a || !y) return;
@@ -95,7 +88,6 @@ function renderMoistureGroup(kind, message) {
         if (last) {
             const options = baseOptions(new Date(loaded.startMs),new Date(loaded.endMs));options.animation = false;
             options.scales.y = {position:'left',min:0,title:{display:true,text:def.unit,color:'#000'},ticks:{color:'#000'}};
-            if (kind === 'vapor') options.scales.yRight = {position:'right',min:0,title:{display:true,text:def.unit,color:'#000'},grid:{drawOnChartArea:false},ticks:{color:'#000'},afterDataLimits(scale){const left = scale.chart.scales.y;if(left){scale.min=left.min;scale.max=left.max;}}};
             options.plugins.legend = {labels:{font:{size:11},boxWidth:18,boxHeight:10,padding:6}};
             // Match U-Tech: numeric callouts at each series and a bottom time tooltip.
             chart = new Chart(canvas,{type:'line',plugins:[flowGuides,chartBackgroundPlugin,pointLabelPlugin,...(kind === 'vapor' ? [flowVaporBand] : [])],data:{datasets:def.fields.map(([key,label,color,fill,digits])=>({label:`${label} (${def.unit})`,valueDigits:digits,yAxisID:'y',borderColor:color,backgroundColor:fill?'rgba(255, 159, 64, 0.20)':color,pointBackgroundColor:color,borderWidth:2,pointRadius:0,tension:.2,fill,spanGaps:false,data:rows.map(r=>({x:stamp(r.recorded_at),y:r[key]}))}))},options});
