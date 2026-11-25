@@ -768,7 +768,7 @@ function calcVpdAverage(data, startHour, endHour, baseDate){
 
     const values = data
         .filter(d=>d.x>=start && d.x<end && d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-        .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum));
+        .map(d=>window.UTechMoisture.densityDeficit(d.temp,d.hum));
 
     if(!values.length) return null;
 
@@ -962,7 +962,7 @@ function getScoreRowsForPeriod(start, end, p01, p21, p31){
     return {
         vpd:daytimeP01
             .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-            .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum)),
+            .map(d=>window.UTechMoisture.densityDeficit(d.temp,d.hum)),
         temp:sourceP01
             .filter(d=>d.temp !== null && !isNaN(d.temp))
             .map(d=>d.temp),
@@ -1778,7 +1778,7 @@ async function loadData(){
                 const last = validP01[validP01.length - 1];
 
                 document.getElementById("tempNow").innerText = last.temp.toFixed(1);
-                document.getElementById("vpdNow").innerText = (calcVapor(last.temp,100) - calcVapor(last.temp,last.hum)).toFixed(1);
+                document.getElementById("vpdNow").innerText = (window.UTechMoisture.densityDeficit(last.temp,last.hum)).toFixed(1);
                 document.getElementById("humNow").innerText = last.hum.toFixed(1);
 
                 const yStart = new Date();

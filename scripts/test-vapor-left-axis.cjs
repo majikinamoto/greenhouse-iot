@@ -1,9 +1,10 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
+const moistureWindow={};new Function('window',fs.readFileSync('moisture-calculations.js','utf8'))(moistureWindow);
 const shared=fs.readFileSync('assets/utech-shared.js','utf8');
 const from=shared.indexOf('const vaporTargetBandPlugin ='),to=shared.indexOf('function createOutsideDiffChart(',from);
 const factory=new Function('Chart','getChartCanvas','hasChartSourceData','destroyExistingChart','getChartDisplayMinTime','baseOptions','window','calcVapor',shared.slice(from,to)+';return {createVaporChart,vaporTargetBandPlugin};');
 class Chart{constructor(canvas,config){this.canvas=canvas;Object.assign(this,config);}}
-const {createVaporChart,vaporTargetBandPlugin}=factory(Chart,id=>({id}),r=>r.length>0,()=>{},(id,min)=>min,()=>({scales:{x:{}},plugins:{}}),{matchMedia:()=>({matches:false})},(t,h)=>216.7*(6.1078*10**(7.5*t/(237.3+t))*h/100)/(t+273.15));
+const {createVaporChart,vaporTargetBandPlugin}=factory(Chart,id=>({id}),r=>r.length>0,()=>{},(id,min)=>min,()=>({scales:{x:{}},plugins:{}}),{matchMedia:()=>({matches:false}),UTechMoisture:moistureWindow.UTechMoisture},(t,h)=>216.7*(6.1078*10**(7.5*t/(237.3+t))*h/100)/(t+273.15));
 for(const id of ['mainVaporChart','reviewVaporChart','vaporChartP11']){
  const chart=createVaporChart(id,[{xValue:1,temp:25,hum:60}],new Date(0),new Date(2));
  assert.deepEqual(Object.keys(chart.options.scales),['x','y']);assert.equal(chart.data.datasets.length,3);assert.equal(chart.data.datasets[2].fill,true);

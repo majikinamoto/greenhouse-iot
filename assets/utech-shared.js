@@ -869,9 +869,7 @@ function formatTime(value){
  * 要確認：この式と係数を採用した出典・適用範囲。
  */
 function calcVapor(temp, hum){
-    const es = 6.1078 * Math.pow(10, (7.5 * temp) / (237.3 + temp));
-    const ea = es * hum / 100;
-    return 216.7 * (ea / (temp + 273.15));
+    return window.UTechMoisture.vaporDensity(temp, hum);
 }
 
 /**
@@ -881,10 +879,7 @@ function calcVapor(temp, hum){
  * 要確認：係数17.27・237.7を採用した出典・適用範囲。
  */
 function calcDewPoint(temp, hum){
-    const a = 17.27;
-    const b = 237.7;
-    const alpha = ((a * temp) / (b + temp)) + Math.log(hum / 100);
-    return (b * alpha) / (a - alpha);
+    return window.UTechMoisture.dewPoint(temp, hum);
 }
 
 // === グラフの共通設定・ズーム・初期範囲 ===
@@ -1738,14 +1733,14 @@ function createVaporChart(canvasId, parsed, minTime, maxTime){
         .filter(d=>d.temp !== null && !isNaN(d.temp))
         .map(d=>({
             x:d.xValue,
-            y:calcVapor(d.temp,100)
+            y:window.UTechMoisture.vaporDensity(d.temp,100)
     }));
     const vaporData = parsed
         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
         .map(d=>({x:d.xValue,y:calcVapor(d.temp,d.hum)}));
     const vaporDeficitData = parsed
         .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-        .map(d=>({x:d.xValue,y:calcVapor(d.temp,100)-calcVapor(d.temp,d.hum)}));
+        .map(d=>({x:d.xValue,y:window.UTechMoisture.densityDeficit(d.temp,d.hum)}));
 
     if(!vaporSaturatedData.length && !vaporData.length && !vaporDeficitData.length) return null;
 

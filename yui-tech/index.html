@@ -2363,6 +2363,7 @@ body.data-export-active .control-panel {
     }
 }
 </style>
+<script src="../moisture-calculations.js"></script>
 <script src="../temp-hum-axis-settings.js"></script>
 </head>
 
@@ -5462,16 +5463,11 @@ function formatTimeTick(value){
 }
 
 function calcVapor(temp, hum){
-    const es = 6.1078 * Math.pow(10, (7.5 * temp) / (237.3 + temp));
-    const ea = es * hum / 100;
-    return 216.7 * (ea / (temp + 273.15));
+    return window.UTechMoisture.vaporDensity(temp, hum);
 }
 
 function calcDewPoint(temp, hum){
-    const a = 17.27;
-    const b = 237.7;
-    const alpha = ((a * temp) / (b + temp)) + Math.log(hum / 100);
-    return (b * alpha) / (a - alpha);
+    return window.UTechMoisture.dewPoint(temp, hum);
 }
 
 function calcDailyTempStats(data, targetDate, isToday){
@@ -5542,7 +5538,7 @@ function calcVpdAverage(data, startHour, endHour, baseDate){
 
     const values = data
         .filter(d=>d.x>=start && d.x<end && d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-        .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum));
+        .map(d=>window.UTechMoisture.densityDeficit(d.temp,d.hum));
 
     if(!values.length) return null;
 
@@ -5723,7 +5719,7 @@ function getScoreRowsForPeriod(start, end, tempHumidityData, p21, p31){
     return {
         vpd:daytimeTempHumidity
             .filter(d=>d.temp !== null && d.hum !== null && !isNaN(d.temp) && !isNaN(d.hum))
-            .map(d=>calcVapor(d.temp,100) - calcVapor(d.temp,d.hum)),
+            .map(d=>window.UTechMoisture.densityDeficit(d.temp,d.hum)),
         temp:sourceTempHumidity
             .filter(d=>d.temp !== null && !isNaN(d.temp))
             .map(d=>d.temp),

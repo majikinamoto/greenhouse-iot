@@ -5,14 +5,14 @@ function flowDeficit(row) {
     const t = numeric(row.temperature), h = numeric(row.humidity);
     const result = {saturated:null, vapor:null, deficit:null, vpd:null};
     if (t === null || t <= -237.3) return result;
-    const es = 6.1078 * 10 ** (7.5 * t / (237.3 + t));
-    const saturated = 216.7 * es / (t + 273.15);
+    const es = window.UTechMoisture.saturationPressure(t);
+    const saturated = window.UTechMoisture.saturatedDensity(t,es);
     if (!Number.isFinite(saturated)) return result;
     result.saturated = saturated;
     if (h === null || h < 0 || h > 100) return result;
     result.vapor = saturated * h / 100;
     result.deficit = saturated - result.vapor;
-    result.vpd = es * (1 - h / 100) / 10;
+    result.vpd = window.UTechMoisture.pressureDeficit(t,h,es);
     return result;
 }
 
