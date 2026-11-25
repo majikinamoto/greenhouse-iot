@@ -1874,6 +1874,7 @@ function resetZoom(){
     allCharts.forEach(c=>{
         if(c){
             if(c.resetZoom) c.resetZoom("none");
+            window.TempHumAxes?.restoreChart(c);
             redrawChart(c);
         }
     });

@@ -5,7 +5,7 @@ function hasChartSourceData(rows){return rows.length>0;}
 function destroyExistingChart(id){Chart.getChart(id)?.destroy();}
 function getChartDisplayMinTime(id,min){return min;}
 function formatTime(ms){const d=new Date(ms+9*3600000);const pad=v=>String(v).padStart(2,'0');return `${pad(d.getUTCMonth()+1)}月${pad(d.getUTCDate())}日 ${pad(d.getUTCHours())}時${pad(d.getUTCMinutes())}分`;}
-function getTempHumAxis(point){return {humMin:20,humMax:90,tempMin:10,tempMax:45,...readAxes()[point]};}
+function getTempHumAxis(point){return {humMin:30,humMax:90,tempMin:10,tempMax:30,...readAxes()[point]};}
 const chartBackgroundPlugin = {
     id: 'chartBackgroundPlugin',
     beforeDraw(chart) {

@@ -279,7 +279,7 @@ let maintenanceLastLoadSucceeded = false;
 let maintenanceKnownUserId = "";
 
 const reviewAxisDefaults = {
-    tempHum:{ humMin:40, humMax:100, tempMin:20, tempMax:40 },
+    tempHum:{ humMin:30, humMax:90, tempMin:10, tempMax:30 },
     outsideDiff:{ min:-1, max:5 },
     vapor:{ min:0, max:undefined },
     solar:{ min:undefined, max:undefined },
@@ -3023,7 +3023,7 @@ function applyReviewDefaultYAxis(chart){
 
     const id = chart.canvas.id;
     if(id === "reviewTempChartP01" || id === "reviewTempChartP11"){
-        setTempHumYAxis(chart, reviewAxisDefaults.tempHum);
+        setTempHumYAxis(chart, getReviewTempHumAxis(id.endsWith('P01')?'P01':'P11'));
         return;
     }
 
@@ -3065,10 +3065,12 @@ function resetReviewAxisInputs(){
         const input = document.getElementById(id);
         if(input) input.value = value === undefined ? "" : value;
     });
+    for(const point of ['P01','P11']) window.TempHumAxes?.restore(point,true);
 }
 
 function applyReviewTempHumYAxis(chart, pointId){
     if(!chart) return;
+    window.TempHumAxes?.save(pointId,true);
     setTempHumYAxis(chart, getReviewTempHumAxis(pointId));
     chart.update();
 }
@@ -3271,6 +3273,7 @@ function resetMaintenanceZoom(){
         maintenanceCharts.forEach(chart=>{
             if(!chart) return;
             if(chart.resetZoom) chart.resetZoom("none");
+            window.TempHumAxes?.restoreChart(chart);
             redrawChart(chart);
         });
 
@@ -3313,6 +3316,7 @@ function resetReviewZoom(){
     reviewCharts.forEach(chart=>{
         if(chart){
             if(chart.resetZoom) chart.resetZoom("none");
+            window.TempHumAxes?.restoreChart(chart);
             redrawChart(chart);
         }
     });

@@ -98,13 +98,13 @@ let lastTouchChartEventAt = 0;
 
 let maintenanceMode = "latest";
 
-let tempMin = 20;
+let tempMin = 10;
 
-let tempMax = 40;
+let tempMax = 30;
 
-let humMin = 40;
+let humMin = 30;
 
-let humMax = 100;
+let humMax = 90;
 
 let co2Min = 300;
 
@@ -2084,7 +2084,9 @@ function createTempHumChart(canvasId, parsed, minTime, maxTime, pointId){
 
     destroyExistingChart(canvasId);
 
-    const axis = getTempHumAxis(pointId);
+    const review = canvasId.startsWith('review');
+    window.TempHumAxes?.restore(pointId,review);
+    const axis = review && typeof getReviewTempHumAxis === 'function' ? getReviewTempHumAxis(pointId) : getTempHumAxis(pointId);
     const displayMinTime = getChartDisplayMinTime(canvasId, minTime, maxTime);
     const humColor = "rgb(0, 100, 255)";
     const tempColor = "rgb(255, 0, 0)";
@@ -2196,6 +2198,7 @@ yTemp:{
 function applyTempHumYAxis(chart, pointId){
     if(!chart) return;
 
+    window.TempHumAxes?.save(pointId);
     const axis = getTempHumAxis(pointId);
     setTempHumYAxis(chart, axis);
 
