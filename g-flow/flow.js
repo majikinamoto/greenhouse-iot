@@ -11,6 +11,7 @@ function recent(){const now=Date.now();$('end').value=jst(now);$('start').value=
 function status(message){$('status').textContent=message;}
 function emptyGraphs(message){
  renderLatestCards([],message);
+ renderDeficits(message);
  charts.forEach(c=>c.destroy());charts=[];$('charts').replaceChildren();$('temperature-charts').replaceChildren();
  [...points,...temperaturePoints].forEach((point,index)=>{const card=document.createElement('section');card.className='chart-card'+(temperaturePoints.includes(point)?' temperature-card':'');const title=document.createElement('h3');title.textContent=`${temperaturePoints.includes(point)?'温湿度':'風速'}No.${index%4+1} · ${point}`;const wrap=document.createElement('div');wrap.className='chart-container';const canvas=document.createElement('canvas');canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${temperaturePoints.includes(point)?'温湿度':'風速'}No.${index%4+1}のグラフ`);wrap.append(canvas);const note=document.createElement('p');note.className='chart-readout';note.textContent=message;card.append(title,wrap,note);(temperaturePoints.includes(point)?$('temperature-charts'):$('charts')).append(card);});
 }
@@ -26,7 +27,7 @@ function syncZoom({chart}){if(syncing)return;syncing=true;for(const c of charts)
 function axisKey(){return 'g_flow_axes_v1_'+loaded.user;}
 function readAxes(){try{return JSON.parse(localStorage.getItem(axisKey()))||{};}catch{return {};}}
 function saveAxes(settings){try{localStorage.setItem(axisKey(),JSON.stringify(settings));}catch{status('縦軸設定を端末へ保存できません。');}}
-function ownAxis(chart){if(temperaturePoints.includes(chart.$point)){const axis=getTempHumAxis(chart.$point);Object.assign(chart.options.scales.yHum,{min:axis.humMin,max:axis.humMax});Object.assign(chart.options.scales.yTemp,{min:axis.tempMin,max:axis.tempMax});return;}const saved=readAxes()[chart.$point]||{};chart.options.scales.y.min=0;delete chart.options.scales.y.max;if(Number.isFinite(saved.max)&&saved.max>0)chart.options.scales.y.max=saved.max;}
+function ownAxis(chart){if(chart.$kind==='deficit'){applyDeficitAxes(chart);return;}if(temperaturePoints.includes(chart.$point)){const axis=getTempHumAxis(chart.$point);Object.assign(chart.options.scales.yHum,{min:axis.humMin,max:axis.humMax});Object.assign(chart.options.scales.yTemp,{min:axis.tempMin,max:axis.tempMax});return;}const saved=readAxes()[chart.$point]||{};chart.options.scales.y.min=0;delete chart.options.scales.y.max;if(Number.isFinite(saved.max)&&saved.max>0)chart.options.scales.y.max=saved.max;}
 function matchWindAxes(){const source=charts[0];if(!source)return;for(const chart of charts.slice(1))if(chart.$link?.checked){chart.options.scales.y.min=source.scales.y.min;chart.options.scales.y.max=source.scales.y.max;chart.update('none');}}
 function resetViews(){if(!loaded)return;for(const c of charts){if(c.resetZoom)c.resetZoom('none');c.options.scales.x.min=loaded.startMs;c.options.scales.x.max=loaded.endMs;ownAxis(c);c.update('none');}matchWindAxes();}
 function addAxes(card,chart,index){
@@ -62,6 +63,7 @@ function render(){
         const chart=charts.at(-1);chart.$point=point;ownAxis(chart);chart.update('none');addAxes(card,chart,index);
     });
     renderTemperatures();
+    renderDeficits();
     matchWindAxes();
 }
 async function load(event){event?.preventDefault();if(!$('data-form').reportValidity())return;
@@ -75,12 +77,13 @@ async function load(event){event?.preventDefault();if(!$('data-form').reportVali
 function csvCell(value){const text=String(value??'');return '"'+(/^[=+\-@\t\r]/.test(text)?"'"+text:text).replaceAll('"','""')+'"';}
 function download(loaded,selected){if(!loaded)return;
 const fields=['user_id','point_id','ハウス名','測定日時（JST）'];
-const groups=selected.map(point=>({point,rows:loaded.rows.filter(row=>row.point_id===point).sort((a,b)=>a.recorded_at.localeCompare(b.recorded_at)),wind:points.includes(point)}));
-const lines=[groups.flatMap(({wind},index)=>[...(index?['']:[]),...fields,...(wind?['10分最大風速（m/s）','10分平均風速（m/s）']:['温度（℃）','湿度（%）'])])];
-for(let i=0;i<Math.max(0,...groups.map(g=>g.rows.length));i++)lines.push(groups.flatMap(({point,rows,wind},index)=>{const r=rows[i];return [...(index?['']:[]),...(r?[i===0?loaded.user:'',i===0?point:'',`No.${Number(point.slice(-1))}`,r.recorded_at,...(wind?[r.wind_speed_max,r.wind_speed_avg]:[r.temperature,r.humidity])]:Array(6).fill(''))];}));
+const groups=selected.map(value=>{const deficit=value.startsWith('deficit:');const point=deficit?value.slice(8):value;return {point,deficit,wind:points.includes(point),rows:loaded.rows.filter(row=>row.point_id===point).sort((a,b)=>a.recorded_at.localeCompare(b.recorded_at))};});
+const lines=[groups.flatMap(({wind,deficit},index)=>[...(index?['']:[]),...fields,...(deficit?['飽差（g/m³）','VPD（kPa）']:wind?['10分最大風速（m/s）','10分平均風速（m/s）']:['温度（℃）','湿度（%）'])])];
+for(let i=0;i<Math.max(0,...groups.map(g=>g.rows.length));i++)lines.push(groups.flatMap(({point,rows,wind,deficit},index)=>{const r=rows[i],derived=r&&deficit?flowDeficit(r):null;return [...(index?['']:[]),...(r?[i===0?loaded.user:'',i===0?point:'',`No.${Number(point.slice(-1))}`,r.recorded_at,...(deficit?[derived.deficit?.toFixed(1)??'',derived.vpd?.toFixed(2)??'']:wind?[r.wind_speed_max,r.wind_speed_avg]:[r.temperature,r.humidity])]:Array(6).fill(''))];}));
 const blob=new Blob(['\uFEFF'+lines.map(line=>line.map(csvCell).join(',')).join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`G-Flow_${loaded.user}_${loaded.start.replace(/\D/g,'')}_${loaded.end.replace(/\D/g,'')}_JST.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 renderLatestCards([], 'user_idを入力して「表示」を押してください。');
+renderDeficits('user_idを入力して「表示」を押してください。');
 recent();$('user-id').value=localStorage.getItem('g_flow_user_id')||localStorage.getItem('usui_user_id')||'';
 $('data-form').addEventListener('submit',load);
 $('export-form').addEventListener('submit',async event=>{event.preventDefault();if(!$('data-form').reportValidity()||!$('export-form').reportValidity())return;const user=$('user-id').value.trim(),start=$('start').value,end=$('end').value,startMs=stamp(start.replace('T',' ')+':00'),endMs=stamp(end.replace('T',' ')+':00');if(!Number.isFinite(startMs)||!Number.isFinite(endMs)||endMs<startMs||endMs-startMs>366*86400000){$('export-context').textContent='開始・終了日時を確認してください（最大366日）。';return;}const selected=Array.from(document.querySelectorAll('input[name=export-point]:checked'),input=>input.value);if(!selected.length){$('export-context').textContent='出力するデータを1つ以上選んでください。';return;}$('csv').disabled=true;$('export-context').textContent='CSVデータを取得中です。';try{const query=new URLSearchParams({user_id:user,start:start.replace('T',' ')+':00',end:end.replace('T',' ')+':00'}),response=await fetch('data.php?'+query,{cache:'no-store'}),body=await response.json();if(!response.ok||!Array.isArray(body.rows))throw new Error(body.message||'CSVデータを取得できませんでした。');download({user,start,end,rows:body.rows},selected);$('export-context').textContent=`出力対象：${user} ｜ ${start.replace('T',' ')}〜${end.replace('T',' ')} JST ｜ ${body.rows.length}件`;}catch(error){$('export-context').textContent=error.message;}finally{$('csv').disabled=false;}});
