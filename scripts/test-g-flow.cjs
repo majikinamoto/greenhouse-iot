@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 class Element{set value(v){this._value=String(v)}get value(){return this._value}constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.listeners={};this.checked=false;this.chartArea={};}append(...children){this.children.push(...children)}replaceChildren(){this.children=[]}setAttribute(){}addEventListener(k,f){this.listeners[k]=f}insertBefore(c,b){this.children.splice(this.children.indexOf(b),0,c)}reportValidity(){return true}click(){} }
 const elements={}, storage=new Map();let blob;
-class Chart{static Tooltip={positioners:{}};static getChart(){} constructor(canvas,config){Object.assign(this,config);this.canvas=canvas;this.scales={};this.update();this.tooltip={setActiveElements(){}};this.chartArea={top:0,bottom:280,left:0,right:400};}update(){for(const [key,value]of Object.entries(this.options.scales))this.scales[key]={...value,min:value.min??0,max:value.max??1};}destroy(){}resetZoom(){}setActiveElements(){} }
+class Chart{static Tooltip={positioners:{}};static getChart(){} constructor(canvas,config){Object.assign(this,config);this.canvas=canvas;this.scales={};this.update();this.tooltip={setActiveElements(){}};this.chartArea={top:0,bottom:280,left:0,right:400};}update(){for(const [key,value]of Object.entries(this.options.scales))this.scales[key]={...value,min:value.min??0,max:value.max??1};}destroy(){}resetZoom(){this.options.plugins?.zoom?.zoom?.onZoomComplete?.({chart:this});}setActiveElements(){} }
 const context=vm.createContext({console,Chart,Date,Intl,Number,Map,JSON,Array,Object,String,Math,Infinity,NaN,Blob:class{constructor(parts){blob=parts.join('')}},URL:{createObjectURL(){return 'blob:test'},revokeObjectURL(){}},URLSearchParams,setTimeout(){},requestAnimationFrame:f=>f(),window:{matchMedia:()=>({matches:false})},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:id=>elements[id]??(elements[id]=new Element()),createElement:tag=>new Element(tag),createTextNode:s=>s}});
 for(const file of ['temperature.js','latest.js','deficit.js','flow.js'])vm.runInContext(fs.readFileSync('g-flow/'+file,'utf8'),context);
 vm.runInContext(`loaded={user:'TEST',start:'2026-11-10T00:00',end:'2026-11-11T00:00',startMs:1794236400000,endMs:1794322800000,rows:[...points,...temperaturePoints].flatMap(point=>[0,1].map(i=>({point_id:point,recorded_at:'2026-11-10 00:'+String(i*10).padStart(2,'0')+':00',temperature:i?null:25,humidity:60,wind_speed_avg:.1,wind_speed_max:.2})))};render();`,context);
@@ -75,3 +75,19 @@ assert.match(blob,/飽和水蒸気量（g\/㎥）/);assert.match(blob,/VPD（kPa
 assert.ok(blob.trim().split('\r\n')[2].endsWith('"","",""'));
 vm.runInContext("emptyGraphs('読み込み中');",context);assert.equal(elements['vpd-charts'].children.length,4);assert.equal(elements['vapor-charts'].children.length,4);assert.doesNotMatch(text(elements['vapor-charts']),/9.2/);
 console.log('Moisture passed: separate VPD/vapor groups, 3 series, fill, zero minima, separate saved maxima, missing humidity, CSV widths and loading.');
+
+// Zoom No.2 in each group: both temperature axes, same-kind peers only, all x ranges.
+vm.runInContext(`loaded.rows=[...points,...temperaturePoints].map(point=>({point_id:point,recorded_at:'2026-11-10 00:00:00',temperature:25,humidity:60,wind_speed_avg:0.1,wind_speed_max:0.2}));render();charts[2].$link.checked=false;`,context);
+const savedBefore=JSON.stringify([...storage]);
+for(const group of ['temperature','wind','vpd','vapor']){
+ vm.runInContext(`resetViews();const source${group}=charts.filter(c=>zoomGroup(c)==='${group}')[1];source${group}.options.scales.x.min=loaded.startMs+600000;source${group}.options.scales.x.max=loaded.endMs-600000;for(const id of (${JSON.stringify(group==='temperature'?['yHum','yTemp']:['y'])})){source${group}.options.scales[id].min=2;source${group}.options.scales[id].max=8;}source${group}.update();`,context);
+ const otherBefore=vm.runInContext(`JSON.stringify(charts.filter(c=>zoomGroup(c)!=='${group}').map(c=>Object.fromEntries(Object.entries(c.scales).filter(([id])=>id!=='x').map(([id,a])=>[id,[a.min,a.max]]))))`,context);
+ vm.runInContext(`syncZoom({chart:source${group}});`,context);
+ assert.equal(vm.runInContext(`charts.filter(c=>zoomGroup(c)==='${group}').every(c=>${JSON.stringify(group==='temperature'?['yHum','yTemp']:['y'])}.every(id=>c.scales[id].min===2&&c.scales[id].max===8))`,context),true);
+ assert.equal(vm.runInContext(`charts.every(c=>c.scales.x.min===loaded.startMs+600000&&c.scales.x.max===loaded.endMs-600000)`,context),true);
+ assert.equal(vm.runInContext(`JSON.stringify(charts.filter(c=>zoomGroup(c)!=='${group}').map(c=>Object.fromEntries(Object.entries(c.scales).filter(([id])=>id!=='x').map(([id,a])=>[id,[a.min,a.max]]))))`,context),otherBefore);
+}
+assert.equal(JSON.stringify([...storage]),savedBefore);
+vm.runInContext('resetViews();',context);
+assert.equal(vm.runInContext('charts.filter(c=>["vpd","vapor"].includes(c.$kind)).every(c=>c.scales.y.min===0)',context),true);
+console.log('Grouped zoom passed: all 4 kinds, No.2 source, both temp/humidity axes, unchecked wind peer, other y axes unchanged, all x synced, saved settings retained/reset.');

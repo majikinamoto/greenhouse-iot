@@ -23,13 +23,30 @@ let cursorTime=null, cursorLatest=false;
 function midnightTimes(min,max){const day=86400000,offset=9*3600000,result=[];for(let t=Math.ceil((min+offset)/day)*day-offset;t<=max;t+=day)result.push(t);return result;}
 function syncCursor(time){cursorTime=time;if(time===null)cursorLatest=false;for(const chart of charts){const active=[];if(time!==null)chart.data.datasets.forEach((dataset,datasetIndex)=>{let best=-1,distance=Infinity;dataset.data.forEach((p,index)=>{const delta=Math.abs(p.x-time);if(p.y!==null&&delta<distance){best=index;distance=delta;}});if(best>=0&&distance<=600000)active.push({datasetIndex,index:best});});chart.setActiveElements(active);chart.tooltip.setActiveElements(active,{x:time===null?chart.chartArea.left:chart.scales.x.getPixelForValue(time),y:chart.chartArea.top});chart.update('none');}}
 const flowGuides={id:'flowGuides',afterEvent(chart,args){if(args.replay)return;const e=args.event,a=chart.chartArea;if(!a)return;if(e.type==='mouseout'){syncCursor(null);return;}if(!['mousemove','touchstart','touchmove'].includes(e.type))return;if(e.x<a.left||e.x>a.right||e.y<a.top||e.y>a.bottom){if(temperaturePoints.includes(chart.$point)&&e.x>a.right&&e.y>=a.top&&e.y<=a.bottom){cursorLatest=true;const times=chart.data.datasets.flatMap(d=>d.data.filter(p=>p.y!==null).map(p=>p.x));syncCursor(times.length?Math.max(...times):null);return;}syncCursor(null);return;}cursorLatest=false;const target=chart.scales.x.getValueForPixel(e.x);const times=chart.data.datasets.flatMap(d=>d.data.map(p=>p.x));const nearest=times.reduce((best,t)=>Math.abs(t-target)<Math.abs(best-target)?t:best,times[0]??target);syncCursor(nearest);args.changed=true;},afterDraw(chart){const a=chart.chartArea,x=chart.scales.x,c=chart.ctx;if(!a||!x)return;c.save();c.beginPath();c.rect(a.left,a.top,a.right-a.left,a.bottom-a.top);c.clip();c.lineWidth=1;const line=(time,color)=>{const px=x.getPixelForValue(time);c.strokeStyle=color;c.beginPath();c.moveTo(px,a.top);c.lineTo(px,a.bottom);c.stroke();};for(const time of midnightTimes(x.min,x.max))line(time,'rgba(0,0,0,0.28)');if(cursorTime!==null&&cursorTime>=x.min&&cursorTime<=x.max)line(cursorTime,'rgba(0,0,0,0.75)');c.restore();}};
-function syncZoom({chart}){if(syncing)return;syncing=true;for(const c of charts){c.options.scales.x.min=chart.scales.x.min;c.options.scales.x.max=chart.scales.x.max;c.update('none');}matchWindAxes();syncing=false;}
+function zoomGroup(chart){return chart.$kind || (points.includes(chart.$point)?'wind':'temperature');}
+function syncZoom({chart}){
+ if(syncing)return;
+ const group=zoomGroup(chart),x={min:chart.scales.x.min,max:chart.scales.x.max};
+ const axes=group==='temperature'?['yHum','yTemp']:['y'];
+ const ranges=Object.fromEntries(axes.filter(id=>chart.scales[id]).map(id=>[id,{min:chart.scales[id].min,max:chart.scales[id].max}]));
+ const previous=new Map(charts.map(c=>[c,Object.fromEntries(Object.entries(c.scales).filter(([id])=>id!=='x').map(([id,scale])=>[id,{min:scale.min,max:scale.max}]))]));
+ syncing=true;
+ try{
+  for(const target of charts){
+   Object.assign(target.options.scales.x,x);
+   // Keep unrelated vertical ranges stable when the shared time window changes.
+   const vertical=zoomGroup(target)===group?ranges:previous.get(target);
+   for(const [id,range] of Object.entries(vertical))if(target.options.scales[id])Object.assign(target.options.scales[id],range);
+   target.update('none');
+  }
+ }finally{syncing=false;}
+}
 function axisKey(){return 'g_flow_axes_v1_'+loaded.user;}
 function readAxes(){try{return JSON.parse(localStorage.getItem(axisKey()))||{};}catch{return {};}}
 function saveAxes(settings){try{localStorage.setItem(axisKey(),JSON.stringify(settings));}catch{status('縦軸設定を端末へ保存できません。');}}
 function ownAxis(chart){if(['vpd','vapor'].includes(chart.$kind)){applyDeficitAxes(chart);return;}if(temperaturePoints.includes(chart.$point)){const axis=getTempHumAxis(chart.$point);Object.assign(chart.options.scales.yHum,{min:axis.humMin,max:axis.humMax});Object.assign(chart.options.scales.yTemp,{min:axis.tempMin,max:axis.tempMax});return;}const saved=readAxes()[chart.$point]||{};chart.options.scales.y.min=0;delete chart.options.scales.y.max;if(Number.isFinite(saved.max)&&saved.max>0)chart.options.scales.y.max=saved.max;}
 function matchWindAxes(){const source=charts[0];if(!source)return;for(const chart of charts.slice(1))if(chart.$link?.checked){chart.options.scales.y.min=source.scales.y.min;chart.options.scales.y.max=source.scales.y.max;chart.update('none');}}
-function resetViews(){if(!loaded)return;for(const c of charts){if(c.resetZoom)c.resetZoom('none');c.options.scales.x.min=loaded.startMs;c.options.scales.x.max=loaded.endMs;ownAxis(c);c.update('none');}matchWindAxes();}
+function resetViews(){if(!loaded||syncing)return;syncing=true;try{for(const c of charts){if(c.resetZoom)c.resetZoom('none');c.options.scales.x.min=loaded.startMs;c.options.scales.x.max=loaded.endMs;ownAxis(c);c.update('none');}matchWindAxes();}finally{syncing=false;}}
 function addAxes(card,chart,index){
  const controls=document.createElement('div');controls.className='measured-axes';
  const label=document.createElement('label');label.textContent='m/s：';
