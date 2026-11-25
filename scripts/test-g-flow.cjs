@@ -3,6 +3,7 @@ class Element{set value(v){this._value=String(v)}get value(){return this._value}
 const elements={}, storage=new Map();let blob;
 class Chart{static Tooltip={positioners:{}};static getChart(){} constructor(canvas,config){Object.assign(this,config);this.canvas=canvas;this.scales={};this.update();this.tooltip={setActiveElements(){}};this.chartArea={top:0,bottom:280,left:0,right:400};}update(){for(const [key,value]of Object.entries(this.options.scales))this.scales[key]={...value,min:value.min??0,max:value.max??1};}destroy(){}resetZoom(){this.options.plugins?.zoom?.zoom?.onZoomComplete?.({chart:this});}setActiveElements(){} }
 const context=vm.createContext({console,Chart,Date,Intl,Number,Map,JSON,Array,Object,String,Math,Infinity,NaN,Blob:class{constructor(parts){blob=parts.join('')}},URL:{createObjectURL(){return 'blob:test'},revokeObjectURL(){}},URLSearchParams,setTimeout(){},requestAnimationFrame:f=>f(),window:{matchMedia:()=>({matches:false})},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:id=>elements[id]??(elements[id]=new Element()),createElement:tag=>new Element(tag),createTextNode:s=>s}});
+vm.runInContext(fs.readFileSync('chart-range-band.js','utf8'),context);
 vm.runInContext(fs.readFileSync('chart-background.js','utf8'),context);
 vm.runInContext(fs.readFileSync('moisture-calculations.js','utf8'),context);
 for(const file of ['temperature.js','latest.js','deficit.js','flow.js'])vm.runInContext(fs.readFileSync('g-flow/'+file,'utf8'),context);

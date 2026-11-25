@@ -46,14 +46,7 @@ function applyDeficitAxes(chart) {
 const flowVaporBand = {
     id:'flowVaporBand',
     beforeDatasetsDraw(chart) {
-        const a = chart.chartArea, y = chart.scales.y;
-        if (!a || !y) return;
-        const min = Math.max(5,y.min), max = Math.min(10,y.max);
-        if (max <= min) return;
-        const top = Math.max(a.top,y.getPixelForValue(max));
-        const bottom = Math.min(a.bottom,y.getPixelForValue(min));
-        chart.ctx.save();chart.ctx.fillStyle = 'rgba(31, 143, 95, 0.12)';
-        chart.ctx.fillRect(a.left,top,a.right-a.left,bottom-top);chart.ctx.restore();
+        window.UTechChartBands.draw(chart, {axis:'y', min:5, max:10, color:'rgba(31, 143, 95, 0.12)'});
     }
 };
 

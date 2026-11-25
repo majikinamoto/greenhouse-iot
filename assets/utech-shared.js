@@ -1657,20 +1657,8 @@ const vaporTargetBandPlugin = {
         chart.options.scales.y.min = 0;
     },
     beforeDatasetsDraw(chart){
-        if(!["mainVaporChart", "reviewVaporChart"].includes(chart.canvas.id)) return;
-        const area = chart.chartArea;
-        const scale = chart.scales.y;
-        if(!area || !scale) return;
-        const min = Math.max(5, scale.min);
-        const max = Math.min(10, scale.max);
-        if(max <= min) return;
-        const top = Math.max(area.top, scale.getPixelForValue(max));
-        const bottom = Math.min(area.bottom, scale.getPixelForValue(min));
-        const ctx = chart.ctx;
-        ctx.save();
-        ctx.fillStyle = "rgba(31, 143, 95, 0.12)";
-        ctx.fillRect(area.left, top, area.right - area.left, bottom - top);
-        ctx.restore();
+        if(!["mainVaporChart", "reviewVaporChart", "vaporChartP11"].includes(chart.canvas.id)) return;
+        window.UTechChartBands.draw(chart, {axis:'y', min:5, max:10, color:'rgba(31, 143, 95, 0.12)'});
     }
 };
 
